@@ -1,0 +1,16 @@
+language: python
+os:
+- linux
+python:
+- '3.6'
+install:
+- pip install .
+- pip install pytest
+script: pytest
+deploy:
+  provider: pypi
+  user: magland
+  on:
+    tags: true
+  password:
+    secure: ljNJVVjZP5fWCzyH9xiBunnacjAjNHzJ926ql7aJbPfsWPDYBnoSHRXWxXUvaezRgjNACWcW7fXPqhiszp4RSrgt3PZYIR7Sn7Qyk5byi5QRT/5RoiElZTrqxrby25NsoLmOQPwv1i8SHdRDclPwoOyl69Etrf324lqtyZ0nHsUKTsOQrUjXQ7BGIErBmjYWMnREmKLTqmUFW+NhBd2LRYA/+6ZZ8+7Qt8QDm8ZNF4FbuAqOKMlWrXxFDCvMxbChR1VrGSgQ90lI+7aCkl6xNUhgAb8sCOxSzuBTh86AOTwIHSa6+4rZ1xh4QkCIW2iDQHtl8cVdRCLCr3r/XynDInDO3fG2o65nW23gDhQ8IIFkKUW3WF30Xthq7Qiy6xmFoKQfkvJG8HApGg6ksDlqKh67ITqgmx5aWFyHLBYiJWtkWR8F36vLRA2Mxdy5iFNlp1I/dVDbEkonwWZbRbupjeDrQw5dyJbSKnY/Xbn30jdtpefOKpUzoF/zZLWISwUSf1lSt4VkaQCrhWPbyVvkB+5zTdw3GwKZtRJCtkV6bbe8Ckc4zWAf9/O1EKy1P3BdHoBa1TfklhOEYOIzZGt8XmgnG7ZZDHyq9bvDpgWapQ2D8TiTlK+lRdD0iBRnoEF7AW80SUfZ4jywhMtmvT1VLu6QaSuyGKTErjRnRiHrVZo=
