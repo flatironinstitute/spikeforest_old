@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import subprocess
+
+def system_call(cmd):
+  print('EXECUTING: '+cmd)
+  p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+   
+  while True:
+      out = p.stderr.read(1)
+      if not out:
+        if p.poll() != None:
+            break
+      if out:
+          sys.stdout.write(out.decode())
+          sys.stdout.flush()
+
+  if p.returncode != 0:
+    raise Exception('Non-zero exit code for command: '+cmd)
+
+if __name__== "__main__":
+  parser = argparse.ArgumentParser(description = 'Run a spikeforest processing batch')
+  parser.add_argument('batch_name', help='The name of the batch to run')
+  parser.add_argument('--run_prefix', help='Prefix to run command', default='')
+  parser.add_argument('--container', help='empty or sc', default='')
+
+  args = parser.parse_args()
+
+  spikeforest_password=os.environ.get('SPIKEFOREST_PASSWORD',None)
+  if not spikeforest_password:
+    print('Environment variable not set: SPIKEFOREST_PASSWORD')
+    sys.exit(-1)
+
+  run_prefix=args.run_prefix
+  if run_prefix:
+    run_prefix=run_prefix+' '
+
+  dirname=os.path.dirname(os.path.realpath(__file__))
+  system_call(dirname+'/sf_run_batch_command prepare '+args.batch_name)
+  if args.container=='sc':
+    system_call(run_prefix+dirname+'/sc_run.sh '+args.batch_name)
+  else:
+    system_call(run_prefix+dirname+'/sf_run_batch_command run '+args.batch_name)
+  system_call(dirname+'/sf_run_batch_command assemble_results '+args.batch_name)

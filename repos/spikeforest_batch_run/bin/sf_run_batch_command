@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import spikeforest_batch_run as sbr
+import spikeforest as sf
+import os
+import sys
+import argparse
+
+if __name__== "__main__":
+  parser = argparse.ArgumentParser(description = 'Run a batch command (clear, prepare, run, assemble_results)')
+  parser.add_argument('command', help='clear, prepare, run, or assemble_results')
+  parser.add_argument('batch_name', help='The name of the batch to run')
+
+  args = parser.parse_args()
+
+  spikeforest_password=os.environ.get('SPIKEFOREST_PASSWORD',None)
+  if not spikeforest_password:
+    print('Environment variable not set: SPIKEFOREST_PASSWORD')
+    sys.exit(-1)
+
+  sf.kbucketConfigRemote(name='spikeforest1-readwrite',password=spikeforest_password)
+  if args.command=='clear':
+    sbr.clearBatch(batch_name=args.batch_name)
+  elif args.command=='prepare':
+    sbr.prepareBatch(batch_name=args.batch_name)
+  elif args.command=='run':
+    sbr.runBatch(batch_name=args.batch_name)
+  elif args.command=='assemble_results':
+    sbr.assembleBatchResults(batch_name=args.batch_name)
+  else:
+    print('Invalid command: '+args.command)
+    sys.exit(-1)

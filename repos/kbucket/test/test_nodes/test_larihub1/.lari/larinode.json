@@ -1,0 +1,15 @@
+{
+    "node_type": "hub",
+    "node_id": "1869d202332c",
+    "network_type": "lari",
+    "name": "test_larihub1",
+    "scientific_research": "yes",
+    "description": "Lari hub for local testing",
+    "owner": "Jeremy Magland",
+    "owner_email": "jmagland@flatironinstitute.org",
+    "listen_port": "64240",
+    "passcode": "passcode_test_larihub1",
+    "listen_url": ".",
+    "parent_hub_url": ".",
+    "parent_hub_passcode": ""
+}

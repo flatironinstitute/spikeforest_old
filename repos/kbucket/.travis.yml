@@ -1,0 +1,22 @@
+language: python
+os:
+- linux
+python:
+- '3.6'
+install:
+- pip install .
+- pip install pytest
+script: python -m pytest
+deploy:
+  - provider: pypi
+    user: magland
+    on:
+      tags: true
+    password:
+      secure: 0bGyp2LsjToyTNKM3OxZDHvz/r9DolhZJd8cb4nEaO5BOwKVmzEAr85tjsT1v5R+K+8Tyt/KE2aiXMEE3uxQNYUgHSsa3VZeewEGxTh/p2kJlOFEz8XDwnsNNm2Ya9FvkpOKs99qDF5u/rFt1fbNtBLrwVeFOJO32I0jYgSMTVBdZsX/ItMaH6zWbtw7fQCZUjIFL5KD5zuIlwsPfOg/KpAOmn3Zzpm5C8n/tkwcQmycuvnE8LV9HC6v9heS0FIMn0Ppf3rKki6K1yzFLgtCwCLa+OTIHzckSvXX3sL4G9ko3cBfLpla7TmoSQ81qtW6sEP7aI2yosOMV1sAvtrM2Xy/EpizHzM7Oaf5AsdNIPTblkCROuwsNs+dQvX4p/BHUD8bOZAAs17YVq5DtNVkye2tXpPbFe1F54xCQEzw/apAfKRUk3JTw9wZ3lxMTsh9E5+qPaikUNAxH0UHg8fLJm3vZrKFDGv4sPquv6wUhe40nbsWphleha1AkC72Lji8kN4rAQnyXCTckI5ptrL5jTyr1WOJtNsZd8KLK9ORfi7TOsm7pKEm4BCPQaAPtxRcJP3hR86MCaNglOXf/MO7oru0Niv7liGjhrfeCmVrhsP4GuWk1EUD4x+0m6C75sGTKAaIJfRQ3snF/970cNGsaAFR5kmTCgt3iz203Bi/0c8=
+  - provider: npm
+    email: jmagland@flatironinstitute.org
+    on:
+      tags: true
+    api_key:
+      secure: svawStal8dTSRp4HYClpLuuSbO0yLaNAbuhxu0uaSosB/wftyf9Omk/BQc7q9N6lPeomx2XOaU8Abd8eA+gopAhLCQXv//KSe9uFqXGeneq7D6wxbDymc2pGGqOLG0Cdes8OnGqqpzUDbX1AEJpt0AFL6iSDVFzBaIf8GPmqKCvevi8S42KSRWFvSkxgltoP2ujAtdpBpGHekQpaEek4hjLpBQOe7lfhtiAdo0qYhe/QuQyuu8VsNLi52xZx5JzC1P6OWog7IQIgrMo1ZMqRaLdi1BptujL/6T6atPn3TSMTb1Q0rsBQyQPyOvKaNAsGRXwyGv2X/997oiQ6u2BkaGqts/EyrpAuPMcEIJUIARYN43OyYdVTc44pZb26LL8H0FhS+sMeQYCJ/JvmWRma/Q4eKcZmJe7zn/M3EqXmGuoT9r8HIx3xH89fz+zpWDtIKH2xlqtCHt+LvKiKPXROvN6uK4ZRiQT161oZl8fBzkjT9OoTh8wc8Ue/G3VIpd+34nuXWT1kbXnIgtBdWd/WnmF7+l4zUm4XtFPa82Ku0uufwZc/2V8yr2NplV84QQMfsuAWmuXbm6akn+Z6Ye9uk5UHKjBlm8eW1cbAR/F4VFOLZz0ADUlOPCyta7jnxToqGzIDC6Ki8UYqb2X0wrnkV7lmCOGv5nmJiWDAenrxm2I=

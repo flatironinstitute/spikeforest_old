@@ -1,0 +1,235 @@
+#!/usr/bin/env node
+
+require('dotenv').config({ path: __dirname+'/../.env' });
+
+const axios=require('axios');
+const crypto=require('crypto');
+//let pairio_url=process.env.PAIRIO_URL||'http://localhost:25340';
+let pairio_url=process.env.PAIRIO_URL||'https://pairio.org:10443';
+
+function print_usage() {
+  console.info('Usage:');
+  console.info('pairio get [user] [key]');
+  console.info('pairio set [user] [key] [value]');
+  console.info('Admin usage:');
+  console.info('pairio register [user]');
+  console.info('pairio get_user_params [user]');
+  console.info('pairio set_max_num_pairs [user] [max_num_pairs]');
+}
+
+let CLP = new CLParams(process.argv);
+
+let command = CLP.unnamedParameters[0] || '';
+let arg1 = CLP.unnamedParameters[1] || '';
+let arg2 = CLP.unnamedParameters[2] || '';
+let arg3 = CLP.unnamedParameters[3] || '';
+
+if (!command) {
+	print_usage();
+	process.exit(-1);
+}
+
+let handlers={
+	'get':handle_get,
+	'set':handle_set,
+	'register':handle_register,
+	'get_user_params':handle_get_user_params,
+	'set_max_num_pairs':handle_set_max_num_pairs
+};
+
+async function main() {
+	
+	if (!(command in handlers)) {
+		console.error('Unrecognized command: '+command);
+		process.exit(-1);
+	}
+
+	handlers[command]();
+}
+main();
+
+function handle_get() {
+	let user=arg1;
+	let key=arg2;
+	if ((!user)||(!key)) {
+		print_usage();
+		process.exit(-1);
+	}
+	let url=pairio_url+`/get/${user}/${key}`;
+	http_get_json(url,function(err,obj) {
+		if (err) {
+			console.error(err.message);
+			process.exit(-1);
+		}
+		if (!obj.success) {
+			console.error(obj.error);
+			process.exit(-1);
+		}
+		console.info(obj.value);
+	});
+}
+
+function handle_set() {
+	let user=arg1;
+	let key=arg2;
+	let value=arg3;
+	let token=process.env.PAIRIO_TOKEN;
+	if ((!user)||(!key)||(!value)) {
+		print_usage();
+		process.exit(-1);
+	}
+	if (!token) {
+		console.error('You must set the following environment variables: PAIRIO_TOKEN');
+		process.exit(-1);
+	}
+	let path=`/set/${user}/${key}/${value}`;
+	let signature=sha1_of_object({path:path,token:token})
+	let url=pairio_url+`${path}?signature=${signature}`;
+	if (CLP.namedParameters['overwrite']=='false') {
+		url+='&overwrite=false';
+	}
+	http_get_json(url,function(err,obj) {
+		if (err) {
+			console.error(err.message);
+			process.exit(-1);
+		}
+		if (!obj.success) {
+			console.error('Error: '+obj.error);
+			process.exit(-1);
+		}
+		console.info(`Key/value has been set for user: ${user}`);
+	});
+}
+
+function handle_register() {
+	let user=arg1;
+	let token=process.env.PAIRIO_ADMIN_TOKEN;
+	if (!user) {
+		print_usage();
+		process.exit(-1);
+	}
+	if (!token) {
+		console.error('You must set the following environment variables: PAIRIO_ADMIN_TOKEN');
+		process.exit(-1);
+	}
+	let path=`/admin/register/${user}`;
+	let signature=sha1_of_object({path:path,token:token});
+	let url=pairio_url+`${path}?signature=${signature}`;
+	http_get_json(url,function(err,obj) {
+		if (err) {
+			console.error(err.message);
+			process.exit(-1);
+		}
+		if (!obj.success) {
+			console.error(obj.error);
+			process.exit(-1);
+		}
+		console.info(obj.token);
+	});
+}
+
+function handle_get_user_params() {
+	let user=arg1;
+	let token=process.env.PAIRIO_ADMIN_TOKEN;
+	if (!user) {
+		print_usage();
+		process.exit(-1);
+	}
+	if (!token) {
+		console.error('You must set the following environment variables: PAIRIO_ADMIN_TOKEN');
+		process.exit(-1);
+	}
+	let path=`/admin/get/${user}/params`;
+	let signature=sha1_of_object({path:path,token:token});
+	let url=pairio_url+`${path}?signature=${signature}`;
+	http_get_json(url,function(err,obj) {
+		if (err) {
+			console.error(err.message);
+			process.exit(-1);
+		}
+		if (!obj.success) {
+			console.error(obj.error);
+			process.exit(-1);
+		}
+		console.info(obj.params);
+	});
+}
+
+function handle_set_max_num_pairs() {
+	let user=arg1;
+	let max_num_pairs=arg2;
+	let token=process.env.PAIRIO_ADMIN_TOKEN;
+	if ((!user)||(!max_num_pairs)) {
+		print_usage();
+		process.exit(-1);
+	}
+	if (!token) {
+		console.error('You must set the following environment variables: PAIRIO_ADMIN_TOKEN');
+		process.exit(-1);
+	}
+	let path=`/admin/set/${user}/max_num_pairs/${max_num_pairs}`;
+	let signature=sha1_of_object({path:path,token:token});
+	let url=pairio_url+`${path}?signature=${signature}`;
+	http_get_json(url,function(err,obj) {
+		if (err) {
+			console.error(err.message);
+			process.exit(-1);
+		}
+		if (!obj.success) {
+			console.error(obj.error);
+			process.exit(-1);
+		}
+		console.info('success.');
+	});
+}
+
+function http_get_json(url, callback) {
+  axios.get(url, {
+      responseType: 'json'
+    })
+    .then(function(response) {
+      setTimeout(function() { // so we don't catch an error from the timeout
+        callback(null, response.data);
+      }, 0);
+    })
+    .catch(function(error) {
+      callback(error);
+    });
+}
+
+function sha1_of_object(obj) {
+  let shasum = crypto.createHash('sha1');
+  shasum.update(JSON.stringify(obj));
+  return shasum.digest('hex');
+}
+
+function CLParams(argv) {
+  this.unnamedParameters = [];
+  this.namedParameters = {};
+
+  var args = argv.slice(2);
+  for (var i = 0; i < args.length; i++) {
+    var arg0 = args[i];
+    if (arg0.indexOf('--') === 0) {
+      arg0 = arg0.slice(2);
+      var ind = arg0.indexOf('=');
+      if (ind >= 0) {
+        this.namedParameters[arg0.slice(0, ind)] = arg0.slice(ind + 1);
+      } else {
+        this.namedParameters[arg0] = '';
+        if (i + 1 < args.length) {
+          var str = args[i + 1];
+          if (str.indexOf('-') != 0) {
+            this.namedParameters[arg0] = str;
+            i++;
+          }
+        }
+      }
+    } else if (arg0.indexOf('-') === 0) {
+      arg0 = arg0.slice(1);
+      this.namedParameters[arg0] = '';
+    } else {
+      this.unnamedParameters.push(arg0);
+    }
+  }
+};

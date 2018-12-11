@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const start_test_nodes=require(__dirname+'/..').start_test_nodes;
+
+start_test_nodes(function(info) {
+	console.info(info);
+});

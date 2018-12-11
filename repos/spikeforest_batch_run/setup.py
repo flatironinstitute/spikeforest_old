@@ -1,24 +1,17 @@
 import setuptools
 
-pkg_name = "spikeforest2"
+pkg_name="spikeforest_batch_run"
 
 setuptools.setup(
     name=pkg_name,
     version="0.1.0",
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
-    description="Spike sorting validation and comparison system",
-    url="https://github.com/magland/spikeforest2",
-    packages=[
-        'vdomr',
-        'spikeforest_batch_run',
-        'spikeextractors','spikewidgets','spiketoolkit',
-        'mlprocessors',
-        'kbucket','pairio'
-    ],
+    description="",
+    url="https://github.com/magland/spikeforest_batch_run",
+    packages=setuptools.find_packages(),
     install_requires=[
-        'numpy',
-        'matplotlib'
+        'kbucket'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",

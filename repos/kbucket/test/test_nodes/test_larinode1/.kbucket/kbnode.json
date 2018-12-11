@@ -1,0 +1,14 @@
+{
+    "node_type": "leaf",
+    "node_id": "178f0bd07ae4",
+    "name": "test_larinode1",
+    "scientific_research": "yes",
+    "description": "Lari node for local testing",
+    "owner": "Jeremy Magland",
+    "owner_email": "jmagland@flatironinstitute.org",
+    "confirm_share": "yes",
+    "network_type": "kbucket",
+    "listen_url": ".",
+    "parent_hub_url": "http://localhost:63240",
+    "parent_hub_passcode": "passcode_test_kbhub1"
+}

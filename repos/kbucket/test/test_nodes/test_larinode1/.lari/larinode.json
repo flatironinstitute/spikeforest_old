@@ -1,0 +1,15 @@
+{
+    "node_type": "leaf",
+    "node_id": "178f0bd07ae4",
+    "network_type": "lari",
+    "name": "test_larinode1",
+    "scientific_research": "yes",
+    "description": "Lari node for local testing",
+    "owner": "Jeremy Magland",
+    "owner_email": "jmagland@flatironinstitute.org",
+    "confirm_share": "yes",
+    "listen_url": ".",
+    "processing_passcode": "passcode_test_larinode1",
+    "parent_hub_url": "http://localhost:64240",
+    "parent_hub_passcode": "passcode_test_larihub1"
+}
