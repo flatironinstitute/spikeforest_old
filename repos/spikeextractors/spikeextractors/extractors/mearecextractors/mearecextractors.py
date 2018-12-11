@@ -1,10 +1,13 @@
 from spikeextractors import RecordingExtractor
 from spikeextractors import SortingExtractor
 
+import quantities as pq
 import numpy as np
 from pathlib import Path
 import h5py
-import json
+import yaml, json
+import neo
+
 
 class MEArecRecordingExtractor(RecordingExtractor):
     def __init__(self, recording_path=None):
@@ -47,14 +50,10 @@ class MEArecRecordingExtractor(RecordingExtractor):
             end_frame = self.getNumFrames()
         if channel_ids is None:
             channel_ids = range(self.getNumChannels())
-        return self._recordings[channel_ids, :][:, start_frame:end_frame]
+        return self._recordings[channel_ids, start_frame:end_frame]
 
     @staticmethod
     def writeRecording(recording, save_path):
-        try:
-            import yaml
-        except:
-            raise Exception('Unable to import yaml')
         save_path = Path(save_path)
         if save_path.suffix == '.h5' or save_path.suffix == '.hdf5':
             F = h5py.File(save_path, 'w')
@@ -95,11 +94,6 @@ class MEArecSortingExtractor(SortingExtractor):
         self._initialize()
 
     def _initialize(self):
-        try:
-            import quantities as pq
-        except:
-            raise Exception('Unable to import quantities')
-
         rec_dict, info = load_recordings(recordings=self._recording_path)
 
         self._num_units = len(rec_dict['spiketrains'])
@@ -134,12 +128,6 @@ class MEArecSortingExtractor(SortingExtractor):
 
     @staticmethod
     def writeSorting(sorting, save_path, sampling_frequency):
-        try:
-            import quantities as pq
-            import neo
-            import yaml
-        except:
-            raise Exception('Unable to import quantities, neo, or yaml')
         save_path = Path(save_path)
         if save_path.suffix == '.h5' or save_path.suffix == '.hdf5':
             F = h5py.File(save_path, 'w')
@@ -187,7 +175,6 @@ def load_recordings(recordings, verbose=False):
     info - dict
 
     '''
-    import yaml
     if verbose:
         print("Loading recordings...")
 
