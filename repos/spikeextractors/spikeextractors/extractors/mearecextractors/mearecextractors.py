@@ -1,13 +1,10 @@
 from spikeextractors import RecordingExtractor
 from spikeextractors import SortingExtractor
 
-import quantities as pq
 import numpy as np
 from pathlib import Path
 import h5py
-import yaml, json
-import neo
-
+import json
 
 class MEArecRecordingExtractor(RecordingExtractor):
     def __init__(self, recording_path=None):
@@ -54,6 +51,7 @@ class MEArecRecordingExtractor(RecordingExtractor):
 
     @staticmethod
     def writeRecording(recording, save_path):
+        import yaml
         save_path = Path(save_path)
         if save_path.suffix == '.h5' or save_path.suffix == '.hdf5':
             F = h5py.File(save_path, 'w')
@@ -94,6 +92,7 @@ class MEArecSortingExtractor(SortingExtractor):
         self._initialize()
 
     def _initialize(self):
+        import quantities as pq
         rec_dict, info = load_recordings(recordings=self._recording_path)
 
         self._num_units = len(rec_dict['spiketrains'])
@@ -128,6 +127,9 @@ class MEArecSortingExtractor(SortingExtractor):
 
     @staticmethod
     def writeSorting(sorting, save_path, sampling_frequency):
+        import quantities as pq
+        import yaml
+        import neo
         save_path = Path(save_path)
         if save_path.suffix == '.h5' or save_path.suffix == '.hdf5':
             F = h5py.File(save_path, 'w')
@@ -175,6 +177,10 @@ def load_recordings(recordings, verbose=False):
     info - dict
 
     '''
+    import quantities as pq
+    import yaml
+    import neo
+
     if verbose:
         print("Loading recordings...")
 
