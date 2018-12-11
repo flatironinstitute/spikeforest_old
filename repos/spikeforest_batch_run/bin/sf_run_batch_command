@@ -10,8 +10,13 @@ if __name__== "__main__":
   parser = argparse.ArgumentParser(description = 'Run a batch command (clear, prepare, run, assemble_results)')
   parser.add_argument('command', help='clear, prepare, run, or assemble_results')
   parser.add_argument('batch_name', help='The name of the batch to run')
+  parser.add_argument('--mlpr_force_run', help='Whether to force run the MountainLab processors',action="store_true")
+  parser.add_argument('--test_one', help='Only run one job and do not assemble the results',action='store_true')
 
   args = parser.parse_args()
+
+  if args.mlpr_force_run:
+    os.environ['MLPROCESSORS_FORCE_RUN']='TRUE'
 
   spikeforest_password=os.environ.get('SPIKEFOREST_PASSWORD',None)
   if not spikeforest_password:
@@ -20,12 +25,15 @@ if __name__== "__main__":
 
   sf.kbucketConfigRemote(name='spikeforest1-readwrite',password=spikeforest_password)
   if args.command=='clear':
-    sbr.clearBatch(batch_name=args.batch_name)
+    sbr.clearBatch(batch_name=args.batch_name, test_one=args.test_one)
   elif args.command=='prepare':
-    sbr.prepareBatch(batch_name=args.batch_name)
+    sbr.prepareBatch(batch_name=args.batch_name, test_one=args.test_one)
   elif args.command=='run':
-    sbr.runBatch(batch_name=args.batch_name)
+    sbr.runBatch(batch_name=args.batch_name, test_one=args.test_one)
   elif args.command=='assemble_results':
+    if args.test_one:
+      print('Cannot assemble results with --test_one flag')
+      sys.exit(-1)
     sbr.assembleBatchResults(batch_name=args.batch_name)
   else:
     print('Invalid command: '+args.command)

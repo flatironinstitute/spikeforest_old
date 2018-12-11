@@ -26,6 +26,10 @@ if __name__== "__main__":
   parser.add_argument('batch_name', help='The name of the batch to run')
   parser.add_argument('--run_prefix', help='Prefix to run command', default='')
   parser.add_argument('--container', help='empty or sc', default='')
+  parser.add_argument('--clear', help='First clear the jobs so that all jobs are run.',action="store_true")
+  parser.add_argument('--mlpr_force_run', help='Whether to force run the MountainLab processors',action="store_true")
+  parser.add_argument('--test_one', help='Only run one job and do not assemble the results',action='store_true')
+
 
   args = parser.parse_args()
 
@@ -38,10 +42,30 @@ if __name__== "__main__":
   if run_prefix:
     run_prefix=run_prefix+' '
 
+  flags=[]
+  if args.mlpr_force_run:
+    flags.append('--mlpr_force_run')
+  if args.test_one:
+    flags.append('--test_one')
+  flags=' '.join(flags)
+
   dirname=os.path.dirname(os.path.realpath(__file__))
-  system_call(dirname+'/sf_run_batch_command prepare '+args.batch_name)
+
+  ## CLEAR
+  if args.clear:
+    system_call(dirname+'/sf_run_batch_command clear {} {}'.format(flags, args.batch_name))
+
+  ## PREPARE
+  system_call(dirname+'/sf_run_batch_command prepare {} {}'.format(flags, args.batch_name))
+
+  ## RUN
   if args.container=='sc':
-    system_call(run_prefix+dirname+'/sc_run.sh '+args.batch_name)
+    system_call(run_prefix+dirname+'/sc_run.sh '+args.batch_name) ## Fix this!
   else:
-    system_call(run_prefix+dirname+'/sf_run_batch_command run '+args.batch_name)
-  system_call(dirname+'/sf_run_batch_command assemble_results '+args.batch_name)
+    system_call(run_prefix+dirname+'/sf_run_batch_command run {} {}'.format(flags, args.batch_name))
+
+  ## ASSEMBLE
+  if args.test_one:
+    print('Not assembling because --test_one flag was used.')
+  else:
+    system_call(dirname+'/sf_run_batch_command assemble_results {} {}'.format(flags, args.batch_name))

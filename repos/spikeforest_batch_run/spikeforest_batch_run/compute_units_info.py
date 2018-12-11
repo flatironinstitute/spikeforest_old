@@ -18,7 +18,7 @@ def get_random_spike_waveforms(*,recording,sorting,unit,snippet_len,max_num,chan
         event_indices=range(num_events)
 
     spikes=recording.getSnippets(reference_frames=st[event_indices].astype(int),snippet_len=snippet_len,channel_ids=channels)
-    if spikes:
+    if len(spikes)>0:
       spikes=np.dstack(tuple(spikes))
     else:
       spikes=np.zeros((recording.getNumChannels(),snippet_len,0))

@@ -4,25 +4,34 @@ import random
 import string
 import datetime
 
-def clearBatch(*,batch_name):
+def clearBatch(*,batch_name, test_one=False):
   batch=kb.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
+
+  if test_one and (len(jobs)>0):
+    jobs=[jobs[0]]
 
   print('Clearing batch {} with {} jobs'.format(batch_name,len(jobs)))
   _clear_job_results(jobs=jobs,incomplete_only=False)
 
 
-def prepareBatch(*,batch_name):
+def prepareBatch(*,batch_name, test_one=False):
   batch=kb.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
+
+  if test_one and (len(jobs)>0):
+    jobs=[jobs[0]]
 
   print('Preparing batch {} with {} jobs'.format(batch_name,len(jobs)))
   _clear_job_results(jobs=jobs,incomplete_only=True)
   _download_recordings(jobs=jobs)
 
-def runBatch(*,batch_name):
+def runBatch(*,batch_name, test_one=False):
   batch=kb.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
+
+  if test_one and (len(jobs)>0):
+    jobs=[jobs[0]]
 
   print('Running batch {} with {} jobs'.format(batch_name,len(jobs)))
   for job in jobs:

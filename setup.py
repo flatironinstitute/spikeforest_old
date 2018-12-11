@@ -16,7 +16,7 @@ setuptools.setup(
         'mlprocessors',
         'kbucket','pairio','fasteners',
         'spikeforest',
-        'pillow','pandas','h5py'
+        'pillow','pandas','h5py','scipy'
     ],
     install_requires=[
         'numpy',

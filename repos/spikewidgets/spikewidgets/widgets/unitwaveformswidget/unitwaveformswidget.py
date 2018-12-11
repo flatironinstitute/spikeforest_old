@@ -1,7 +1,5 @@
 from matplotlib import pyplot as plt
 import numpy as np
-import ipywidgets as widgets
-
 
 class UnitWaveformsWidget:
     def __init__(self, *, recording, sorting, channels=None, unit_ids=None, width=14, height=7, snippet_len=100,
@@ -63,7 +61,7 @@ class UnitWaveformsWidget:
 
         spikes = self._IX.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
                                       channel_ids=channels)
-        if spikes:
+        if len(spikes)>0:
             spikes = np.dstack(tuple(spikes))
         else:
             spikes = np.zeros((self._IX.getNumChannels(), self._snippet_len, 0))

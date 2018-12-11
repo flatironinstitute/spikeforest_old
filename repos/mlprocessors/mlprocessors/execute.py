@@ -135,7 +135,14 @@ class ProcessorExecuteOutput():
     def __init__(self):
         self.outputs=dict()
 
-def execute(proc, _cache=True, _force_run=False, **kwargs):
+def execute(proc, _cache=True, _force_run=None, **kwargs):
+
+    if _force_run is None:
+        if os.environ.get('MLPROCESSORS_FORCE_RUN','') == 'TRUE':
+            _force_run=True
+        else:
+            _force_run=False
+
     # Execute a processor
     print ('::::::::::::::::::::::::::::: '+proc.NAME)
     X=proc() # instance

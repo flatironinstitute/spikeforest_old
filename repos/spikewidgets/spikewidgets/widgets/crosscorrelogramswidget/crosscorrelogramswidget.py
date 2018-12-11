@@ -1,7 +1,5 @@
 from matplotlib import pyplot as plt
 import numpy as np
-import ipywidgets as widgets
-
 
 class CrossCorrelogramsWidget:
     def __init__(self, *, sorting, samplerate, unit_ids=None):

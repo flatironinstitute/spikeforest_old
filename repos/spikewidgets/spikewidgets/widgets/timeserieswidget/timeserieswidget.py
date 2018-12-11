@@ -1,8 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-import ipywidgets as widgets
 from matplotlib.ticker import MaxNLocator
-
 
 def plot_timeseries(*, recording, sorting=None, channels=None, trange=None, width=None, height=None):
     W = TimeseriesWidget(
@@ -47,16 +45,20 @@ class TimeseriesWidget:
             self._visible_trange = [0, np.minimum(10000, recording.getNumFrames())]
         self._initialize_stats()
         self._vspacing = self._mean_channel_std * 15
+        self._visible_trange = self._fix_trange(self._visible_trange)
+        # self._update_plot()
+
+    def _init_widgets(self):
+        import ipywidgets as widgets
         self._widget = widgets.Output()
         self._control_panel = self._create_control_panel()
         self._main_widget = widgets.VBox([self._control_panel, self._widget])
-        self._visible_trange = self._fix_trange(self._visible_trange)
-        # self._update_plot()
 
     def plot(self):
         self._do_plot()
 
     def display(self):
+        self._init_widgets()
         self._update_plot()
         display(self._main_widget)
 
