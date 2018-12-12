@@ -121,6 +121,10 @@ class SpykingCircus(mlpr.Processor):
         tmpdir=os.environ.get('TEMPDIR','/tmp')+'/ironclust-tmp-'+code
         
         num_workers=os.environ.get('NUM_WORKERS',1)
+
+        singularity_container=os.environ.get('SC_SINGULARITY_CONTAINER',None)
+        if not singularity_container:
+            raise Exception('Environment variable not set: SC_SINGULARITY_CONTAINER')
             
         try:
             recording=si.MdaRecordingExtractor(self.recording_dir)
@@ -143,8 +147,7 @@ class SpykingCircus(mlpr.Processor):
                 electrode_dimensions=None,
                 whitening_max_elts=self.whitening_max_elts,
                 clustering_max_elts=self.clustering_max_elts,
-                singularity_container=os.environ.get('SC_SINGULARITY_CONTAINER',None)
-            )
+                singularity_container=singularity_container
             si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
