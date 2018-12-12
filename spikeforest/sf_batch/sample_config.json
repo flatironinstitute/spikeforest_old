@@ -1,0 +1,26 @@
+{
+    "batch_name":"sample1",
+    "share_id":"spikeforest.spikeforest1",
+	"studies":["magland_synth_noise10_K10_C4"],
+	"datasets":["001_synth"],
+	"sorters":[
+		{
+			"name":"MountainSort4-thr3",
+            "processor_name":"MountainSort4",
+			"params":{
+				"detect_sign":-1,
+				"adjacency_radius":25,
+				"detect_threshold":3
+			}
+		},
+        {
+			"name":"MountainSort4-thr5",
+            "processor_name":"MountainSort4",
+			"params":{
+				"detect_sign":-1,
+				"adjacency_radius":25,
+				"detect_threshold":5
+			}
+		}
+	]
+}
