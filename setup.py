@@ -21,7 +21,7 @@ setuptools.setup(
         'numpy',
         'matplotlib',
         'requests',
-	'fasteners'
+	'fasteners',
         'pillow','pandas','h5py','scipy'
     ],
     classifiers=(
