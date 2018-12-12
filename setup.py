@@ -14,14 +14,15 @@ setuptools.setup(
         'spikeforest_batch_run',
         'spikeextractors','spikewidgets','spiketoolkit',
         'mlprocessors',
-        'kbucket','pairio','fasteners',
-        'spikeforest',
-        'pillow','pandas','h5py','scipy'
+        'kbucket','pairio',
+        'spikeforest'
     ],
     install_requires=[
         'numpy',
         'matplotlib',
-        'requests'
+        'requests',
+	'fasteners'
+        'pillow','pandas','h5py','scipy'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
