@@ -29,7 +29,7 @@ if __name__== "__main__":
   parser.add_argument('--clear', help='First clear the jobs so that all jobs are run.',action="store_true")
   parser.add_argument('--mlpr_force_run', help='Whether to force run the MountainLab processors',action="store_true")
   parser.add_argument('--test_one', help='Only run one job and do not assemble the results',action='store_true')
-
+  parser.add_argument('--parallel', help='Number of times to simultaneously do the run command.', default='1')
 
   args = parser.parse_args()
 
@@ -59,10 +59,19 @@ if __name__== "__main__":
   system_call(dirname+'/sf_run_batch_command prepare {} {}'.format(flags, args.batch_name))
 
   ## RUN
-  if args.container=='sc':
-    system_call(run_prefix+dirname+'/sc_run.sh '+args.batch_name) ## Fix this!
+  def do_run(num=0):
+    if args.container=='sc':
+      system_call(run_prefix+dirname+'/sc_run.sh '+args.batch_name) ## Fix this!
+    else:
+      system_call(run_prefix+dirname+'/sf_run_batch_command run {} {}'.format(flags, args.batch_name))
+
+  num_parallel=int(args.parallel)
+  if num_parallel<=1:
+    do_run()
   else:
-    system_call(run_prefix+dirname+'/sf_run_batch_command run {} {}'.format(flags, args.batch_name))
+    from multiprocessing import Pool
+    pool=Pool()
+    pool.map(do_run, list(range(num_parallel)))
 
   ## ASSEMBLE
   if args.test_one:
