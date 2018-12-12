@@ -6,3 +6,4 @@ pillow
 pandas
 h5py
 scipy
+ipython

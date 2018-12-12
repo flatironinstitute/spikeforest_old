@@ -1,7 +1,6 @@
 import numpy as np
 import spiketoolkit as st
 import spikeextractors as se
-from sklearn.decomposition import PCA
 import time
 
 
@@ -257,6 +256,8 @@ def computePCAScores(recording, sorting, n_comp=3, by_property=None,
 
     '''
     # concatenate all waveforms
+    from sklearn.decomposition import PCA
+
     all_waveforms = np.array([])
     nspikes = []
     if 'waveforms' in sorting.getUnitSpikeFeatureNames():
