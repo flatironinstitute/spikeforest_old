@@ -20,7 +20,7 @@ def summarize_recording(recording):
   units=recording.get('units_true',None)
   if kb.findFile(firings_true_path):
     ret['firings_true']=firings_true_path
-    ret['plots']['waveforms_true']=create_waveforms_plot(recording,ret['firings_true'])
+    #ret['plots']['waveforms_true']=create_waveforms_plot(recording,ret['firings_true'])
     true_units_info_fname=compute_units_info(recording_dir=recording['directory'],firings=firings_true_path,return_format='filename',channel_ids=channels,unit_ids=units)
     kb.saveFile(true_units_info_fname)
     ret['true_units_info']='sha1://'+kb.computeFileSha1(true_units_info_fname)+'/true_units_info.json'
