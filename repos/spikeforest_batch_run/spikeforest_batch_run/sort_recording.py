@@ -148,6 +148,7 @@ class SpykingCircus(mlpr.Processor):
                 whitening_max_elts=self.whitening_max_elts,
                 clustering_max_elts=self.clustering_max_elts,
                 singularity_container=singularity_container
+            )
             si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
