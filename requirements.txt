@@ -1,0 +1,8 @@
+numpy
+matplotlib
+requests
+fasteners
+pillow
+pandas
+h5py
+scipy

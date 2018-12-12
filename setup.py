@@ -18,11 +18,6 @@ setuptools.setup(
         'spikeforest'
     ],
     install_requires=[
-        'numpy',
-        'matplotlib',
-        'requests',
-	'fasteners',
-        'pillow','pandas','h5py','scipy'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
