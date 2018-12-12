@@ -2,8 +2,6 @@ import numpy as np
 import spikeextractors as se
 from scipy.optimize import linear_sum_assignment
 from .sortingcomparison import SortingComparison
-import networkx as nx
-
 
 class MultiSortingComparison():
     def __init__(self, sorting_list, name_list=None, delta_tp=10, minimum_accuracy=0.5):
@@ -24,6 +22,7 @@ class MultiSortingComparison():
         return AgreementSortingExtractor(self, min_agreement=minimum_matching)
 
     def _do_matching(self):
+        import networkx as nx
         # do pairwise matching
         self.sorting_comparisons = {}
         for i in range(len(self._sorting_list)):
