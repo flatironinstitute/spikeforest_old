@@ -69,14 +69,14 @@ function KBNodeShareIndexer(config) {
   let m_prv_cache_manager = new PrvCacheManager(config.configDir(), config.hemlockNodeDirectory());
 
   var m_file_iterator = new SteadyFileIterator(config.hemlockNodeDirectory());
-  m_file_iterator.onUpdateFile(function(relpath, stat0) { //note: stat is not really used
-    update_file(relpath, stat0);
+  m_file_iterator.onUpdateFile(function(relpath, stat0) { //note: stat is not used
+    update_file(relpath);
   });
   m_file_iterator.onRemoveFile(function(relpath) {
     remove_file(relpath);
   });
 
-  function update_file(relpath, stat0) {
+  function update_file(relpath) {
     m_queued_files[relpath] = true;
   }
 
@@ -93,17 +93,21 @@ function KBNodeShareIndexer(config) {
     m_file_iterator.start();
   }
 
-  handle_queued_files();
-
-  function handle_queued_files() {
-    do_handle_queued_files(function(err) {
+  loop(); //start the loop
+  function loop() {
+    do_handle_file_hints(function(err) {
       if (err) {
-        console.warn('Problem handling queued files: ' + err);
+        console.warn('Problem handling file hints: ' + err);
       }
-      setTimeout(function() {
-        handle_queued_files();
-        report_changes();
-      }, 100);
+      do_handle_queued_files(function(err) {
+        if (err) {
+          console.warn('Problem handling queued files: ' + err);
+        }
+        setTimeout(function() {
+          loop();
+          report_changes();
+        }, 100);
+      });
     });
   }
 
@@ -119,6 +123,50 @@ function KBNodeShareIndexer(config) {
         console.info(`Indexed ${report.num_indexed_files} files.`);
       }
       s_last_report = report;
+    }
+  }
+
+  function do_handle_file_hints(callback) {
+    hints_dir=config.configDir()+'/hints';
+    if (!fs.existsSync(hints_dir)) {
+      callback(null);
+      return;
+    }
+    fs.readdir(hints_dir, function(err, list) {
+      if (err) {
+        callback(err.message);
+        return;
+      }
+      async.eachSeries(list, function(item, cb) {
+        if ((item == '.') || (item == '..')) {
+          cb();
+          return;
+        }
+        let hint_fname = require('path').join(hints_dir, item);
+        do_handle_file_hint(hint_fname, function() {
+          cb();
+        });
+      },function() {
+        callback();
+      });
+    });
+  }
+
+  function do_handle_file_hint(hint_fname, callback) {
+    var obj = read_json_file(hint_fname);
+    if (!obj) {
+      callback(null);
+      return;
+    }
+    let relpath=obj['path'];
+    if (relpath) {
+      console.info('Updating file from hint: '+relpath);
+      update_file(relpath);
+      safe_remove_file(hint_fname);
+      callback(null);
+    }
+    else {
+      callback(null);
     }
   }
 
@@ -451,15 +499,15 @@ function PrvCacheManager(config_dir, node_directory) {
     callback(null);
   }
 
-  function safe_remove_file(cache_filepath) {
-    try {
-      require('fs').unlinkSync(cache_filepath);
-    } catch (err) {
-      console.warn('Unable to remove file: ' + cache_filepath);
-    }
-  }
-
   start_the_cleaner();
+}
+
+function safe_remove_file(filepath) {
+  try {
+    require('fs').unlinkSync(filepath);
+  } catch (err) {
+    console.warn('Unable to remove file: ' + filepath);
+  }
 }
 
 function compute_file_sha1(path, opts, callback) {

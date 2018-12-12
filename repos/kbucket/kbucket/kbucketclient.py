@@ -123,7 +123,7 @@ class KBucketClient():
         files={},
         dirs={}
       )
-      list=os.listdir(path)
+      list=_safe_list_dir(path)
       for name0 in list:
         path0=path+'/'+name0
         if os.path.isfile(path0):
@@ -252,7 +252,7 @@ class KBucketClient():
     try:
       fname=self.moveFileToCache(tmp_fname)
     except:
-      os.remove(tmp_fname)
+      _safe_remove_file(tmp_fname)
       raise
     self.saveFile(fname,share_id=share_id,upload_token=upload_token,key=key,basename='object.json',remote=remote)
 
@@ -290,6 +290,13 @@ class KBucketClient():
       self._nodeinfo_cache[share_id]=ret
     return ret
 
+  def _safe_list_dir(path):
+    try:
+      ret=os.listdir(path)
+    except:
+      print('Warning: unable to listdir: '+path)
+      return []
+
   def _find_file_helper(self,*,path,sha1=None,share_ids=None,key=None,collection=None,local=None,remote=None):
     if local is None:
       local=self._config['load_local']
@@ -320,7 +327,7 @@ class KBucketClient():
         remote=True
         ### continue to below
       else:
-        if os.path.exists(path): ## Todo: also check if it is file
+        if os.path.exists(path) and os.path.isfile(path):
           return (path, None, os.path.getsize(path))
         else:
           return (None, None, None)
@@ -441,22 +448,26 @@ class Sha1Cache():
     hints_fname=path+'.hints.json'
     if os.path.exists(hints_fname):
       hints=_read_json_file(hints_fname)
-      files=hints['files']
-      matching_files=[]
-      for file in files:
-        path0=file['stat']['path']
-        if os.path.exists(path0) and os.path.isfile(path0):
-          stat_obj0=_get_stat_object(path0)
-          if stat_obj0:
-            if (_stat_objects_match(stat_obj0,file['stat'])):
-              to_return=path0
-              matching_files.append(file)
-      if len(matching_files)>0:
-        hints['files']=matching_files
-        _write_json_file(hints,hints_fname)
-        return matching_files[0]['stat']['path']
+      if hints and 'files' in hints:
+        files=hints['files']
+        matching_files=[]
+        for file in files:
+          path0=file['stat']['path']
+          if os.path.exists(path0) and os.path.isfile(path0):
+            stat_obj0=_get_stat_object(path0)
+            if stat_obj0:
+              if (_stat_objects_match(stat_obj0,file['stat'])):
+                to_return=path0
+                matching_files.append(file)
+        if len(matching_files)>0:
+          hints['files']=matching_files
+          _write_json_file(hints,hints_fname)
+          return matching_files[0]['stat']['path']
+        else:
+          _safe_remove_file(hints_fname)
       else:
-        os.remove(hints_fname)
+        print('Warning: failed to load hints json file, or invalid file. Removing: '+hints_fname)
+        _safe_remove_file(hints_fname)
 
   def downloadFile(self,url,sha1,target_path=None,size=None):
     alternate_target_path=False
@@ -472,17 +483,13 @@ class Sha1Cache():
     sha1b=steady_download_and_compute_sha1(url=url,target_path=path_tmp)
     if not sha1b:
       if os.path.exists(path_tmp):
-        os.remove(path_tmp)
+        _safe_remove_file(path_tmp)
     if sha1!=sha1b:
       if os.path.exists(path_tmp):
-        os.remove(path_tmp)
+        _safe_remove_file(path_tmp)
       raise Exception('sha1 of downloaded file does not match expected {} {}'.format(url,sha1))
     if os.path.exists(target_path):
-      try:
-        os.remove(target_path)
-      except:
-        print ('Warning: unable to remove file that we thought existed: '+target_path)
-        pass
+      _safe_remove_file(target_path)
     os.rename(path_tmp,target_path)
     if alternate_target_path:
       self.computeFileSha1(target_path,_known_sha1=sha1)
@@ -493,7 +500,7 @@ class Sha1Cache():
     path0=self._get_path(sha1,create=True)
     if os.path.exists(path0):
       if path!=path0:
-        os.remove(path)
+        _safe_remove_file(path)
     else:
       os.rename(path,path0)
     return path0
@@ -598,9 +605,19 @@ def _sha1_of_object(obj):
   txt=json.dumps(obj, sort_keys=True, separators=(',', ':'))
   return _compute_string_sha1(txt)
 
+def _safe_remove_file(fname):
+  try:
+    os.remove(fname)
+  except:
+    print ('Warning: unable to remove file that we thought existed: '+fname)
+
 def _read_json_file(path):
-  with open(path) as f:
-    return json.load(f)
+  try:
+    with open(path) as f:
+      return json.load(f)
+  except:
+    print('Warning: Unable to read or parse json file: '+path)
+    return None
 
 def _write_json_file(obj,path):
   with open(path,'w') as f:

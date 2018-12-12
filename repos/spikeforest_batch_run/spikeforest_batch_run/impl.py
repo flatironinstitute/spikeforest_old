@@ -11,8 +11,15 @@ def clearBatch(*,batch_name, test_one=False):
   if test_one and (len(jobs)>0):
     jobs=[jobs[0]]
 
-  print('Clearing batch {} with {} jobs'.format(batch_name,len(jobs)))
+  setBatchStatus(
+    batch_name=batch_name,
+    status='clearing_batch'
+  )
   _clear_job_results(jobs=jobs,incomplete_only=False)
+  setBatchStatus(
+    batch_name=batch_name,
+    status='finished_clearing_batch'
+  )
 
 
 def prepareBatch(*,batch_name, test_one=False):
@@ -22,9 +29,22 @@ def prepareBatch(*,batch_name, test_one=False):
   if test_one and (len(jobs)>0):
     jobs=[jobs[0]]
 
-  print('Preparing batch {} with {} jobs'.format(batch_name,len(jobs)))
+  setBatchStatus(
+    batch_name=batch_name,
+    status='preparing_batch'
+  )
   _clear_job_results(jobs=jobs,incomplete_only=True)
+
+  setBatchStatus(
+    batch_name=batch_name,
+    status='downloading_recordings'
+  )
   _download_recordings(jobs=jobs)
+
+  setBatchStatus(
+    batch_name=batch_name,
+    status='finished_preparing_batch'
+  )
 
 def runBatch(*,batch_name, test_one=False):
   batch=kb.loadObject(key=dict(batch_name=batch_name))
@@ -33,9 +53,11 @@ def runBatch(*,batch_name, test_one=False):
   if test_one and (len(jobs)>0):
     jobs=[jobs[0]]
 
-  print('Running batch {} with {} jobs'.format(batch_name,len(jobs)))
   for job in jobs:
     _run_job(job)
+
+def setBatchStatus(*,batch_name,status):
+  pa.set(key=dict(name='spikeforest_batch_status',batch_name=batch_name),value=status)
 
 def _do_sort_recording(job):
   try:
@@ -134,7 +156,7 @@ def _clear_job_results(*,jobs,incomplete_only=True):
         pa.set(key=job,value=None)
 
 def _download_recordings(*,jobs):
-  for job in jobs:
+  for ii,job in enumerate(jobs):
     val=pa.get(key=job)
     if not val:
       if 'recording' in job:
