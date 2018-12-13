@@ -28,6 +28,7 @@ class MountainSort4(mlpr.Processor):
     noise_overlap_threshold=mlpr.FloatParameter(optional=True,default=0.15,description='Use None for no automated curation')
     
     def run(self):
+        print('MountainSort4...')
         recording=si.MdaRecordingExtractor(self.recording_dir)
         if len(self.channels)>0:
           recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
@@ -220,6 +221,7 @@ def sort_recording(sorter,recording):
     else:
         raise Exception('No such sorter: '+processor_name)
         
+    print('Sorting recording {} using {}'.format(dsdir, processor_name))
     outputs=SS.execute(
         recording_dir=dsdir,
         channels=recording.get('channels',[]),

@@ -47,12 +47,14 @@ def prepareBatch(*,batch_name, test_one=False):
   )
 
 def runBatch(*,batch_name, test_one=False):
+  print('Loading batch object...')
   batch=kb.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
 
   if test_one and (len(jobs)>0):
     jobs=[jobs[0]]
 
+  print('Running batch with {} jobs...'.format(len(jobs)))
   for job in jobs:
     _run_job(job)
 
