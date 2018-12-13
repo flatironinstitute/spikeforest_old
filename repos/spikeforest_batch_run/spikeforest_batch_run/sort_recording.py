@@ -228,10 +228,12 @@ def sort_recording(sorter,recording):
         firings_out=dict(ext='.mda'),
         **sorting_params
     ).outputs
+    print('Saving firings_out...')
     firings_out=kb.saveFile(outputs['firings_out'])
     firings_true_path=recording['directory']+'/firings_true.mda'
     if not kb.findFile(firings_true_path):
         firings_true_path=None
+    print('Assembling result...')
     result=dict(
         recording_name=recording['name'],
         study_name=recording['study'],
@@ -245,8 +247,10 @@ def sort_recording(sorter,recording):
         sorting_processor_version=SS.VERSION,
         firings=firings_out
     )
+    print('Summarizing sorting...')
     result['summary']=summarize_sorting(result)
     if result.get('firings_true',None):
+        print('Comparing with truth...')
         result['comparison_with_truth']=compare_with_truth(result)
     
     return result

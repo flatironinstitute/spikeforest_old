@@ -248,8 +248,9 @@ def execute(proc, _cache=True, _force_run=None, **kwargs):
             temporary_output_files.add(tmp_fname)
             setattr(X,name0,tmp_fname)
     try:
-        print ('EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
+        print ('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
         X.run()
+        print ('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
     except:
         # clean up temporary output files
         print ('Problem executing {}. Cleaning up files.'.format(proc.NAME))
