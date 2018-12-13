@@ -262,6 +262,8 @@ class KBucketClient():
       raise Exception('Unable to find file.')
     if format=='json':
       ret=_read_json_file(fname)
+      if not ret:
+        raise Exception('Unable to read or parse json file: '+fname)
     else:
       raise Exception('Unsupported format in loadObject: '+format)
     return ret
@@ -448,7 +450,7 @@ class Sha1Cache():
     hints_fname=path+'.hints.json'
     if os.path.exists(hints_fname):
       hints=_read_json_file(hints_fname)
-      if hints and 'files' in hints:
+      if hints and ('files' in hints):
         files=hints['files']
         matching_files=[]
         for file in files:
@@ -520,10 +522,11 @@ class Sha1Cache():
     path0=self._get_path(aa_hash,create=True)+'.record.json'
     if os.path.exists(path0):
       obj=_read_json_file(path0)
-      bb=obj['stat']
-      if _stat_objects_match(aa,bb):
-        if obj.get('sha1',None):
-          return obj['sha1']
+      if obj:
+        bb=obj['stat']
+        if _stat_objects_match(aa,bb):
+          if obj.get('sha1',None):
+            return obj['sha1']
     if _known_sha1 is None:
       sha1=_compute_file_sha1(path)
     else:
@@ -542,6 +545,8 @@ class Sha1Cache():
     if os.path.exists(path1):
       hints=_read_json_file(path1)
     else:
+      hints=None
+    if not hints:
       hints={'files':[]}
     hints['files'].append(obj)
     _write_json_file(hints,path1)
