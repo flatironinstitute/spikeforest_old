@@ -11,7 +11,7 @@ from .compare_with_truth import compare_with_truth
 
 class MountainSort4(mlpr.Processor):
     NAME='MountainSort4'
-    VERSION='4.0.1'
+    VERSION='4.1.0'
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
