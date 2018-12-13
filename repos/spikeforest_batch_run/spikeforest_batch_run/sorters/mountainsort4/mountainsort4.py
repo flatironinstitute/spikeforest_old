@@ -33,6 +33,7 @@ def mountainsort4(
     if whiten:
         recording=sw.lazyfilters.whiten(recording=recording)
 
+    print('Debug A')
     # Sort
     sorting=ml_ms4alg.mountainsort4(
     recording=recording,
@@ -43,14 +44,17 @@ def mountainsort4(
     detect_interval=detect_interval,
     num_workers=num_workers
     )
+    print('Debug B')
 
     # Curate
-    if noise_overlap_threshold is not None:
-        sorting=ml_ms4alg.mountainsort4_curation(
-          recording=recording,
-          sorting=sorting,
-          noise_overlap_threshold=noise_overlap_threshold
-        )
-    print('Elapsed time: ', time.time() - t_start_proc)
+    #if noise_overlap_threshold is not None:
+    #    print('Debug B.1')
+    #    sorting=ml_ms4alg.mountainsort4_curation(
+    #      recording=recording,
+    #      sorting=sorting,
+    #      noise_overlap_threshold=noise_overlap_threshold
+    #    )
+    #    print('Debug B.2')
+    #print('Elapsed time: ', time.time() - t_start_proc)
 
     return sorting
