@@ -89,7 +89,7 @@ class MdaRecordingExtractor(RecordingExtractor):
             samplerate=recording.getSamplingFrequency(),
             spike_sign=-1
         )
-        with (save_path + '/params.json').open('w') as f:
+        with open(save_path + '/params.json','w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
 
