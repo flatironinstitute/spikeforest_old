@@ -155,6 +155,7 @@ class SFData():
         self._studies_by_name=dict()
         self._study_names=[]
     def loadRecordings(self,*,key=None):
+        print('Loading recordings: '+json.dumps(key))
         if key is None:
             key=dict(name='spikeforest_studies_processed')
         obj=kb.loadObject(key=key)
@@ -172,6 +173,7 @@ class SFData():
             study=ds['study']
             self._studies_by_name[study].addRecording(ds)
     def loadProcessingBatch(self,*,key):
+        print('Loading processing batch: '+json.dumps(key))
         obj=kb.loadObject(key=key)
         job_results=obj['job_results']
         num_sorting_results=0

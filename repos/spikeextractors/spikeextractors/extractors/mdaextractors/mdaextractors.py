@@ -82,7 +82,7 @@ class MdaRecordingExtractor(RecordingExtractor):
         for ii in range(len(channel_ids)):
             location_ii = recording.getChannelProperty(channel_ids[ii], 'location')
             geom[ii, :] = list(location_ii)
-        if not os.save.isdir(save_path):
+        if not os.path.isdir(save_path):
             os.mkdir(save_path)
         writemda32(raw, save_path + '/raw.mda')
         params = dict(
