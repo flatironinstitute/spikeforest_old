@@ -24,6 +24,8 @@ def summarize_recording(recording):
     true_units_info_fname=compute_units_info(recording_dir=recording['directory'],firings=firings_true_path,return_format='filename',channel_ids=channels,unit_ids=units)
     kb.saveFile(true_units_info_fname)
     ret['true_units_info']='sha1://'+kb.computeFileSha1(true_units_info_fname)+'/true_units_info.json'
+  else:
+    raise Exception('firings_true file not found: '+firings_true_path)
   return ret
 
 def read_json_file(fname):
