@@ -1,9 +1,9 @@
 ## SpikeForest2
 
-This is a meta repository that is meant to be used in development/editable mode. Therefore to install, you should use:
+This is a meta repository that is meant to be used in development/editable mode. To install, you can do the following in a fresh conda environment:
 
 ```
-python setup.py develop
+./install_conda.sh
 ```
 
 This will install snapshots of various python packages (including vdomr, spikeextractors, spikewidgets, mlprocessors, etc.), so you should make sure these don't conflict with existing packages on your system.
