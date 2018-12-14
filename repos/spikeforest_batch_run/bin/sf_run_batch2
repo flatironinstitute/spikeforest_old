@@ -71,4 +71,4 @@ if __name__== "__main__":
   if args.job_index:
     print('Not assembling because --job_index option was used.')
   else:
-    system_call(dirname+'/sf_run_batch_command2 assemble_results {} {}'.format(assemble_opts, args.batch_name))
+    system_call(dirname+'/sf_run_batch_command2 assemble {} {}'.format(assemble_opts, args.batch_name))

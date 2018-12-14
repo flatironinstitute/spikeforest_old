@@ -172,10 +172,12 @@ class SFData():
         for ds in recordings:
             study=ds['study']
             self._studies_by_name[study].addRecording(ds)
-    def loadProcessingBatch(self,*,key):
+    def loadProcessingBatch(self,*,batch_name=None,key=None):
+        if batch_name:
+            key=dict(name='batcho_batch_results',batch_name=batch_name)
         print('Loading processing batch: '+json.dumps(key))
         obj=kb.loadObject(key=key)
-        job_results=obj['job_results']
+        job_results=obj.get('job_results',obj.get('results')) # transitioning to 'results'
         num_sorting_results=0
         num_recording_summary_results=0
         for X in job_results:
