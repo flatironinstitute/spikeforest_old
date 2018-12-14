@@ -1,4 +1,5 @@
 from kbucket import client as kb
+from pairio import client as pa
 from PIL import Image
 import json
 import pandas as pd
@@ -176,6 +177,8 @@ class SFData():
         if batch_name:
             key=dict(name='batcho_batch_results',batch_name=batch_name)
         print('Loading processing batch: '+json.dumps(key))
+        if not pa.get(key=key):
+            raise Exception('Batch result not found.')
         obj=kb.loadObject(key=key)
         job_results=obj.get('job_results',obj.get('results')) # transitioning to 'results'
         num_sorting_results=0
