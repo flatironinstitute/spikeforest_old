@@ -15,7 +15,8 @@ setuptools.setup(
         'spikeextractors','spikewidgets','spiketoolkit',
         'mlprocessors',
         'kbucket','pairio',
-        'spikeforest'
+        'spikeforest',
+        'batcho'
     ],
     install_requires=[
     ],
