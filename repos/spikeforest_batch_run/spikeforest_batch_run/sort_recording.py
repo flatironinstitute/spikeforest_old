@@ -103,7 +103,7 @@ class IronClust(mlpr.Processor):
         
 class SpykingCircus(mlpr.Processor):
     NAME='SpykingCircus'
-    VERSION='0.1.5'
+    VERSION='0.1.6'
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])

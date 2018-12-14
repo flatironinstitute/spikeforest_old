@@ -12,7 +12,7 @@ def kb_read_text_file(fname):
 def kb_read_json_file(fname):
     fname=kb.realizeFile(fname)
     if not fname:
-        raise Exception('Unable to realize file: '+fname)
+        raise Exception('Unable to realize file: ',fname)
     with open(fname,'r') as f:
         return json.load(f)
 

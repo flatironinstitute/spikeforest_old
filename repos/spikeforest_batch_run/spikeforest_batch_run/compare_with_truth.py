@@ -14,7 +14,7 @@ def compare_with_truth(result):
     return ret
 
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION='0.1.1'
+    VERSION='0.1.2'
     firings=mlpr.Input('Firings file (sorting)')
     firings_true=mlpr.Input('True firings file')
     units_true=mlpr.IntegerListParameter('List of true units to consider')
