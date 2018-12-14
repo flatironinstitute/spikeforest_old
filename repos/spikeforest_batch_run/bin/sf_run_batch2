@@ -36,23 +36,28 @@ if __name__== "__main__":
   if run_prefix:
     run_prefix=run_prefix+' '
 
-  opts=[]
+  prepare_opts=[]
+  run_opts=[]
+  assemble_opts=[]
   if args.clear:
-    opts.append('--clear')
+    prepare_opts.append('--clear')
   if args.mlpr_force_run:
-    opts.append('--mlpr_force_run')
+    run_opts.append('--mlpr_force_run')
   if args.job_index:
-    opts.append('--job_index {}'.format(args.job_index))
-  opts=' '.join(opts)
+    prepare_opts.append('--job_index {}'.format(args.job_index))
+    run_opts.append('--job_index {}'.format(args.job_index))
+  prepare_opts=' '.join(prepare_opts)
+  run_opts=' '.join(run_opts)
+  assemble_opts=' '.join(assemble_opts)
 
   dirname=os.path.dirname(os.path.realpath(__file__))
 
   ## PREPARE
-  system_call(dirname+'/sf_run_batch_command2 prepare {} {}'.format(opts, args.batch_name))
+  system_call(dirname+'/sf_run_batch_command2 prepare {} {}'.format(prepare_opts, args.batch_name))
 
   ## RUN
   def do_run(num=0):
-    system_call(run_prefix+dirname+'/sf_run_batch_command2 run {} {}'.format(opts, args.batch_name))
+    system_call(run_prefix+dirname+'/sf_run_batch_command2 run {} {}'.format(run_opts, args.batch_name))
 
   num_parallel=int(args.parallel)
   if num_parallel<=1:
@@ -66,4 +71,4 @@ if __name__== "__main__":
   if args.job_index:
     print('Not assembling because --job_index option was used.')
   else:
-    system_call(dirname+'/sf_run_batch_command2 assemble_results {} {}'.format(opts, args.batch_name))
+    system_call(dirname+'/sf_run_batch_command2 assemble_results {} {}'.format(assemble_opts, args.batch_name))
