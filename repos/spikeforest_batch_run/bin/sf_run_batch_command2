@@ -79,7 +79,7 @@ def main():
       print('Missing --output argument.')
       sys.exit(-1)
     results=batcho.get_batch_results(batch_name=args.batch_name)
-    _write_json_file(results,output)
+    _write_json_file(results,args.output)
   else:
     print('Invalid command: '+args.command)
     sys.exit(-1)
