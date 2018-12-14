@@ -52,7 +52,7 @@ if __name__== "__main__":
 
   ## RUN
   def do_run(num=0):
-    system_call(run_prefix+dirname+'/sf_run_batch_command2 run {} {}'.format(flags, args.batch_name))
+    system_call(run_prefix+dirname+'/sf_run_batch_command2 run {} {}'.format(opts, args.batch_name))
 
   num_parallel=int(args.parallel)
   if num_parallel<=1:
@@ -66,4 +66,4 @@ if __name__== "__main__":
   if args.job_index:
     print('Not assembling because --job_index option was used.')
   else:
-    system_call(dirname+'/sf_run_batch_command2 assemble_results {} {}'.format(flags, args.batch_name))
+    system_call(dirname+'/sf_run_batch_command2 assemble_results {} {}'.format(opts, args.batch_name))
