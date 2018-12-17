@@ -127,7 +127,7 @@ function KBNodeShareIndexer(config) {
   }
 
   function do_handle_file_hints(callback) {
-    hints_dir=config.configDir()+'/hints';
+    let hints_dir=config.hemlockNodeDirectory()+'/sha1-cache/hints';
     if (!fs.existsSync(hints_dir)) {
       callback(null);
       return;
@@ -142,33 +142,29 @@ function KBNodeShareIndexer(config) {
           cb();
           return;
         }
-        let hint_fname = require('path').join(hints_dir, item);
-        do_handle_file_hint(hint_fname, function() {
+        let hint_fname = hints_dir+'/'+item;
+        let hint_obj = read_json_file(hint_fname);
+        if (!hint_obj) {
           cb();
-        });
+          return;
+        }
+        let relpath=hint_obj['path'];
+        if (relpath) {
+          let relpath2='sha1-cache/'+relpath;
+          console.info('Updating file from hint: '+relpath2);
+          update_file(relpath2);
+          safe_remove_file(hint_fname);
+          cb();
+        }
+        else {
+          cb();
+        }
       },function() {
         callback();
       });
     });
   }
 
-  function do_handle_file_hint(hint_fname, callback) {
-    var obj = read_json_file(hint_fname);
-    if (!obj) {
-      callback(null);
-      return;
-    }
-    let relpath=obj['path'];
-    if (relpath) {
-      console.info('Updating file from hint: '+relpath);
-      update_file(relpath);
-      safe_remove_file(hint_fname);
-      callback(null);
-    }
-    else {
-      callback(null);
-    }
-  }
 
   function do_handle_queued_files(callback) {
     var relpaths = Object.keys(m_queued_files);

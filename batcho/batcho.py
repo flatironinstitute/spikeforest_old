@@ -2,6 +2,9 @@ from kbucket import client as kb
 from pairio import client as pa
 import random
 import string
+import os
+import sys
+import tempfile
 
 _registered_commands=dict()
 
@@ -62,14 +65,28 @@ def run_batch(*, batch_name, job_index=None):
           _set_job_status(batch_name=batch_name, job_index=ii, status='running')
           X=_registered_commands[command]
           print('Running job {}'.format(label))
+
+          console_fname=_start_writing_to_file()
+
           try:
             result=X['run'](job)
           except:
+            _stop_writing_to_file()
+
             print('Error running job {}'.format(label))
             _set_job_status(batch_name=batch_name, job_index=ii, status='error', job_code=job_code)
+
+            _set_job_console_output(batch_name=batch_name, job_index=ii, file_name=console_fname)
+            os.remove(console_fname)
             raise
-          _set_job_result(batch_name=batch_name, job_index=ii, result=result, job_code=job_code)
+          _stop_writing_to_file()
+
           _set_job_status(batch_name=batch_name, job_index=ii, status='finished', job_code=job_code)
+          _set_job_result(batch_name=batch_name, job_index=ii, result=result, job_code=job_code)
+
+          _set_job_console_output(batch_name=batch_name, job_index=ii, file_name=console_fname)
+          os.remove(console_fname)
+          
           num_ran=num_ran+1
 
   print('Ran {} jobs.'.format(num_ran))
@@ -118,6 +135,14 @@ def get_batch_results(*, batch_name):
   key=dict(name='batcho_batch_results',batch_name=batch_name)
   return kb.loadObject(key=key)
 
+def get_batch_job_console_output(*, batch_name, job_index):
+  key=dict(name='batcho_job_console_output',batch_name=batch_name,job_index=job_index)
+  fname=kb.realizeFile(key=key)
+  if not fname:
+    return None
+  txt=_read_text_file(fname)
+  return txt
+
 def _retrieve_batch(batch_name):
   key=dict(name='batcho_batch',batch_name=batch_name)
   a=pa.get(key=key)
@@ -157,6 +182,15 @@ def _set_job_result(*, batch_name, job_index, result, job_code=None):
   key=dict(name='batcho_job_result',batch_name=batch_name,job_index=job_index)
   return kb.saveObject(key=key, object=result)
 
+def _set_job_console_output(*, batch_name, job_index, file_name, job_code=None):
+  if job_code:
+    code=_get_job_lock_code(batch_name=batch_name, job_index=job_index)
+    if code != job_code:
+      print('Not setting job console output because lock code does not match job code')
+      return
+  key=dict(name='batcho_job_console_output',batch_name=batch_name,job_index=job_index)
+  return kb.saveFile(key=key, fname=file_name)
+
 def _acquire_job_lock(*, batch_name, job_index, code):
   key=dict(name='batcho_job_lock',batch_name=batch_name,job_index=job_index)
   return pa.set(key=key, value=code, overwrite=False)
@@ -168,4 +202,38 @@ def _get_job_lock_code(*, batch_name, job_index):
 def _clear_job_lock(*, batch_name, job_index):
   key=dict(name='batcho_job_lock',batch_name=batch_name,job_index=job_index)
   pa.set(key=key, value=None, overwrite=True)
+
+def _read_text_file(fname):
+  with open(fname,'r') as f:
+    return f.read()
+
+_console_to_file_data=dict(
+  file_handle=None,
+  file_name=None,
+  original_stdout=sys.stdout,
+  original_stderr=sys.stderr
+)
+
+def _start_writing_to_file():
+  if _console_to_file_data['file_name']:
+    _stop_writing_to_file()
+  tmp_fname=tempfile.mktemp(suffix='.txt')
+  file_handle=open(tmp_fname,'w')
+  _console_to_file_data['file_name']=tmp_fname
+  _console_to_file_data['file_handle']=file_handle
+  sys.stdout=file_handle
+  sys.stderr=file_handle
+  return tmp_fname
+
+def _stop_writing_to_file():
+  sys.stdout=_console_to_file_data['original_stdout']
+  sys.stderr=_console_to_file_data['original_stderr']
+  fname=_console_to_file_data['file_name']
+  file_handle=_console_to_file_data['file_handle']
+  
+  if not fname:
+    return
+  file_handle.close()
+  _console_to_file_data['file_name']=None
+  _console_to_file_data['file_handle']=None
 

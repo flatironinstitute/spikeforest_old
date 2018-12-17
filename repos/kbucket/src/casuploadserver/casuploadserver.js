@@ -11,7 +11,7 @@ in advance, and then posts the file data. If a file with this
 hash already exists on the server (i.e., was previously uploaded),
 then the upload is interrupted with a message that the file already
 exists. Otherwise, the server computes the SHA-1 hash of the uploaded
-file and returns whether the upload was successful.
+file, verifies it matches the request, and returns whether the upload was successful.
 
 Before running the server, you should set the following environment
 variables:
@@ -69,7 +69,10 @@ function CASUploadServer() {
     process.exit(-1);
   }
 
-  let m_sha1_cache=new Sha1Cache(process.env.CAS_UPLOAD_DIR);
+  let m_upload_dir=process.env.CAS_UPLOAD_DIR;
+
+  let m_sha1_cache=new Sha1Cache(m_upload_dir);
+  m_sha1_cache.onFileAdded(on_sha1_cache_file_added);
   let m_app = express();
   m_app.set('json spaces', 4); // when we respond with json, this is how it will be formatted
   m_app.use(cors());
@@ -185,6 +188,16 @@ function CASUploadServer() {
     });
   });
 
+  function on_sha1_cache_file_added(rel_fname) {
+  	let hints_dir=m_upload_dir+'/hints';
+  	if (!fs.existsSync(hints_dir))
+  		fs.mkdirSync(hints_dir);
+  	let hint_fname=hints_dir+'/'+sha1_of_object({fname:rel_fname});
+  	if (!write_json_file(hint_fname,{path:rel_fname})) {
+  		console.warn('Problem writing hint json file: '+hint_fname);
+  	}
+  }
+
   function sha1_of_object(obj) {
     let shasum = crypto.createHash('sha1');
     shasum.update(JSON.stringify(obj));
@@ -290,6 +303,7 @@ function UploadHandler(sha1_cache) {
 function Sha1Cache(directory) {
   let m_uploads={};
   let m_last_upload_id=100;
+  let m_file_added_handlers=[];
 
   this.initializeUpload=function(sha1,file_size,callback) {
     initialize_upload(sha1,file_size,callback);
@@ -306,6 +320,9 @@ function Sha1Cache(directory) {
   this.checkExists=function(sha1) {
     let path=get_upload_path(sha1);
     return fs.existsSync(path);
+  }
+  this.onFileAdded=function(callback) {
+  	m_file_added_handlers.push(callback);
   }
 
 
@@ -398,13 +415,17 @@ function Sha1Cache(directory) {
       callback(`SHA-1 does not match: ${sha1_calc}<>${X.sha1}`);
       return;
     }
-    let fname=get_upload_path(X.sha1);
+    let rel_fname=get_rel_upload_path(X.sha1);
+    let fname=directory+'/'+rel_fname;
     try {
       fs.renameSync(X.tmp_fname,fname);
     }
     catch(err) {
       callback('Error renaming file: '+err.message);
       return;
+    }
+    for (i in m_file_added_handlers) {
+    	m_file_added_handlers[i](rel_fname);
     }
     callback(null);
   }
@@ -420,14 +441,15 @@ function Sha1Cache(directory) {
   }
   */
   function get_upload_path(sha1) {
-    let path='';
-    path=directory;
-    if (!fs.existsSync(path)) fs.mkdirSync(path);
-    path=directory+`/${sha1[0]}`;
-    if (!fs.existsSync(path)) fs.mkdirSync(path);
-    path=directory+`/${sha1[0]}/${sha1[1]}${sha1[2]}`;
-    if (!fs.existsSync(path)) fs.mkdirSync(path);
-    return path+'/'+sha1;
+    return directory+'/'+get_rel_upload_path(sha1);
+  }
+  function get_rel_upload_path(sha1) {
+  	if (!fs.existsSync(directory)) fs.mkdirSync(directory);
+  	let relpath=`${sha1[0]}`;
+    if (!fs.existsSync(directory+'/'+relpath)) fs.mkdirSync(directory+'/'+relpath);
+    relpath=`${sha1[0]}/${sha1[1]}${sha1[2]}`;
+    if (!fs.existsSync(directory+'/'+relpath)) fs.mkdirSync(directory+'/'+relpath);
+    return relpath+'/'+sha1;
   }
 }
 
@@ -490,3 +512,22 @@ async function start_http_server(app) {
   console.info(`Server is running ${app.protocol} on port ${app.port}`);
 }
 
+function write_text_file(fname,txt) {
+	try {
+		fs.writeFileSync(fname,txt);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+function write_json_file(fname,obj) {
+	try {
+		require('fs').writeFileSync(fname,JSON.stringify(obj,null,4));
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
