@@ -42,4 +42,6 @@ def _download_recording_if_needed(job):
       dsdir=job['recording']['directory']
       fname=dsdir+'/raw.mda'
       print('REALIZING FILE: '+fname)
-      kb.realizeFile(fname)
+      fname2=kb.realizeFile(fname)
+      if not fname2:
+        raise Exception('Unable to realize file: '+fname)
