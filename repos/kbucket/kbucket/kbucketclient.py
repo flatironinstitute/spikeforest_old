@@ -436,6 +436,7 @@ def _filter_share_id(id):
 def _safe_list_dir(path):
   try:
     ret=os.listdir(path)
+    return ret
   except:
     print('Warning: unable to listdir: '+path)
     return []
