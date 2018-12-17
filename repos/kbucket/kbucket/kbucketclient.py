@@ -292,13 +292,6 @@ class KBucketClient():
       self._nodeinfo_cache[share_id]=ret
     return ret
 
-  def _safe_list_dir(path):
-    try:
-      ret=os.listdir(path)
-    except:
-      print('Warning: unable to listdir: '+path)
-      return []
-
   def _find_file_helper(self,*,path,sha1=None,share_ids=None,key=None,collection=None,local=None,remote=None):
     if local is None:
       local=self._config['load_local']
@@ -439,6 +432,13 @@ def _filter_share_id(id):
     return ret
   else:
     return id
+
+def _safe_list_dir(path):
+  try:
+    ret=os.listdir(path)
+  except:
+    print('Warning: unable to listdir: '+path)
+    return []
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .report.json and .hints.json files that are no longer relevant
