@@ -59,6 +59,8 @@ function KBNodeShareIndexer(config) {
     return ret;
   };
   this.findFileBySha1 = function(sha1, callback) {
+    console.log('findFileBySha1',sha1);
+    console.log('#####',m_files_by_sha1[sha1])
     callback(m_files_by_sha1[sha1] || null);
   }
 
@@ -385,7 +387,16 @@ function PrvCacheManager(config_dir, node_directory) {
   function get_prv_cache_fname(path) {
     // used for kbnode_type='share'
     if (!path) return '';
-    return config_dir + '/prv_cache/' + sha1(path).slice(0, 12) + '.json';
+    let fname0=sha1(path).slice(0, 20) + '.json';
+    let path1=config_dir + '/prv_cache/'+fname0.slice(0,1);
+    let path2=path1+'/'+fname0.slice(1,3);
+    if (!require('fs').existsSync(path1)) {
+      require('fs').mkdirSync(path1);
+    }
+    if (!require('fs').existsSync(path2)) {
+      require('fs').mkdirSync(path2);
+    }
+    return path2 + '/'+fname0;
   }
 
   function get_prv_from_cache(relpath) {
@@ -446,27 +457,46 @@ function PrvCacheManager(config_dir, node_directory) {
   }
 
   function cleanup(callback) {
-    cleanup_prv_cache(function() {
+    let prv_cache_dir = config_dir + '/prv_cache';
+    cleanup_prv_cache(prv_cache_dir, function() {
       callback(null);
     });
   }
 
-  function cleanup_prv_cache(callback) {
+  function cleanup_prv_cache(prv_cache_dir, callback) {
     // used for kbnode_type='share'
-    var prv_cache_dir = config_dir + '/prv_cache';
     require('fs').readdir(prv_cache_dir, function(err, files) {
       if (err) {
         callback('Error in cleanup_prv_cache:readdir: ' + err.message);
         return;
       }
       async.eachSeries(files, function(file, cb) {
-        cleanup_prv_cache_file(prv_cache_dir + '/' + file, function(err) {
-          if (err) {
-            callback(err);
-            return;
-          }
+        let stat0 = stat_file(prv_cache_dir+'/'+file);
+        if (!stat0) {
           cb();
-        });
+          return;
+        }
+        if (stat0.isFile()) {
+          cleanup_prv_cache_file(prv_cache_dir + '/' + file, function(err) {
+            if (err) {
+              callback(err);
+              return;
+            }
+            cb();
+          });
+        }
+        else if (stat0.isDirectory()) {
+          cleanup_prv_cache(prv_cache_dir + '/' + file, function(err) {
+            if (err) {
+              callback(err);
+              return;
+            }
+            cb();
+          });
+        }
+        else {
+          cb();
+        }
       }, function() {
         callback();
       });
