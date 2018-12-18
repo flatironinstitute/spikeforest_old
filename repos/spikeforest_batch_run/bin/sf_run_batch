@@ -45,6 +45,10 @@ def main():
 
   dirname=os.path.dirname(os.path.realpath(__file__))
 
+  if len(args.batch_names)==0:
+    raise Exception('At least one batch name is needed.')
+
+  print('Starting sf_run_batch...')
   while True:
 
     for batch_name in args.batch_names:
