@@ -14,6 +14,25 @@ def register_job_command(*, command, prepare, run):
       run=run
   )
 
+def clear_batch_jobs(*, batch_name, job_index=None):
+  print('Retrieving batch {}'.format(batch_name))
+  batch=_retrieve_batch(batch_name)
+  jobs=batch['jobs']
+  print('Batch has {} jobs.'.format(len(jobs)))
+  
+  num_cleared=0
+  for ii,job in enumerate(jobs):
+    if (job_index is None) or (job_index==ii):
+      command=job['command']
+      label=job['label']
+      status=_get_job_status(batch_name=batch_name, job_index=ii)
+      if status:
+        _set_job_status(batch_name=batch_name, job_index=ii, status=None)
+        _clear_job_lock(batch_name=batch_name, job_index=ii)
+        num_cleared=num_cleared+1
+  print('Cleared {} jobs.'.format(num_cleared))
+
+
 def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
   print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
@@ -27,8 +46,9 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
       label=job['label']
       status=_get_job_status(batch_name=batch_name, job_index=ii)
       if clear_jobs:
-        if status=='finished':
+        if status:
           _set_job_status(batch_name=batch_name, job_index=ii, status=None)
+          _clear_job_lock(batch_name=batch_name, job_index=ii)
           status=None
       if (status!='finished'):
         if command not in _registered_commands:
