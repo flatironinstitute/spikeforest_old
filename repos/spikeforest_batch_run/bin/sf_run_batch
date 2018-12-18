@@ -53,11 +53,11 @@ def main():
       if (args.clear) or (_check_run_needed(batch_name, job_index)):
 
         ## PREPARE
-        _system_call(dirname+'/sf_run_batch_command2 prepare {} {}'.format(prepare_opts, batch_name))
+        _system_call(dirname+'/sf_run_batch_command prepare {} {}'.format(prepare_opts, batch_name))
 
         ## RUN
         def do_run(num=0):
-          _system_call(run_prefix+dirname+'/sf_run_batch_command2 run {} {}'.format(run_opts, batch_name))
+          _system_call(run_prefix+dirname+'/sf_run_batch_command run {} {}'.format(run_opts, batch_name))
 
         num_parallel=int(args.parallel)
         if num_parallel<=1:
@@ -71,7 +71,7 @@ def main():
         if job_index is not None:
           print('Not assembling because --job_index option was used.')
         else:
-          _system_call(dirname+'/sf_run_batch_command2 assemble {} {}'.format(assemble_opts, batch_name))
+          _system_call(dirname+'/sf_run_batch_command assemble {} {}'.format(assemble_opts, batch_name))
 
     if not args.repeat:
       break
