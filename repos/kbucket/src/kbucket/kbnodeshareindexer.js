@@ -38,7 +38,7 @@ function KBNodeShareIndexer(config) {
       }
       setTimeout(function() {
         check_it();
-      }, 1000);
+      }, 500);
     }
     check_it();
   };
@@ -108,7 +108,7 @@ function KBNodeShareIndexer(config) {
         setTimeout(function() {
           loop();
           report_changes();
-        }, 100);
+        }, 10);
       });
     });
   }
