@@ -234,6 +234,17 @@ _console_to_file_data=dict(
   original_stderr=sys.stderr
 )
 
+class Logger2(object):
+  def __init__(self, file1, file2):
+    self.file1 = file1
+    self.file2 = file2
+  def write(self, data):
+    self.file1.write(data)
+    self.file2.write(data)
+  def flush(self):
+    self.file1.flush()
+    self.file2.flush()
+
 def _start_writing_to_file():
   if _console_to_file_data['file_name']:
     _stop_writing_to_file()
@@ -241,8 +252,8 @@ def _start_writing_to_file():
   file_handle=open(tmp_fname,'w')
   _console_to_file_data['file_name']=tmp_fname
   _console_to_file_data['file_handle']=file_handle
-  sys.stdout=file_handle
-  sys.stderr=file_handle
+  sys.stdout=Logger2(file_handle,_console_to_file_data['original_stdout'])
+  sys.stderr=Logger2(file_handle,_console_to_file_data['original_stderr'])
   return tmp_fname
 
 def _stop_writing_to_file():

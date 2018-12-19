@@ -70,6 +70,7 @@ def kilosort(*,
     if retcode != 0:
         raise Exception('kilosort returned a non-zero exit code')
 
+
     # parse output
     result_fname=tmpdir+'/firings.mda'
     if not os.path.exists(result_fname):
