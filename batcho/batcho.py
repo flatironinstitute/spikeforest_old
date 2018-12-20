@@ -134,6 +134,11 @@ def assemble_batch(*, batch_name):
   print('Assembling {} results'.format(len(assembled_results)))
   kb.saveObject(key=dict(name='batcho_batch_results',batch_name=batch_name),object=dict(results=assembled_results))
   
+def get_batch_jobs(*, batch_name):
+  batch=_retrieve_batch(batch_name)
+  jobs=batch['jobs']
+  return jobs
+
 def get_batch_job_statuses(*, batch_name, job_index=None):
   batch=_retrieve_batch(batch_name)
   jobs=batch['jobs']
@@ -155,13 +160,17 @@ def get_batch_results(*, batch_name):
   key=dict(name='batcho_batch_results',batch_name=batch_name)
   return kb.loadObject(key=key)
 
-def get_batch_job_console_output(*, batch_name, job_index):
+def get_batch_job_console_output(*, batch_name, job_index, return_url=False):
   key=dict(name='batcho_job_console_output',batch_name=batch_name,job_index=job_index)
-  fname=kb.realizeFile(key=key)
-  if not fname:
-    return None
-  txt=_read_text_file(fname)
-  return txt
+  if return_url:
+    url=kb.findFile(key=key,local=False,remote=True)
+    return url
+  else:
+    fname=kb.realizeFile(key=key)
+    if not fname:
+      return None
+    txt=_read_text_file(fname)
+    return txt
 
 def _retrieve_batch(batch_name):
   key=dict(name='batcho_batch',batch_name=batch_name)

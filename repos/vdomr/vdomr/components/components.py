@@ -15,6 +15,9 @@ class SelectBox(vd.Component):
         
     def value(self):
         return self._value
+
+    def index(self):
+        return self._options.index(self._value)
     
     def setValue(self,value):
         self._value=value
