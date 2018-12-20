@@ -42,10 +42,12 @@ def compute_template_snr(template,channel_noise_levels):
 def compute_channel_noise_levels(recording):
     channel_ids=recording.getChannelIds()
     M=len(channel_ids)
-    X=recording.getTraces(start_frame=0,end_frame=int(np.minimum(1000,recording.getNumFrames())))
+    samplerate=int(recording.getSamplingFrequency())
+    X=recording.getTraces(start_frame=samplerate*1,end_frame=samplerate*2)
     ret=[]
     for ii in range(len(channel_ids)):
-        noise_level=np.std(X[ii,:])
+        #noise_level=np.std(X[ii,:])
+        noise_level=np.median(np.abs(X[ii,:]))/0.6745 # median absolute deviation (MAD)
         ret.append(noise_level)
     return ret
 
@@ -99,7 +101,7 @@ class MemoryRecordingExtractor(si.RecordingExtractor):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.1'
+  VERSION='0.1.2'
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
   unit_ids=mlpr.IntegerListParameter(description='List of units to use.',optional=True,default=[])
