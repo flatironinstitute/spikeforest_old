@@ -80,7 +80,7 @@ class KBucketClient():
     path, sha1, size = self._find_file_helper(path=path,sha1=sha1,share_ids=share_ids,key=key,collection=collection,local=local,remote=remote)
     return path
 
-  def realizeFile(self,path=None,*,sha1=None,share_ids=None,target_path=None,key=None,collection=None,local=None,remote=None):
+  def realizeFile(self,path=None,*,sha1=None,share_ids=None,target_path=None,key=None,collection=None,local=None,remote=None,verbose=True):
     path, sha1, size = self._find_file_helper(path=path,sha1=sha1,share_ids=share_ids,key=key,collection=collection,local=local,remote=remote)
     if not path:
       return None
@@ -93,7 +93,7 @@ class KBucketClient():
           return path
       else:
         return path
-    return self._sha1_cache.downloadFile(url=path,sha1=sha1,target_path=target_path,size=size)
+    return self._sha1_cache.downloadFile(url=path,sha1=sha1,target_path=target_path,size=size,verbose=verbose)
 
   def getFileSize(self, path=None,*,sha1=None,share_ids=None,key=None,collection=None,local=None,remote=None):
     path, sha1, size = self._find_file_helper(path=path,sha1=sha1,share_ids=share_ids,key=key,collection=collection,local=local,remote=remote)
@@ -476,7 +476,7 @@ class Sha1Cache():
         print('Warning: failed to load hints json file, or invalid file. Removing: '+hints_fname)
         _safe_remove_file(hints_fname)
 
-  def downloadFile(self,url,sha1,target_path=None,size=None):
+  def downloadFile(self,url,sha1,target_path=None,size=None,verbose=True):
     alternate_target_path=False
     if target_path is None:
       target_path=self._get_path(sha1,create=True)
@@ -486,7 +486,8 @@ class Sha1Cache():
     size_mb='unknown'
     if size:
       size_mb=int(size/(1024*1024)*10)/10
-    print ('Downloading file --- ({} MB): {} -> {}'.format(size_mb,url,target_path))
+    if verbose:
+      print ('Downloading file --- ({} MB): {} -> {}'.format(size_mb,url,target_path))
     sha1b=steady_download_and_compute_sha1(url=url,target_path=path_tmp)
     if not sha1b:
       if os.path.exists(path_tmp):
