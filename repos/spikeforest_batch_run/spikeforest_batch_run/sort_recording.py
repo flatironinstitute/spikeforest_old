@@ -103,10 +103,10 @@ class IronClust(mlpr.Processor):
         
 class SpykingCircus(mlpr.Processor):
     NAME='SpykingCircus'
-    VERSION='0.1.6'
+    VERSION='0.1.7'
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
-    singularity_container=mlpr.Input('Singularity container',optional=False)
+    #singularity_container=mlpr.Input('Singularity container',optional=False)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
     firings_out=mlpr.Output('Output firings file')
     
@@ -119,6 +119,10 @@ class SpykingCircus(mlpr.Processor):
     clustering_max_elts=mlpr.IntegerParameter(optional=True,default=10000,description='I believe it relates to subsampling and affects compute time')
 
     def run(self):
+        singularity_container=os.environ.get('SC_SINGULARITY_CONTAINER',None)
+        if not singularity_container:
+            raise Exception('You must set the environment variable SC_SINGULARITY_CONTAINER.')
+
         code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
         tmpdir=os.environ.get('TEMPDIR','/tmp')+'/ironclust-tmp-'+code
         
@@ -130,7 +134,7 @@ class SpykingCircus(mlpr.Processor):
               recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
-            sorting=singsorters.spyking_circus(
+            sorting=sorters.spyking_circus(
                 recording=recording,
                 output_folder=tmpdir,
                 probe_file=None,
@@ -145,7 +149,7 @@ class SpykingCircus(mlpr.Processor):
                 electrode_dimensions=None,
                 whitening_max_elts=self.whitening_max_elts,
                 clustering_max_elts=self.clustering_max_elts,
-                singularity_container=self.singularity_container
+                singularity_container=singularity_container
             )
             si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
         except:

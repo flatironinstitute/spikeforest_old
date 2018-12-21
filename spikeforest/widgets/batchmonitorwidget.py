@@ -83,9 +83,11 @@ class JobStatusWidget(vd.Component):
   def render(self):
     if not self._job:
       return vd.div('none')
-    status=self._job_status.get('status','unknown')
+    status=self._job_status.get('status')
+    if not status:
+      status='unknown'
     if self._job_console_output is not None:
-      #contenteditable is used to enable ctrl+a select all
+      #contenteditable is used to enable ctrl+a select
       console_output_elmt=vd.div(vd.pre(self._job_console_output),style={'background':'black','color':'white'},contenteditable="true")
     else:
       console_output_elmt=self._show_console_output_button
@@ -93,11 +95,12 @@ class JobStatusWidget(vd.Component):
         vd.tr(vd.td('Status:'),vd.td(status))
     )
     out=vd.div(console_output_elmt,style=dict(overflow='auto',height='200px'))
-    return vd.div(
+    ret=vd.div(
         vd.h3(self._job['label']),
         table,
         out
     )
+    return ret
 
 class BatchMonitorWidget(vd.Component):
   def __init__(self,batch_names):
