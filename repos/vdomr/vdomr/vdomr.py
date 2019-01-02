@@ -3,23 +3,35 @@ import os
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global=dict(
-    jp_invokable_functions={},
-    jp_widget=None,
-    mode=None
+    mode=None,
+    invokable_functions={}, # for mode=jp_proxy_widget or server
+    jp_widget=None # for mode=jp_proxy_widget
 )
 
+vdomr_server_global=dict(
+    sessions=dict(),
+    current_session=None
+)
+
+def _set_server_session(session_id):
+    if session_id not in vdomr_server_global['sessions']:
+        vdomr_server_global['sessions'][session_id]=dict(javascript_to_execute=[])
+    vdomr_server_global['current_session']=vdomr_server_global['sessions'][session_id]
+
 jp_proxy_widget_invokable_functions = {}
-def jp_proxy_widget_invokeFunction(identifier, argument_list, kwargs):
-    f = vdomr_global['jp_invokable_functions'][identifier]
-    f(*argument_list, **kwargs)
+def invoke_callback(callback_id, argument_list=[], kwargs={}):
+    if callback_id not in vdomr_global['invokable_functions']:
+        raise Exception('No callback with id: '+callback_id)
+    f = vdomr_global['invokable_functions'][callback_id]
+    return f(*argument_list, **kwargs)
 
 def register_callback(callback_id,callback):
     if vdomr_global['mode']=='colab':
         from google.colab import output as colab_output
         colab_output.register_callback(callback_id,callback)
         exec_javascript('window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
-    elif vdomr_global['mode']=='jp_proxy_widget':
-        vdomr_global['jp_invokable_functions'][callback_id] = callback
+    elif (vdomr_global['mode']=='jp_proxy_widget') or (vdomr_global['mode']=='server'):
+        vdomr_global['invokable_functions'][callback_id] = callback
 
 def _do_init():
     vdomr_global['mode']=_determine_mode()
@@ -34,9 +46,11 @@ def _do_init():
         // Attach the callback to the global window object so
         // you can find it from anywhere:
         window.vdomr_invokeFunction = invokeFunction;
-        """, invokeFunction=jp_proxy_widget_invokeFunction)
+        """, invokeFunction=invoke_callback)
         vdomr_global['jp_widget']=jp_widget
         display(jp_widget)
+    elif vdomr_global['mode']=='server':
+        pass
 
 def exec_javascript(js):
     if vdomr_global['mode']=='colab':
@@ -44,9 +58,23 @@ def exec_javascript(js):
         display(Javascript(js))
     elif vdomr_global['mode']=='jp_proxy_widget':
         vdomr_global['jp_widget'].js_init(js)
+    elif vdomr_global['mode']=='server':
+        SS=vdomr_server_global['current_session']
+        if SS:
+            SS['javascript_to_execute'].append(js)
+        else:
+            print('Warning: current session is not set. Unable to execute javascript.')
     else:
         from IPython.display import Javascript
         display(Javascript(js))
+
+def _take_javascript_to_execute():
+    SS=vdomr_server_global['current_session']
+    if len(SS['javascript_to_execute'])==0:
+        return None
+    js='\n'.join(SS['javascript_to_execute'])
+    SS['javascript_to_execute']=[]
+    return js
 
 def _found_colab():
     try:
@@ -70,6 +98,9 @@ def _determine_mode():
     if os.environ.get('VDOMR_MODE','')=='COLAB':
         print('vdomr: using colab because of VDOMR_MODE environment variable')
         return 'colab'
+    if os.environ.get('VDOMR_MODE','')=='SERVER':
+        print('vdomr: using server because of VDOMR_MODE environment variable')
+        return 'server'
     if _found_jp_proxy_widget():
         if _found_colab():
             print('vdomr: unable to determine whether to use jp_proxy_widget or google colab')

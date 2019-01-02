@@ -94,7 +94,7 @@ class JobStatusWidget(vd.Component):
     table=vd.table(
         vd.tr(vd.td('Status:'),vd.td(status))
     )
-    out=vd.div(console_output_elmt,style=dict(overflow='auto',height='200px'))
+    out=vd.div(console_output_elmt,style=dict(overflow='auto',height='300px'))
     ret=vd.div(
         vd.h3(self._job['label']),
         table,
@@ -103,7 +103,7 @@ class JobStatusWidget(vd.Component):
     return ret
 
 class BatchMonitorWidget(vd.Component):
-  def __init__(self,batch_names):
+  def __init__(self,batch_names,height=300):
     vd.Component.__init__(self)
     self._batch_names=batch_names
     self._SEL_batch=vd.components.SelectBox(options=self._batch_names)
@@ -112,6 +112,7 @@ class BatchMonitorWidget(vd.Component):
     self._SEL_jobs.onChange(self._on_job_changed)
     self._job_status_widget=JobStatusWidget()
     self._jobs=[]
+    self._height=height
     self._update_jobs()
   def _on_batch_changed(self,value):
     self._update_jobs()
@@ -133,8 +134,8 @@ class BatchMonitorWidget(vd.Component):
       ),
       vd.table(
         vd.tr(
-          vd.td(ScrollArea(self._SEL_jobs,height=300),style={'vertical-align':'top','min-width':'400px'}),
-          vd.td(ScrollArea(self._job_status_widget,height=300),style={'vertical-align':'top'})
+          vd.td(ScrollArea(self._SEL_jobs,height=self._height),style={'vertical-align':'top','min-width':'400px'}),
+          vd.td(ScrollArea(self._job_status_widget,height=self._height),style={'vertical-align':'top'})
         )
       )
     )
