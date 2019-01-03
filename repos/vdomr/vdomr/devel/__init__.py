@@ -1,1 +1,1 @@
-from .devel import loadBootstrap
+from .devel import loadBootstrap, loadCss, loadJavascript

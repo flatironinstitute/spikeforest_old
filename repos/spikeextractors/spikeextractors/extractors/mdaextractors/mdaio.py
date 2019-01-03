@@ -3,6 +3,7 @@ import struct
 import os
 import requests
 import tempfile
+import traceback
 
 class MdaHeader:
     def __init__(self, dt0, dims0):
@@ -337,7 +338,10 @@ def _writemda(X,fname,dt):
         print ("Unexpected data type: {}".format(dt))
         return False
 
-    f=open(fname,'wb')
+    if type(fname)==str:
+        f=open(fname,'wb')
+    else:
+        f=fname
     try:
         _write_int32(f,dt_code)
         _write_int32(f,num_bytes_per_entry)
@@ -345,13 +349,20 @@ def _writemda(X,fname,dt):
         for j in range(0,X.ndim):
             _write_int32(f,X.shape[j])
         #This is how I do column-major order
-        A=np.reshape(X,X.size,order='F').astype(dt)
-        A.tofile(f)
-        f.close()
+        #A=np.reshape(X,X.size,order='F').astype(dt)
+        #A.tofile(f)
+
+        bytes0=X.astype(dt).tobytes(order='F')
+        f.write(bytes0)
+
+        if type(fname)==str:
+            f.close()
         return True
     except Exception as e: # catch *all* exceptions
+        traceback.print_exc()
         print (e)
-        f.close()
+        if type(fname)==str:
+            f.close()
         return False
 
 def readnpy(path):
@@ -411,8 +422,11 @@ def appendmda(X,path):
         return False
 
 def file_extension(fname):
-    filename, ext = os.path.splitext(fname)
-    return ext
+    if type(fname)==str:
+        filename, ext = os.path.splitext(fname)
+        return ext
+    else:
+        return None
     
 def _read_int32(f):
     return struct.unpack('<i',f.read(4))[0]

@@ -27,6 +27,8 @@ class SelectListBox(vd.Component):
         return self._value
 
     def index(self):
+        if not self._value:
+          return None
         return self._options.index(self._value)
     
     def setValue(self,value):
@@ -103,24 +105,33 @@ class JobStatusWidget(vd.Component):
     return ret
 
 class BatchMonitorWidget(vd.Component):
-  def __init__(self,batch_names,height=300):
+  def __init__(self,batch_names=[],height=300):
     vd.Component.__init__(self)
-    self._batch_names=batch_names
-    self._SEL_batch=vd.components.SelectBox(options=self._batch_names)
+    self._SEL_batch=vd.components.SelectBox(options=[])
     self._SEL_batch.onChange(self._on_batch_changed)
     self._SEL_jobs=SelectListBox(options=[])
     self._SEL_jobs.onChange(self._on_job_changed)
     self._job_status_widget=JobStatusWidget()
     self._jobs=[]
     self._height=height
+    self.setBatchNames(batch_names)
+  def setBatchNames(self,batch_names):
+    self._batch_names=batch_names
+    self._SEL_batch.setOptions(options=self._batch_names)
     self._update_jobs()
   def _on_batch_changed(self,value):
     self._update_jobs()
   def _on_job_changed(self,value):
-    job=self._jobs[self._SEL_jobs.index()]
-    self._job_status_widget.setJob(job,batch_name=self._SEL_batch.value(),job_index=self._SEL_jobs.index())
+    idx=self._SEL_jobs.index()
+    if idx:
+      job=self._jobs[idx]
+      self._job_status_widget.setJob(job,batch_name=self._SEL_batch.value(),job_index=self._SEL_jobs.index())
   def _update_jobs(self):
-    jobs=batcho.get_batch_jobs(batch_name=self._SEL_batch.value())
+    batch_name=batch_name=self._SEL_batch.value()
+    if batch_name:
+      jobs=batcho.get_batch_jobs(batch_name=self._SEL_batch.value())
+    else:
+      jobs=[]
     self._SEL_jobs.setOptions(['{}: {}'.format(i,jobs[i]['label']) for i in range(len(jobs))])
     self._jobs=jobs
     self._on_job_changed(self._SEL_jobs.value())

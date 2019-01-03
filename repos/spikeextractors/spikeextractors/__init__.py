@@ -22,3 +22,4 @@ from .extractors.spykingcircussortingextractor.spykingcircussortingextractor imp
 
 from . import example_datasets
 from .tools import loadProbeFile, saveProbeFile, writeBinaryDatFormat, getSubExtractorsByProperty
+from .extractors.mdaextractors import mdaio

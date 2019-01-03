@@ -10,16 +10,18 @@ class MainWindow(vd.Component):
     vd.Component.__init__(self)
     self._groups=kb.loadObject(key=dict(name='spikeforest_batch_group_names'))
     self._SEL_group=vd.components.SelectBox(options=self._groups['batch_group_names'])
-    self._SEL_group.onChange(self.on_group_changed)
-  def on_group_changed(self,value):
-    self.refresh()
-  def render(self):
+    self._SEL_group.onChange(self._on_group_changed)
+    self._BMW=sf.BatchMonitorWidget([],height=600)
+    self._on_group_changed(value=self._SEL_group.value())
+  def _on_group_changed(self,value):
     group_name=self._SEL_group.value()
     a=kb.loadObject(key=dict(name='spikeforest_batch_group',group_name=group_name))
-    BMW=sf.BatchMonitorWidget(a['batch_names'],height=600)
+    self._BMW.setBatchNames(a['batch_names'])
+  def render(self):
     return vd.div(
+      vd.h3('Select batch group:'),
       self._SEL_group,
-      BMW
+      self._BMW
     )
 
 class TheApp():

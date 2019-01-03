@@ -155,8 +155,7 @@ class SFData():
     def __init__(self):
         self._studies_by_name=dict()
         self._study_names=[]
-    def loadRecordings(self,*,key=None):
-        print('Loading recordings: '+json.dumps(key))
+    def loadRecordings(self,*,key=None,verbose=False):
         if key is None:
             key=dict(name='spikeforest_studies_processed')
         obj=kb.loadObject(key=key)
@@ -173,10 +172,11 @@ class SFData():
         for ds in recordings:
             study=ds['study']
             self._studies_by_name[study].addRecording(ds)
-    def loadProcessingBatch(self,*,batch_name=None,key=None):
+        if verbose:
+            print('Loaded {} recordings'.format(len(recordings)))
+    def loadProcessingBatch(self,*,batch_name=None,key=None,verbose=False):
         if batch_name:
             key=dict(name='batcho_batch_results',batch_name=batch_name)
-        print('Loading processing batch: '+json.dumps(key))
         if not pa.get(key=key):
             raise Exception('Batch result not found.')
         obj=kb.loadObject(key=key)
@@ -215,7 +215,8 @@ class SFData():
                     print('Warning: study not found: '+study_name)
             else:
                 pass
-        print('Loaded {} sorting results and {} recording summary results'.format(num_sorting_results,num_recording_summary_results))
+        if verbose:
+            print('Loaded {} sorting results and {} recording summary results'.format(num_sorting_results,num_recording_summary_results))
 
     def studyNames(self):
         return self._study_names
