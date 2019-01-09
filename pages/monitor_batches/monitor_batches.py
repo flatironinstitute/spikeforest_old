@@ -19,7 +19,7 @@ class MainWindow(vd.Component):
     self._BMW.setBatchNames(a['batch_names'])
   def render(self):
     return vd.div(
-      vd.h3('Select batch group:'),
+      vd.h3('Select batch group----:'),
       self._SEL_group,
       self._BMW
     )

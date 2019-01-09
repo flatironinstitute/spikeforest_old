@@ -447,6 +447,8 @@ class Sha1Cache():
   def __init__(self):
     self._directory=''
   def setDirectory(self,directory):
+    if not os.path.exists(directory):
+      os.mkdir(directory)
     self._directory=directory
   def findFile(self,sha1):
     path=self._get_path(sha1,create=False)

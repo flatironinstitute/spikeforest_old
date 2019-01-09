@@ -16,6 +16,13 @@ class BandpassFilterRecording(FilterRecording):
         i1 = start_frame - padding
         i2 = end_frame + padding
         padded_chunk = self._read_chunk(i1, i2)
+        if i1<0:
+            for m in range(padded_chunk.shape[0]):
+                padded_chunk[m,:-i1]=padded_chunk[m,-i1]
+        if i2>self._recording.getNumFrames():
+            for m in range(padded_chunk.shape[0]):
+                aa=(i2-self._recording.getNumFrames())
+                padded_chunk[m,-aa:]=padded_chunk[m,aa-1]
         filtered_padded_chunk = self._do_filter(padded_chunk)
         return filtered_padded_chunk[:, start_frame - i1:end_frame - i1]
 

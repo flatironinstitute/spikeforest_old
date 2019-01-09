@@ -8,6 +8,9 @@ import spikeforest as sf
 import batcho
 import time
 
+# This can be important for some of the jobs in certain situations
+os.environ['DISPLAY']=''
+
 def main():
   parser = argparse.ArgumentParser(description = 'Run a spikeforest processing batch')
   parser.add_argument('--run_prefix',help='Prefix to run command', default='')

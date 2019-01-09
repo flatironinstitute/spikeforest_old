@@ -16,7 +16,16 @@ def loadCss(*,url=None,path=None,css=None,integrity=None,crossorigin=None):
     loadCss(css=css)
     return
   if css:
-    display(HTML('<style>{}</style>'.format(css)))
+
+    js="""
+    let style = document.createElement( "style" );
+    style.appendChild(document.createTextNode('{css}'));
+    document.getElementsByTagName( "head" )[0].appendChild( style );
+    """
+    js=css.join(js.split('{css}'))
+    loadJavascript(js=js)
+
+    #display(HTML('<style>{}</style>'.format(css)))
     return
   if url:
     attrs=[]
@@ -45,14 +54,15 @@ def loadJavascript(*,url=None,path=None,js=None,delay=None):
   if path:
     modified_timestamp=os.path.getmtime(path)
     colab_mode=(os.environ['VDOMR_MODE']=='COLAB')
-    if (not colab_mode) and (path in loaded_javascript_files):
+    #if (not colab_mode) and (path in loaded_javascript_files):
     #  if loaded_javascript_files[path]['mtime']==modified_timestamp:
         ## already loaded
-        return
+    #    return
     with open(path) as f:
       js=f.read()
+    #print('loading javascript from path',path,len(js))
     loadJavascript(js=js,delay=delay)
-    loaded_javascript_files[path]=dict(mtime=modified_timestamp)
+    #loaded_javascript_files[path]=dict(mtime=modified_timestamp)
     return
   if js:
     if delay is not None:
@@ -64,15 +74,26 @@ def loadJavascript(*,url=None,path=None,js=None,delay=None):
       js2=str(delay).join(js2.split('{delay}'))
       js2=js.join(js2.split('{js}'))
       js=js2
+    js='{\n'+js+'\n}'
     vd.exec_javascript(js)
     return
   if url:
     colab_mode=(os.environ['VDOMR_MODE']=='COLAB')
-    if (not colab_mode) and (url in loaded_javascript_files):
+    #if (not colab_mode) and (url in loaded_javascript_files):
       ## already loaded
-      return
+    #  return
     if delay is not None:
       raise Exception('Cannot use delay with url parameter')
-    display(HTML('<script src="{}"></script>'.format(url)))
-    loaded_javascript_files[path]=dict(mtime=True)
+
+    js0="""
+    let script = document.createElement( "script" );
+    script.src = '{url}';
+
+    document.getElementsByTagName( "head" )[0].appendChild( script );
+    """
+    js0=url.join(js0.split('{script}'))
+    loadJavascript(js=js0)
+
+    #display(HTML('<script src="{}"></script>'.format(url)))
+    #loaded_javascript_files[path]=dict(mtime=True)
 

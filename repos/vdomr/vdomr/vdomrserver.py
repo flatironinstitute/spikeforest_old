@@ -2,6 +2,8 @@ import time
 
 import random
 import string
+import traceback
+import uuid
 
 import json
 
@@ -34,12 +36,16 @@ def _start_vdomr_server(vdomr_app):
   sessions=dict()
   class RootHandler(tornado.web.RequestHandler):
       def get(self):
-        root=vdomr_app.createSession()
         session_id=''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         sessions[session_id]=dict(
-          root=root
+          root=None
         )
         vd._set_server_session(session_id)
+
+        root=vdomr_app.createSession()
+        sessions[session_id]['root']=root
+
+        
         html='''
         <head>
           <script>
@@ -83,7 +89,9 @@ def _start_vdomr_server(vdomr_app):
           <script>
           window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
             console.log('vdomr_invokeFunction',callback_id,args,kwargs);
+            document.getElementById('overlay').style.visibility='visible'
             post_json('/invoke/?session_id={session_id}',{callback_id:callback_id,args:args,kwargs:kwargs},function(err,resp) {
+            document.getElementById('overlay').style.visibility='hidden'
               if (err) {
                 console.error(err);
                 return;
@@ -109,8 +117,24 @@ def _start_vdomr_server(vdomr_app):
             },1000);
           </script>
 
+          <style>
+          .overlay {
+              background-color: rgba(1, 1, 1, 0.2);
+              color:white;
+              font-size:24px;
+              bottom: 0;
+              left: 0;
+              position: fixed;
+              right: 0;
+              top: 0;
+              text-align: center;
+              padding: 40px;
+          }
+          </style>
+
         </head>
         <html>
+          <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
           {content}
         </html>
         '''
@@ -144,6 +168,7 @@ def _start_vdomr_server(vdomr_app):
         try:
           retval=vd.invoke_callback(callback_id,argument_list=args,kwargs=kwargs)
         except:
+          traceback.print_exc()
           self.write(dict(success=False,error='Error invoking callback.'))
           return
         self.write(dict(success=True,retval=retval))

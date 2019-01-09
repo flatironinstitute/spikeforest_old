@@ -31,6 +31,7 @@ window.render_widget=function(widget_name,props,element) {
 
 window.TimeseriesModel=require(__dirname+'/ephys_viz/timeseriesmodel.js').TimeseriesModel;
 window.TimeseriesWidget=require(__dirname+'/ephys_viz/timeserieswidget.js').TimeseriesWidget;
+window.GeomWidget=require(__dirname+'/ephys_viz/geomwidget.js').GeomWidget;
 window.Mda=require(__dirname+'/ephys_viz/mda.js').Mda;
 window.test_ephys_viz=function(div_id) {
 	let X=new window.Mda(4,1000);

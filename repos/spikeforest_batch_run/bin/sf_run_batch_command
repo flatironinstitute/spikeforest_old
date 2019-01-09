@@ -59,6 +59,9 @@ def main():
 
   sbr.register_job_commands()
 
+  # This can be important for some of the jobs in certain situations
+  os.environ['DISPLAY']=''
+
   if args.command=='set':
     if not args.input:
       print('Missing --input argument.')

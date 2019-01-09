@@ -11,7 +11,18 @@ function GeomWidget(O) {
     position: 'relative'
   });
 
+  this.setGeometry = function(X) {
+    console.log('setGeometry',X);
+    let lines=[]
+    for (var i in X.electrodes) {
+      lines.push(X.electrodes[i].location.join(','));
+    }
+    console.log(lines);
+    console.log(lines.join('\n'))
+    O.setGeomText(lines.join('\n'));
+  }
   this.setGeomText = function(txt) {
+    console.log('setGeomText',txt);
     setGeomText(txt);
   };
   this.setVisibleChannels = function(visible_channels) {
@@ -30,6 +41,7 @@ function GeomWidget(O) {
   O.onPaint(paint);
 
   function paint(painter) {
+    console.log('paint...',m_geom);
     var W = O.width();
     var H = O.height();
     painter.fillRect(0, 0, W, H, 'rgb(240,240,240)');

@@ -77,6 +77,24 @@ class SFRecording():
         return self._obj['description']
     def directory(self):
         return self._obj['directory']
+    def recordingFileIsLocal(self):
+        fname=self.directory()+'/raw.mda'
+        fname2=kb.findFile(fname)
+        if fname2 and (not _is_url(fname2)):
+            return True
+        return False
+    def realizeRecordingFile(self):
+        fname=self.directory()+'/raw.mda'
+        return kb.realizeFile(fname)
+    def firingsTrueFileIsLocal(self):
+        fname=self.directory()+'/firings_true.mda'
+        fname2=kb.findFile(fname)
+        if fname2 and (not _is_url(fname2)):
+            return True
+        return False
+    def realizeFiringsTrueFile(self):
+        fname=self.directory()+'/firings_true.mda'
+        return kb.realizeFile(fname)
     def recordingExtractor(self,download=False):
         X=si.MdaRecordingExtractor(dataset_directory=self.directory(),download=download)
         if 'channels' in self._obj:
@@ -222,3 +240,6 @@ class SFData():
         return self._study_names
     def study(self,name):
         return self._studies_by_name.get(name,None)
+
+def _is_url(path):
+    return (path.startswith('http://') or path.startswith('https://'))
