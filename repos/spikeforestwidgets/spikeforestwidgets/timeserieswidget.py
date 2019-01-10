@@ -46,12 +46,13 @@ class TimeseriesWidget(vd.Component):
         let X=_base64ToArrayBuffer(window.sfdata['array_b64_{div_id}']);
         let A=new window.Mda();
         A.setFromArrayBuffer(X);
-        let TS=new window.TimeseriesModel(A);
+        let TS=new window.TimeseriesModel(A,{samplerate:{samplerate}});
         W.setTimeseriesModel(TS);
         W.setSize(800,400)
         $('#{div_id}').empty();
         $('#{div_id}').append(W.div());
         """
         js=self._div_id.join(js.split('{div_id}'))
+        js='{}'.format(self._recording.getSamplingFrequency()).join(js.split('{samplerate}'))
         vd.devel.loadJavascript(js=js,delay=1)
         return div

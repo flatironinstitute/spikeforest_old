@@ -9,6 +9,7 @@ function EVTimeDisplay(O) {
     return m_div;
   };
   O.setSampleRate = function(s) {
+    console.log('setting samplerate:',s);
     m_samplerate = s;
     schedule_refresh();
   };

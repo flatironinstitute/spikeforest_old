@@ -24,6 +24,9 @@ function TimeseriesModel(path_or_mda, params) {
     this.dtype = function() {
       return 'in-memory';
     };
+    this.getSampleRate = function() {
+      return params.samplerate;
+    }
 
     function getChunkFromX(opts) {
       return X.subArray(0, opts.t1, X.N1(), opts.t2 - opts.t1 + 1);

@@ -101,7 +101,7 @@ class MemoryRecordingExtractor(si.RecordingExtractor):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.2'
+  VERSION='0.1.3'
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
   unit_ids=mlpr.IntegerListParameter(description='List of units to use.',optional=True,default=[])
@@ -114,17 +114,18 @@ class ComputeUnitsInfo(mlpr.Processor):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
     recording=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
     sorting=si.MdaSortingExtractor(firings_file=self.firings)
-    ef=int(1e6)
-    recording_sub=si.SubRecordingExtractor(parent_recording=recording,start_frame=0,end_frame=ef)
-    recording_sub=MemoryRecordingExtractor(parent_recording=recording_sub)
-    sorting_sub=si.SubSortingExtractor(parent_sorting=sorting,start_frame=0,end_frame=ef)
+    #ef=int(1e6)
+    #recording_sub=si.SubRecordingExtractor(parent_recording=recording,start_frame=0,end_frame=ef)
+    #recording_sub=MemoryRecordingExtractor(parent_recording=recording_sub)
+    #sorting_sub=si.SubSortingExtractor(parent_sorting=sorting,start_frame=0,end_frame=ef)
     unit_ids=self.unit_ids
     if (not unit_ids) or (len(unit_ids)==0):
       unit_ids=sorting.getUnitIds()
   
     channel_noise_levels=compute_channel_noise_levels(recording=recording)
     print('computing templates...')
-    templates=compute_unit_templates(recording=recording_sub,sorting=sorting_sub,unit_ids=unit_ids)
+    # No longer use subset to compute the templates
+    templates=compute_unit_templates(recording=recording,sorting=sorting,unit_ids=unit_ids)
     print('.')
     ret=[]
     for i,unit_id in enumerate(unit_ids):

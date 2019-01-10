@@ -167,6 +167,13 @@ class SFRecordingWidget(vd.Component):
     rows.append(vd.tr(
         vd.th('Num. true units'),vd.td('{}'.format(len(true_units)))
     ))
+    RX=rec.recordingExtractor()
+    rows.append(vd.tr(
+        vd.th('Num. channels'),vd.td('{}'.format(len(RX.getChannelIds())))
+    ))
+    rows.append(vd.tr(
+        vd.th('Samplerate'),vd.td('{}'.format(RX.getSamplingFrequency()))
+    ))
 
     recording_file_is_local=self._recording.recordingFileIsLocal()
     if recording_file_is_local:
@@ -186,7 +193,7 @@ class SFRecordingWidget(vd.Component):
         vd.th('firings_true.mda is downloaded'),vd.td(elmt))
     )
 
-    table=vd.table(rows,style={'text-align':'left','width':'auto'},class_='table')
+    table=vd.table(rows,style={'text-align':'left','width':'auto','font-size':'13px'},class_='table')
     button_style={'margin':'3px'}
     view_timeseries_button=vd.button('View timeseries',onclick=self._on_view_timeseries,style=button_style)
     view_geometry_button=vd.button('View electrode geometry',onclick=self._on_view_geometry,style=button_style)

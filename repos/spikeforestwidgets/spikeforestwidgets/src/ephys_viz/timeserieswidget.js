@@ -247,9 +247,11 @@ function TimeseriesWidget() {
         that._scheduleRefresh();
     }
     function setTimeseriesModel(X) {
+        console.log('setTimeseriesModel',X.getSampleRate());
         m_timeseries_model=X;
         that._setNumTimepoints(X.numTimepoints());
         that._scheduleRefresh();
+        that.setSampleRate(X.getSampleRate());
     }
     function setFiringsModel(X) {
         m_firings_model=X;
