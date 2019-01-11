@@ -1,0 +1,54 @@
+{% set data=load_setup_py_data() %}
+
+# Cannot get the name dynamically from the setup.py
+{% set pkg_name = "ml_ms4alg" %}
+#{% set pkg_name = data.get('name') %}
+{% set build_script = data.get('conda',{}).get('build_script',[]) %}
+{% set requirements = data.get('conda',{}).get('requirements',[]) %}
+{% set test_commands = data.get('conda',{}).get('test_commands',[]) %}
+{% set test_imports = data.get('conda',{}).get('test_imports',[]) %}
+{% set version = data.get('version') %}
+{% set build_number = data.get('conda',{}).get('build_number',0) %}
+{% set repo_url = data.get('url','') %}
+{% set description = data.get('description','') %}
+{% set license = "Apache-2.0" %}
+
+package:
+  name: '{{ pkg_name|lower }}'
+  version: '{{ version }}'
+
+source:
+  #url: https://github.com/{{ repo_owner }}/{{ name }}/archive/{{ version }}.tar.gz
+  path: ../..
+
+build:
+  number: {{ build_number }}
+  script:
+    {% for line in build_script %}
+      - {{ line }}
+    {% endfor %}
+    
+requirements:
+  host:
+    {% for line in requirements %}
+      - {{ line }}
+    {% endfor %}
+  run:
+    {% for line in requirements %}
+      - {{ line }}
+    {% endfor %}
+
+test:
+  imports:
+    {% for line in test_imports %}
+      - {{ line }}
+    {% endfor %}
+  commands:
+    {% for line in test_commands %}
+      - {{ line }}
+    {% endfor %}
+
+about:
+  home: {{ repo_url }}
+  license: {{ license }}
+  description: {{ description }}

@@ -1,0 +1,28 @@
+Bootstrap: shub
+FROM: magland/mlsing
+
+%labels
+    Maintainer Jeremy Magland
+
+%setup
+  mkdir ${SINGULARITY_ROOTFS}/working
+  cp -r . ${SINGULARITY_ROOTFS}/working/src
+
+%post
+  echo "################################## Activating conda environment"
+  . /opt/conda/etc/profile.d/conda.sh
+  conda activate mountainlab
+  
+  echo "################################## Installing gcc"
+  apt-get update && apt-get install -y build-essential
+
+  echo "################################## Installing ML package"
+  pip install /working/src
+  ml-link-python-module ml_ms4alg `ml-config package_directory`/ml_ms4alg
+
+  echo "################################## Testing package"
+  ml-list-processors
+
+%environment
+  . /opt/conda/etc/profile.d/conda.sh
+  conda activate mountainlab
