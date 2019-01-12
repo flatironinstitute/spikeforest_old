@@ -1,8 +1,5 @@
 import mlprocessors as mlpr
-import spikeextractors as se
-import spiketoolkit as st
 import os
-import ml_ms4alg
 
 class MountainSort4(mlpr.Processor):
     NAME='MountainSort4'
@@ -22,6 +19,10 @@ class MountainSort4(mlpr.Processor):
     noise_overlap_threshold=mlpr.FloatParameter(optional=True,default=0.15,description='Use None for no automated curation')
     
     def run(self):
+        import spikeextractors as se
+        import spiketoolkit as st
+        import ml_ms4alg
+        
         print('MountainSort4...')
         recording=se.MdaRecordingExtractor(self.recording_dir)
         num_workers=os.environ.get('NUM_WORKERS',None)
