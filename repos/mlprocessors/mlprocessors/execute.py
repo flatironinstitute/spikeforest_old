@@ -7,6 +7,9 @@ import shutil
 import tempfile
 from pairio import client as pairio
 from kbucket import client as kbucket
+import inspect
+from subprocess import Popen, PIPE
+import shlex
 
 def sha1(str):
     hash_object = hashlib.sha1(str.encode('utf-8'))
@@ -135,7 +138,104 @@ class ProcessorExecuteOutput():
     def __init__(self):
         self.outputs=dict()
 
-def execute(proc, _cache=True, _force_run=None, **kwargs):
+def _read_text_file(fname):
+    with open(fname) as f:
+        return f.read()
+    
+def _write_text_file(fname,str):
+    with open(fname,'w') as f:
+        f.write(str)
+
+def _read_text_file(fname):
+    with open(fname) as f:
+        return f.read()
+    
+def _write_text_file(fname,str):
+    with open(fname,'w') as f:
+        f.write(str)
+
+def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
+    singularity_opts=[]
+    kbucket_cache_dir=kbucket.getConfig()['local_cache_dir']
+    singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir,'/sha1-cache'))
+    singularity_opts.append('-B /tmp:/tmp')
+
+    for input0 in proc.INPUTS:
+        name0=input0.name
+        fname0=getattr(X,name0)
+        if fname0:
+            if fname0.startswith('kbucket://') or fname0.startswith('sha1://'):
+                pass
+            else:
+                fname0=os.path.abspath(fname0)
+                fname2='/execute_in_container/input_{}'.format(name0)
+                kwargs[name0]=fname2
+                singularity_opts.append('-B {}:{}'.format(fname0,fname2))
+                
+    for output0 in proc.OUTPUTS:
+        name0=output0.name
+        val=getattr(X,name0)
+        if val:
+            val=os.path.abspath(val)
+            dirname=os.path.dirname(val)
+            filename=os.path.basename(val)
+            dirname2='/execute_in_container/outputdir_{}'.format(name0)
+            kwargs[name0]=dirname2+'/'+filename
+            singularity_opts.append('-B {}:{}'.format(dirname,dirname2))
+
+    expanded_kwargs_list=[]
+    for key in kwargs:
+        val=kwargs[key]
+        if type(val)==str:
+            val="'{}'".format(val)
+        expanded_kwargs_list.append('{}={}'.format(key,val))
+    expanded_kwargs=', '.join(expanded_kwargs_list)
+
+    processor_source_fname=inspect.getsourcefile(proc)
+    if not processor_source_fname:
+        raise Exception('inspect.getsourcefile() returned empty for processor.')
+    singularity_opts.append('-B {}:/execute_in_container/processor_source.py'.format(processor_source_fname))
+
+    # Code generation
+    code="""
+from processor_source import {processor_name}
+
+def main():
+    {processor_name}.execute({expanded_kwargs})
+
+if __name__ == "__main__":
+    main()
+    """
+    code=code.replace('{processor_name}',proc.__name__)
+    code=code.replace('{expanded_kwargs}',expanded_kwargs)
+
+    _write_text_file(tempdir+'/execute_in_container.py',code)
+    singularity_opts.append('-B {}:/execute_in_container/execute_in_container.py'.format(tempdir+'/execute_in_container.py'))
+
+
+    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container)
+
+
+    retcode = _run_command_and_print_output(singularity_cmd)
+    if retcode != 0:
+        raise Exception('Processor in singularity returned a non-zero exit code')
+
+def _run_command_and_print_output(command):
+    print('RUNNING: '+command)
+    with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
+        while True:
+            output_stdout = process.stdout.readline()
+            output_stderr = process.stderr.readline()
+            if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
+                break
+            if output_stdout:
+                print(output_stdout.decode())
+            if output_stderr:
+                print(output_stderr.decode())
+        rc = process.poll()
+        return rc
+
+def execute(proc, _cache=True, _force_run=None, _container=None, **kwargs):
 
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN','') == 'TRUE':
@@ -247,17 +347,29 @@ def execute(proc, _cache=True, _force_run=None, **kwargs):
             tmp_fname=create_temporary_file(fname0)
             temporary_output_files.add(tmp_fname)
             setattr(X,name0,tmp_fname)
-    try:
-        print ('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
-        X.run()
-        print ('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
-    except:
-        # clean up temporary output files
-        print ('Problem executing {}. Cleaning up files.'.format(proc.NAME))
-        for fname in temporary_output_files:
-            if os.path.exists(fname):
-                os.remove(fname)
-        raise
+    ## Now it is time to execute
+    if not _container:
+        try:
+            print ('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
+            X.run()
+            print ('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
+        except:
+            # clean up temporary output files
+            print ('Problem executing {}. Cleaning up files.'.format(proc.NAME))
+            for fname in temporary_output_files:
+                if os.path.exists(fname):
+                    os.remove(fname)
+            raise
+    else:
+        ## in a container
+        tempdir=tempfile.mkdtemp()
+        try:
+            _execute_in_container(proc, X, container=_container, tempdir=tempdir, **kwargs)
+        except:
+            shutil.rmtree(tempdir)
+            raise
+        shutil.rmtree(tempdir)
+    
     for output0 in proc.OUTPUTS:
         name0=output0.name
         output_fname=getattr(X,name0)
@@ -268,6 +380,7 @@ def execute(proc, _cache=True, _force_run=None, **kwargs):
             output_sha1=kbucket.computeFileSha1(output_fname)
             signature0=output_signatures[name0]
             pairio.set(signature0,output_sha1)
+
     return ret
 
 def _get_output_ext(out0):

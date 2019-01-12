@@ -9,46 +9,48 @@ from . import sorters as sorters
 from .summarize_sorting import summarize_sorting
 from .compare_with_truth import compare_with_truth
 
-class MountainSort4(mlpr.Processor):
-    NAME='MountainSort4'
-    VERSION='4.1.0'
+from spikesorters import MountainSort4
+
+# class MountainSort4(mlpr.Processor):
+#     NAME='MountainSort4'
+#     VERSION='4.1.0'
     
-    recording_dir=mlpr.Input('Directory of recording',directory=True)
-    channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
-    firings_out=mlpr.Output('Output firings file')
+#     recording_dir=mlpr.Input('Directory of recording',directory=True)
+#     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
+#     firings_out=mlpr.Output('Output firings file')
     
-    detect_sign=mlpr.IntegerParameter('Use -1, 0, or 1, depending on the sign of the spikes in the recording')
-    adjacency_radius=mlpr.FloatParameter('Use -1 to include all channels in every neighborhood')
-    freq_min=mlpr.FloatParameter(optional=True,default=300,description='Use 0 for no bandpass filtering')
-    freq_max=mlpr.FloatParameter(optional=True,default=6000,description='Use 0 for no bandpass filtering')
-    whiten=mlpr.BoolParameter(optional=True,default=True,description='Whether to do channel whitening as part of preprocessing')
-    clip_size=mlpr.IntegerParameter(optional=True,default=50,description='')
-    detect_threshold=mlpr.FloatParameter(optional=True,default=3,description='')
-    detect_interval=mlpr.IntegerParameter(optional=True,default=10,description='Minimum number of timepoints between events detected on the same channel')
-    noise_overlap_threshold=mlpr.FloatParameter(optional=True,default=0.15,description='Use None for no automated curation')
+#     detect_sign=mlpr.IntegerParameter('Use -1, 0, or 1, depending on the sign of the spikes in the recording')
+#     adjacency_radius=mlpr.FloatParameter('Use -1 to include all channels in every neighborhood')
+#     freq_min=mlpr.FloatParameter(optional=True,default=300,description='Use 0 for no bandpass filtering')
+#     freq_max=mlpr.FloatParameter(optional=True,default=6000,description='Use 0 for no bandpass filtering')
+#     whiten=mlpr.BoolParameter(optional=True,default=True,description='Whether to do channel whitening as part of preprocessing')
+#     clip_size=mlpr.IntegerParameter(optional=True,default=50,description='')
+#     detect_threshold=mlpr.FloatParameter(optional=True,default=3,description='')
+#     detect_interval=mlpr.IntegerParameter(optional=True,default=10,description='Minimum number of timepoints between events detected on the same channel')
+#     noise_overlap_threshold=mlpr.FloatParameter(optional=True,default=0.15,description='Use None for no automated curation')
     
-    def run(self):
-        print('MountainSort4...')
-        recording=si.MdaRecordingExtractor(self.recording_dir)
-        if len(self.channels)>0:
-          recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
-        num_workers=os.environ.get('NUM_WORKERS',None)
-        if num_workers:
-            num_workers=int(num_workers)
-        sorting=sorters.mountainsort4(
-            recording=recording,
-            detect_sign=self.detect_sign,
-            adjacency_radius=self.adjacency_radius,
-            freq_min=self.freq_min,
-            freq_max=self.freq_max,
-            whiten=self.whiten,
-            clip_size=self.clip_size,
-            detect_threshold=self.detect_threshold,
-            detect_interval=self.detect_interval,
-            noise_overlap_threshold=self.noise_overlap_threshold,
-            num_workers=num_workers
-        )
-        si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
+#     def run(self):
+#         print('MountainSort4...')
+#         recording=si.MdaRecordingExtractor(self.recording_dir)
+#         if len(self.channels)>0:
+#           recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
+#         num_workers=os.environ.get('NUM_WORKERS',None)
+#         if num_workers:
+#             num_workers=int(num_workers)
+#         sorting=sorters.mountainsort4(
+#             recording=recording,
+#             detect_sign=self.detect_sign,
+#             adjacency_radius=self.adjacency_radius,
+#             freq_min=self.freq_min,
+#             freq_max=self.freq_max,
+#             whiten=self.whiten,
+#             clip_size=self.clip_size,
+#             detect_threshold=self.detect_threshold,
+#             detect_interval=self.detect_interval,
+#             noise_overlap_threshold=self.noise_overlap_threshold,
+#             num_workers=num_workers
+#         )
+#         si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
     
 
 class IronClust(mlpr.Processor):
@@ -206,10 +208,10 @@ class KiloSort(mlpr.Processor):
 #sf.sorters.ironclust(*, recording, tmpdir, detect_sign=-1, adjacency_radius=-1, detect_threshold=5, merge_thresh=0.98, freq_min=300, freq_max=6000, pc_per_chan=3, prm_template_name, ironclust_src=None)
         
 Processors=dict(
-    MountainSort4=MountainSort4,
-    IronClust=IronClust,
-    SpykingCircus=SpykingCircus,
-    KiloSort=KiloSort
+    MountainSort4=(MountainSort4,'MS4_CONTAINER'),
+    IronClust=(IronClust,None),
+    SpykingCircus=(SpykingCircus,None),
+    KiloSort=(KiloSort,None)
 )
         
 def sort_recording(sorter,recording):
@@ -217,12 +219,25 @@ def sort_recording(sorter,recording):
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
     if processor_name in Processors:
-        SS=Processors[processor_name]
+        SS=Processors[processor_name][0]
+        SS_container_env_variable_name=Processors[processor_name][1]
     else:
         raise Exception('No such sorter: '+processor_name)
+
+    if SS_container_env_variable_name:
+        if not SS_container_env_variable_name in os.environ:
+            raise Exception('Environment variable must be set: '+SS_container_env_variable_name)
+        container=os.environ[SS_container_env_variable_name]
+    else:
+        container=None
+
+    if container:
+        if not os.path.exists(container):
+            raise Exception('Container file does not exist: '+container)
         
     print('Sorting recording {} using {}'.format(dsdir, processor_name))
     outputs=SS.execute(
+        _container=container,
         recording_dir=dsdir,
         channels=recording.get('channels',[]),
         firings_out=dict(ext='.mda'),
