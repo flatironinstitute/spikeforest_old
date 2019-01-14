@@ -216,8 +216,14 @@ if __name__ == "__main__":
     _write_text_file(tempdir+'/execute_in_container.py',code)
     singularity_opts.append('-B {}:/execute_in_container/execute_in_container.py'.format(tempdir+'/execute_in_container.py'))
 
-
-    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container)
+    env_vars=[]
+    if getattr(proc,'ENVIRONMENT_VARIABLES'):
+        list=proc.ENVIRONMENT_VARIABLES
+        for v in list:
+            val=os.environ.get(v,'')
+            if val:
+                env_vars.append('{}={}'.format(v,val))
+    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container,' '.join(env_vars))
 
 
     retcode = _run_command_and_print_output(singularity_cmd)

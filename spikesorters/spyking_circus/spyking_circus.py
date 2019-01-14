@@ -14,6 +14,7 @@ import shutil
 class SpykingCircus(mlpr.Processor):
     NAME='SpykingCircus'
     VERSION='0.2.0'
+    ENVIRONMENT_VARIABLES=['NUM_WORKERS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS','OMP_NUM_THREADS']
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])

@@ -4,6 +4,7 @@ import os
 class MountainSort4(mlpr.Processor):
     NAME='MountainSort4'
     VERSION='4.2.0'
+    ENVIRONMENT_VARIABLES=['NUM_WORKERS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS','OMP_NUM_THREADS']
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     firings_out=mlpr.Output('Output firings file')
@@ -23,11 +24,13 @@ class MountainSort4(mlpr.Processor):
         import spiketoolkit as st
         import ml_ms4alg
         
-        print('MountainSort4...')
+        print('MountainSort4......')
         recording=se.MdaRecordingExtractor(self.recording_dir)
         num_workers=os.environ.get('NUM_WORKERS',None)
         if num_workers:
             num_workers=int(num_workers)
+
+        print('Using {} workers',num_workers)
 
         # Bandpass filter
         if self.freq_min or self.freq_max:
