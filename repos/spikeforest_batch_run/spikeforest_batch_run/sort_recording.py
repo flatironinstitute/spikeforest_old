@@ -9,7 +9,7 @@ from . import sorters as sorters
 from .summarize_sorting import summarize_sorting
 from .compare_with_truth import compare_with_truth
 
-from spikesorters import MountainSort4
+from spikesorters import MountainSort4, SpykingCircus
 
 # class MountainSort4(mlpr.Processor):
 #     NAME='MountainSort4'
@@ -103,62 +103,62 @@ class IronClust(mlpr.Processor):
             raise
         shutil.rmtree(tmpdir)
         
-class SpykingCircus(mlpr.Processor):
-    NAME='SpykingCircus'
-    VERSION='0.1.7'
+# class SpykingCircus(mlpr.Processor):
+#     NAME='SpykingCircus'
+#     VERSION='0.1.7'
     
-    recording_dir=mlpr.Input('Directory of recording',directory=True)
-    #singularity_container=mlpr.Input('Singularity container',optional=False)
-    channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
-    firings_out=mlpr.Output('Output firings file')
+#     recording_dir=mlpr.Input('Directory of recording',directory=True)
+#     #singularity_container=mlpr.Input('Singularity container',optional=False)
+#     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
+#     firings_out=mlpr.Output('Output firings file')
     
-    detect_sign=mlpr.IntegerParameter(description='-1, 1, or 0')
-    adjacency_radius=mlpr.FloatParameter(optional=True,default=100,description='Channel neighborhood adjacency radius corresponding to geom file')
-    spike_thresh=mlpr.FloatParameter(optional=True,default=6,description='Threshold for detection')
-    template_width_ms=mlpr.FloatParameter(optional=True,default=3,description='Spyking circus parameter')
-    filter=mlpr.BoolParameter(optional=True,default=True)
-    whitening_max_elts=mlpr.IntegerParameter(optional=True,default=1000,description='I believe it relates to subsampling and affects compute time')
-    clustering_max_elts=mlpr.IntegerParameter(optional=True,default=10000,description='I believe it relates to subsampling and affects compute time')
+#     detect_sign=mlpr.IntegerParameter(description='-1, 1, or 0')
+#     adjacency_radius=mlpr.FloatParameter(optional=True,default=100,description='Channel neighborhood adjacency radius corresponding to geom file')
+#     spike_thresh=mlpr.FloatParameter(optional=True,default=6,description='Threshold for detection')
+#     template_width_ms=mlpr.FloatParameter(optional=True,default=3,description='Spyking circus parameter')
+#     filter=mlpr.BoolParameter(optional=True,default=True)
+#     whitening_max_elts=mlpr.IntegerParameter(optional=True,default=1000,description='I believe it relates to subsampling and affects compute time')
+#     clustering_max_elts=mlpr.IntegerParameter(optional=True,default=10000,description='I believe it relates to subsampling and affects compute time')
 
-    def run(self):
-        singularity_container=os.environ.get('SC_SINGULARITY_CONTAINER',None)
-        if not singularity_container:
-            raise Exception('You must set the environment variable SC_SINGULARITY_CONTAINER.')
+#     def run(self):
+#         singularity_container=os.environ.get('SC_SINGULARITY_CONTAINER',None)
+#         if not singularity_container:
+#             raise Exception('You must set the environment variable SC_SINGULARITY_CONTAINER.')
 
-        code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
-        tmpdir=os.environ.get('TEMPDIR','/tmp')+'/ironclust-tmp-'+code
+#         code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
+#         tmpdir=os.environ.get('TEMPDIR','/tmp')+'/ironclust-tmp-'+code
         
-        num_workers=os.environ.get('NUM_WORKERS',1)
+#         num_workers=os.environ.get('NUM_WORKERS',1)
             
-        try:
-            recording=si.MdaRecordingExtractor(self.recording_dir)
-            if len(self.channels)>0:
-              recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
-            if not os.path.exists(tmpdir):
-                os.mkdir(tmpdir)
-            sorting=sorters.spyking_circus(
-                recording=recording,
-                output_folder=tmpdir,
-                probe_file=None,
-                file_name=None,
-                detect_sign=self.detect_sign,
-                adjacency_radius=self.adjacency_radius,
-                spike_thresh=self.spike_thresh,
-                template_width_ms=self.template_width_ms,
-                filter=self.filter,
-                merge_spikes=True,
-                n_cores=num_workers,
-                electrode_dimensions=None,
-                whitening_max_elts=self.whitening_max_elts,
-                clustering_max_elts=self.clustering_max_elts,
-                singularity_container=singularity_container
-            )
-            si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
-        except:
-            if os.path.exists(tmpdir):
-                shutil.rmtree(tmpdir)
-            raise
-        shutil.rmtree(tmpdir)
+#         try:
+#             recording=si.MdaRecordingExtractor(self.recording_dir)
+#             if len(self.channels)>0:
+#               recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
+#             if not os.path.exists(tmpdir):
+#                 os.mkdir(tmpdir)
+#             sorting=sorters.spyking_circus(
+#                 recording=recording,
+#                 output_folder=tmpdir,
+#                 probe_file=None,
+#                 file_name=None,
+#                 detect_sign=self.detect_sign,
+#                 adjacency_radius=self.adjacency_radius,
+#                 spike_thresh=self.spike_thresh,
+#                 template_width_ms=self.template_width_ms,
+#                 filter=self.filter,
+#                 merge_spikes=True,
+#                 n_cores=num_workers,
+#                 electrode_dimensions=None,
+#                 whitening_max_elts=self.whitening_max_elts,
+#                 clustering_max_elts=self.clustering_max_elts,
+#                 singularity_container=singularity_container
+#             )
+#             si.MdaSortingExtractor.writeSorting(sorting=sorting,save_path=self.firings_out)
+#         except:
+#             if os.path.exists(tmpdir):
+#                 shutil.rmtree(tmpdir)
+#             raise
+#         shutil.rmtree(tmpdir)
 
 class KiloSort(mlpr.Processor):
     NAME='KiloSort'
@@ -210,7 +210,7 @@ class KiloSort(mlpr.Processor):
 Processors=dict(
     MountainSort4=(MountainSort4,'MS4_CONTAINER'),
     IronClust=(IronClust,None),
-    SpykingCircus=(SpykingCircus,None),
+    SpykingCircus=(SpykingCircus,'SC_CONTAINER'),
     KiloSort=(KiloSort,None)
 )
         
