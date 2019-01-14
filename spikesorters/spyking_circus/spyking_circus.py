@@ -7,6 +7,9 @@ import numpy as np
 from os.path import join
 from subprocess import Popen, PIPE
 import shlex
+import random
+import string
+import shutil
 
 class SpykingCircus(mlpr.Processor):
     NAME='SpykingCircus'

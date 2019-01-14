@@ -192,13 +192,16 @@ def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
     expanded_kwargs=', '.join(expanded_kwargs_list)
 
     processor_source_fname=inspect.getsourcefile(proc)
+    processor_source_dirname=os.path.dirname(processor_source_fname)
+    processor_source_basename=os.path.basename(processor_source_fname)
+    processor_source_basename_noext=os.path.splitext(processor_source_basename)[0]
     if not processor_source_fname:
         raise Exception('inspect.getsourcefile() returned empty for processor.')
-    singularity_opts.append('-B {}:/execute_in_container/processor_source.py'.format(processor_source_fname))
+    singularity_opts.append('-B {}:/execute_in_container/processor_source'.format(processor_source_dirname))
 
     # Code generation
     code="""
-from processor_source import {processor_name}
+from processor_source.{processor_source_basename_noext} import {processor_name}
 
 def main():
     {processor_name}.execute({expanded_kwargs})
@@ -206,6 +209,7 @@ def main():
 if __name__ == "__main__":
     main()
     """
+    code=code.replace('{processor_source_basename_noext}',processor_source_basename_noext)
     code=code.replace('{processor_name}',proc.__name__)
     code=code.replace('{expanded_kwargs}',expanded_kwargs)
 
