@@ -102,7 +102,7 @@ class MemoryRecordingExtractor(si.RecordingExtractor):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.3'
+  VERSION='0.1.4'
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
   unit_ids=mlpr.IntegerListParameter(description='List of units to use.',optional=True,default=[])
