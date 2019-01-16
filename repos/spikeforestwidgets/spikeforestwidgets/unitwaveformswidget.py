@@ -15,6 +15,10 @@ class UnitWaveformsWidget(vd.Component):
         for id in sorting.getUnitIds()
     ]
     vd.devel.loadBootstrap()
+  def setSelectedUnitIds(self,ids):
+    ids=set(ids)
+    for W in self._widgets:
+        W.setSelected(W.unitId() in ids)
   def render(self):
     box_style=dict(float='left')
     boxes=[
@@ -22,7 +26,7 @@ class UnitWaveformsWidget(vd.Component):
         for W in self._widgets
     ]
     div=vd.div(boxes)
-    return vd.components.ScrollArea(div,height=500)
+    return div
 
 class UnitWaveformWidget(vd.Component):
   def __init__(self,*,recording,sorting,unit_id,max_num_spikes_per_unit=20):
@@ -33,13 +37,25 @@ class UnitWaveformWidget(vd.Component):
         unit_id=unit_id,
         max_num_spikes_per_unit=max_num_spikes_per_unit
     )
+    self._plot_div=vd.components.LazyDiv(self._plot)
     self._unit_id=unit_id
+    self._selected=False
+  def setSelected(self,val):
+    if self._selected==val:
+        return
+    self._selected=val
+    self.refresh()
+  def unitId(self):
+    return self._unit_id
   def render(self):
     style0={'border':'solid 1px black','margin':'5px'}
-    plot=vd.components.LazyDiv(self._plot)
+    style1={}
+    if self._selected:
+        style1['background-color']='yellow'
     return vd.div(
         vd.p('Unit {}'.format(self._unit_id),style={'text-align':'center'}),
-        vd.div(plot,style=style0)
+        vd.div(self._plot_div,style=style0),
+        style=style1
     )
 
 import time
@@ -60,10 +76,6 @@ class _UnitWaveformPlot(vd.components.Pyplot):
         unit_id=self._unit_id,
         max_num_spikes_per_unit=self._max_num_spikes_per_unit
     )
-    
-
-  
-
 
 def _compute_minimum_gap(x):
   a=np.sort(np.unique(x))

@@ -41,14 +41,17 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
         for cb in callbacks:
           cbname=cb['name']
           if cbname in attributes:
-            from google.colab import output as colab_output
-            callback_id = cbname+'callback-' + str(uuid.uuid4())
-            register_callback(callback_id,attributes[cbname])
-            #js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
-            js="window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
-            js=js.replace('{callback_id}',callback_id)
-            js=js.replace('{kwargs}',cb['kwargs'])
-            attributes[cbname]=js
+            if attributes[cbname] is not None:
+                from google.colab import output as colab_output
+                callback_id = cbname+'callback-' + str(uuid.uuid4())
+                register_callback(callback_id,attributes[cbname])
+                #js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
+                js="window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
+                js=js.replace('{callback_id}',callback_id)
+                js=js.replace('{kwargs}',cb['kwargs'])
+                attributes[cbname]=js
+            else:
+                attributes[cbname]=''
 
         v = VDOM(tag_name, attributes, style, children)
         return v

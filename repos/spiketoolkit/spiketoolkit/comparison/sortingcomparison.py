@@ -2,7 +2,6 @@ import numpy as np
 import spikeextractors as se
 from scipy.optimize import linear_sum_assignment
 
-
 class SortingComparison():
     def __init__(self, sorting1, sorting2, sorting1_name=None, sorting2_name=None, delta_tp=10, minimum_accuracy=0.5,
                  count=False, verbose=False):
@@ -241,6 +240,8 @@ class SortingComparison():
             for i2, u2 in enumerate(unit2_ids):
                 times2 = sorting2.getUnitSpikeTrain(u2)
                 num_matches = count_matching_events(times1, times2, delta=self._delta_tp)
+                #test_unmatched=get_unmatched_times(times1,times2,delta=self._delta_tp)
+                #print(u1,u2,'num_matches',num_matches,'num_unmatched',len(test_unmatched),'sum',num_matches+len(test_unmatched),'total',len(times1))
                 matching_event_counts[i1, i2] = num_matches
                 scores[i1, i2] = self._compute_agreement_score(num_matches, event_counts1[i1], event_counts2[i2])
 
@@ -529,6 +530,22 @@ class MappedSortingExtractor(se.SortingExtractor):
             print(unit_id, " is not matched!")
             return None
 
+## for troubleshooting
+def get_unmatched_times(times1,times2,*,delta):
+  times1=np.array(times1)
+  times2=np.array(times2)
+  times_concat = np.concatenate((times1, times2))
+  membership = np.concatenate((np.ones(times1.shape) * 1, np.ones(times2.shape) * 2))
+  indices = times_concat.argsort()
+  times_concat_sorted = times_concat[indices]
+  membership_sorted = membership[indices]
+  diffs = times_concat_sorted[1:] - times_concat_sorted[:-1]
+  unmatched_inds = 1+np.where((diffs[1:] > delta) & (diffs[:-1] > delta) & (membership_sorted[1:-1]==1))[0]
+  if (diffs[0]>delta) and (membership_sorted[0]==1):
+    unmatched_inds=np.concatenate(([0],unmatched_inds))
+  if (diffs[-1]>delta) and (membership_sorted[-1]==1):
+    unmatched_inds=np.concatenate((unmatched_inds,[len(membership_sorted)-1]))
+  return times_concat_sorted[unmatched_inds]
 
 def count_matching_events(times1, times2, delta=10):
     times_concat = np.concatenate((times1, times2))

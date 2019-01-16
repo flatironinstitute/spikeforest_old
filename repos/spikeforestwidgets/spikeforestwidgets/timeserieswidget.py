@@ -30,6 +30,16 @@ class TimeseriesWidget(vd.Component):
         js=self._div_id.join(js.split('{div_id}'))
         js=self._array_b64.join(js.split('{b64}'))
         vd.devel.loadJavascript(js=js)
+        self._size=(800,400)
+    def setSize(self,size):
+        print('setSize')
+        if self._size==size:
+            return
+        print('test 1')
+        self._size=size
+        print('test 2')
+        self.refresh()
+        print('test 3')
     def render(self):
         div=vd.div(id=self._div_id)
         js="""
@@ -48,11 +58,13 @@ class TimeseriesWidget(vd.Component):
         A.setFromArrayBuffer(X);
         let TS=new window.TimeseriesModel(A,{samplerate:{samplerate}});
         W.setTimeseriesModel(TS);
-        W.setSize(800,400)
+        W.setSize({width},{height})
         $('#{div_id}').empty();
         $('#{div_id}').append(W.div());
         """
         js=self._div_id.join(js.split('{div_id}'))
+        js=js.replace('{width}',str(self._size[0]))
+        js=js.replace('{height}',str(self._size[1]))
         js='{}'.format(self._recording.getSamplingFrequency()).join(js.split('{samplerate}'))
         vd.devel.loadJavascript(js=js,delay=1)
         return div

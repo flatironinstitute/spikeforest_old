@@ -1,5 +1,6 @@
 import uuid
 import os
+import traceback
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global=dict(
@@ -26,12 +27,18 @@ def invoke_callback(callback_id, argument_list=[], kwargs={}):
     return f(*argument_list, **kwargs)
 
 def register_callback(callback_id,callback):
+    def the_callback(*args,**kwargs):
+        try:
+            callback(*args,**kwargs)
+        except Exception as err:
+            traceback.print_exc()
+            print('Error: ',err)
     if vdomr_global['mode']=='colab':
         from google.colab import output as colab_output
-        colab_output.register_callback(callback_id,callback)
+        colab_output.register_callback(callback_id,the_callback)
         exec_javascript('window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
     elif (vdomr_global['mode']=='jp_proxy_widget') or (vdomr_global['mode']=='server'):
-        vdomr_global['invokable_functions'][callback_id] = callback
+        vdomr_global['invokable_functions'][callback_id] = the_callback
 
 def _do_init():
     vdomr_global['mode']=_determine_mode()

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #OPTS="--run_prefix \"srun -c 2 -n 40 -p ccm --time=01:00:00\""
-OPTS="--clear --job_index 0 --mlpr_force_run"
+#OPTS="--clear --job_index 0 --mlpr_force_run"
+OPTS="--clear --job_index 0"
 #OPTS=""
 #OPTS="--parallel 10"
 
