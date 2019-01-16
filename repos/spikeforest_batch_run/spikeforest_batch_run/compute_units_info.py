@@ -36,7 +36,8 @@ def compute_unit_templates(*,recording,sorting,unit_ids,snippet_len=50):
 def compute_template_snr(template,channel_noise_levels):
     channel_snrs=[]
     for ch in range(template.shape[0]):
-        channel_snrs.append((np.max(template[ch,:])-np.min(template[ch,:]))/channel_noise_levels[ch])
+        #channel_snrs.append((np.max(template[ch,:])-np.min(template[ch,:]))/channel_noise_levels[ch])
+        channel_snrs.append((np.max(np.abs(template[ch,:])))/channel_noise_levels[ch])
     return float(np.max(channel_snrs))
     
 def compute_channel_noise_levels(recording):
