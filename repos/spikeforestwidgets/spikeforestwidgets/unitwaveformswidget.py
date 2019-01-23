@@ -3,14 +3,16 @@ from matplotlib import pyplot as plt
 import vdomr as vd
 
 class UnitWaveformsWidget(vd.Component):
-  def __init__(self,*,recording,sorting,max_num_spikes_per_unit=20):
+  def __init__(self,*,recording,sorting,max_num_spikes_per_unit=20,snippet_len=100):
     vd.Component.__init__(self)
     self._widgets=[
         UnitWaveformWidget(
             recording=recording,
             sorting=sorting,
             unit_id=id,
-            max_num_spikes_per_unit=max_num_spikes_per_unit
+            average_waveform=None,
+            max_num_spikes_per_unit=max_num_spikes_per_unit,
+            snippet_len=snippet_len
         )
         for id in sorting.getUnitIds()
     ]
@@ -29,13 +31,16 @@ class UnitWaveformsWidget(vd.Component):
     return div
 
 class UnitWaveformWidget(vd.Component):
-  def __init__(self,*,recording,sorting,unit_id,max_num_spikes_per_unit=20):
+  def __init__(self,*,recording,sorting,unit_id,average_waveform=None,show_average=True,max_num_spikes_per_unit=20,snippet_len=100):
     vd.Component.__init__(self)
     self._plot=_UnitWaveformPlot(
         recording=recording,
         sorting=sorting,
         unit_id=unit_id,
-        max_num_spikes_per_unit=max_num_spikes_per_unit
+        average_waveform=average_waveform,
+        show_average=show_average,
+        max_num_spikes_per_unit=max_num_spikes_per_unit,
+        snippet_len=snippet_len
     )
     self._plot_div=vd.components.LazyDiv(self._plot)
     self._unit_id=unit_id
@@ -61,12 +66,15 @@ class UnitWaveformWidget(vd.Component):
 import time
 import spikewidgets as sw
 class _UnitWaveformPlot(vd.components.Pyplot):
-  def __init__(self,*,recording,sorting,unit_id,max_num_spikes_per_unit):
+  def __init__(self,*,recording,sorting,unit_id,average_waveform,show_average,max_num_spikes_per_unit,snippet_len):
     vd.components.Pyplot.__init__(self)
     self._recording=recording
     self._sorting=sorting
     self._unit_id=unit_id
     self._max_num_spikes_per_unit=max_num_spikes_per_unit
+    self._average_waveform=average_waveform
+    self._show_average=show_average
+    self._snippet_len=snippet_len
   def plot(self):
     #W=sw.UnitWaveformsWidget(recording=self._recording,sorting=self._sorting,unit_ids=[self._unit_id],width=5,height=5)
     #W.plot()
@@ -74,7 +82,10 @@ class _UnitWaveformPlot(vd.components.Pyplot):
         recording=self._recording,
         sorting=self._sorting,
         unit_id=self._unit_id,
-        max_num_spikes_per_unit=self._max_num_spikes_per_unit
+        average_waveform=self._average_waveform,
+        show_average=self._show_average,
+        max_num_spikes_per_unit=self._max_num_spikes_per_unit,
+        snippet_len=self._snippet_len
     )
 
 def _compute_minimum_gap(x):
@@ -83,7 +94,7 @@ def _compute_minimum_gap(x):
     return 1
   return np.min(np.diff(a))
 
-def _plot_spike_shapes(*, representative_waveforms=None, average_waveform=None, channel_locations=None,
+def _plot_spike_shapes(*, representative_waveforms=None, average_waveform=None, show_average, channel_locations=None,
                            ylim=None, max_representatives=None, color='blue', title=''):
     if average_waveform is None:
         if representative_waveforms is None:
@@ -127,6 +138,15 @@ def _plot_spike_shapes(*, representative_waveforms=None, average_waveform=None, 
                 indices = np.random.choice(range(W0.shape[2]), size=max_representatives, replace=False)
                 representative_waveforms = W0[:, :, indices]
         L = representative_waveforms.shape[2]
+        # for j in range(L):
+        #     XX = np.zeros((T, M))
+        #     YY = np.zeros((T, M))
+        #     for m in range(M):
+        #         loc = channel_locations[m, -2:]
+        #         XX[:, m] = loc[0] + xvals
+        #         YY[:, m] = loc[1] + (representative_waveforms[m, :, j] - representative_waveforms[m, 0, j])*yscale
+        #     color=(np.random.uniform(0,1), np.random.uniform(0,1), np.random.uniform(0,1))
+        #     plt.plot(XX, YY, color=color, alpha=0.3)    
         XX = np.zeros((T, M, L))
         YY = np.zeros((T, M, L))
         for m in range(M):
@@ -136,15 +156,16 @@ def _plot_spike_shapes(*, representative_waveforms=None, average_waveform=None, 
                 YY[:, m, j] = loc[1] + (representative_waveforms[m, :, j] - representative_waveforms[m, 0, j])*yscale
         XX = XX.reshape(T, M * L)
         YY = YY.reshape(T, M * L)
-        plt.plot(XX, YY, color=(0.5, 0.5, 0.5), alpha=0.4)
+        plt.plot(XX, YY, color=(0.5, 0.5, 0.5), alpha=0.5)
 
-        XX = np.zeros((T, M))
-        YY = np.zeros((T, M))
-        for m in range(M):
-            loc = channel_locations[m, -2:]
-            XX[:, m] = loc[0] + xvals
-            YY[:, m] = loc[1] + (average_waveform[m, :] - average_waveform[m, 0])*yscale
-        plt.plot(XX, YY, color)
+        if show_average:
+            XX = np.zeros((T, M))
+            YY = np.zeros((T, M))
+            for m in range(M):
+                loc = channel_locations[m, -2:]
+                XX[:, m] = loc[0] + xvals
+                YY[:, m] = loc[1] + (average_waveform[m, :] - average_waveform[m, 0])*yscale
+            plt.plot(XX, YY, color)
         
     plt.xlim(xmin-xgap/2,xmax+xgap/2)
     plt.ylim(ymin-ygap/2,ymax+ygap/2)
@@ -169,7 +190,7 @@ def _get_random_spike_waveforms(*,recording, sorting, unit, max_num, channels, s
         spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
     return spikes
 
-def plot_unit_waveform(*,recording,sorting,unit_id,max_num_spikes_per_unit,channel_ids=None,snippet_len=100,title=''):
+def plot_unit_waveform(*,recording,sorting,unit_id,max_num_spikes_per_unit,average_waveform,show_average,channel_ids=None,snippet_len=100,title=''):
   if not channel_ids:
     channel_ids=recording.getChannelIds()
   M = len(channel_ids)
@@ -182,4 +203,4 @@ def plot_unit_waveform(*,recording,sorting,unit_id,max_num_spikes_per_unit,chann
   #if not title:
   #  title='Unit {}'.format(int(unit_id))
   
-  _plot_spike_shapes(representative_waveforms=spikes,channel_locations=channel_locations, title=title)
+  _plot_spike_shapes(representative_waveforms=spikes,channel_locations=channel_locations, average_waveform=average_waveform, show_average=show_average, title=title)

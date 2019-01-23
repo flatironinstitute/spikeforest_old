@@ -524,7 +524,11 @@ class VIEW_TrueUnitsTable(Table):
     self._context.setSelectedTrueUnitIds(self.selectedRowIds())
   def _update(self):
     self.setColumnLabels([
-        'Unit ID','SNR','Peak channel','Num. events','Firing rate','Accuracy','Best unit','Matched unit','False neg rate','False pos rate','Num matches'
+        'Unit ID','SNR','Peak channel',
+        'Num. events','Firing rate','Accuracy',
+        'Best unit','Matched unit',
+        'False neg rate','False pos rate',
+        'Num matches','Num false neg','Num false pos'
     ])
     self.clearRows()
     for unit in self._true_units_info:
@@ -537,6 +541,8 @@ class VIEW_TrueUnitsTable(Table):
           f_n=item['f_n']
           f_p=item['f_p']
           num_matches=item['num_matches']
+          num_false_negatives=item.get('num_false_negatives','')
+          num_false_positives=item.get('num_false_positives','')
         else:
           accuracy=''
           best_unit=''
@@ -544,6 +550,8 @@ class VIEW_TrueUnitsTable(Table):
           f_n=''
           f_p=''
           num_matches=''
+          num_false_negatives=''
+          num_false_positives=''
         self.addRow(
             id=unit_id,
             values=[
@@ -557,7 +565,9 @@ class VIEW_TrueUnitsTable(Table):
               matched_unit,
               _f3(f_n),
               _f3(f_p),
-              num_matches
+              num_matches,
+              num_false_negatives,
+              num_false_positives
             ]
         )
     self._update_selection()

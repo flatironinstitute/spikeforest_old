@@ -17,12 +17,15 @@ class KBucketClient():
         upload_share_id=None,
         upload_token=None,
         local_cache_dir=os.getenv('KBUCKET_CACHE_DIR','/tmp/sha1-cache'),
+        local_cache_dir2=os.getenv('KBUCKET_CACHE_DIR2',''),
         load_local=True,
         load_remote=True,
         save_remote=True
     )
     self._sha1_cache=Sha1Cache()
     self._sha1_cache.setDirectory(self._config['local_cache_dir'])
+    if self._config['local_cache_dir2']:
+      self._sha1_cache.setDirectory2(self._config['local_cache_dir2'])
     self._nodeinfo_cache={}
     self._verbose=False
 
@@ -32,6 +35,7 @@ class KBucketClient():
     upload_share_id=None,
     upload_token=None,
     local_cache_dir=None,
+    local_cache_dir2=None,
     load_local=None,
     load_remote=None, save_remote=None,
     verbose=None
@@ -51,6 +55,9 @@ class KBucketClient():
     if local_cache_dir is not None:
       self._config['local_cache_dir']=local_cache_dir
       self._sha1_cache.setDirectory(self._config['local_cache_dir'])
+    if local_cache_dir2 is not None:
+      self._config['local_cache_dir2']=local_cache_dir2
+      self._sha1_cache.setDirectory2(self._config['local_cache_dir2'])
     if load_local is not None:
       self._config['load_local']=load_local
     if load_remote is not None:
@@ -442,14 +449,19 @@ def _safe_list_dir(path):
     return []
 
 # TODO: implement cleanup() for Sha1Cache
-# removing .report.json and .hints.json files that are no longer relevant
+# removing .record.json and .hints.json files that are no longer relevant
 class Sha1Cache():
   def __init__(self):
     self._directory=''
+    self._directory2=None # for hints.json and record.json
   def setDirectory(self,directory):
     if not os.path.exists(directory):
       os.mkdir(directory)
     self._directory=directory
+  def setDirectory2(self,directory2): # for .hints.json and .record.json
+    if not os.path.exists(directory2):
+      os.mkdir(directory2)
+    self._directory2=directory2
   def findFile(self,sha1):
     path=self._get_path(sha1,create=False)
     if os.path.exists(path):
@@ -527,7 +539,7 @@ class Sha1Cache():
     aa=_get_stat_object(path)
     aa_hash=_compute_string_sha1(json.dumps(aa, sort_keys=True))
 
-    path0=self._get_path(aa_hash,create=True)+'.record.json'
+    path0=self._get_path(aa_hash,create=True,directory=self._directory2)+'.record.json'
     if os.path.exists(path0):
       obj=_read_json_file(path0)
       if obj:
@@ -549,7 +561,7 @@ class Sha1Cache():
     )
     _write_json_file(obj,path0)
 
-    path1=self._get_path(sha1,create=True)+'.hints.json'
+    path1=self._get_path(sha1,create=True,directory=self._directory2)+'.hints.json'
     if os.path.exists(path1):
       hints=_read_json_file(path1)
     else:
@@ -561,8 +573,10 @@ class Sha1Cache():
     ## todo: use hints for findFile
     return sha1
 
-  def _get_path(self,sha1,*,create=True):
-    path0=self._directory+'/{}/{}{}'.format(sha1[0],sha1[1],sha1[2])
+  def _get_path(self,sha1,*,create=True,directory=None):
+    if directory is None:
+      directory=self._directory
+    path0=directory+'/{}/{}{}'.format(sha1[0],sha1[1],sha1[2])
     if create:
       if not os.path.exists(path0):
         os.makedirs(path0)

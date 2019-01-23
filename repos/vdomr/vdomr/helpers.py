@@ -158,3 +158,5 @@ menuitem = _create_component('menuitem')
 summary = _create_component('summary')
 
 style = _create_component('style')
+
+svg = _create_component('svg')

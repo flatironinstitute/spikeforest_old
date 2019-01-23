@@ -92,7 +92,7 @@ def loadJavascript(*,url=None,path=None,js=None,delay=None):
 
     document.getElementsByTagName( "head" )[0].appendChild( script );
     """
-    js0=url.join(js0.split('{script}'))
+    js0=url.join(js0.split('{url}'))
     loadJavascript(js=js0)
 
     #display(HTML('<script src="{}"></script>'.format(url)))

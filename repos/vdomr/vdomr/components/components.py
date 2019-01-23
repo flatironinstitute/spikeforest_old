@@ -124,7 +124,7 @@ class Pyplot(vd.Component):
         except Exception as e:
             return vd.div('Error in plot: '+str(e))
         tmp_fname='tmp_pyplot.jpg'
-        _save_plot(fig,tmp_fname)
+        _save_plot(fig,tmp_fname,quality=100)
         with open(tmp_fname,'rb') as f:
           self._image_data_b64=base64.b64encode(f.read()).decode('utf-8')
         os.remove(tmp_fname)
