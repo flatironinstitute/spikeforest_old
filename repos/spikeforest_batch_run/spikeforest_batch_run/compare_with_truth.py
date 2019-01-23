@@ -70,14 +70,14 @@ def get_comparison_data_frame(*,comparison):
             num_false_positives=0
         row0 = {
             'unit_id': unit1,
-            'accuracy': SC.getAgreementFraction(unit1, unit2),
+            'accuracy': _safe_frac(num_matches,num_false_positives+num_false_negatives+num_matches),
             'best_unit': unit2,
             'matched_unit': SC.getMappedSorting1().getMappedUnitIds(unit1),
             'num_matches': num_matches,
             'num_false_negatives': num_false_negatives,
             'num_false_positives': num_false_positives,
-            'f_n': _safe_frac(num_false_negatives,event_counts1[unit1]),
-            'f_p': _safe_frac(num_false_positives,event_counts2[unit2])
+            'f_n': _safe_frac(num_false_negatives,num_false_negatives+num_matches),
+            'f_p': _safe_frac(num_false_positives,num_false_positives+num_matches)
         }
         for prop in unit_properties:
             pname = prop['name']
