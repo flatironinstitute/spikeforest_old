@@ -175,8 +175,9 @@ class LazyDiv(vd.Component):
         self.refresh()
     def render(self):
         try:
-            size=self._child.size() ## if it has the size attribute
+            size=self._child.size() ## if it has the size method
         except:
+            print('Warning: child of LazyDiv does not have a size() method')
             size=(300,300)
         div_style=dict()
         div_style['width']='{}px'.format(size[0])
