@@ -60,9 +60,14 @@ def get_comparison_data_frame(*,comparison):
     rows = []
     for u_1, unit1 in enumerate(unit1_ids):
         unit2 = SC.getBestUnitMatch1(unit1)
-        num_matches=SC.getMatchingEventCount(unit1, unit2)
-        num_false_negatives=event_counts1[unit1]-num_matches
-        num_false_positives=event_counts2[unit2]-num_matches
+        if unit2>=0:
+            num_matches=SC.getMatchingEventCount(unit1, unit2)
+            num_false_negatives=event_counts1[unit1]-num_matches
+            num_false_positives=event_counts2[unit2]-num_matches
+        else:
+            num_matches=0
+            num_false_negatives=event_counts1[unit1]
+            num_false_positives=0
         row0 = {
             'unit_id': unit1,
             'accuracy': SC.getAgreementFraction(unit1, unit2),
