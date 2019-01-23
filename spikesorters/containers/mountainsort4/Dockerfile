@@ -8,7 +8,7 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "12 January 2019"
+RUN echo "23 January 2019"
 
 #########################################
 ### spikeforest2

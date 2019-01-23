@@ -223,7 +223,7 @@ if __name__ == "__main__":
             val=os.environ.get(v,'')
             if val:
                 env_vars.append('{}={}'.format(v,val))
-    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache KBUCKET_CACHE_DIR=/sha1-cache2 {} python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container,' '.join(env_vars))
+    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container,' '.join(env_vars))
 
 
     retcode = _run_command_and_print_output(singularity_cmd)
