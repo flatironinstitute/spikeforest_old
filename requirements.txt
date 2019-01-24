@@ -1,9 +1,9 @@
-#spikeforest dependencies
+#spikeforest2 dependencies
 jsonschema
 numexpr
 ipywidgets
 numpydoc
-altair
+# altair - no longer needed
 
 numpy
 matplotlib
