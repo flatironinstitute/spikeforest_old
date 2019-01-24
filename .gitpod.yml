@@ -1,5 +1,4 @@
-image:
-  file: Dockerfile
+image: gitpod/workspace-full:latest
 ports:
 - port: 3005
 tasks:
