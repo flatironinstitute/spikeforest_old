@@ -7,10 +7,20 @@ conda create -n spikeforest2 python=3.6
 conda activate spikeforest2
 ```
 
-Then run the install script
+Then run the following
 
 ```
-./install_within_conda.sh
+# See: setup_python.sh
+pip install -r requirements.txt
+python setup.py develop
+```
+
+To run colab jupyter notebooks in a local runtime, we recommend chrome browser or chromium-browser. Firefox browser may not properly connect to the local runtime environment. You must run the following prior to using colab with a local runtime:
+
+```
+# colab (see setup_colab.sh)
+pip install jupyter_http_over_ws
+jupyter serverextension enable --py jupyter_http_over_ws
 ```
 
 In addition, if you want to use some of the interactive graphics within jupyterlab, do the following:
@@ -18,8 +28,6 @@ In addition, if you want to use some of the interactive graphics within jupyterl
 ```
 ./install_jp_proxy_widget.sh
 ```
-
-To run colab jupyter notebooks in a local runtime, we recommend chrome browser or chromium-browser. Firefox browser may not connect to the local runtime environment.
 
 This project contains a snapshot of a number of different dependent projects contained in repo/. These may or may not be up-to-date with the associated stand-alone packages. In this way, spikeforest2 is a snapshot project that contains all the necessary code, and is less susceptible to breaking changes in other packages.
 

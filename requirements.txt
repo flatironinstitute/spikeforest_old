@@ -1,4 +1,5 @@
-#spikeforest2 dependencies
+# spikeforest2 dependencies
+# you can install these via: pip install -r requirements.txt
 jsonschema
 numexpr
 ipywidgets
