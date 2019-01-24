@@ -1,7 +1,7 @@
 from .vdom import VDOM
 import uuid
-from IPython.display import Javascript
 from .vdomr import register_callback
+
 
 def _create_component(tag_name, allow_children=True, callbacks=[]):
     """
@@ -31,35 +31,36 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
         else:
             attributes = dict(**kwargs)
 
-        if (tag_name=='a') and ('href' not in attributes):
-            attributes['href']='#'
+        if (tag_name == 'a') and ('href' not in attributes):
+            attributes['href'] = '#'
 
         if not allow_children and children:
             # We don't allow children, but some were passed in
-            raise ValueError('<{tag_name} /> cannot have children'.format(tag_name=tag_name))
-            
+            raise ValueError(
+                '<{tag_name} /> cannot have children'.format(tag_name=tag_name))
+
         for cb in callbacks:
-          cbname=cb['name']
-          if cbname in attributes:
-            if attributes[cbname] is not None:
-                from google.colab import output as colab_output
-                callback_id = cbname+'callback-' + str(uuid.uuid4())
-                register_callback(callback_id,attributes[cbname])
-                #js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
-                js="window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
-                js=js.replace('{callback_id}',callback_id)
-                js=js.replace('{kwargs}',cb['kwargs'])
-                attributes[cbname]=js
-            else:
-                attributes[cbname]=''
+            cbname = cb['name']
+            if cbname in attributes:
+                if attributes[cbname] is not None:
+                    from google.colab import output as colab_output
+                    callback_id = cbname+'callback-' + str(uuid.uuid4())
+                    register_callback(callback_id, attributes[cbname])
+                    #js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
+                    js = "window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
+                    js = js.replace('{callback_id}', callback_id)
+                    js = js.replace('{kwargs}', cb['kwargs'])
+                    attributes[cbname] = js
+                else:
+                    attributes[cbname] = ''
 
         v = VDOM(tag_name, attributes, style, children)
         return v
 
-
     return _component
 
 # From https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+
 
 # Content sectioning
 address = _create_component('address')
@@ -80,7 +81,7 @@ section = _create_component('section')
 # Text content
 blockquote = _create_component('blockquote')
 dd = _create_component('dd')
-div = _create_component('div',callbacks=[dict(name='onclick',kwargs='{}')])
+div = _create_component('div', callbacks=[dict(name='onclick', kwargs='{}')])
 dl = _create_component('dl')
 dt = _create_component('dt')
 figcaption = _create_component('figcaption')
@@ -93,7 +94,7 @@ pre = _create_component('pre')
 ul = _create_component('ul')
 
 # Inline text semantics
-a = _create_component('a',callbacks=[dict(name='onclick',kwargs='{}')])
+a = _create_component('a', callbacks=[dict(name='onclick', kwargs='{}')])
 abbr = _create_component('abbr')
 b = _create_component('b')
 br = _create_component('br', allow_children=False)
@@ -108,7 +109,7 @@ q = _create_component('q')
 s = _create_component('s')
 samp = _create_component('samp')
 small = _create_component('small')
-span = _create_component('span',callbacks=[dict(name='onclick',kwargs='{}')])
+span = _create_component('span', callbacks=[dict(name='onclick', kwargs='{}')])
 strong = _create_component('strong')
 sub = _create_component('sub')
 sup = _create_component('sup')
@@ -135,11 +136,13 @@ thead = _create_component('thead')
 tr = _create_component('tr')
 
 # Forms (only read only aspects)
-button = _create_component('button',callbacks=[dict(name='onclick',kwargs='{}')])
+button = _create_component(
+    'button', callbacks=[dict(name='onclick', kwargs='{}')])
 datalist = _create_component('datalist')
 fieldset = _create_component('fieldset')
 form = _create_component('form')
-input = _create_component('input',callbacks=[dict(name='onchange',kwargs='{value:this.value}')])
+input = _create_component('input', callbacks=[dict(
+    name='onchange', kwargs='{value:this.value}')])
 label = _create_component('label')
 legend = _create_component('legend')
 meter = _create_component('meter')
@@ -147,8 +150,10 @@ optgroup = _create_component('optgroup')
 option = _create_component('option')
 output = _create_component('output')
 progress = _create_component('progress')
-select = _create_component('select',callbacks=[dict(name='onchange',kwargs='{value:this.value}')])
-textarea = _create_component('textarea',callbacks=[dict(name='onchange',kwargs='{value:this.value}')])
+select = _create_component('select', callbacks=[dict(
+    name='onchange', kwargs='{value:this.value}')])
+textarea = _create_component('textarea', callbacks=[dict(
+    name='onchange', kwargs='{value:this.value}')])
 
 # Interactive elements
 details = _create_component('details')

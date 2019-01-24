@@ -1,8 +1,9 @@
 from html import escape
-from ipython_genutils.py3compat import PY3, safe_unicode, string_types
+from ipython_genutils.py3compat import safe_unicode, string_types
 import re
 import io
 from copy import deepcopy
+
 
 class VDOM(object):
     def __init__(self, tag_name, attributes=None, style=None, children=None):
@@ -17,7 +18,6 @@ class VDOM(object):
             for k, v in self.style.items()
         ):
             raise ValueError('Style must be a dict with string keys & values')
-
 
     def to_html(self):
         return self._repr_html_()
@@ -38,15 +38,17 @@ class VDOM(object):
             out.write('<{tag}'.format(tag=escape(self.tag_name)))
             if self.style:
                 # Important values are in double quotes - cgi.escape only escapes double quotes, not single quotes!
-                out.write(' style="{css}"'.format(css=escape(self._to_inline_css(self.style))))
+                out.write(' style="{css}"'.format(
+                    css=escape(self._to_inline_css(self.style))))
 
             for k, v in self.attributes.items():
-                k2=k
-                if k2=='class_':
-                    k2='class'
+                k2 = k
+                if k2 == 'class_':
+                    k2 = 'class'
                 # Important values are in double quotes - cgi.escape only escapes double quotes, not single quotes!
                 if isinstance(v, string_types):
-                    out.write(' {key}="{value}"'.format(key=escape(k2), value=escape(v)))
+                    out.write(' {key}="{value}"'.format(
+                        key=escape(k2), value=escape(v)))
                 if isinstance(v, bool) and v:
                     out.write(' {key}'.format(key=escape(k2)))
             out.write('>')
@@ -61,9 +63,13 @@ class VDOM(object):
 
             return out.getvalue()
 
+
 upper = re.compile(r'[A-Z]')
+
+
 def _upper_replace(matchobj):
     return '-' + matchobj.group(0).lower()
+
 
 def convert_style_key(key):
     """Converts style names from DOM to css styles.
