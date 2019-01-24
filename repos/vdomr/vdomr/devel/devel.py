@@ -67,7 +67,6 @@ def loadJavascript(*,url=None,path=None,js=None,delay=None):
   if js:
     if delay is not None:
       js2="""
-      console.log('test1');
       setTimeout(function() {
         {js}
       },{delay})

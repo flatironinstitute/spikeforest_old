@@ -7,7 +7,6 @@ window.Simplot=(function() {
   }
   
   function inject_css(css) {
-  	console.log('inject css');
   	let style = document.createElement( "style" );
     style.appendChild(document.createTextNode(css));
     document.getElementsByTagName( "head" )[0].appendChild( style );
@@ -348,7 +347,6 @@ window.Simplot=(function() {
         if (obj.tooltip) {
           let tt=obj.tooltip();
           if ((tt)&&(tt.text)) {
-            console.log('test!!!',tt.text);
             the_tooltip=tt;
           }
         }

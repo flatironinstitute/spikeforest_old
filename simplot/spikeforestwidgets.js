@@ -12,6 +12,7 @@ window.SpikeforestWidgets=(function() {
   }
 
 	function SpikeWaveformsWidget(div) {
+		console.log('SpikeWaveformsWidget');
 		let that=this;
 		this.setSize=function(W,H) {setSize(W,H);};
 		this.setGeometry=function(geom) {m_geometry=clone(geom); schedule_update_spikes();}; //should be done prior to adding spikes
