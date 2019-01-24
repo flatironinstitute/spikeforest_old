@@ -6,6 +6,7 @@ import pathlib
 import random
 import fasteners
 import base64
+from datetime import datetime as dt
 
 class PairioClient():
     def __init__(self):
@@ -307,6 +308,7 @@ def _filter_key(key):
     raise Exception('Invalid type for key')
         
 def _http_get_json(url,verbose=False):
+    #print('pairio _http_get_json 1',dt.now())
     if verbose:
       print ('_http_get_json::: '+url)
     try:
@@ -319,6 +321,7 @@ def _http_get_json(url,verbose=False):
         raise Exception('Unable to load json from url: '+url)
     if verbose:
       print ('done.')
+    #print('------ _http_get_json 2',dt.now())
     return ret
 
 def _sha1_of_string(txt):

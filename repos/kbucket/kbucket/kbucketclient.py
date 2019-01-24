@@ -8,6 +8,7 @@ import random
 from pairio import client as pairio
 from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
+from datetime import datetime as dt
 
 class KBucketClient():
   def __init__(self):
@@ -306,7 +307,6 @@ class KBucketClient():
     if path is not None:
       if sha1 is not None:
         raise Exception('Cannot specify both path and sha1 in find file')
-
       if path.startswith('sha1://'):
         list=path.split('/')
         sha1=list[2]
@@ -382,6 +382,7 @@ class KBucketClient():
     return _http_get_json(url,verbose=self._verbose)
 
 def _http_get_json(url,verbose=False):
+    timer=dt.now()
     if verbose:
       print ('_http_get_json::: '+url)
     try:
@@ -395,7 +396,6 @@ def _http_get_json(url,verbose=False):
     if verbose:
       print ('done.')
     return ret
-
 
 def _http_post_file_data(url,fname):
   with open(fname, 'rb') as f:
@@ -438,7 +438,7 @@ def _safe_list_dir(path):
     ret=os.listdir(path)
     return ret
   except:
-    print('Warning: unable to listdir: '+path)
+    print ('Warning: unable to listdir: '+path)
     return []
 
 # TODO: implement cleanup() for Sha1Cache
@@ -474,12 +474,12 @@ class Sha1Cache():
           try:
             _write_json_file(hints,hints_fname)
           except:
-            print('Warning: problem writing hints file: '+hints_fname)
+            print ('Warning: problem writing hints file: '+hints_fname)
           return matching_files[0]['stat']['path']
         else:
           _safe_remove_file(hints_fname)
       else:
-        print('Warning: failed to load hints json file, or invalid file. Removing: '+hints_fname)
+        print ('Warning: failed to load hints json file, or invalid file. Removing: '+hints_fname)
         _safe_remove_file(hints_fname)
 
   def downloadFile(self,url,sha1,target_path=None,size=None,verbose=True):
@@ -554,7 +554,7 @@ class Sha1Cache():
     try:
       _write_json_file(obj,path0)
     except:
-      print('Warning: problem writing .record.json file: '+path0)
+      print ('Warning: problem writing .record.json file: '+path0)
 
     path1=self._get_path(sha1,create=True,directory=self._directory2)+'.hints.json'
     if os.path.exists(path1):
@@ -567,7 +567,7 @@ class Sha1Cache():
     try:
       _write_json_file(hints,path1)
     except:
-      print('Warning: problem writing .hints.json file: '+path1)
+      print ('Warning: problem writing .hints.json file: '+path1)
     ## todo: use hints for findFile
     return sha1
 
@@ -641,7 +641,7 @@ def _read_json_file(path):
     with open(path) as f:
       return json.load(f)
   except:
-    print('Warning: Unable to read or parse json file: '+path)
+    print ('Warning: Unable to read or parse json file: '+path)
     return None
 
 def _write_json_file(obj,path):
