@@ -3,5 +3,5 @@ ports:
 tasks:
 - command: pip install -r requirements.txt
 - command: python setup.py develop
-- command: npm install -g nodemon
+- command: sudo npm install -g nodemon
 - command: pip install jupyterlab
