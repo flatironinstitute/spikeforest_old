@@ -4,8 +4,8 @@ pkg_name="mlprocessors"
 
 setuptools.setup(
     name=pkg_name,
-    version="0.2.6",
-    author="Witold Wysota",
+    version="0.3.0",
+    author="Witold Wysota and Jeremy Magland",
     author_email="wysota@wysota.org",
     description="A Python framework for making MountainLab processor packages",
     url="https://github.com/flatironinstitute/mlprocessors",

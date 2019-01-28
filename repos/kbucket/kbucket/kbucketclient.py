@@ -446,7 +446,6 @@ def _safe_list_dir(path):
 class Sha1Cache():
   def __init__(self):
     self._directory=''
-    self._directory2=None # for hints.json and record.json
   def setDirectory(self,directory):
     if not os.path.exists(directory):
       os.mkdir(directory)
@@ -556,7 +555,7 @@ class Sha1Cache():
     except:
       print ('Warning: problem writing .record.json file: '+path0)
 
-    path1=self._get_path(sha1,create=True,directory=self._directory2)+'.hints.json'
+    path1=self._get_path(sha1,create=True,directory=self._directory)+'.hints.json'
     if os.path.exists(path1):
       hints=_read_json_file(path1)
     else:
