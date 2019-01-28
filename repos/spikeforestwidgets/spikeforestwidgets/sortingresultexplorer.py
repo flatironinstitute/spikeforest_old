@@ -531,6 +531,9 @@ class VIEW_TrueUnitsTable(Table):
         'Num matches','Num false neg','Num false pos'
     ])
     self.clearRows()
+    if not self._true_units_info:
+        print('WARNING: _true_units_info is null.')
+        return
     for unit in self._true_units_info:
         unit_id=unit['unit_id']
         if unit_id in self._comparison_by_unit:
