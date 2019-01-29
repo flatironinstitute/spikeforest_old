@@ -1,3 +1,2 @@
 tasks:
-- command: pip install -r requirements.txt && python setup.py develop
-- command: pip install jupyterlab
+- command: ./gitpod_init.sh
