@@ -1,2 +1,3 @@
+image: "magland/gitpod_spikeforest2"
 tasks:
 - command: ./gitpod_init.sh
