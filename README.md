@@ -1,6 +1,10 @@
 ## SpikeForest2
 
-This is a meta repository that is meant to be used in development/editable mode. To install using conda, first create a conda environment with python 3.6:
+## Installation
+
+This is a meta repository that is meant to be used in development/editable mode.
+
+To install using conda, first create a conda environment with python 3.6:
 
 ```
 conda create -n spikeforest2 python=3.6
@@ -33,3 +37,31 @@ The repo/ directory contains a snapshot of a number of different dependent proje
 
 Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/spikeforest-docs/blob/master/docs/index.md)
 
+## Installation using theiapod
+
+You can use spikeforest2 with theiapod.
+
+Prerequisites: docker and [theiapod](https://github.com/magland/theiapod)/
+
+First clone this repo:
+
+```
+git clone https://github.com/flatironinstitute/SpikeForest2
+```
+
+Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go.
+
+Then run a script such as the following.
+
+```
+#!/bin/bash
+
+OPTS="-v $HOME/.gitconfig:/home_data/.gitconfig"
+
+theiapod -w $PWD/spikeforest2 --port 3000 -p 3005,3006,3007,3008,3009 -v $KBUCKET_CACHE_DIR:/
+tmp/sha1-cache $OPTS
+```
+
+This will create a container with the theia browser-based IDE. You can then start interacting with the project by pointing your web browser (preferably chrome) to `http://localhost:3000`.
+
+Note that, according to the above script, ports 3005-3009 will be exposed. You can use these for jupyter lab or other web services.
