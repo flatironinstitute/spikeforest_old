@@ -2,6 +2,8 @@
 
 ## Installation
 
+(See below for instructions on opening this project in a docker container via theiapod)
+
 This is a meta repository that is meant to be used in development/editable mode.
 
 To install using conda, first create a conda environment with python 3.6:
@@ -41,17 +43,17 @@ Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/s
 
 You can use spikeforest2 with theiapod.
 
-Prerequisites: docker and [theiapod](https://github.com/magland/theiapod)/
+Prerequisites: [docker](https://docs.docker.com/) and [theiapod](https://github.com/magland/theiapod)
 
 First clone this repo:
 
 ```
-git clone https://github.com/flatironinstitute/SpikeForest2
+git clone https://github.com/flatironinstitute/spikeforest2
 ```
 
-Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go.
+Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-Then run a script such as the following.
+Then create and run a script such as the following.
 
 ```
 #!/bin/bash
