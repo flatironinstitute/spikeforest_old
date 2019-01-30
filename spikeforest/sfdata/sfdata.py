@@ -134,7 +134,7 @@ class SFRecording():
     def addSortingResult(self,obj):
         sorter_name=obj['sorter_name']
         if sorter_name in self._sorting_results_by_name:
-            print('Sorting result already in recording: {}'.format(sorter_name))
+            print ('Sorting result already in recording: {}'.format(sorter_name))
         else:
             R=SFSortingResult(obj,self)
             self._sorting_result_names.append(sorter_name)
@@ -158,7 +158,7 @@ class SFStudy():
     def addRecording(self,obj):
         name=obj['name']
         if name in self._recordings_by_name:
-            print('Recording already in study: '+name)
+            print ('Recording already in study: '+name)
         else:
             self._recording_names.append(name)
             D=SFRecording(obj,self)
@@ -181,7 +181,7 @@ class SFData():
         for study in studies:
             name=study['name']
             if name in self._studies_by_name:
-                print('Study already loaded: '+name)
+                print ('Study already loaded: '+name)
             else:
                 self._study_names.append(study['name'])
                 S=SFStudy(study)
@@ -191,7 +191,7 @@ class SFData():
             study=ds['study']
             self._studies_by_name[study].addRecording(ds)
         if verbose:
-            print('Loaded {} recordings'.format(len(recordings)))
+            print ('Loaded {} recordings'.format(len(recordings)))
     def loadProcessingBatch(self,*,batch_name=None,key=None,verbose=False):
         if batch_name:
             key=dict(name='batcho_batch_results',batch_name=batch_name)
@@ -214,9 +214,9 @@ class SFData():
                         num_sorting_results=num_sorting_results+1
                         D.addSortingResult(result)
                     else:
-                        print('Warning: recording not found: '+recording_name)
+                        print ('Warning: recording not found: '+recording_name)
                 else:
-                    print('Warning: study not found: '+study_name)
+                    print ('Warning: study not found: '+study_name)
             elif X['job']['command']=='summarize_recording':
                 study_name=X['job']['recording']['study']
                 recording_name=X['job']['recording']['name']
@@ -228,13 +228,13 @@ class SFData():
                         num_recording_summary_results=num_recording_summary_results+1
                         D.setSummaryResult(result)
                     else:
-                        print('Warning: recording not found: '+recording_name)
+                        print ('Warning: recording not found: '+recording_name)
                 else:
-                    print('Warning: study not found: '+study_name)
+                    print ('Warning: study not found: '+study_name)
             else:
                 pass
         if verbose:
-            print('Loaded {} sorting results and {} recording summary results'.format(num_sorting_results,num_recording_summary_results))
+            print ('Loaded {} sorting results and {} recording summary results'.format(num_sorting_results,num_recording_summary_results))
 
     def studyNames(self):
         return self._study_names

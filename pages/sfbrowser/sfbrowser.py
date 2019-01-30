@@ -16,12 +16,12 @@ class SFBrowser(vd.Component):
             SF.loadRecordings(key=dict(name=recordings_name))
         except:
             raise
-            print('Warning: unable to load recordings: '+recordings_name)
+            print ('Warning: unable to load recordings: '+recordings_name)
         for batch_name in a['batch_names']:
             try:
                 SF.loadProcessingBatch(batch_name=batch_name)
             except:
-                print('Warning: unable to load processing batch: '+batch_name)
+                print ('Warning: unable to load processing batch: '+batch_name)
     self._SF_data=SF
     self._accuracy_threshold_input=vd.components.LineEdit(value=0.8,dtype=float,style=dict(width='70px'))
     self._update_button=vd.components.Button(onclick=self._on_update,class_='button',label='Update')
@@ -31,12 +31,12 @@ class SFBrowser(vd.Component):
     self._update_accuracy_table()
 
   def _on_update(self):
-      print('_on_update')
       self._update_accuracy_table()
 
   def _update_accuracy_table(self):
     accuracy_threshold=self._accuracy_threshold_input.value()
-    self._accuracy_table, self._sorters=_get_accuracy_table(self._SF_data,accuracy_threshold=accuracy_threshold)
+    self._accuracy_table, self._sorters=_get_accuracy_table(self._SF_data,
+    accuracy_threshold=accuracy_threshold)
     self.refresh()
     
   def render(self):
@@ -106,7 +106,7 @@ def _get_study_sorting_results(study):
             num_false_negatives=np.array([unit['num_false_negatives'] for unit in units])
         )
     except:
-        print('WARNING: Problem loading results for sorter: '+sorter)
+        print ('WARNING: Problem loading results for sorter: '+sorter)
         ret[sorter]=dict(
             true_unit_ids=[],
             true_unit_snrs=np.array([]),
@@ -123,7 +123,7 @@ def _get_accuracy_table(SF_data,*,accuracy_threshold):
     accuracy_table=[]
     sorters=set()
     for sname in SF.studyNames():
-        print(sname)
+        print ('STUDY: '+sname)
         study=SF.study(sname)
         b=_get_study_sorting_results(study)
         tmp=dict(study=sname)
