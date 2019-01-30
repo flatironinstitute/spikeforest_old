@@ -362,10 +362,11 @@ class KBucketClient():
       return (None,None)
     urls0=obj['urls']
     results0=obj['results']
-    for url0 in urls0:
-      if _test_url_accessible(url0):
-        size0=results0[0]['size']
-        return (url0,size0)
+    for timeout in [0.5,2]: ## probably not a good idea
+      for url0 in urls0:
+        if _test_url_accessible(url0,timeout=timeout):
+          size0=results0[0]['size']
+          return (url0,size0)
     return (None,None)
 
   def _get_cas_upload_url_for_share(self,share_id):
@@ -407,10 +408,10 @@ def _http_post_file_data(url,fname):
     raise Exception('Error posting file data: {} {}'.format(obj.status_code,obj.content.decode('utf-8')))
   return json.loads(obj.content)
 
-def _test_url_accessible(url):
+def _test_url_accessible(url,timeout):
   try:
     req = urllib.request.Request(url, method="HEAD")
-    code=urllib.request.urlopen(req).getcode()
+    code=urllib.request.urlopen(req,timeout=timeout).getcode()
     return (code==200)
   except:
     return False
