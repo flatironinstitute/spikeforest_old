@@ -1,4 +1,4 @@
-import urllib
+import urllib.request as request
 import json
 import os
 import random
@@ -387,7 +387,7 @@ def _http_get_json(url,verbose=False):
     if verbose:
       print ('_http_get_json::: '+url)
     try:
-        req=urllib.request.urlopen(url)
+        req=request.urlopen(url)
     except:
         raise Exception('Unable to open url: '+url)
     try:
@@ -410,8 +410,8 @@ def _http_post_file_data(url,fname):
 
 def _test_url_accessible(url,timeout):
   try:
-    req = urllib.request.Request(url, method="HEAD")
-    code=urllib.request.urlopen(req,timeout=timeout).getcode()
+    req = request.Request(url, method="HEAD")
+    code=request.urlopen(req,timeout=timeout).getcode()
     return (code==200)
   except:
     return False

@@ -1,5 +1,5 @@
 import json
-import urllib
+import urllib.request as request
 import hashlib
 import os
 import pathlib
@@ -312,7 +312,7 @@ def _http_get_json(url,verbose=False):
     if verbose:
       print ('_http_get_json::: '+url)
     try:
-        req=urllib.request.urlopen(url)
+        req=request.urlopen(url)
     except:
         raise Exception('Unable to open url: '+url)
     try:
