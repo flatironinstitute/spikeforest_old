@@ -12,7 +12,7 @@ function print_usage() {
   console.info('pairio get [user] [key]');
   console.info('pairio set [user] [key] [value]');
   console.info('Admin usage:');
-  console.info('pairio register [user]');
+  console.info('pairio register [user] [usertoken]');
   console.info('pairio get_user_params [user]');
   console.info('pairio set_max_num_pairs [user] [max_num_pairs]');
 }
@@ -103,6 +103,7 @@ function handle_set() {
 
 function handle_register() {
 	let user=arg1;
+    let usertoken=arg2;
 	let token=process.env.PAIRIO_ADMIN_TOKEN;
 	if (!user) {
 		print_usage();
@@ -112,7 +113,7 @@ function handle_register() {
 		console.error('You must set the following environment variables: PAIRIO_ADMIN_TOKEN');
 		process.exit(-1);
 	}
-	let path=`/admin/register/${user}`;
+	let path=`/admin/register/${user}/${usertoken}`;
 	let signature=sha1_of_object({path:path,token:token});
 	let url=pairio_url+`${path}?signature=${signature}`;
 	http_get_json(url,function(err,obj) {

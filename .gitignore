@@ -3,6 +3,9 @@
 # singularity image files
 *.simg
 
+# kbucket config
+.kbucket
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -189,7 +189,7 @@ class PairioClient():
                 url0=url0+'&overwrite=false'
             obj=self._http_get_json(url0)
             if not obj['success']:
-                print('WARNING: '+obj['error'])
+                print ('WARNING: '+obj['error'])
                 return False
 
         return True

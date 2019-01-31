@@ -57,7 +57,7 @@ GET:/remove/[user]/[key]?signature=[signature]
 
 To create an account on the server:
 
-GET:/admin/register/[new_user]?signature=[signature]
+GET:/admin/register/[new_user]/[new_user_token]?signature=[signature]
 
   where [signature] is the SHA-1 hash of the JSON string associated
   with the object:
@@ -274,8 +274,8 @@ function PairioServer(API) {
     res.json(obj);
   });
 
-  // API /admin/register/:user
-  m_app.get('/admin/register/:user', async function(req, res) {
+  // API /admin/register/:user/:usertoken
+  m_app.get('/admin/register/:user/:usertoken', async function(req, res) {
     let params = req.params;
     let query = req.query;
     if (!query.signature) {
@@ -285,7 +285,7 @@ function PairioServer(API) {
       });
       return;
     }
-    let ok=await verify_admin_signature(`/admin/register/${params.user}`,query.signature);
+    let ok=await verify_admin_signature(`/admin/register/${params.user}/${params.usertoken}`,query.signature);
     if (!ok) {
       res.json({
         success:false,
@@ -294,7 +294,7 @@ function PairioServer(API) {
       return;
     }
     try {
-      obj = await API.adminRegister(params.user);
+      obj = await API.adminRegister(params.user,params.usertoken);
     }
     catch(err) {
       console.error(err);
@@ -485,10 +485,11 @@ function PairioApi(DB) {
     return {success:true};
   };
 
-  this.adminRegister=async function(user) {
+  this.adminRegister=async function(user,usertoken) {
     let info=await DB.getUserInfo(user);
     if (!info) info={};
-    info.token=await create_random_token(12);
+    //info.token=await create_random_token(12);
+    info.token=usertoken;
     await DB.setUserInfo(user,info);
     return {success:true,token:info.token};
   };
