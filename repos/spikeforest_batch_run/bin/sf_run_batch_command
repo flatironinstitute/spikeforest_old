@@ -13,16 +13,20 @@ def main():
   parser = argparse.ArgumentParser(description = 'Run a batch command (prepare, run, assemble, status, results)')
   parser.add_argument('command', help='set, prepare, run, assemble, status, results')
   parser.add_argument('batch_name', help='The name of the batch')
-  parser.add_argument('--mlpr_force_run', help='Whether to force run the MountainLab processors',action="store_true")
   parser.add_argument('--job_index', help='Only prepare and run one job and do not assemble',default='')
   parser.add_argument('--clear', help='Applies only to prepare command',action='store_true')
   parser.add_argument('--input',help='Applies to set command',default='')
   parser.add_argument('--output',help='Applies to results command',default='')
+  parser.add_argument('--mlpr_force_run', help='Whether to force run the MountainLab processors',action="store_true")
+  parser.add_argument('--mlpr_keep_temp_files', help='Whether to keep temporary files when a MountainLab processor fails',action="store_true")
 
   args = parser.parse_args()
 
   if args.mlpr_force_run:
     os.environ['MLPROCESSORS_FORCE_RUN']='TRUE'
+
+  if args.mlpr_keep_temp_files:
+    os.environ['MLPROCESSORS_KEEP_TEMP_FILES']='TRUE'
 
   if args.clear:
     if args.command != 'prepare':

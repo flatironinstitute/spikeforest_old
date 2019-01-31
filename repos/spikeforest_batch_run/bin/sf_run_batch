@@ -15,12 +15,13 @@ def main():
   parser = argparse.ArgumentParser(description = 'Run a spikeforest processing batch')
   parser.add_argument('--run_prefix',help='Prefix to run command', default='')
   parser.add_argument('--clear',help='First clear the jobs so that all jobs are run.',action="store_true")
-  parser.add_argument('--mlpr_force_run',help='Force run the MountainLab processors',action="store_true")
   parser.add_argument('--job_index',help='Only run one job and do not assemble the results',default='')
   parser.add_argument('--parallel',help='Number of times to simultaneously do the run command.', default='1')
   parser.add_argument('--repeat',help='Continuously repeat the processing with a delay between successive runs',action="store_true")
   parser.add_argument('--delay',help='Number of seconds to delay between runs (to be used with --repeat)',default='5')
   parser.add_argument('batch_names',help='The names of the batches to run',nargs='*')
+  parser.add_argument('--mlpr_force_run',help='Force run the MountainLab processors',action="store_true")
+  parser.add_argument('--mlpr_keep_temp_files', help='Whether to keep temporary files when a MountainLab processor fails',action="store_true")
 
   args = parser.parse_args()
 
@@ -35,6 +36,8 @@ def main():
     prepare_opts.append('--clear')
   if args.mlpr_force_run:
     run_opts.append('--mlpr_force_run')
+  if args.mlpr_keep_temp_files:
+    run_opts.append('--mlpr_keep_temp_files')
   if args.job_index:
     prepare_opts.append('--job_index {}'.format(args.job_index))
     run_opts.append('--job_index {}'.format(args.job_index))

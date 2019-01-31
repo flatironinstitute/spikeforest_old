@@ -245,13 +245,19 @@ def _run_command_and_print_output(command):
         rc = process.poll()
         return rc
 
-def execute(proc, _cache=True, _force_run=None, _container=None, **kwargs):
+def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_files=None, **kwargs):
 
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN','') == 'TRUE':
             _force_run=True
         else:
             _force_run=False
+    
+    if _keep_temp_files is None:
+        if os.environ.get('MLPROCESSORS_KEEP_TEMP_FILES','') == 'TRUE':
+            _keep_temp_files=True
+        else:
+            _keep_temp_files=False
 
     # Execute a processor
     print ('::::::::::::::::::::::::::::: '+proc.NAME)
@@ -366,9 +372,10 @@ def execute(proc, _cache=True, _force_run=None, _container=None, **kwargs):
         except:
             # clean up temporary output files
             print ('Problem executing {}. Cleaning up files.'.format(proc.NAME))
-            for fname in temporary_output_files:
-                if os.path.exists(fname):
-                    os.remove(fname)
+            if not _keep_temp_files:
+                for fname in temporary_output_files:
+                    if os.path.exists(fname):
+                        os.remove(fname)
             raise
     else:
         ## in a container
