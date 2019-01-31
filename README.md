@@ -58,10 +58,12 @@ Then create and run a script such as the following.
 ```
 #!/bin/bash
 
-OPTS="-v $HOME/.gitconfig:/home_data/.gitconfig"
+OPTS=""
+OPTS="$OPTS -v $HOME/.gitconfig:/home/theiapod/.gitconfig"
+OPTS="$OPTS --port 3000 -p 3005-3009"
+OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache"
 
-theiapod -w $PWD/spikeforest2 --port 3000 -p 3005,3006,3007,3008,3009 -v $KBUCKET_CACHE_DIR:/
-tmp/sha1-cache $OPTS
+theiapod -w $PWD/spikeforest2 $OPTS
 ```
 
 This will create a container with the theia browser-based IDE. You can then start interacting with the project by pointing your web browser (preferably chrome) to `http://localhost:3000`.
