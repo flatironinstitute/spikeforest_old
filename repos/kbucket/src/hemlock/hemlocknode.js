@@ -76,7 +76,7 @@ function HemlockNode(hemlock_node_directory, node_type) {
       }
       steps.push(connect_to_parent_hub);
       steps.push(start_sending_node_data_to_parent);
-      steps.push(start_checking_config_exists);
+      steps.push(start_checking_config_changed);
     }
 
     async.series(steps, function(err) {
@@ -368,15 +368,30 @@ function HemlockNode(hemlock_node_directory, node_type) {
     });
   }
 
-  function start_checking_config_exists(callback) {
+  function start_checking_config_changed(callback) {
+    let config_file_mtime=null;
+
     do_check();
     callback();
 
     function do_check() {
-      if (!fs.existsSync(hemlock_node_directory + '/' + m_config_directory_name + '/' + m_config_file_name)) {
+      let config_fname=hemlock_node_directory + '/' + m_config_directory_name + '/' + m_config_file_name;
+      if (!fs.existsSync(config_fname)) {
         console.info('Configuration file does not exist. Exiting.');
         process.exit(-1);
       }
+      let stat0=stat_file(config_fname);
+      if (!stat0) {
+        console.info('Unable to stat config file. Exiting.');
+        process.exit(-1);
+      }
+      if (config_file_mtime) {
+        if ((stat0.mtime+'')!=(config_file_mtime+'')) {
+            console.info('Configuration file has been modified. Exiting.');
+            process.exit(-1);
+        }
+      }
+      config_file_mtime=stat0.mtime;
       setTimeout(function() {
         do_check();
       }, 3000);
@@ -499,5 +514,13 @@ function write_json_file(fname, obj) {
     return true;
   } catch (err) {
     return false;
+  }
+}
+
+function stat_file(fname) {
+  try {
+    return require('fs').statSync(fname);
+  } catch (err) {
+    return null;
   }
 }
