@@ -371,8 +371,11 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
             print ('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
         except:
             # clean up temporary output files
-            print ('Problem executing {}. Cleaning up files.'.format(proc.NAME))
-            if not _keep_temp_files:
+            print ('Problem executing {}.'.format(proc.NAME))
+            if _keep_temp_files:
+                print('Not cleaning up files because _keep_temp_files was specified')
+            else:
+                print('Cleaning up {} files.'.format(len(temporary_output_files)))
                 for fname in temporary_output_files:
                     if os.path.exists(fname):
                         os.remove(fname)
