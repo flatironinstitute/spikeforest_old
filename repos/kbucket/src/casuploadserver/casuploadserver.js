@@ -474,6 +474,7 @@ function error_response(req,res,code,err) {
 }
 
 async function main() {
+  start_checking_for_kill_file();
   let SERVER=new CASUploadServer();
   try {
     await start_http_server(SERVER.app());
@@ -485,6 +486,25 @@ async function main() {
   }
 }
 main();
+
+function start_checking_for_kill_file() {
+    let kill_fname=process.env.CAS_UPLOAD_DIR+'/casuploadserver.kill';
+    if (fs.existsSync(kill_fname)) {
+        fs.unlinkSync(kill_fname);
+    }
+    write_text_file(kill_fname+'.readme',`If you create a kill file (${kill_fname}), the casuploadserver will exit.`);
+    do_check();
+
+    function do_check() {
+        if (fs.existsSync(kill_fname)) {
+            console.info('Kill file exists. Exiting.');
+            process.exit(-1);
+        }
+        setTimeout(function() {
+            do_check();
+        }, 3000);
+    }
+}
 
 async function start_http_server(app) {
   let listen_port=process.env.PORT||25341;
