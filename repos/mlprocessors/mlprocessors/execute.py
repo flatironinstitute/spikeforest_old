@@ -293,7 +293,7 @@ if __name__ == "__main__":
         raise Exception('Processor returned a non-zero exit code')
 
 def _shell_execute(cmd):
-    popen = subprocess.Popen('bash -c "{}"'.format(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+    popen = subprocess.Popen('{}'.format(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         #yield stdout_line
         print (stdout_line,end='\r')
@@ -442,7 +442,7 @@ try:
     import batcho
     batcho_ok=True
 except:
-    print('Warning: unable to import batcho.')
+    print ('Warning: unable to import batcho.')
     batcho_ok=False
 if batcho_ok:
     def _batcho_execute_mlprocessor_prepare(job):
