@@ -454,9 +454,9 @@ if __name__ == "__main__":
                 ret['outputs'][key]='sha1://'+kb.computeFileSha1(temporary_output_files[key])+'/'+key+out0['ext']
         return ret
     except:
-        #shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir)
         raise
-    #shutil.rmtree(tempdir)
+    shutil.rmtree(tempdir)
     return ret
 
 try:
