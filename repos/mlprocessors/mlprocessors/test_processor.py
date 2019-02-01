@@ -6,7 +6,7 @@ class test_processor(mlpr.Processor):
         A test processor
     """
     NAME='test.test_processor'
-    VERSION='0.1.1'
+    VERSION='0.1.2'
 
     input_file = mlpr.Input('Path of test input file')
     output_file = mlpr.Output('Test output file')
