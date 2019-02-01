@@ -6,17 +6,17 @@ import argparse
 import spikeforest as sf
 import batcho
 import time
-from kbucket import kbclient as kb
+from kbucket import client as kb
 
 # This can be important for some of the jobs in certain situations
 os.environ['DISPLAY']=''
 
 def main():
   parser = argparse.ArgumentParser(description = 'Listen for batches as a compute resource')
-  parser.add_argument('compute_resource',description='Name of the compute resource')
-  parser.add_argument('--config_collection',help='The collection for the kbucket config, e.g., spikeforest1')
-  parser.add_argument('--config_name',help='The name for the kbucket config, e.g., spikeforest1-readwrite')
-  parser.add_argument('--config_password',help='The password for the kbucket config')
+  parser.add_argument('compute_resource',help='Name of the compute resource')
+  parser.add_argument('--config_collection',help='The collection for the kbucket config, e.g., spikeforest',required=True)
+  parser.add_argument('--config_name',help='The name for the kbucket config, e.g., spikeforest1-readwrite',required=True)
+  parser.add_argument('--config_password',help='The password for the kbucket config',required=True)
 
   args = parser.parse_args()
 

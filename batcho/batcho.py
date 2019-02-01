@@ -191,13 +191,13 @@ def remove_batch_name_for_compute_resource(compute_resource,batch_name):
 
 def listen_as_compute_resource(compute_resource):
     while True:
-        batch_names=batcho.get_batch_names_for_compute_resource(compute_resource)
+        batch_names=get_batch_names_for_compute_resource(compute_resource)
         if len(batch_names)>0:
             batch_name=batch_names[0]
-            batcho.prepare_batch(batch_name=batch_name)
-            batcho.run_batch(batch_name=batch_name)
-            batcho.assemble_batch(batch_name=batch_name)
-            batcho.remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
+            prepare_batch(batch_name=batch_name)
+            run_batch(batch_name=batch_name)
+            assemble_batch(batch_name=batch_name)
+            remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
         time.sleep(4)
 
 def get_batch_names_for_compute_resource(compute_resource):
