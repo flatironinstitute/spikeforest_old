@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import time
+import subprocess
 
 _registered_commands=dict()
 
@@ -189,13 +190,35 @@ def remove_batch_name_for_compute_resource(compute_resource,batch_name):
         kb.saveObject(key=key0,object=obj)
         time.sleep(0.2) # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
 
-def listen_as_compute_resource(compute_resource):
+def _call_run_batch(batch_name,run_prefix):
+    source_dir = os.path.dirname(os.path.realpath(__file__))
+    if run_prefix is None:
+        run_prefix=''
+    if run_prefix:
+        run_prefix=run_prefix+' '
+    cmd='{}python {}/internal_batcho_run.py {}'.format(run_prefix,source_dir,batch_name)
+    _run_command_and_print_output(cmd)
+
+def _shell_execute(cmd):
+    popen = subprocess.Popen('{}'.format(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        #yield stdout_line
+        print (stdout_line,end='\r')
+    popen.stdout.close()
+    return_code = popen.wait()
+    return return_code
+
+def _run_command_and_print_output(cmd):
+    print ('RUNNING: '+cmd)
+    return _shell_execute(cmd)
+
+def listen_as_compute_resource(compute_resource,run_prefix=None):
     while True:
         batch_names=get_batch_names_for_compute_resource(compute_resource)
         if len(batch_names)>0:
             batch_name=batch_names[0]
             prepare_batch(batch_name=batch_name)
-            run_batch(batch_name=batch_name)
+            _call_run_batch(batch_name=batch_name,run_prefix=run_prefix)
             assemble_batch(batch_name=batch_name)
             remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
         time.sleep(4)

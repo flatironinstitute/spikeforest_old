@@ -14,8 +14,7 @@ os.environ['DISPLAY']=''
 
 def main():
   parser = argparse.ArgumentParser(description = 'Listen for batches as a compute resource')
-  parser.add_argument('compute_resource',help='Name of the compute resource')
-  parser.add_argument('--run_prefix',help='Prefix for running jobs (e.g., srun)',required=False,default=None)
+  parser.add_argument('batch_name',help='Name of the batch to run')
 
   args = parser.parse_args()
 
@@ -29,10 +28,9 @@ def main():
       print('You must set the environment variables: BATCHO_CONFIG_NAME, BATCHO_CONFIG_COLLECTION, BATCHO_CONFIG_PASSWORD')
       sys.exit(-1)
 
-
   sf.kbucketConfigRemote(name=BATCHO_CONFIG_NAME,collection=BATCHO_CONFIG_COLLECTION,password=BATCHO_CONFIG_PASSWORD)
 
-  batcho.listen_as_compute_resource(args.compute_resource,run_prefix=args.run_prefix)
+  batcho.run_batch(batch_name=args.batch_name)
 
 if __name__== "__main__":
   main()
