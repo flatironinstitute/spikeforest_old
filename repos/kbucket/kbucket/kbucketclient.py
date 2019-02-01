@@ -82,6 +82,9 @@ class KBucketClient():
     return path
 
   def realizeFile(self,path=None,*,sha1=None,share_ids=None,target_path=None,key=None,collection=None,local=None,remote=None,verbose=True):
+    if path:
+        if os.path.exists(path):
+            return path
     path, sha1, size = self._find_file_helper(path=path,sha1=sha1,share_ids=share_ids,key=key,collection=collection,local=local,remote=remote)
     if not path:
       return None
@@ -197,9 +200,10 @@ class KBucketClient():
     if (remote) and (share_id) and (not upload_token):
       raise Exception('Upload token not set for share_id='+share_id)
 
-    path=self.realizeFile(path)
+    path0=path
+    path=self.realizeFile(path0)
     if not path:
-      raise Exception('Unable to realize file for upload.')
+      raise Exception('Unable to realize file for upload: '+path0)
     sha1=self.computeFileSha1(path)
 
     ret_path='sha1://{}/{}'.format(sha1,basename)
@@ -248,17 +252,19 @@ class KBucketClient():
 
     return ret
 
-  def saveObject(self,object,*,key,format='json',share_id=None,upload_token=None,remote=None):
+  def saveObject(self,object,*,key=None,format='json',share_id=None,upload_token=None,remote=None,basename=None):
     tmp_fname=self._create_temporary_file_for_object(object=object,format=format)
     try:
       fname=self.moveFileToCache(tmp_fname)
     except:
       _safe_remove_file(tmp_fname)
       raise
-    self.saveFile(fname,share_id=share_id,upload_token=upload_token,key=key,basename='object.json',remote=remote)
+    if basename is None:
+        basename='object.json'
+    return self.saveFile(fname,share_id=share_id,upload_token=upload_token,key=key,basename=basename,remote=remote)
 
-  def loadObject(self,*,format='json',share_ids=None,key=None,collection=None,local=None,remote=None):
-    fname=self.realizeFile(share_ids=share_ids,key=key,collection=collection,local=local,remote=remote)
+  def loadObject(self,*,format='json',share_ids=None,key=None,path=None,collection=None,local=None,remote=None):
+    fname=self.realizeFile(share_ids=share_ids,key=key,path=path,collection=collection,local=local,remote=remote)
     if fname is None:
       raise Exception('Unable to find file.')
     if format=='json':

@@ -5,8 +5,9 @@ import json
 import os
 import shutil
 import tempfile
+import subprocess
 from pairio import client as pairio
-from kbucket import client as kbucket
+from kbucket import client as kb
 import inspect
 from subprocess import Popen, PIPE
 import shlex
@@ -24,12 +25,12 @@ def compute_job_input_signature(val,input_name,*,directory):
             return list[2]
         elif val.startswith('kbucket://'):
             if directory:
-                hash0=kbucket.computeDirHash(val)
+                hash0=kb.computeDirHash(val)
                 if not hash0:
                     raise Exception('Unable to compute directory hash for input: {}'.format(input_name))
                 return hash0
             else:
-                sha1=kbucket.computeFileSha1(val)
+                sha1=kb.computeFileSha1(val)
                 if not sha1:
                     raise Exception('Unable to compute file sha-1 for input: {}'.format(input_name))
                 return sha1
@@ -37,7 +38,7 @@ def compute_job_input_signature(val,input_name,*,directory):
             if os.path.exists(val):
                 if directory:
                     if os.path.isdir(val):
-                        hash0=kbucket.computeDirHash(val)
+                        hash0=kb.computeDirHash(val)
                         if not hash0:
                             raise Exception('Unable to compute hash for directory input: {} ({})'.format(input_name,val))
                         return hash0
@@ -45,7 +46,7 @@ def compute_job_input_signature(val,input_name,*,directory):
                         raise Exception('Input is not a directory: {}'.format(input_name))
                 else:
                     if os.path.isfile(val):
-                        sha1=kbucket.computeFileSha1(val)
+                        sha1=kb.computeFileSha1(val)
                         if not sha1:
                             raise Exception('Unable to compute sha-1 of input: {} ({})'.format(input_name,val))        
                         return sha1
@@ -138,13 +139,41 @@ class ProcessorExecuteOutput():
     def __init__(self):
         self.outputs=dict()
 
-def _read_text_file(fname):
-    with open(fname) as f:
-        return f.read()
-    
-def _write_text_file(fname,str):
-    with open(fname,'w') as f:
-        f.write(str)
+def _read_python_code_of_directory(dirname):
+    files=[]
+    dirs=[]
+    for fname in os.listdir(dirname):
+        if os.path.isfile(dirname+'/'+fname):
+            if fname.endswith('.py'):
+                with open(dirname+'/'+fname) as f:
+                    txt=f.read()
+                files.append(dict(
+                    name=fname,
+                    content=txt
+                ))
+        elif os.path.isdir(dirname+'/'+fname):
+            if (not fname.startswith('__')) and (not fname.startswith('.')):
+                content=_read_python_code_of_directory(dirname+'/'+fname)
+                if len(content['files'])+len(content['dirs'])>0:
+                    dirs.append(dict(
+                        name=fname,
+                        content=content
+                    ))
+    return dict(
+        files=files,
+        dirs=dirs
+    )
+
+def _write_python_code_to_directory(dirname,code):
+    if os.path.exists(dirname):
+        raise Exception('Cannot write code to already existing directory: {}'.format(dirname))
+    os.mkdir(dirname)
+    for item in code['files']:
+        fname0=dirname+'/'+item['name']
+        with open(fname0,'w') as f:
+            f.write(item['content'])
+    for item in code['dirs']:
+        _write_python_code_to_directory(dirname+'/'+item['name'],item['content'])
 
 def _read_text_file(fname):
     with open(fname) as f:
@@ -154,11 +183,33 @@ def _write_text_file(fname,str):
     with open(fname,'w') as f:
         f.write(str)
 
-def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
+def _read_text_file(fname):
+    with open(fname) as f:
+        return f.read()
+    
+def _write_text_file(fname,str):
+    with open(fname,'w') as f:
+        f.write(str)
+
+def _get_expanded_args(args):
+    expanded_args_list=[]
+    for key in args:
+        val=args[key]
+        if type(val)==str:
+            val="'{}'".format(val)
+        elif type(val)==dict:
+            val="{}".format(json.dumps(val))
+        expanded_args_list.append('{}={}'.format(key,val))
+    expanded_args=', '.join(expanded_args_list)
+    return expanded_args
+
+def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, **kwargs):
+    # Note: if container is '', then we are just executing on the host machine
     singularity_opts=[]
-    kbucket_cache_dir=kbucket.getConfig()['local_cache_dir']
-    singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir,'/sha1-cache'))
-    singularity_opts.append('-B /tmp:/tmp')
+    if container:
+        kbucket_cache_dir=kb.getConfig()['local_cache_dir']
+        singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir,'/sha1-cache'))
+        singularity_opts.append('-B /tmp:/tmp')
 
     for input0 in proc.INPUTS:
         name0=input0.name
@@ -168,9 +219,12 @@ def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
                 pass
             else:
                 fname0=os.path.abspath(fname0)
-                fname2='/execute_in_container/input_{}'.format(name0)
+                if container:
+                    fname2='/execute_in_container/input_{}'.format(name0)
+                    singularity_opts.append('-B {}:{}'.format(fname0,fname2))
+                else:
+                    fname2=fname0
                 kwargs[name0]=fname2
-                singularity_opts.append('-B {}:{}'.format(fname0,fname2))
                 
     for output0 in proc.OUTPUTS:
         name0=output0.name
@@ -180,16 +234,13 @@ def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
             dirname=os.path.dirname(val)
             filename=os.path.basename(val)
             dirname2='/execute_in_container/outputdir_{}'.format(name0)
-            kwargs[name0]=dirname2+'/'+filename
-            singularity_opts.append('-B {}:{}'.format(dirname,dirname2))
+            if container:
+                kwargs[name0]=dirname2+'/'+filename
+                singularity_opts.append('-B {}:{}'.format(dirname,dirname2))
+            else:
+                kwargs[name0]=val
 
-    expanded_kwargs_list=[]
-    for key in kwargs:
-        val=kwargs[key]
-        if type(val)==str:
-            val="'{}'".format(val)
-        expanded_kwargs_list.append('{}={}'.format(key,val))
-    expanded_kwargs=', '.join(expanded_kwargs_list)
+    expanded_kwargs=_get_expanded_args(kwargs)
 
     processor_source_fname=inspect.getsourcefile(proc)
     processor_source_dirname=os.path.dirname(processor_source_fname)
@@ -197,41 +248,65 @@ def _execute_in_container(proc, X, *, container, tempdir, **kwargs):
     processor_source_basename_noext=os.path.splitext(processor_source_basename)[0]
     if not processor_source_fname:
         raise Exception('inspect.getsourcefile() returned empty for processor.')
-    singularity_opts.append('-B {}:/execute_in_container/processor_source'.format(processor_source_dirname))
+    if container:
+        singularity_opts.append('-B {}:/execute_in_container/processor_source'.format(processor_source_dirname))
+    else:
+        os.symlink(processor_source_dirname, tempdir+'/processor_source')
 
     # Code generation
     code="""
-from processor_source.{processor_source_basename_noext} import {processor_name}
+from processor_source.{processor_source_basename_noext} import {processor_class_name}
 
 def main():
-    {processor_name}.execute({expanded_kwargs})
+    {processor_class_name}.execute({expanded_kwargs})
 
 if __name__ == "__main__":
     main()
     """
     code=code.replace('{processor_source_basename_noext}',processor_source_basename_noext)
-    code=code.replace('{processor_name}',proc.__name__)
+    code=code.replace('{processor_class_name}',proc.__name__)
     code=code.replace('{expanded_kwargs}',expanded_kwargs)
 
     _write_text_file(tempdir+'/execute_in_container.py',code)
-    singularity_opts.append('-B {}:/execute_in_container/execute_in_container.py'.format(tempdir+'/execute_in_container.py'))
+    if container:
+        singularity_opts.append('-B {}:/execute_in_container/execute_in_container.py'.format(tempdir+'/execute_in_container.py'))
 
     env_vars=[]
-    if getattr(proc,'ENVIRONMENT_VARIABLES'):
+    if hasattr(proc,'ENVIRONMENT_VARIABLES'):
         list=proc.ENVIRONMENT_VARIABLES
         for v in list:
             val=os.environ.get(v,'')
             if val:
                 env_vars.append('{}={}'.format(v,val))
-    singularity_cmd='singularity exec --contain -e {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container,' '.join(env_vars))
-
+    if container:
+        singularity_opts.append('--contain')
+        singularity_opts.append('-e')
+        singularity_cmd='singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python /execute_in_container/execute_in_container.py"'.format(' '.join(singularity_opts),container,' '.join(env_vars))
+    else:
+        singularity_cmd='python {}/execute_in_container.py'.format(tempdir)
+        if _system_call_prefix is not None:
+            singularity_cmd='{} {}'.format(_system_call_prefix,singularity_cmd)
+        #singularity_cmd='bash -c "{}"'.format(singularity_cmd)
 
     retcode = _run_command_and_print_output(singularity_cmd)
     if retcode != 0:
-        raise Exception('Processor in singularity returned a non-zero exit code')
+        raise Exception('Processor returned a non-zero exit code')
 
-def _run_command_and_print_output(command):
-    print('RUNNING: '+command)
+def _shell_execute(cmd):
+    popen = subprocess.Popen('bash -c "{}"'.format(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        #yield stdout_line
+        print (stdout_line,end='\r')
+    popen.stdout.close()
+    return_code = popen.wait()
+    return return_code
+
+def _run_command_and_print_output(cmd):
+    print ('RUNNING: '+cmd)
+    return _shell_execute(cmd)
+
+def _run_command_and_print_output_old(command):
+    print ('RUNNING: '+command)
     with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
         while True:
             output_stdout = process.stdout.readline()
@@ -239,13 +314,154 @@ def _run_command_and_print_output(command):
             if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
                 break
             if output_stdout:
-                print(output_stdout.decode())
+                print (output_stdout.decode())
             if output_stderr:
-                print(output_stderr.decode())
+                print (output_stderr.decode())
         rc = process.poll()
         return rc
 
-def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_files=None, **kwargs):
+def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
+    inputs=dict()
+    for input0 in proc.INPUTS:
+        name0=input0.name
+        if not name0 in kwargs:
+            raise Exception('Missing input: {}'.format(name0))
+        fname0=kwargs[name0]
+        if fname0.startswith('kbucket://') or fname0.startswith('sha1://'):
+            pass
+        else:
+            if not os.path.exists(fname0):
+                raise Exception('Input {} does not exist: {}'.format(name0,fname0))
+            sha1_url=kb.saveFile(fname0)
+            if not sha1_url:
+                raise Exception('Problem saving input {} to kbucket ({})'.format(name0,fname0))
+            fname0=sha1_url
+        inputs[name0]=fname0
+    outputs=dict()
+    for output0 in proc.OUTPUTS:
+        name0=output0.name
+        if not name0 in kwargs:
+            raise Exception('Missing output: {}'.format(name0))
+        val0=kwargs[name0]
+        if type(val0)!=dict:
+            raise Exception('Type of output {} cannot be {}'.format(name0,str(type(val0))))
+        outputs[name0]=val0
+    parameters=dict()
+    for param0 in proc.PARAMETERS:
+        name0=param0.name
+        if not name0 in kwargs:
+            if param0.optional:
+                val0=param0.default
+            else:
+                raise Exception('Missing required parameter: {}'.format(name0))
+        else:
+            val0=kwargs[name0]
+        parameters[name0]=val0
+    if type(_container)==str and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
+        pass
+    else:
+        _container=kb.saveFile(_container)
+    processor_source_fname=inspect.getsourcefile(proc)
+    processor_source_dirname=os.path.dirname(processor_source_fname)
+    processor_source_basename=os.path.basename(processor_source_fname)
+    code=_read_python_code_of_directory(processor_source_dirname)
+    processor_job=dict(
+        command='execute_mlprocessor',
+        label='{} (version: {}) (container: {})'.format(proc.NAME,proc.VERSION,_container),
+        processor_name=proc.NAME,
+        processor_version=proc.VERSION,
+        processor_class_name=proc.__name__,
+        processor_source_basename=processor_source_basename,
+        processor_code=kb.saveObject(code,basename='code.json'),
+        container=_container,
+        inputs=inputs,
+        outputs=outputs,
+        parameters=parameters
+    )
+    if _force_run:
+        processor_job['_force_run']=True
+    if _cache:
+        processor_job['_cache']=True
+    if _keep_temp_files:
+        processor_job['_keep_temp_files']=True
+    return processor_job
+
+def _execute_processor_job(job):
+    tempdir=tempfile.mkdtemp()
+    try:
+        processor_code=kb.loadObject(path=job['processor_code'])
+        _write_python_code_to_directory(tempdir+'/processor_source',processor_code)
+
+        processor_class_name=job['processor_class_name']
+        processor_source_basename=job['processor_source_basename']
+        processor_source_basename_noext=os.path.splitext(processor_source_basename)[0]
+
+        container_path=kb.realizeFile(job['container'])
+        if not container_path:
+            raise Exception('Unable to find container: {}'.format(job['container']))
+
+        execute_kwargs=dict(
+            _cache=job.get('_cache',None),
+            _force_run=job.get('_force_run',None),
+            _keep_temp_files=job.get('_keep_temp_files',None),
+            _container=container_path,
+        )
+        for key in job['inputs']:
+            execute_kwargs[key]=job['inputs'][key]
+        for key in job['outputs']:
+            execute_kwargs[key]=job['outputs'][key]
+        for key in job['parameters']:
+            execute_kwargs[key]=job['parameters'][key]
+        expanded_execute_kwargs=_get_expanded_args(execute_kwargs)
+
+        # Code generation
+        code="""
+from processor_source.{processor_source_basename_noext} import {processor_class_name}
+
+def main():
+    {processor_class_name}.execute({expanded_execute_kwargs})
+
+if __name__ == "__main__":
+    main()
+        """
+        code=code.replace('{processor_source_basename_noext}',processor_source_basename_noext)
+        code=code.replace('{processor_class_name}',processor_class_name)
+        code=code.replace('{expanded_execute_kwargs}',expanded_execute_kwargs)
+
+        _write_text_file(tempdir+'/execute.py',code)
+
+        _run_command_and_print_output('python {}/execute.py'.format(tempdir))
+        ret=0
+    except:
+        #shutil.rmtree(tempdir)
+        raise
+    #shutil.rmtree(tempdir)
+    return ret
+
+try:
+    import batcho
+    batcho_ok=True
+except:
+    print('Warning: unable to import batcho.')
+    batcho_ok=False
+if batcho_ok:
+    def _batcho_execute_mlprocessor_prepare(job):
+        pass
+    def _batcho_execute_mlprocessor_run(job):
+        return _execute_processor_job(job)
+    batcho.register_job_command(command='execute_mlprocessor',prepare=_batcho_execute_mlprocessor_prepare,run=_batcho_execute_mlprocessor_run)
+
+    
+
+def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, **kwargs):
+
+    if _system_call:
+        if _container is not None:
+            raise Exception('Cannot use container with system call.')
+        _container=''
+    else:
+        if _system_call_prefix is not None:
+            raise Exception('Cannot use _system_call_prefix when _system_call=False')
 
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN','') == 'TRUE':
@@ -315,7 +531,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
                     ext0=_get_output_ext(out0)
                     sha1=output_sha1s[name0]
                     output_files[name0]='sha1://'+sha1+'/'+name0+ext0
-                    fname=kbucket.findFile(sha1=sha1)
+                    fname=kb.findFile(sha1=sha1)
                     if not fname:
                         output_files_all_found=False
         if outputs_all_in_pairio and (not output_files_all_found):
@@ -329,10 +545,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
                     fname1=output_files[name0]
                     fname2=getattr(X,name0)
                     if type(fname2)==str:
-                        fname1=kbucket.realizeFile(fname1)
+                        fname2=os.path.abspath(fname2)
+                        fname1=kb.realizeFile(fname1)
                         if fname1!=fname2:
                             if os.path.exists(fname2):
                                 os.remove(fname2)
+                            print ('copying file: {} -> {}'.format(fname1,fname2))
                             shutil.copyfile(fname1,fname2)
                         ret.outputs[name0]=fname2
                     else:
@@ -348,7 +566,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
             if input0.directory:
                 val1=val0
             else:
-                val1=kbucket.realizeFile(val0)
+                val1=kb.realizeFile(val0)
                 if not val1:
                     raise Exception('Unable to realize input file {}: {}'.format(name0,val0))
             setattr(X,name0,val1)
@@ -364,7 +582,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
             temporary_output_files.add(tmp_fname)
             setattr(X,name0,tmp_fname)
     ## Now it is time to execute
-    if not _container:
+    if _container is None:
         try:
             print ('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
             X.run()
@@ -373,9 +591,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
             # clean up temporary output files
             print ('Problem executing {}.'.format(proc.NAME))
             if _keep_temp_files:
-                print('Not cleaning up files because _keep_temp_files was specified')
+                print ('Not cleaning up files because _keep_temp_files was specified')
             else:
-                print('Cleaning up {} files.'.format(len(temporary_output_files)))
+                print ('Cleaning up {} files.'.format(len(temporary_output_files)))
                 for fname in temporary_output_files:
                     if os.path.exists(fname):
                         os.remove(fname)
@@ -384,20 +602,26 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _keep_temp_file
         ## in a container
         tempdir=tempfile.mkdtemp()
         try:
-            _execute_in_container(proc, X, container=_container, tempdir=tempdir, **kwargs)
+            _execute_in_container(proc, X, container=_container, tempdir=tempdir, **kwargs, _cache=_cache, _force_run=_force_run, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
         except:
-            shutil.rmtree(tempdir)
+            if _keep_temp_files:
+                print ('Not removing temporary directory because _keep_temp_files was specified')
+            else:
+                shutil.rmtree(tempdir)
             raise
-        shutil.rmtree(tempdir)
+        if _keep_temp_files:
+            print ('Not removing temporary directory because _keep_temp_files was specified')
+        else:
+            shutil.rmtree(tempdir)
     
     for output0 in proc.OUTPUTS:
         name0=output0.name
         output_fname=getattr(X,name0)
         if output_fname in temporary_output_files:
-            output_fname=kbucket.moveFileToCache(output_fname)
+            output_fname=kb.moveFileToCache(output_fname)
         ret.outputs[name0]=output_fname
         if _cache:
-            output_sha1=kbucket.computeFileSha1(output_fname)
+            output_sha1=kb.computeFileSha1(output_fname)
             signature0=output_signatures[name0]
             pairio.set(signature0,output_sha1)
 
