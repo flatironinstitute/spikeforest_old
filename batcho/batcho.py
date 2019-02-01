@@ -5,6 +5,7 @@ import string
 import os
 import sys
 import tempfile
+import time
 
 _registered_commands=dict()
 
@@ -15,10 +16,10 @@ def register_job_command(*, command, prepare, run):
   )
 
 def clear_batch_jobs(*, batch_name, job_index=None):
-  print ('Retrieving batch {}'.format(batch_name))
+  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
   jobs=batch['jobs']
-  print ('Batch has {} jobs.'.format(len(jobs)))
+  print('Batch has {} jobs.'.format(len(jobs)))
   
   num_cleared=0
   for ii,job in enumerate(jobs):
@@ -30,14 +31,14 @@ def clear_batch_jobs(*, batch_name, job_index=None):
         _set_job_status(batch_name=batch_name, job_index=ii, status=None)
         _clear_job_lock(batch_name=batch_name, job_index=ii)
         num_cleared=num_cleared+1
-  print ('Cleared {} jobs.'.format(num_cleared))
+  print('Cleared {} jobs.'.format(num_cleared))
 
 
 def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
-  print ('Retrieving batch {}'.format(batch_name))
+  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
   jobs=batch['jobs']
-  print ('Batch has {} jobs.'.format(len(jobs)))
+  print('Batch has {} jobs.'.format(len(jobs)))
   
   num_prepared=0
   for ii,job in enumerate(jobs):
@@ -54,22 +55,22 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
         if command not in _registered_commands:
           raise Exception('Problem preparing job {}: command not registered: {}'.format(label,command))
         X=_registered_commands[command]
-        print ('Preparing job {}'.format(label))
+        print('Preparing job {}'.format(label))
         try:
           X['prepare'](job)
         except:
-          print ('Error preparing job {}'.format(label))
+          print('Error preparing job {}'.format(label))
           raise
         num_prepared=num_prepared+1
         _set_job_status(batch_name=batch_name, job_index=ii, status='ready')
         _clear_job_lock(batch_name=batch_name, job_index=ii)
-  print ('Prepared {} jobs.'.format(num_prepared))
+  print('Prepared {} jobs.'.format(num_prepared))
 
 def run_batch(*, batch_name, job_index=None):
-  print ('Retrieving batch {}'.format(batch_name))
+  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
   jobs=batch['jobs']
-  print ('Batch has {} jobs.'.format(len(jobs)))
+  print('Batch has {} jobs.'.format(len(jobs)))
   job_code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
   num_ran=0
   for ii,job in enumerate(jobs):
@@ -79,12 +80,12 @@ def run_batch(*, batch_name, job_index=None):
       status=_get_job_status(batch_name=batch_name, job_index=ii)
       if status=='ready':
         if _acquire_job_lock(batch_name=batch_name, job_index=ii, code=job_code):
-          print ('Acquired lock for job {}'.format(label))
+          print('Acquired lock for job {}'.format(label))
           if command not in _registered_commands:
             raise Exception('Problem preparing job {}: command not registered: {}'.format(label,command))
           _set_job_status(batch_name=batch_name, job_index=ii, status='running')
           X=_registered_commands[command]
-          print ('Running job {}'.format(label))
+          print('Running job {}'.format(label))
 
           console_fname=_start_writing_to_file()
 
@@ -93,7 +94,7 @@ def run_batch(*, batch_name, job_index=None):
           except:
             _stop_writing_to_file()
 
-            print ('Error running job {}'.format(label))
+            print('Error running job {}'.format(label))
             _set_job_status(batch_name=batch_name, job_index=ii, status='error', job_code=job_code)
 
             _set_job_console_output(batch_name=batch_name, job_index=ii, file_name=console_fname)
@@ -109,13 +110,13 @@ def run_batch(*, batch_name, job_index=None):
           
           num_ran=num_ran+1
 
-  print ('Ran {} jobs.'.format(num_ran))
+  print('Ran {} jobs.'.format(num_ran))
   
 def assemble_batch(*, batch_name):
-  print ('Retrieving batch {}'.format(batch_name))
+  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
   jobs=batch['jobs']
-  print ('Batch has {} jobs.'.format(len(jobs)))
+  print('Batch has {} jobs.'.format(len(jobs)))
   num_ran=0
   assembled_results=[]
   for ii,job in enumerate(jobs):
@@ -123,7 +124,7 @@ def assemble_batch(*, batch_name):
     label=job['label']
     status=_get_job_status(batch_name=batch_name, job_index=ii)
     if status=='finished':
-      print ('ASSEMBLING job result for {}'.format(label))
+      print('ASSEMBLING job result for {}'.format(label))
       result=_get_job_result(batch_name=batch_name, job_index=ii)
       assembled_results.append(dict(
           job=job,
@@ -131,7 +132,7 @@ def assemble_batch(*, batch_name):
       ))
     else:
       raise Exception('Job {} not finished. Status is {}'.format(label,status))
-  print ('Assembling {} results'.format(len(assembled_results)))
+  print('Assembling {} results'.format(len(assembled_results)))
   kb.saveObject(key=dict(name='batcho_batch_results',batch_name=batch_name),object=dict(results=assembled_results))
   
 def get_batch_jobs(*, batch_name):
@@ -152,9 +153,51 @@ def get_batch_job_statuses(*, batch_name, job_index=None):
       ))
   return ret
   
-def set_batch(*, batch_name, jobs):
+def set_batch(*, batch_name, jobs, compute_resource=None):
   key=dict(name='batcho_batch',batch_name=batch_name)
   kb.saveObject(key=key, object=dict(jobs=jobs))
+  if compute_resource is not None:
+      add_batch_name_for_compute_resource(compute_resource,batch_name)
+
+def add_batch_name_for_compute_resource(compute_resource,batch_name):
+    key0=dict(
+        name='compute_resource_batch_names',
+        compute_resource=compute_resource
+    )
+    while True:
+        obj=kb.loadObject(key=key0)
+        if not obj:
+            obj=dict(batch_names=[])
+        if batch_name in obj['batch_names']:
+            return
+        obj['batch_names'].append(batch_name)
+        kb.saveObject(key=key0,object=obj)
+        time.sleep(0.2) # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
+
+def remove_batch_name_for_compute_resource(compute_resource,batch_name):
+    key0=dict(
+        name='compute_resource_batch_names',
+        compute_resource=compute_resource
+    )
+    while True:
+        obj=kb.loadObject(key=key0)
+        if not obj:
+            obj=dict(batch_names=[])
+        if batch_name not in obj['batch_names']:
+            return
+        obj['batch_names'].remove(batch_name)
+        kb.saveObject(key=key0,object=obj)
+        time.sleep(0.2) # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
+
+def get_batch_names_for_compute_resource(compute_resource):
+    key0=dict(
+        name='compute_resource_batch_names',
+        compute_resource=compute_resource
+    )
+    obj=kb.loadObject(key=key0)
+    if not obj:
+        obj=dict(batch_names=[])
+    return obj.get('batch_names',[])
   
 def get_batch_results(*, batch_name):
   key=dict(name='batcho_batch_results',batch_name=batch_name)
@@ -193,7 +236,7 @@ def _set_job_status(*, batch_name, job_index, status, job_code=None):
   if job_code:
     code=_get_job_lock_code(batch_name=batch_name, job_index=job_index)
     if code != job_code:
-      print ('Not setting job status because lock code does not match batch code')
+      print('Not setting job status because lock code does not match batch code')
       return
   key=dict(name='batcho_job_status',batch_name=batch_name,job_index=job_index)
   return pa.set(key=key, value=status)
@@ -206,7 +249,7 @@ def _set_job_result(*, batch_name, job_index, result, job_code=None):
   if job_code:
     code=_get_job_lock_code(batch_name=batch_name, job_index=job_index)
     if code != job_code:
-      print ('Not setting job result because lock code does not match job code')
+      print('Not setting job result because lock code does not match job code')
       return
   key=dict(name='batcho_job_result',batch_name=batch_name,job_index=job_index)
   return kb.saveObject(key=key, object=result)
@@ -215,7 +258,7 @@ def _set_job_console_output(*, batch_name, job_index, file_name, job_code=None):
   if job_code:
     code=_get_job_lock_code(batch_name=batch_name, job_index=job_index)
     if code != job_code:
-      print ('Not setting job console output because lock code does not match job code')
+      print('Not setting job console output because lock code does not match job code')
       return
   key=dict(name='batcho_job_console_output',batch_name=batch_name,job_index=job_index)
   return kb.saveFile(key=key, fname=file_name)

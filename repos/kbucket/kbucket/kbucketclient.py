@@ -266,7 +266,8 @@ class KBucketClient():
   def loadObject(self,*,format='json',share_ids=None,key=None,path=None,collection=None,local=None,remote=None):
     fname=self.realizeFile(share_ids=share_ids,key=key,path=path,collection=collection,local=local,remote=remote)
     if fname is None:
-      raise Exception('Unable to find file.')
+      #raise Exception('Unable to find file.')
+      return None ## NOTE: this was changed on 2/1/19 -- used to raise an exception
     if format=='json':
       ret=_read_json_file(fname)
       if not ret:
