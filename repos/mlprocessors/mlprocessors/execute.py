@@ -386,6 +386,14 @@ def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=N
         processor_job['_keep_temp_files']=True
     return processor_job
 
+def _prepare_processor_job(job):
+    for key in job['inputs']:
+        fname0=job['inputs'][key]
+        print('Realizing file for input {}: {}'.format(key,fname0))
+        a=kb.realizeFile(fname0)
+        if not a:
+            raise Exception('Unable to realize file for input {}: {}'.format(key,fname0))
+
 def _execute_processor_job(job):
     tempdir=tempfile.mkdtemp()
     try:
@@ -459,7 +467,7 @@ except:
     batcho_ok=False
 if batcho_ok:
     def _batcho_execute_mlprocessor_prepare(job):
-        pass
+        _prepare_processor_job(job)
     def _batcho_execute_mlprocessor_run(job):
         return _execute_processor_job(job)
     batcho.register_job_command(command='execute_mlprocessor',prepare=_batcho_execute_mlprocessor_prepare,run=_batcho_execute_mlprocessor_run)

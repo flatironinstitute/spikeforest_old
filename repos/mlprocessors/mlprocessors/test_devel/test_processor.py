@@ -23,20 +23,3 @@ class test_processor(mlpr.Processor):
         with open(self.output_file,'w') as f:
             f.write(str)
         return True
-    
-class test_batch(mlpr.Processor):
-    NAME='test_batch'
-    VERSION='0.1'
-
-    input_file = mlpr.Input('Path of test input file')
-    output_file = mlpr.Output('Test output file')
-    param1 = mlpr.IntegerParameter('Test integer parameter')
-
-    def run(self):
-        with open(self.input_file,'r') as f:
-            str=f.read()
-        str="param1={}\n{}".format(self.param1,str)
-        print(str)
-        with open(self.output_file,'w') as f:
-            f.write(str)
-        return True

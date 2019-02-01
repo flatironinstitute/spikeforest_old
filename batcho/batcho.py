@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import subprocess
+import traceback
 
 _registered_commands=dict()
 
@@ -17,8 +18,9 @@ def register_job_command(*, command, prepare, run):
   )
 
 def clear_batch_jobs(*, batch_name, job_index=None):
-  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return False
   jobs=batch['jobs']
   print('Batch has {} jobs.'.format(len(jobs)))
   
@@ -33,11 +35,13 @@ def clear_batch_jobs(*, batch_name, job_index=None):
         _clear_job_lock(batch_name=batch_name, job_index=ii)
         num_cleared=num_cleared+1
   print('Cleared {} jobs.'.format(num_cleared))
+  return True
 
 
 def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
-  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return False
   jobs=batch['jobs']
   print('Batch has {} jobs.'.format(len(jobs)))
   
@@ -66,10 +70,12 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
         _set_job_status(batch_name=batch_name, job_index=ii, status='ready')
         _clear_job_lock(batch_name=batch_name, job_index=ii)
   print('Prepared {} jobs.'.format(num_prepared))
+  return True
 
 def run_batch(*, batch_name, job_index=None):
-  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return False
   jobs=batch['jobs']
   print('Batch has {} jobs.'.format(len(jobs)))
   job_code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
@@ -112,10 +118,12 @@ def run_batch(*, batch_name, job_index=None):
           num_ran=num_ran+1
 
   print('Ran {} jobs.'.format(num_ran))
+  return True
   
 def assemble_batch(*, batch_name):
-  print('Retrieving batch {}'.format(batch_name))
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return False
   jobs=batch['jobs']
   print('Batch has {} jobs.'.format(len(jobs)))
   num_ran=0
@@ -135,14 +143,19 @@ def assemble_batch(*, batch_name):
       raise Exception('Job {} not finished. Status is {}'.format(label,status))
   print('Assembling {} results'.format(len(assembled_results)))
   kb.saveObject(key=dict(name='batcho_batch_results',batch_name=batch_name),object=dict(results=assembled_results))
+  return True
   
 def get_batch_jobs(*, batch_name):
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return None
   jobs=batch['jobs']
   return jobs
 
 def get_batch_job_statuses(*, batch_name, job_index=None):
   batch=_retrieve_batch(batch_name)
+  if not batch:
+      return None
   jobs=batch['jobs']
   ret=[]
   for ii,job in enumerate(jobs):
@@ -197,7 +210,15 @@ def _call_run_batch(batch_name,run_prefix):
     if run_prefix:
         run_prefix=run_prefix+' '
     cmd='{}python {}/internal_batcho_run.py {}'.format(run_prefix,source_dir,batch_name)
-    _run_command_and_print_output(cmd)
+    try:
+        ret_code=_run_command_and_print_output(cmd)
+    except:
+        print('Error running batch: ',err)
+        return False
+    if ret_code!=0:
+        print('Run batch command returned non-zero exit code.')
+        return False
+    return True
 
 def _shell_execute(cmd):
     popen = subprocess.Popen('{}'.format(cmd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
@@ -212,15 +233,34 @@ def _run_command_and_print_output(cmd):
     print ('RUNNING: '+cmd)
     return _shell_execute(cmd)
 
+def _try_handle_batch(compute_resource,batch_name,run_prefix):
+    if not _retrieve_batch(batch_name):
+        # In this case the object is not yet ready, so just return false and do not remove
+        return False
+    try:
+        if not prepare_batch(batch_name=batch_name,clear_jobs=True):
+            raise Exception('Problem preparing batch.')
+        if not _call_run_batch(batch_name=batch_name,run_prefix=run_prefix):
+            raise Exception('Problem running batch.')
+        if not assemble_batch(batch_name=batch_name):
+            raise Exception('Problem assembling batch.')
+    except Exception as err:
+        remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
+        print('Error handling batch: ',err)
+        return False
+    remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
+    return True
+
 def listen_as_compute_resource(compute_resource,run_prefix=None):
+    index=0
     while True:
         batch_names=get_batch_names_for_compute_resource(compute_resource)
         if len(batch_names)>0:
-            batch_name=batch_names[0]
-            prepare_batch(batch_name=batch_name)
-            _call_run_batch(batch_name=batch_name,run_prefix=run_prefix)
-            assemble_batch(batch_name=batch_name)
-            remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
+            if index>=len(batch_names):
+                index=0
+            batch_name=batch_names[index]
+            _try_handle_batch(compute_resource,batch_name,run_prefix=run_prefix)
+            index=index+1
         time.sleep(4)
 
 def get_batch_names_for_compute_resource(compute_resource):
@@ -250,14 +290,16 @@ def get_batch_job_console_output(*, batch_name, job_index, return_url=False, ver
     return txt
 
 def _retrieve_batch(batch_name):
+  print('Retrieving batch {}'.format(batch_name))
   key=dict(name='batcho_batch',batch_name=batch_name)
   a=pa.get(key=key)
   if not a:
-    raise Exception('Unable to find batch with batch_name={}'.format(batch_name))
-  try:
-    obj=kb.loadObject(key=key)
-  except:
-    raise Exception('Unable to retrieve object for batch with batch_name={}'.format(batch_name))
+    print('Unable to retrieve batch {}. Not found in pairio.'.format(batch_name))
+    return None
+  obj=kb.loadObject(key=key)
+  if not obj:
+      print('Unable to retrieve batch {}. Object not found on kbucket.'.format(batch_name))
+      return None
   if not 'jobs' in obj:
     raise Exception('batch object does not contain jobs field for batch_name={}'.format(batch_name))
   return obj
