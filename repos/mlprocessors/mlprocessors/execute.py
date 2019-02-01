@@ -408,8 +408,12 @@ def _execute_processor_job(job):
         )
         for key in job['inputs']:
             execute_kwargs[key]=job['inputs'][key]
+        temporary_output_files=dict()
         for key in job['outputs']:
-            execute_kwargs[key]=job['outputs'][key]
+            out0=job['outputs'][key]
+            tmp_fname=tempdir+'/output_'+key+out0['ext']
+            temporary_output_files[key]=tmp_fname
+            execute_kwargs[key]=tmp_fname
         for key in job['parameters']:
             execute_kwargs[key]=job['parameters'][key]
         expanded_execute_kwargs=_get_expanded_args(execute_kwargs)
@@ -431,7 +435,16 @@ if __name__ == "__main__":
         _write_text_file(tempdir+'/execute.py',code)
 
         _run_command_and_print_output('python {}/execute.py'.format(tempdir))
-        ret=0
+        ret=dict(
+            outputs=dict()
+        )
+        for key in job['outputs']:
+            out0=job['outputs'][key]
+            if out0.get('upload',False):
+                ret['outputs'][key]=kb.saveFile(temporary_output_files[key],basename=key+out0['ext'])
+            else:
+                ret['outputs'][key]='sha1://'+kb.computeFileSha1(temporary_output_files[key])+'/'+key+out0['ext']
+        return ret
     except:
         #shutil.rmtree(tempdir)
         raise
