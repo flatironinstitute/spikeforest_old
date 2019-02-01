@@ -189,6 +189,17 @@ def remove_batch_name_for_compute_resource(compute_resource,batch_name):
         kb.saveObject(key=key0,object=obj)
         time.sleep(0.2) # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
 
+def listen_as_compute_resource(compute_resource):
+    while True:
+        batch_names=batcho.get_batch_names_for_compute_resource(compute_resource)
+        if len(batch_names)>0:
+            batch_name=batch_names[0]
+            batcho.prepare_batch(batch_name=batch_name)
+            batcho.run_batch(batch_name=batch_name)
+            batcho.assemble_batch(batch_name=batch_name)
+            batcho.remove_batch_name_for_compute_resource(compute_resource,batch_name=batch_name)
+        time.sleep(4)
+
 def get_batch_names_for_compute_resource(compute_resource):
     key0=dict(
         name='compute_resource_batch_names',
