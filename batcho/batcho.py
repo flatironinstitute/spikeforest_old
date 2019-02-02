@@ -325,7 +325,7 @@ def get_batch_job_console_output(*, batch_name, job_index, return_url=False, ver
         fname = kb.realizeFile(key=key, verbose=verbose)
         if not fname:
             return None
-        txt =_read_text_file(fname)
+        txt = _read_text_file(fname)
         return txt
 
 
