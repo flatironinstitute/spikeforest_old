@@ -3,7 +3,6 @@ import vdomr as vd
 import spikeforest as sf
 from kbucket import client as kb
 import spikeforestwidgets as SFW
-os.environ['VDOMR_MODE'] = 'SERVER'
 
 
 class MainWindow(vd.Component):

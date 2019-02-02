@@ -4,7 +4,6 @@ import os
 import vdomr as vd
 import spikeforest as sf
 from sfbrowsermainwindow import SFBrowserMainWindow
-os.environ['VDOMR_MODE'] = 'SERVER'
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
 

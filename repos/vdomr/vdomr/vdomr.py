@@ -3,7 +3,7 @@ import traceback
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
-    mode=None,
+    mode='server',  # colab, jp_proxy_widget, or server -- by default we are in server mode
     invokable_functions={},  # for mode=jp_proxy_widget or server
     jp_widget=None  # for mode=jp_proxy_widget
 )
@@ -45,26 +45,6 @@ def register_callback(callback_id, callback):
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
     elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server'):
         vdomr_global['invokable_functions'][callback_id] = the_callback
-
-
-def _do_init():
-    vdomr_global['mode'] = _determine_mode()
-
-    if vdomr_global['mode'] == 'colab':
-        pass
-    elif vdomr_global['mode'] == 'jp_proxy_widget':
-        import jp_proxy_widget
-        jp_widget = jp_proxy_widget.JSProxyWidget()
-        jp_widget.element.html("<span id=jp_widget_empty></span>")
-        jp_widget.js_init("""
-        // Attach the callback to the global window object so
-        // you can find it from anywhere:
-        window.vdomr_invokeFunction = invokeFunction;
-        """, invokeFunction=invoke_callback)
-        vdomr_global['jp_widget'] = jp_widget
-        display(jp_widget)
-    elif vdomr_global['mode'] == 'server':
-        pass
 
 
 def exec_javascript(js):
@@ -109,34 +89,66 @@ def _found_jp_proxy_widget():
         return False
 
 
-def _determine_mode():
+def _determine_mode_from_env():
     # Note: this is tricky because we might be in a local runtime on colab.
-    if os.environ.get('VDOMR_MODE', '') == 'JP_PROXY_WIDGET':
-        print('vdomr: using jp_proxy_widget because of VDOMR_MODE environment variable')
-        return 'jp_proxy_widget'
-    if os.environ.get('VDOMR_MODE', '') == 'COLAB':
-        print('vdomr: using colab because of VDOMR_MODE environment variable')
-        return 'colab'
-    if os.environ.get('VDOMR_MODE', '') == 'SERVER':
-        print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
-        return 'server'
-    if os.environ.get('VDOMR_MODE', '') == '':
-        print('vdomr: using SERVER mode because of VDOMR_MODE environment variable not set')
-        return 'server'
-    if _found_jp_proxy_widget():
-        if _found_colab():
-            print(
-                'vdomr: unable to determine whether to use jp_proxy_widget or google colab')
-            print(
-                'You should set the environment variable VDOMR_MODE to JP_PROXY_WIDGET or COLAB')
-            return ''
-        print('vdomr: using jp_proxy_widget')
-        return 'jp_proxy_widget'
-    if _found_colab():
-        print('vdomr: using colab')
-        return 'colab'
-    print('vdomr: unable to import jp_proxy_widget or google.colab.colab_output')
-    # Note: this is tricky because we might be in a local runtime on colab.
+    # if os.environ.get('VDOMR_MODE', '') == 'JP_PROXY_WIDGET':
+    #     print('vdomr: using jp_proxy_widget because of VDOMR_MODE environment variable')
+    #     return 'jp_proxy_widget'
+    # if os.environ.get('VDOMR_MODE', '') == 'COLAB':
+    #     print('vdomr: using colab because of VDOMR_MODE environment variable')
+    #     return 'colab'
+    # if os.environ.get('VDOMR_MODE', '') == 'SERVER':
+    #     print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
+    #     return 'server'
+    # if _found_jp_proxy_widget():
+    #     if _found_colab():
+    #         print(
+    #             'vdomr: unable to determine whether to use jp_proxy_widget or google colab')
+    #         print(
+    #             'You should set the environment variable VDOMR_MODE to JP_PROXY_WIDGET or COLAB')
+    #         return ''
+    #     print('vdomr: using jp_proxy_widget')
+    #     return 'jp_proxy_widget'
+    # if _found_colab():
+    #     print('vdomr: using colab')
+    #     return 'colab'
+    # print('vdomr: unable to import jp_proxy_widget or google.colab.colab_output')
+    # # Note: this is tricky because we might be in a local runtime on colab.
+
+    return None
 
 
-_do_init()
+def config_jupyter():
+    vdomr_global['mode'] = 'jp_proxy_widget'
+
+    import jp_proxy_widget
+    jp_widget = jp_proxy_widget.JSProxyWidget()
+    jp_widget.element.html("<span id=jp_widget_empty></span>")
+    jp_widget.js_init("""
+    // Attach the callback to the global window object so
+    // you can find it from anywhere:
+    window.vdomr_invokeFunction = invokeFunction;
+    """, invokeFunction=invoke_callback)
+    vdomr_global['jp_widget'] = jp_widget
+    display(jp_widget)
+
+
+def config_colab():
+    vdomr_global['mode'] = 'colab'
+
+
+def config_server():
+    vdomr_global['mode'] = 'server'
+
+
+if os.environ.get('VDOMR_MODE', '') == 'JP_PROXY_WIDGET':
+    print('vdomr: using jp_proxy_widget because of VDOMR_MODE environment variable')
+    config_jupyter()
+
+if os.environ.get('VDOMR_MODE', '') == 'COLAB':
+    print('vdomr: using colab because of VDOMR_MODE environment variable')
+    config_colab()
+
+if os.environ.get('VDOMR_MODE', '') == 'SERVER':
+    print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
+    config_server()

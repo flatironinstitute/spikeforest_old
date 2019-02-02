@@ -1,6 +1,5 @@
 import vdomr as vd
 import os
-os.environ['VDOMR_MODE'] = 'SERVER'
 
 
 class Status(vd.Component):

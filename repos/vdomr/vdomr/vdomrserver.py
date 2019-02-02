@@ -29,10 +29,6 @@ class VDOMRServer():
             raise Exception(
                 'Problem importing tornado. Try "pip install tornado".')
 
-        if os.environ.get('VDOMR_MODE', None) != 'SERVER':
-            raise Exception(
-                'You must set the environment variable VDOMR_MODE to "SERVER"')
-
         server_self = self
 
         class RootHandler(tornado.web.RequestHandler):
