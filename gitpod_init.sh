@@ -5,6 +5,9 @@ pip install -r requirements.txt
 python setup.py develop
 pip install jupyterlab
 
+pip install autopep8
+git config core.hooksPath .githooks
+
 #if [ -d /home/theiapod ]; then
 #    echo "test"
 #    for filename in /home/theiapod/{*,.??*}; do
