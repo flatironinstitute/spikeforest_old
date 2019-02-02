@@ -28,8 +28,7 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
             style = None
         if 'attributes' in kwargs:
             attributes = kwargs['attributes']
-        else:
-            attributes = dict(**kwargs)
+        else:         attributes = dict(**kwargs)
 
         if (tag_name == 'a') and ('href' not in attributes):
             attributes['href'] = '#'
