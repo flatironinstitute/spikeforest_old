@@ -1,7 +1,7 @@
-import spikeforest as sf
-from monitorbatchesmainwindow import MonitorBatchesMainWindow
-import vdomr as vd
 import os
+import vdomr as vd
+from monitorbatchesmainwindow import MonitorBatchesMainWindow
+import spikeforest as sf
 os.environ['VDOMR_MODE'] = 'SERVER'
 
 

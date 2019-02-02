@@ -118,7 +118,10 @@ def _determine_mode():
         print('vdomr: using colab because of VDOMR_MODE environment variable')
         return 'colab'
     if os.environ.get('VDOMR_MODE', '') == 'SERVER':
-        print('vdomr: using server because of VDOMR_MODE environment variable')
+        print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
+        return 'server'
+    if os.environ.get('VDOMR_MODE', '') == '':
+        print('vdomr: using SERVER mode because of VDOMR_MODE environment variable not set')
         return 'server'
     if _found_jp_proxy_widget():
         if _found_colab():

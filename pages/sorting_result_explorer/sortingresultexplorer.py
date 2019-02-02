@@ -53,7 +53,8 @@ def get_unmatched_times(times1, times2, *, delta):
     membership_sorted = membership[indices]
     diffs = times_concat_sorted[1:] - times_concat_sorted[:-1]
     unmatched_inds = 1 + \
-        np.where((diffs[1:] > delta) & (diffs[:-1] > delta) & (membership_sorted[1:-1] == 1))[0]
+        np.where((diffs[1:] > delta) & (diffs[:-1] > delta)
+                 & (membership_sorted[1:-1] == 1))[0]
     if (diffs[0] > delta) and (membership_sorted[0] == 1):
         unmatched_inds = np.concatenate(([0], unmatched_inds))
     if (diffs[-1] > delta) and (membership_sorted[-1] == 1):

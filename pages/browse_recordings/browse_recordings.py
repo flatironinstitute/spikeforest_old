@@ -1,8 +1,8 @@
-import spikeforestwidgets as SFW
-from kbucket import client as kb
-import spikeforest as sf
-import vdomr as vd
 import os
+import vdomr as vd
+import spikeforest as sf
+from kbucket import client as kb
+import spikeforestwidgets as SFW
 os.environ['VDOMR_MODE'] = 'SERVER'
 
 

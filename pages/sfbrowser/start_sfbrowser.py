@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from sfbrowsermainwindow import SFBrowserMainWindow
-import spikeforest as sf
-import vdomr as vd
 import os
+import vdomr as vd
+import spikeforest as sf
+from sfbrowsermainwindow import SFBrowserMainWindow
 os.environ['VDOMR_MODE'] = 'SERVER'
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
