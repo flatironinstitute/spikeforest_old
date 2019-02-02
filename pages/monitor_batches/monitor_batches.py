@@ -2,6 +2,7 @@ import os
 os.environ['VDOMR_MODE']='SERVER'
 import vdomr as vd
 from monitorbatchesmainwindow import MonitorBatchesMainWindow
+import spikeforest as sf
 
 class TheApp():
   def __init__(self):
@@ -13,6 +14,7 @@ class TheApp():
 def main():
   ## Configure readonly access to kbucket
   sf.kbucketConfigRemote(name='spikeforest1-readonly')
+  #sf.kbucketConfigLocal()
 
   APP=TheApp()
   server=vd.VDOMRServer(APP)
