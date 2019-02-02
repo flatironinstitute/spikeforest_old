@@ -13,3 +13,7 @@ exec 1>&2
 
 echo "Validating PEP8 compliance..."
 pycodestyle --ignore=W504,E501,E226,E722 batcho kbucket mlprocessors pages pairio spikesorters vdomr
+rc=$?; if [[ $rc != 0 ]];
+  echo "BLOCKING COMMIT"
+  then exit $rc;
+fi
