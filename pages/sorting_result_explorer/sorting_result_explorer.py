@@ -1,12 +1,12 @@
+from sortingresultexplorer import SortingResultExplorer
+import spikeforestwidgets as SFW
+from kbucket import client as kb
+import spikeforest as sf
+import vdomr as vd
 import os
 os.environ['VDOMR_MODE'] = 'SERVER'
-os.environ['SIMPLOT_SRC_DIR']='../../simplot'
+os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
-import vdomr as vd
-import spikeforest as sf
-from kbucket import client as kb
-import spikeforestwidgets as SFW
-from sortingresultexplorer import SortingResultExplorer
 
 class SortingResultSelectWidget(vd.Component):
     def __init__(self):
@@ -20,7 +20,7 @@ class SortingResultSelectWidget(vd.Component):
         self._SEL_recording.onChange(self._on_recording_changed)
         self._SEL_sorting_result = vd.components.SelectBox(options=[])
         self._SEL_sorting_result.onChange(self._on_sorting_result_changed)
-        self._selection_changed_handlers=[]
+        self._selection_changed_handlers = []
 
         vd.devel.loadBootstrap()
 
@@ -31,7 +31,7 @@ class SortingResultSelectWidget(vd.Component):
         self._SEL_group.setValue('magland_synth')
         self._on_group_changed(value=self._SEL_group.value())
 
-    def onSelectionChanged(self,handler):
+    def onSelectionChanged(self, handler):
         self._selection_changed_handlers.append(handler)
 
     def recording(self):
@@ -84,7 +84,7 @@ class SortingResultSelectWidget(vd.Component):
         rec = self.recording()
         srnames = rec.sortingResultNames()
         #opts = ['']+srnames
-        opts=srnames
+        opts = srnames
         self._SEL_sorting_result.setOptions(opts)
         self._on_sorting_result_changed(value=self._SEL_sorting_result.value())
 
@@ -111,31 +111,31 @@ class SortingResultSelectWidget(vd.Component):
 class MainWindow(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
-        self._select_widget=SortingResultSelectWidget()
-        self._explorer=None
+        self._select_widget = SortingResultSelectWidget()
+        self._explorer = None
 
         self._select_widget.onSelectionChanged(self._on_selection_changed)
         self._select_widget.initialize()
 
-
     def _on_selection_changed(self):
-        rec=self._select_widget.recording()
+        rec = self._select_widget.recording()
         if not rec:
             return
-        sorting_result_name=self._select_widget.sortingResultName()
+        sorting_result_name = self._select_widget.sortingResultName()
         if not sorting_result_name:
             return
-        res=rec.sortingResult(sorting_result_name)
-        self._explorer=SortingResultExplorer(sorting_result=res)
+        res = rec.sortingResult(sorting_result_name)
+        self._explorer = SortingResultExplorer(sorting_result=res)
         self.refresh()
 
     def render(self):
-        list=[self._select_widget]
+        list = [self._select_widget]
         if self._explorer:
             list.append(self._explorer)
         return vd.div(
             list
         )
+
 
 class TheApp():
     def __init__(self):

@@ -5,13 +5,14 @@ from kbucket import client as kb
 import spikeforestwidgets as SFW
 from .sfbrowser import SFBrowser
 
+
 class GroupSelectWidget(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
 
         self._SEL_group = vd.components.SelectBox(options=[])
         self._SEL_group.onChange(self._on_group_changed)
-        self._selection_changed_handlers=[]
+        self._selection_changed_handlers = []
 
         vd.devel.loadBootstrap()
 
@@ -22,7 +23,7 @@ class GroupSelectWidget(vd.Component):
         self._SEL_group.setValue('magland_synth')
         self._on_group_changed(value=self._SEL_group.value())
 
-    def onSelectionChanged(self,handler):
+    def onSelectionChanged(self, handler):
         self._selection_changed_handlers.append(handler)
 
     def group(self):
@@ -46,22 +47,22 @@ class GroupSelectWidget(vd.Component):
 class SFBrowserMainWindow(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
-        self._group_select_widget=GroupSelectWidget()
-        self._sf_browser=None
+        self._group_select_widget = GroupSelectWidget()
+        self._sf_browser = None
 
-        self._group_select_widget.onSelectionChanged(self._on_selection_changed)
+        self._group_select_widget.onSelectionChanged(
+            self._on_selection_changed)
         self._group_select_widget.initialize()
 
-
     def _on_selection_changed(self):
-        group=self._group_select_widget.group()
+        group = self._group_select_widget.group()
         if not group:
             return
-        self._sf_browser=SFBrowser(group=group)
+        self._sf_browser = SFBrowser(group=group)
         self.refresh()
 
     def render(self):
-        list=[self._group_select_widget]
+        list = [self._group_select_widget]
         if self._sf_browser:
             list.append(self._sf_browser)
         return vd.div(
