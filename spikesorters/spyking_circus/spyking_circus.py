@@ -165,19 +165,19 @@ def spyking_circus(
         join(output_folder_cmd, file_name+'.npy'), num_cores_str)
 
     # I think the merging step requires a gui and some user interaction. TODO: inquire about this
-    #cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
+    # cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
     # cmd_convert = 'spyking-circus {} -m converting'.format(join(output_folder, file_name+'.npy'))
 
     if singularity_container:
         cmd = 'singularity exec --contain -e -B {}:{} -B /tmp:/tmp {} bash -c "{}"'.format(
             output_folder, output_folder_cmd, singularity_container, cmd)
-        #cmd_merge='singularity exec --contain -e -B {}:{} -B /tmp:/tmp {} bash -c "{}"'.format(output_folder,output_folder_cmd,singularity_container,cmd_merge)
+        # cmd_merge='singularity exec --contain -e -B {}:{} -B /tmp:/tmp {} bash -c "{}"'.format(output_folder,output_folder_cmd,singularity_container,cmd_merge)
 
     retcode = run_command_and_print_output(cmd)
     if retcode != 0:
         raise Exception('Spyking circus returned a non-zero exit code')
 
-    #retcode = run_command_and_print_output(cmd_merge)
+    # retcode = run_command_and_print_output(cmd_merge)
     # if retcode != 0:
     #    raise Exception('Spyking circus merging returned a non-zero exit code')
     processing_time = time.time() - t_start_proc

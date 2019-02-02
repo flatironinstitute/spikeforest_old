@@ -9,7 +9,7 @@ import os
 os.environ['VDOMR_MODE'] = 'SERVER'
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
-#from sfmain import sfmain
+# from sfmain import sfmain
 
 
 class MainWindow(vd.Component):

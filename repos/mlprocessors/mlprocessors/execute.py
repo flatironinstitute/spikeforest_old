@@ -318,7 +318,7 @@ if __name__ == "__main__":
         if _system_call_prefix is not None:
             singularity_cmd = '{} {}'.format(
                 _system_call_prefix, singularity_cmd)
-        #singularity_cmd='bash -c "{}"'.format(singularity_cmd)
+        # singularity_cmd='bash -c "{}"'.format(singularity_cmd)
 
     retcode = _run_command_and_print_output(singularity_cmd)
     if retcode != 0:
@@ -361,7 +361,7 @@ def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=N
     inputs = dict()
     for input0 in proc.INPUTS:
         name0 = input0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             raise Exception('Missing input: {}'.format(name0))
         fname0 = kwargs[name0]
         if fname0.startswith('kbucket://') or fname0.startswith('sha1://'):
@@ -379,7 +379,7 @@ def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=N
     outputs = dict()
     for output0 in proc.OUTPUTS:
         name0 = output0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             raise Exception('Missing output: {}'.format(name0))
         val0 = kwargs[name0]
         if type(val0) != dict:
@@ -389,7 +389,7 @@ def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=N
     parameters = dict()
     for param0 in proc.PARAMETERS:
         name0 = param0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             if param0.optional:
                 val0 = param0.default
             else:
@@ -557,17 +557,17 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     ret = ProcessorExecuteOutput()  # We will return this object
     for input0 in proc.INPUTS:
         name0 = input0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             raise Exception('Missing input: {}'.format(name0))
         setattr(X, name0, kwargs[name0])
     for output0 in proc.OUTPUTS:
         name0 = output0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             raise Exception('Missing output: {}'.format(name0))
         setattr(X, name0, kwargs[name0])
     for param0 in proc.PARAMETERS:
         name0 = param0.name
-        if not name0 in kwargs:
+        if name0 not in kwargs:
             if param0.optional:
                 val0 = param0.default
             else:

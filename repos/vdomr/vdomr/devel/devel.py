@@ -101,5 +101,5 @@ def loadJavascript(*, url=None, path=None, js=None, delay=None):
         js0 = url.join(js0.split('{url}'))
         loadJavascript(js=js0)
 
-        #display(HTML('<script src="{}"></script>'.format(url)))
+        # display(HTML('<script src="{}"></script>'.format(url)))
         # loaded_javascript_files[path]=dict(mtime=True)

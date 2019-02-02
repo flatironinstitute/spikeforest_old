@@ -1,0 +1,15 @@
+#!/bin/sh
+# Create a link to this file at .git/hooks/pre-commit to
+# force PEP8 validation prior to committing
+#
+# Ignored violations:
+#
+#   W504: Line break after binary operator
+#   E501: Line too long
+#   E226 missing whitespace around arithmetic operator
+#   E722 do not use bare 'except'
+
+exec 1>&2
+
+echo "Validating PEP8 compliance..."
+pycodestyle --ignore=W504,E501,E226,E722 batcho kbucket mlprocessors pages pairio spikesorters vdomr

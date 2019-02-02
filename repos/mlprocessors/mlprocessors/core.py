@@ -112,11 +112,11 @@ class Parameter():
 
 class BoolParameter(Parameter):
     def __init__(self, description='', **kwargs):
-        if not 'description' in kwargs:
+        if 'description' not in kwargs:
             kwargs['description'] = description
         super().__init__(**kwargs)
         self.datatype = bool
-        if not 'choices' in kwargs:
+        if 'choices' not in kwargs:
             self.choices = [True, False]
 
     def clean(self, value):
@@ -127,7 +127,7 @@ class BoolParameter(Parameter):
 
 class StringParameter(Parameter):
     def __init__(self, description='', **kwargs):
-        if not 'description' in kwargs:
+        if 'description' not in kwargs:
             kwargs['description'] = description
         super().__init__(**kwargs)
         self.datatype = str
@@ -137,7 +137,7 @@ class StringParameter(Parameter):
 
 class ArithmeticParameter(Parameter):
     def __init__(self, description='', **kwargs):
-        if not 'description' in kwargs:
+        if 'description' not in kwargs:
             kwargs['description'] = description
         super().__init__(**kwargs)
         if 'min' in kwargs or 'max' in kwargs:
@@ -208,9 +208,9 @@ class ProcMeta(type):
         else:
             name_components.append(name)
         new_class.NAME = '.'.join(name_components)
-        if not 'VERSION' in attrs:
+        if 'VERSION' not in attrs:
             new_class.VERSION = '0.0.1'
-        if not 'DESCRIPTION' in attrs:
+        if 'DESCRIPTION' not in attrs:
             if '__doc__' in attrs:
                 doc = attrs['__doc__']
                 # find first empty line
@@ -240,7 +240,7 @@ class ProcMeta(type):
             new_class.PARAMETERS = new_class.PARAMETERS.copy()
 
         for attr in attrs:
-            if isinstance(attrs[attr],  Input):
+            if isinstance(attrs[attr], Input):
                 attrs[attr].name = attr
                 new_class.INPUTS.append(attrs[attr])
             if isinstance(attrs[attr], Output):
@@ -400,7 +400,7 @@ class Processor(metaclass=ProcMeta):
             opts['required'] = not param.optional
             if isinstance(param.datatype, tuple):
                 opts['type'] = str
-                #opts['type'] = param.datatype[1]
+                # opts['type'] = param.datatype[1]
             else:
                 opts['type'] = param.datatype
 

@@ -83,7 +83,7 @@ class SortingResultSelectWidget(vd.Component):
     def _on_recording_changed(self, value):
         rec = self.recording()
         srnames = rec.sortingResultNames()
-        #opts = ['']+srnames
+        # opts = ['']+srnames
         opts = srnames
         self._SEL_sorting_result.setOptions(opts)
         self._on_sorting_result_changed(value=self._SEL_sorting_result.value())

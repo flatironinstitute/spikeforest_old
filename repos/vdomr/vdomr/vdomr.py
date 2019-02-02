@@ -26,7 +26,7 @@ jp_proxy_widget_invokable_functions = {}
 
 def invoke_callback(callback_id, argument_list=[], kwargs={}):
     if callback_id not in vdomr_global['invokable_functions']:
-        raise Exception('No callback with id: '+callback_id)
+        raise Exception('No callback with id: ' + callback_id)
     f = vdomr_global['invokable_functions'][callback_id]
     return f(*argument_list, **kwargs)
 

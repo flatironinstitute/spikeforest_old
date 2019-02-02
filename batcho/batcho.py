@@ -341,7 +341,7 @@ def _retrieve_batch(batch_name):
         print(
             'Unable to retrieve batch {}. Object not found on kbucket.'.format(batch_name))
         return None
-    if not 'jobs' in obj:
+    if 'jobs' not in obj:
         raise Exception(
             'batch object does not contain jobs field for batch_name={}'.format(batch_name))
     return obj

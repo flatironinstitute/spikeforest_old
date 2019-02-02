@@ -283,7 +283,7 @@ class KBucketClient():
         fname = self.realizeFile(share_ids=share_ids, key=key, path=path,
                                  collection=collection, local=local, remote=remote)
         if fname is None:
-            #raise Exception('Unable to find file.')
+            # raise Exception('Unable to find file.')
             return None  # NOTE: this was changed on 2/1/19 -- used to raise an exception
         if format == 'json':
             ret = _read_json_file(fname)
@@ -398,10 +398,10 @@ class KBucketClient():
         node_info = self.getNodeInfo(share_id)
         if not node_info:
             raise Exception('Unable to get node info for share: '+share_id)
-        if not 'info' in node_info:
+        if 'info' not in node_info:
             raise Exception(
                 'node_info does not have info field for share: '+share_id)
-        if not 'cas_upload_url' in node_info['info']:
+        if 'cas_upload_url' not in node_info['info']:
             raise Exception(
                 'node_info does not have info.cas_upload_url field for share: '+share_id)
         return node_info['info'].get('cas_upload_url', None)

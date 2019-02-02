@@ -28,7 +28,8 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
             style = None
         if 'attributes' in kwargs:
             attributes = kwargs['attributes']
-        else:         attributes = dict(**kwargs)
+        else:
+            attributes = dict(**kwargs)
 
         if (tag_name == 'a') and ('href' not in attributes):
             attributes['href'] = '#'
@@ -45,7 +46,7 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
                     from google.colab import output as colab_output
                     callback_id = cbname+'callback-' + str(uuid.uuid4())
                     register_callback(callback_id, attributes[cbname])
-                    #js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
+                    # js="google.colab.kernel.invokeFunction('{callback_id}', [], {kwargs})"
                     js = "window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
                     js = js.replace('{callback_id}', callback_id)
                     js = js.replace('{kwargs}', cb['kwargs'])

@@ -330,7 +330,7 @@ def _filter_key(key):
 
 
 def _http_get_json(url, verbose=False):
-    #print('pairio _http_get_json 1',dt.now())
+    # print('pairio _http_get_json 1',dt.now())
     if verbose:
         print('_http_get_json::: '+url)
     try:
@@ -343,7 +343,7 @@ def _http_get_json(url, verbose=False):
         raise Exception('Unable to load json from url: '+url)
     if verbose:
         print('done.')
-    #print('------ _http_get_json 2',dt.now())
+    # print('------ _http_get_json 2',dt.now())
     return ret
 
 
