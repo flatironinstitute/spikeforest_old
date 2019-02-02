@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Create a link to this file at .git/hooks/pre-commit to
 # force PEP8 validation prior to committing
 #
