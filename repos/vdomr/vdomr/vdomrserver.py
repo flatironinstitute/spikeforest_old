@@ -13,7 +13,7 @@ import vdomr as vd
 class VDOMRServer():
     def __init__(self, vdomr_app):
         self._vdomr_app = vdomr_app
-        self._sessions=dict()
+        self._sessions = dict()
         pass
 
     def start(self):
@@ -33,7 +33,7 @@ class VDOMRServer():
             raise Exception(
                 'You must set the environment variable VDOMR_MODE to "SERVER"')
 
-        server_self=self
+        server_self = self
 
         class RootHandler(tornado.web.RequestHandler):
             def get(self):
@@ -159,10 +159,12 @@ class VDOMRServer():
                 try:
                     obj = json.loads(self.request.body)
                 except:
-                    self.write(dict(success=False, error='Unable to parse body'))
+                    self.write(
+                        dict(success=False, error='Unable to parse body'))
                     return
                 if 'callback_id' not in obj:
-                    self.write(dict(success=False, error='Missing callback_id'))
+                    self.write(
+                        dict(success=False, error='Missing callback_id'))
                     return
                 callback_id = obj['callback_id']
                 args = obj['args']
