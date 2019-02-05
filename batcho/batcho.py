@@ -192,6 +192,7 @@ def set_batch(*, batch_name, jobs, compute_resource=None):
     key = dict(name='batcho_batch', batch_name=batch_name)
     kb.saveObject(key=key, object=dict(jobs=jobs))
     if compute_resource is not None:
+        clear_batch_jobs(batch_name=batch_name)
         add_batch_name_for_compute_resource(compute_resource, batch_name)
 
 

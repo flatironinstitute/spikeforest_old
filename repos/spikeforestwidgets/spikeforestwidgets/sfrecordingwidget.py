@@ -48,14 +48,17 @@ class TrueUnitsTable(vd.Component):
             vd.th('Num. events'),
             vd.th('Firing rate')
         ))
-        for unit in self._true_units_info:
-            rows.append(vd.tr(
-                vd.td(str(unit['unit_id'])),
-                vd.td(str(unit['snr'])),
-                vd.td(str(unit['peak_channel'])),
-                vd.td(str(unit['num_events'])),
-                vd.td(str(unit['firing_rate']))
-            ))
+        if self._true_units_info:
+            for unit in self._true_units_info:
+                rows.append(vd.tr(
+                    vd.td(str(unit['unit_id'])),
+                    vd.td(str(unit['snr'])),
+                    vd.td(str(unit['peak_channel'])),
+                    vd.td(str(unit['num_events'])),
+                    vd.td(str(unit['firing_rate']))
+                ))
+        else:
+            print('WARNING: true units info not found.')
         table=vd.table(rows,class_='table')
         return vd.div(ScrollArea(vd.div(table),height=400))
 
@@ -221,9 +224,10 @@ class SFRecordingWidget(vd.Component):
         vd.th('Directory'),vd.td(rec.directory())
     ))
     true_units=rec.trueUnitsInfo(format='json')
-    rows.append(vd.tr(
-        vd.th('Num. true units'),vd.td('{}'.format(len(true_units)))
-    ))
+    if true_units:
+        rows.append(vd.tr(
+            vd.th('Num. true units'),vd.td('{}'.format(len(true_units)))
+        ))
     RX=rec.recordingExtractor()
     rows.append(vd.tr(
         vd.th('Num. channels'),vd.td('{}'.format(len(RX.getChannelIds())))

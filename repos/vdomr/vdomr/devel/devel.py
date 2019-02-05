@@ -61,7 +61,7 @@ loaded_javascript_files = {}
 def loadJavascript(*, url=None, path=None, js=None, delay=None):
     if path:
         modified_timestamp = os.path.getmtime(path)
-        colab_mode = (os.environ['VDOMR_MODE'] == 'COLAB')
+        colab_mode = (vd.mode() == 'colab')
         # if (not colab_mode) and (path in loaded_javascript_files):
         #  if loaded_javascript_files[path]['mtime']==modified_timestamp:
         # already loaded
@@ -85,7 +85,7 @@ def loadJavascript(*, url=None, path=None, js=None, delay=None):
         vd.exec_javascript(js)
         return
     if url:
-        colab_mode = (os.environ['VDOMR_MODE'] == 'COLAB')
+        colab_mode = (vd.mode() == 'colab')
         # if (not colab_mode) and (url in loaded_javascript_files):
         # already loaded
         #  return
