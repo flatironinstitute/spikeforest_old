@@ -1,6 +1,7 @@
 import urllib.request as request
 import json
 import os
+import shutil
 import random
 import hashlib
 import requests
@@ -352,6 +353,9 @@ class KBucketClient():
                 else:
                     return (None, None, None)
 
+        if sha1 is None:
+            return (None, None, None)
+
         # search locally
         if local:
             path = self._sha1_cache.findFile(sha1=sha1)
@@ -547,7 +551,7 @@ class Sha1Cache():
                 'sha1 of downloaded file does not match expected {} {}'.format(url, sha1))
         if os.path.exists(target_path):
             _safe_remove_file(target_path)
-        os.rename(path_tmp, target_path)
+        _rename_or_move(path_tmp, target_path)
         if alternate_target_path:
             self.computeFileSha1(target_path, _known_sha1=sha1)
         return target_path
@@ -559,7 +563,7 @@ class Sha1Cache():
             if path != path0:
                 _safe_remove_file(path)
         else:
-            os.rename(path, path0)
+            _rename_or_move(path, path0)
         return path0
 
     def copyFileToCache(self, path):
@@ -567,7 +571,7 @@ class Sha1Cache():
         path0 = self._get_path(sha1, create=True)
         if not os.path.exists(path0):
             copyfile(path, path0+'.copying')
-            os.rename(path0+'.copying', path0)
+            _rename_or_move(path0+'.copying', path0)
         return path0
 
     def computeFileSha1(self, path, _known_sha1=None):
@@ -704,6 +708,16 @@ def _write_json_file(obj, path):
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     return ''.join(random.choice(chars) for _ in range(num_chars))
+
+
+def _rename_or_move(path1, path2):
+    if os.path.abspath(path1) == os.path.abspath(path2):
+        return
+    try:
+        os.rename(path1, path2)
+    except:
+        shutil.copyfile(path1, path2)
+        os.unlink(path1)
 
 
 # The global module client
