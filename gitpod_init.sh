@@ -1,24 +1,12 @@
 #!/bin/bash
 set -ex
 
+# These should already be installed from the container
 pip install -r requirements.txt
 python setup.py develop
 pip install jupyterlab
 
-pip install autopep8
+# Additional development packages
+pip install autopep8 # for formatting python code
 git config core.hooksPath .githooks
-
-#if [ -d /home/theiapod ]; then
-#    echo "test"
-#    for filename in /home/theiapod/{*,.??*}; do
-#        echo "testing --- $filename"
-#        if [ -e "$filename" ]; then # in case no such file exists
-#            fname=$(basename $filename)
-#            ln -s /home/theiapod/$fname ~/$fname
-#        fi
-#    done
-#fi
-
-#if [ -f /home_data/.gitconfig ]; then
-#    ln -s /home_data/.gitconfig ~/.gitconfig
-#fi
+pip install --upgrade nbstripout # for stripping output on .ipynb files
