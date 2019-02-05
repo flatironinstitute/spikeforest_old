@@ -11,6 +11,7 @@ from kbucket import client as kb
 import inspect
 from subprocess import Popen, PIPE
 import shlex
+import time
 
 
 def sha1(str):
@@ -76,6 +77,10 @@ def get_file_extension(fname):
         return ext
     else:
         return ''
+
+
+def compute_processor_job_stats_signature(self):
+    compute_processor_job_output_signature(self, '--stats--')
 
 
 def compute_processor_job_output_signature(self, output_name):
@@ -152,6 +157,7 @@ def create_temporary_file(fname):
 class ProcessorExecuteOutput():
     def __init__(self):
         self.outputs = dict()
+        self.stats = dict()
 
 
 def _read_python_code_of_directory(dirname):
@@ -619,6 +625,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             if not _force_run:
                 print('Using outputs from cache:',
                       ','.join(list(cache_collections)))
+
                 for output0 in proc.OUTPUTS:
                     name0 = output0.name
                     fname1 = output_files[name0]
@@ -634,6 +641,11 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                         ret.outputs[name0] = fname2
                     else:
                         ret.outputs[name0] = fname1
+
+                stats_signature0 = compute_processor_job_stats_signature(X)
+                stats = kb.loadObject(key=stats_signature0)
+                if stats:
+                    ret.stats = stats
                 return ret
             else:
                 print('Found outputs in cache, but forcing run...')
@@ -662,6 +674,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             temporary_output_files.add(tmp_fname)
             setattr(X, name0, tmp_fname)
     # Now it is time to execute
+    start_time = time.time()
     if _container is None:
         try:
             print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
@@ -681,9 +694,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             raise
     else:
         # in a container
+        container_path = kb.realizeFile(_container)
+        if not container_path:
+            print('Unable to realize container file: '+_container)
         tempdir = tempfile.mkdtemp()
         try:
-            _execute_in_container(proc, X, container=_container, tempdir=tempdir, **kwargs, _cache=_cache,
+            _execute_in_container(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=_cache,
                                   _force_run=_force_run, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
         except:
             if _keep_temp_files:
@@ -698,6 +714,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         else:
             shutil.rmtree(tempdir)
 
+    end_time = time.time()
+    elapsed_time = end_time-start_time
+
     for output0 in proc.OUTPUTS:
         name0 = output0.name
         output_fname = getattr(X, name0)
@@ -708,6 +727,10 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             output_sha1 = kb.computeFileSha1(output_fname)
             signature0 = output_signatures[name0]
             pairio.set(signature0, output_sha1)
+
+    ret.stats['start_time'] = start_time
+    ret.stats['end_time'] = end_time
+    ret.stats['elapsed_sec'] = elapsed_time
 
     return ret
 
