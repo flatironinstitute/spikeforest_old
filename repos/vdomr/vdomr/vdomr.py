@@ -141,6 +141,10 @@ def config_server():
     vdomr_global['mode'] = 'server'
 
 
+def mode():
+    return vdomr_global['mode']
+
+
 if os.environ.get('VDOMR_MODE', '') == 'JP_PROXY_WIDGET':
     print('vdomr: using jp_proxy_widget because of VDOMR_MODE environment variable')
     config_jupyter()

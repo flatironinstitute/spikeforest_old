@@ -64,6 +64,8 @@ class SFRecording():
         self._sorting_result_names=[]
         self._sorting_results_by_name=dict()
         self._summary_result=None
+        if 'summary' in obj:
+            self._summary_result=obj['summary']
         self._study=study
     def getObject(self):
         return self._obj
@@ -122,6 +124,8 @@ class SFRecording():
             else:
                 raise Exception('Invalid format: '+format)
     def trueUnitsInfo(self,format='dataframe'):
+        if not self._summary_result:
+            return None
         B=kb_read_json_file(self._summary_result['true_units_info'])
         if format=='json':
             return B
@@ -173,7 +177,25 @@ class SFData():
     def __init__(self):
         self._studies_by_name=dict()
         self._study_names=[]
+    def loadStudy(self,study):
+        name=study['name']
+        if name in self._studies_by_name:
+            print ('Study already loaded: '+name)
+        else:
+            self._study_names.append(study['name'])
+            S=SFStudy(study)
+            self._studies_by_name[name]=S
+    def loadStudies(self,studies):
+        for study in studies:
+            self.loadStudy(study)
+    def loadRecording(self,recording):
+        study=recording['study']
+        self._studies_by_name[study].addRecording(recording)
+    def loadRecordings2(self,recordings):
+        for recording in recordings:
+            self.loadRecording(recording)
     def loadRecordings(self,*,key=None,verbose=False):
+        # old
         if key is None:
             key=dict(name='spikeforest_studies_processed')
         obj=kb.loadObject(key=key)
@@ -192,6 +214,23 @@ class SFData():
             self._studies_by_name[study].addRecording(ds)
         if verbose:
             print ('Loaded {} recordings'.format(len(recordings)))
+    def loadSortingResults(self,sorting_results):
+        for result in sorting_results:
+            self.loadSortingResult(result)
+    def loadSortingResult(self,X):
+        study_name=X['recording']['study']
+        recording_name=X['recording']['name']
+        sorter_name=X['sorter']['name']
+        sorting=X['sorting']
+        S=self.study(study_name)
+        if S:
+            D=S.recording(recording_name)
+            if D:
+                D.addSortingResult(sorting)
+            else:
+                print ('Warning: recording not found: '+recording_name)
+        else:
+            print ('Warning: study not found: '+study_name)
     def loadProcessingBatch(self,*,batch_name=None,key=None,verbose=False):
         if batch_name:
             key=dict(name='batcho_batch_results',batch_name=batch_name)

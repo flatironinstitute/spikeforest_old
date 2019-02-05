@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE
 import shlex
 import time
 import sys
+import multiprocessing
 
 
 def sha1(str):
@@ -373,7 +374,14 @@ def _run_command_and_print_output_old(command):
         return rc
 
 
-def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
+def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
+
+    if _force_run is None:
+        if os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE':
+            _force_run = True
+        else:
+            _force_run = False
+
     inputs = dict()
     for input0 in proc.INPUTS:
         name0 = input0.name
@@ -413,10 +421,11 @@ def createJob(proc, _container, _cache=True, _force_run=None, _keep_temp_files=N
         else:
             val0 = kwargs[name0]
         parameters[name0] = val0
-    if type(_container) == str and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
-        pass
-    else:
-        _container = kb.saveFile(_container)
+    if _container is not None:
+        if type(_container) == str and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
+            pass
+        else:
+            _container = kb.saveFile(_container)
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
@@ -454,7 +463,33 @@ def _prepare_processor_job(job):
                 'Unable to realize file for input {}: {}'.format(key, fname0))
 
 
-def _execute_processor_job(job):
+def executeBatch(*, jobs, num_workers=None, compute_resource=None):
+    if num_workers is not None:
+        if compute_resource is not None:
+            raise Exception('Cannot specify num_workers and compute_resource.')
+        pool = multiprocessing.Pool(num_workers)
+        results = pool.map(executeJob, jobs)
+        pool.close()
+        pool.join()
+        for i, job in enumerate(jobs):
+            job['result'] = results[i]
+        return
+
+    if compute_resource is not None:
+        import batcho
+        batch_name = 'test1'
+        batcho.set_batch(batch_name=batch_name, jobs=jobs,
+                         compute_resource=compute_resource)
+        while True:
+            statuses = batcho.get_batch_job_statuses(batch_name=batch_name)
+            print('-'.join(['{}'.format(a['status']) for a in statuses]))
+            time.sleep(3)
+
+    for job in jobs:
+        job['result'] = executeJob(job)
+
+
+def executeJob(job):
     tempdir = tempfile.mkdtemp()
     try:
         processor_code = kb.loadObject(path=job['processor_code'])
@@ -466,16 +501,15 @@ def _execute_processor_job(job):
         processor_source_basename_noext = os.path.splitext(
             processor_source_basename)[0]
 
-        container_path = kb.realizeFile(job['container'])
-        if not container_path:
-            raise Exception(
-                'Unable to find container: {}'.format(job['container']))
+        container = job.get('container', None)
+        if container:
+            container = kb.realizeFile(container)
 
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
             _force_run=job.get('_force_run', None),
             _keep_temp_files=job.get('_keep_temp_files', None),
-            _container=container_path,
+            _container=container,
         )
         for key in job['inputs']:
             execute_kwargs[key] = job['inputs'][key]
@@ -543,7 +577,7 @@ if batcho_ok:
         _prepare_processor_job(job)
 
     def _batcho_execute_mlprocessor_run(job):
-        return _execute_processor_job(job)
+        return executeJob(job)
     batcho.register_job_command(command='execute_mlprocessor',
                                 prepare=_batcho_execute_mlprocessor_prepare, run=_batcho_execute_mlprocessor_run)
 

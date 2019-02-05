@@ -1,6 +1,7 @@
 from .core import *
 from .registry import *
 from .validators import *
+from .execute import executeJob, executeBatch
 
 __all__ = [
     "Input", "Output",
@@ -8,5 +9,6 @@ __all__ = [
     "Processor",
     "registry", "register_processor", "ProcessorRegistry",
     "Validator", "ValueValidator", "RegexValidator", "FileExtensionValidator", "FileExistsValidator",
-    "invoke"
+    "invoke",
+    "executeJob", "executeBatch"
 ]

@@ -52,54 +52,6 @@ def compute_channel_noise_levels(recording):
         ret.append(noise_level)
     return ret
 
-class MemoryRecordingExtractor(si.RecordingExtractor):
-    def __init__(self, parent_recording):
-        si.RecordingExtractor.__init__(self)
-        self._parent_recording=parent_recording
-        self._traces=parent_recording.getTraces()
-        self.copyChannelProperties(parent_recording)
-        self._channel_index_map=dict()
-        ids=parent_recording.getChannelIds()
-        for ii,id in enumerate(ids):
-          self._channel_index_map[id]=ii
-        self._copy_channel_properties(parent_recording)
-
-    def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
-        if start_frame is None:
-            start_frame=0
-        if end_frame is None:
-            end_frame=self.getNumFrames()
-        if channel_ids is None:
-            channel_ids=self.getChannelIds()
-        channel_indices=[]
-        for id in channel_ids:
-          channel_indices.append(self._channel_index_map[id])
-        return self._traces[channel_indices,start_frame:end_frame]
-
-    def getChannelIds(self):
-        return self._parent_recording.getChannelIds()
-
-    def getNumFrames(self):
-        return self._parent_recording.getNumFrames()
-
-    def getSamplingFrequency(self):
-        return self._parent_recording.getSamplingFrequency()
-
-    def frameToTime(self, frame):
-        return self._parent_recording.frameToTime(frame)
-
-    def timeToFrame(self, time):
-        return self._parent_recording.timeToFrame(time)
-
-    def _copy_channel_properties(self, recording, channel_ids=None):
-        if channel_ids is None:
-            channel_ids=recording.getChannelIds()
-        for id in channel_ids:
-          pnames=recording.getChannelPropertyNames(channel_id=id)
-          for pname in pnames:
-            val=recording.getChannelProperty(channel_id=id,property_name=pname)
-            self.setChannelProperty(channel_id=id,property_name=pname,value=val)
-
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
   VERSION='0.1.4'
@@ -115,10 +67,6 @@ class ComputeUnitsInfo(mlpr.Processor):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
     recording=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
     sorting=si.MdaSortingExtractor(firings_file=self.firings)
-    #ef=int(1e6)
-    #recording_sub=si.SubRecordingExtractor(parent_recording=recording,start_frame=0,end_frame=ef)
-    #recording_sub=MemoryRecordingExtractor(parent_recording=recording_sub)
-    #sorting_sub=si.SubSortingExtractor(parent_sorting=sorting,start_frame=0,end_frame=ef)
     unit_ids=self.unit_ids
     if (not unit_ids) or (len(unit_ids)==0):
       unit_ids=sorting.getUnitIds()
