@@ -460,10 +460,10 @@ def _prepare_processor_job(job):
         a = kb.realizeFile(container)
         if not a:
             raise Exception('Unable to realize container file: '+container)
-    files_to_realize=job.get('files_to_realize')
+    files_to_realize = job.get('files_to_realize', [])
     for fname in files_to_realize:
         print('realizing file: '+fname)
-        a=kb.realizeFile(fname)
+        a = kb.realizeFile(fname)
         if not a:
             raise Exception('Unable to realize file: '+fname)
 
