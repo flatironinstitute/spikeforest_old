@@ -454,13 +454,18 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
 
 
 def _prepare_processor_job(job):
-    for key in job['inputs']:
-        fname0 = job['inputs'][key]
-        print('Realizing file for input {}: {}'.format(key, fname0))
-        a = kb.realizeFile(fname0)
+    container = job.get('container', None)
+    if container:
+        print('realizing container: '+container)
+        a = kb.realizeFile(container)
         if not a:
-            raise Exception(
-                'Unable to realize file for input {}: {}'.format(key, fname0))
+            raise Exception('Unable to realize container file: '+container)
+    files_to_realize=job.get('files_to_realize')
+    for fname in files_to_realize:
+        print('realizing file: '+fname)
+        a=kb.realizeFile(fname)
+        if not a:
+            raise Exception('Unable to realize file: '+fname)
 
 
 def executeBatch(*, jobs, num_workers=None, compute_resource=None):
