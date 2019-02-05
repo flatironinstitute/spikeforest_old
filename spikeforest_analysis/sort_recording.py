@@ -196,6 +196,7 @@ def sort_recording(*,sorter,recording):
     )
     outputs=X.outputs
     stats=X.stats
+    console_out=X.console_out
     print('Saving firings_out...')
     firings_out=kb.saveFile(outputs['firings_out'])
     firings_true_path=recording['directory']+'/firings_true.mda'
@@ -211,9 +212,10 @@ def sort_recording(*,sorter,recording):
         units_true=recording.get('units_true',[]),
         firings_true=firings_true_path,
         sorting_params=sorting_params,
-        sorting_processor_name=SS.NAME,
-        sorting_processor_version=SS.VERSION,
-        sorting_execution_stats=stats,
+        processor_name=SS.NAME,
+        processor_version=SS.VERSION,
+        execution_stats=stats,
+        console_out=kb.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
         firings=firings_out
     )

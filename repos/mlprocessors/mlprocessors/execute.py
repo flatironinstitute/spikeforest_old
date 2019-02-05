@@ -12,6 +12,7 @@ import inspect
 from subprocess import Popen, PIPE
 import shlex
 import time
+import sys
 
 
 def sha1(str):
@@ -80,7 +81,11 @@ def get_file_extension(fname):
 
 
 def compute_processor_job_stats_signature(self):
-    compute_processor_job_output_signature(self, '--stats--')
+    return compute_processor_job_output_signature(self, '--stats--')
+
+
+def compute_processor_job_console_out_signature(self):
+    return compute_processor_job_output_signature(self, '--console-out--')
 
 
 def compute_processor_job_output_signature(self, output_name):
@@ -158,6 +163,7 @@ class ProcessorExecuteOutput():
     def __init__(self):
         self.outputs = dict()
         self.stats = dict()
+        self.console_out = ''
 
 
 def _read_python_code_of_directory(dirname):
@@ -326,20 +332,24 @@ if __name__ == "__main__":
                 _system_call_prefix, singularity_cmd)
         # singularity_cmd='bash -c "{}"'.format(singularity_cmd)
 
-    retcode = _run_command_and_print_output(singularity_cmd)
+    retcode, console_out = _run_command_and_print_output(singularity_cmd)
     if retcode != 0:
         raise Exception('Processor returned a non-zero exit code')
+
+    return console_out
 
 
 def _shell_execute(cmd):
     popen = subprocess.Popen('{}'.format(cmd), stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+    console_output_lines = []
     for stdout_line in iter(popen.stdout.readline, ""):
         # yield stdout_line
+        console_output_lines.append(stdout_line)
         print(stdout_line, end='\r')
     popen.stdout.close()
     return_code = popen.wait()
-    return return_code
+    return return_code, ''.join(console_output_lines)
 
 
 def _run_command_and_print_output(cmd):
@@ -497,9 +507,13 @@ if __name__ == "__main__":
 
         _write_text_file(tempdir+'/execute.py', code)
 
-        _run_command_and_print_output('python {}/execute.py'.format(tempdir))
+        retcode, console_out = _run_command_and_print_output(
+            'python {}/execute.py'.format(tempdir))
+        if retcode != 0:
+            raise Exception('Non-zero return code when running processor job')
         ret = dict(
-            outputs=dict()
+            outputs=dict(),
+            console_out=console_out
         )
         for key in job['outputs']:
             out0 = job['outputs'][key]
@@ -532,6 +546,45 @@ if batcho_ok:
         return _execute_processor_job(job)
     batcho.register_job_command(command='execute_mlprocessor',
                                 prepare=_batcho_execute_mlprocessor_prepare, run=_batcho_execute_mlprocessor_run)
+
+
+class Logger2(object):
+    def __init__(self, file1, file2):
+        self.file1 = file1
+        self.file2 = file2
+
+    def write(self, data):
+        self.file1.write(data)
+        self.file2.write(data)
+
+    def flush(self):
+        self.file1.flush()
+        self.file2.flush()
+
+
+class ConsoleCapture():
+    def __init__(self):
+        self._console_out = ''
+        self._tmp_fname = None
+        self._file_handle = None
+        self._original_stdout = sys.stdout
+        self._original_stderr = sys.stderr
+
+    def start_capturing(self):
+        self._tmp_fname = tempfile.mktemp(suffix='.txt')
+        self._file_handle = open(self._tmp_fname, 'w')
+        sys.stdout = Logger2(self._file_handle, self._original_stdout)
+        sys.stderr = Logger2(self._file_handle, self._original_stderr)
+
+    def stop_capturing(self):
+        sys.stdout = self._original_stdout
+        sys.stderr = self._original_stderr
+        self._file_handle.close()
+        with open(self._tmp_fname, 'r') as f:
+            self._console_out = f.read()
+
+    def consoleOut(self):
+        return self._console_out
 
 
 def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, **kwargs):
@@ -586,6 +639,10 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         output_signatures = dict()
         output_sha1s = dict()
         cache_collections = set()
+
+        stats_signature0 = compute_processor_job_stats_signature(X)
+        console_out_signature0 = compute_processor_job_console_out_signature(X)
+
         for output0 in proc.OUTPUTS:
             name0 = output0.name
             signature0 = compute_processor_job_output_signature(X, name0)
@@ -642,10 +699,13 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     else:
                         ret.outputs[name0] = fname1
 
-                stats_signature0 = compute_processor_job_stats_signature(X)
                 stats = kb.loadObject(key=stats_signature0)
                 if stats:
                     ret.stats = stats
+
+                console_out = kb.loadText(key=console_out_signature0)
+                if console_out:
+                    ret.console_out = console_out
                 return ret
             else:
                 print('Found outputs in cache, but forcing run...')
@@ -673,14 +733,17 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             tmp_fname = create_temporary_file(fname0)
             temporary_output_files.add(tmp_fname)
             setattr(X, name0, tmp_fname)
+
     # Now it is time to execute
     start_time = time.time()
     if _container is None:
+        print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
+        console_capture = ConsoleCapture()
+        console_capture.start_capturing()
         try:
-            print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
             X.run()
-            print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
         except:
+            console_capture.stop_capturing()
             # clean up temporary output files
             print('Problem executing {}.'.format(proc.NAME))
             if _keep_temp_files:
@@ -692,6 +755,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     if os.path.exists(fname):
                         os.remove(fname)
             raise
+        console_capture.stop_capturing()
+        console_out = console_capture.consoleOut()
+        print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
     else:
         # in a container
         container_path = kb.realizeFile(_container)
@@ -699,8 +765,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             print('Unable to realize container file: '+_container)
         tempdir = tempfile.mkdtemp()
         try:
-            _execute_in_container(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=_cache,
-                                  _force_run=_force_run, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
+            # Do not use cache inside container... we handle caching outside container
+            console_out = _execute_in_container(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
+                                                _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
         except:
             if _keep_temp_files:
                 print(
@@ -731,6 +798,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     ret.stats['start_time'] = start_time
     ret.stats['end_time'] = end_time
     ret.stats['elapsed_sec'] = elapsed_time
+
+    ret.console_out = console_out
+
+    if _cache:
+        kb.saveObject(key=stats_signature0, object=ret.stats)
+        kb.saveText(key=console_out_signature0, text=ret.console_out)
 
     return ret
 

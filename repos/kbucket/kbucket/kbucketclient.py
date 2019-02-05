@@ -280,6 +280,17 @@ class KBucketClient():
             basename = 'object.json'
         return self.saveFile(fname, share_id=share_id, upload_token=upload_token, key=key, basename=basename, remote=remote)
 
+    def saveText(self, text, *, key=None, share_id=None, upload_token=None, remote=None, basename=None):
+        tmp_fname = self._create_temporary_file_for_text(text=text)
+        try:
+            fname = self.moveFileToCache(tmp_fname)
+        except:
+            _safe_remove_file(tmp_fname)
+            raise
+        if basename is None:
+            basename = 'file.txt'
+        return self.saveFile(fname, share_id=share_id, upload_token=upload_token, key=key, basename=basename, remote=remote)
+
     def loadObject(self, *, format='json', share_ids=None, key=None, path=None, collection=None, local=None, remote=None):
         fname = self.realizeFile(share_ids=share_ids, key=key, path=path,
                                  collection=collection, local=local, remote=remote)
@@ -294,6 +305,18 @@ class KBucketClient():
             raise Exception('Unsupported format in loadObject: '+format)
         return ret
 
+    def loadText(self, *, share_ids=None, key=None, path=None, collection=None, local=None, remote=None):
+        fname = self.realizeFile(share_ids=share_ids, key=key, path=path,
+                                 collection=collection, local=local, remote=remote)
+        if fname is None:
+            # raise Exception('Unable to find file.')
+            return None
+        try:
+            with open(fname) as f:
+                return f.read()
+        except:
+            raise Exception('Unable to read text file: '+fname)
+
     def getTemporaryFileName(self, fname):
         return self._create_temporary_fname(fname)
 
@@ -303,6 +326,12 @@ class KBucketClient():
             _write_json_file(object, tmp_fname)
         else:
             raise Exception('Unsupported format in saveObject: '+format)
+        return tmp_fname
+
+    def _create_temporary_file_for_text(self, *, text):
+        tmp_fname = self._create_temporary_fname('object.json')
+        with open(tmp_fname, 'w') as f:
+            f.write(text)
         return tmp_fname
 
     def _create_temporary_fname(self, fname):

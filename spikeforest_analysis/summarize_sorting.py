@@ -17,12 +17,13 @@ def summarize_sorting(sorting):
     #unit_waveforms=kb.saveFile(unit_waveforms,basename='unit_waveforms.jpg')
     #ret['plots']['unit_waveforms']=unit_waveforms
 
-    autocorrelograms=PlotAutoCorrelograms.execute(
+    X=PlotAutoCorrelograms.execute(
       recording_dir=sorting['recording_dir'],
       channels=sorting.get('channels',[]),
       firings=sorting['firings'],
       plot_out={'ext':'.jpg'}
-    ).outputs['plot_out']
+    )
+    autocorrelograms=X.outputs['plot_out']
     autocorrelograms=kb.saveFile(autocorrelograms,basename='autocorrelograms.jpg')
     ret['plots']['autocorrelograms']=autocorrelograms
 
