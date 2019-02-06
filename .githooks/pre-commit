@@ -9,11 +9,12 @@
 #   E226 missing whitespace around arithmetic operator
 #   E722 do not use bare 'except'
 #   W503 line break before binary operator
+#   E265 block comment should start with '# '
 
 exec 1>&2
 
 echo "Validating PEP8 compliance..."
-pycodestyle --ignore=W504,E501,E226,E722,W503 batcho kbucket mlprocessors pages pairio spikesorters vdomr
+pycodestyle --ignore=W504,E501,E226,E722,W503,E265 batcho kbucket mlprocessors pages pairio spikesorters vdomr
 rc=$?; if [[ $rc != 0 ]]; then
   echo "BLOCKING COMMIT"
   exit $rc;

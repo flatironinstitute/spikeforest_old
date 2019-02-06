@@ -46,7 +46,7 @@ def main():
     if args.command=='stop':
         batcho.stop_batch(batch_name=batch_name)
     elif args.command=='start':
-        list=np.arange(10001,10011)
+        list=np.arange(10001,10004)
         jobs=[
             ComputeNthPrime.createJob(n=int(n),output={'ext':'.txt'},_force_run=args.force_run)
             for n in list

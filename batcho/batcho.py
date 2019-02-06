@@ -161,7 +161,7 @@ def run_batch(*, batch_name, job_index=None):
                     num_ran = num_ran+1
 
     _check_batch_code(batch_name, batch_code)
-    print('Ran {} jobs.'.format(num_ran))
+    #print('Ran {} jobs.'.format(num_ran))
     return True
 
 
@@ -202,8 +202,8 @@ def assemble_batch(*, batch_name):
                 'Job {} not finished. Status is {}'.format(label, status))
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
-    kb.saveObject(key=dict(name='batcho_batch_results',
-                           batch_name=batch_name), object=dict(results=assembled_results))
+    kb.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
+                  object=dict(results=assembled_results), confirm=True)
     _set_batch_status(batch_name=batch_name,
                       status=dict(status='done_assembling'))
     return True
@@ -516,7 +516,7 @@ def _get_job_result(*, batch_name, job_index):
 def _set_job_result(*, batch_name, job_index, result):
     key = dict(name='batcho_job_result',
                batch_name=batch_name, job_index=job_index)
-    return kb.saveObject(key=key, object=result)
+    return kb.saveObject(key=key, object=result, confirm=True)
 
 
 def _set_job_console_output(*, batch_name, job_index, file_name):
