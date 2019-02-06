@@ -336,8 +336,7 @@ function computePrvDirectoryObject(path0, callback) {
 }
 
 function computePrvObject(fname, callback) {
-  var stat0 = stat_file(fname);
-  if (!stat0) {
+  if (!stat_file(fname)) {
     callback('Cannot stat file: ' + fname);
     return;
   }
@@ -355,9 +354,10 @@ function computePrvObject(fname, callback) {
         return;
       }
       var fcs = 'head1000-' + sha1_head;
-      var obj = {
+      var stat1 = stat_file(fname);
+      var obj = {        
         original_checksum: sha1,
-        original_size: stat0.size,
+        original_size: stat1.size,
         original_fcs: fcs,
         original_path: require('path').resolve(fname),
         prv_version: '0.11'
