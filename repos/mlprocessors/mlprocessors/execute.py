@@ -14,6 +14,7 @@ import shlex
 import time
 import sys
 import multiprocessing
+import random
 
 
 def sha1(str):
@@ -468,7 +469,12 @@ def _prepare_processor_job(job):
             raise Exception('Unable to realize file: '+fname)
 
 
-def executeBatch(*, jobs, num_workers=None, compute_resource=None):
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
+
+
+def executeBatch(*, jobs, num_workers=None, compute_resource=None, batch_name=None):
     if num_workers is not None:
         if compute_resource is not None:
             raise Exception('Cannot specify num_workers and compute_resource.')
@@ -482,19 +488,40 @@ def executeBatch(*, jobs, num_workers=None, compute_resource=None):
 
     if compute_resource is not None:
         import batcho
-        batch_name = 'test1'
+        if batch_name is None:
+            batch_name = 'batch_'+_random_string(10)
         batcho.set_batch(batch_name=batch_name, jobs=jobs,
                          compute_resource=compute_resource)
         while True:
-            statuses = batcho.get_batch_job_statuses(batch_name=batch_name)
-            print('-'.join(['{}'.format(a['status']) for a in statuses]))
+            status = batcho.get_batch_status(batch_name=batch_name)
+            if status is None:
+                print('Waiting...')
+            else:
+                status0 = status.get('status', '')
+                print('Status: '+status0)
+                if status0 == 'finished':
+                    break
+                if status0 == 'error':
+                    err0 = status.get('error', '')
+                    raise Exception('Error executing batch: {}'.format(err0))
+            # statuses = batcho.get_batch_job_statuses(batch_name=batch_name)
+            # print('-'.join(['{}'.format(a['status']) for a in statuses]))
             time.sleep(3)
 
+        results0 = batcho.get_batch_results(batch_name=batch_name)
+        if results0 is None:
+            raise Exception('Unable to get batch results.')
+        for i, job in enumerate(jobs):
+            job['result'] = results0['results'][i]['result']
+        return
+
+    timer = time.time()
     for job in jobs:
         job['result'] = executeJob(job)
 
 
 def executeJob(job):
+    timer = time.time()
     tempdir = tempfile.mkdtemp()
     try:
         processor_code = kb.loadObject(path=job['processor_code'])
@@ -628,6 +655,7 @@ class ConsoleCapture():
 
 def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, **kwargs):
 
+    timer = time.time()
     if _system_call:
         if _container is not None:
             raise Exception('Cannot use container with system call.')

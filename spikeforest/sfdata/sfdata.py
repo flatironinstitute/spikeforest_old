@@ -209,6 +209,8 @@ class SFData():
                 S=SFStudy(study)
                 self._studies_by_name[name]=S
         recordings=obj['recordings']
+        print('recordings ===================================================================')
+        print(recordings)
         for ds in recordings:
             study=ds['study']
             self._studies_by_name[study].addRecording(ds)
