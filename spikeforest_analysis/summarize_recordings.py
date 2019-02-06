@@ -14,6 +14,7 @@ def summarize_recordings(recordings):
     jobs_timeseries_plot=[]
     jobs_units_info=[]
     for recording in recordings:
+        raw_path=recording['directory']+'/raw.mda'
         firings_true_path=recording['directory']+'/firings_true.mda'
         channels=recording.get('channels',None)
         units=recording.get('units_true',None)
@@ -25,6 +26,7 @@ def summarize_recordings(recordings):
             channels=recording.get('channels',[]),
             json_out={'ext':'.json'}
         )
+        job['files_to_realize']=[raw_path,firings_true_path]
         jobs_info.append(job)
         job=CreateTimeseriesPlot.createJob(
             recording_dir=recording['directory'],

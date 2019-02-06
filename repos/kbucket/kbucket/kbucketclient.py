@@ -32,6 +32,7 @@ class KBucketClient():
         self._verbose = False
 
     def setConfig(self, *,
+                  token=None,
                   share_ids=None,
                   url=None,
                   upload_share_id=None,
@@ -41,6 +42,12 @@ class KBucketClient():
                   load_remote=None, save_remote=None,
                   verbose=None
                   ):
+        if token is not None:
+            list0 = token.split('.')
+            obj = pairio.getObject(collection=list0[0], key=list0[1])
+            self.setConfig(**obj['kbucket'])
+            pairio.setConfig(**obj['pairio'])
+            return
         if share_ids is not None:
             if type(share_ids) != list:
                 raise Exception('share_ids must be a list')
@@ -751,3 +758,10 @@ def _rename_or_move(path1, path2):
 
 # The global module client
 client = KBucketClient()
+
+if os.environ.get('KBUCKET_CONFIG', None):
+    try:
+        client.setConfig(token=os.environ.get('KBUCKET_CONFIG'))
+        print('KBucket config set using KBUCKET_CONFIG environment variable.')
+    except:
+        print('WARNING: problem setting kbucket config from KBUCKET_CONFIG environment variable.')

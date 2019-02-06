@@ -16,6 +16,7 @@ def main():
   parser = argparse.ArgumentParser(description = 'Listen for batches as a compute resource')
   parser.add_argument('compute_resource',help='Name of the compute resource')
   parser.add_argument('--run_prefix',help='Prefix for running jobs (e.g., srun)',required=False,default=None)
+  parser.add_argument('--parallel',help='Number of jobs to run in parallel (should not be run in combination with a tool like srun)',required=False,default=None)
 
   args = parser.parse_args()
 
@@ -35,7 +36,12 @@ def main():
   else:
     sf.kbucketConfigRemote(name=BATCHO_CONFIG_NAME,collection=BATCHO_CONFIG_COLLECTION,password=BATCHO_CONFIG_PASSWORD)
 
-  batcho.listen_as_compute_resource(args.compute_resource,run_prefix=args.run_prefix)
+  if args.parallel:
+      num_simultaneous=int(args.parallel)
+  else:
+      num_simultaneous=None
+
+  batcho.listen_as_compute_resource(args.compute_resource,run_prefix=args.run_prefix,num_simultaneous=num_simultaneous)
 
 if __name__== "__main__":
   main()
