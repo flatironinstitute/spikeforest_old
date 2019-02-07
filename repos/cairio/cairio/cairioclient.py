@@ -479,7 +479,7 @@ def _get_default_local_db_path():
     return ret
 
 def _hash_of_key(key):
-    if type(key) == dict:
+    if (type(key) == dict) or (type(key) == list):
         key = json.dumps(key, sort_keys=True, separators=(',', ':'))
     return _sha1_of_string(key)
 
