@@ -58,12 +58,9 @@ class Sha1Cache():
         else:
             alternate_target_path = True
         path_tmp = target_path+'.downloading'
-        size_mb = 'unknown'
-        if size:
-            size_mb = int(size/(1024*1024)*10)/10
         if verbose:
             print(
-                'Downloading file --- ({} MB): {} -> {}'.format(size_mb, url, target_path))
+                'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)
         if not sha1b:
             if os.path.exists(path_tmp):
@@ -221,3 +218,18 @@ def _rename_or_move(path1, path2):
     except:
         shutil.copyfile(path1, path2)
         os.unlink(path1)
+
+# thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
+def _format_file_size(size):
+    if not size:
+        return 'Unknown'
+    if size<=1024:
+        return '{} B'.format(size)
+    return _sizeof_fmt(size)
+
+def _sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f %s%s" % (num, 'Yi', suffix)

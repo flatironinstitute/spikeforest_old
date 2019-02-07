@@ -9,34 +9,52 @@ import base64
 import tempfile
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
+from .cairioremoteclient import CairioRemoteClient
 
 class CairioClient():
     def __init__(self):
-        self._config = dict(
+        self._remote_config = dict(
+            url='http://localhost:3010',
+            collection=None,
+            token=None,
+            share_id=None,
+            upload_token=None
         )
         self._verbose = False
         self._local_db=CairioLocal()
+        self._remote_client=CairioRemoteClient()
 
-    def setConfig(self):
-        pass
+    def setRemoteConfig(self,url=None,collection=None,token=None,share_id=None,upload_token=None):
+        if url is not None:
+            self._remote_config['url']=url
+        if collection is not None:
+            self._remote_config['collection']=collection
+        if token is not None:
+            self._remote_config['token']=token
+        if share_id is not None:
+            self._remote_config['share_id']=share_id
+        if upload_token is not None:
+            self._remote_config['upload_token']=upload_token
 
-    def getConfig(self):
-        ret = self._config.copy()
+    def getRemoteConfig(self):
+        ret = self._remote_config.copy()
         return ret
 
+    def addRemoteCollection(self,collection,token,admin_token):
+        return self._remote_client.addCollection(collection=collection,token=token,url=self._remote_config['url'],admin_token=admin_token)
 
     # get value / set value
-    def getValue(self,*,key,subkey=None):
-        return self._get_value(key=key,subkey=subkey)
+    def getValue(self,*,key,subkey=None,password=None):
+        return self._get_value(key=key,subkey=subkey,password=password)
 
-    def setValue(self,*,key,subkey=None,value,overwrite=True):
-        return self._set_value(key=key,subkey=subkey,value=value,overwrite=overwrite)
+    def setValue(self,*,key,subkey=None,value,overwrite=True,password=None):
+        return self._set_value(key=key,subkey=subkey,value=value,overwrite=overwrite,password=password)
 
-    def getSubKeys(self,key):
-        return list(self._get_sub_keys(key=key))
+    def getSubKeys(self,key,password=None):
+        return list(self._get_sub_keys(key=key,password=password))
 
     # realize file / save file
-    def realizeFile(self,key_or_path=None,*,key=None,path=None,subkey=None):
+    def realizeFile(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
         if key_or_path is None:
             if key:
                 key_or_path=key
@@ -51,25 +69,25 @@ class CairioClient():
             return self._realize_file(path=path)
         elif type(key_or_path)==dict:
             key=key_or_path
-            val=self.getValue(key=key,subkey=subkey)
+            val=self.getValue(key=key,subkey=subkey,password=password)
             if not val:
                 return None
             return self.realizeFile(path=val)
         else:
             raise Exception('Invalid type for key_or_path in realizeFile.',type(key_or_path))
 
-    def saveFile(self,path,*,key=None,subkey=None,basename=None):
+    def saveFile(self,path,*,key=None,subkey=None,basename=None,password=None):
         if path is None:
-            self.setValue(key=key,subkey=subkey,value=None)
+            self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
         sha1_path=self._save_file(path=path,basename=basename)
         if key is not None:
-            self.setValue(key=key,subkey=subkey,value=sha1_path)
+            self.setValue(key=key,subkey=subkey,value=sha1_path,password=password)
         return sha1_path
 
 
     # load object / save object
-    def loadObject(self,key_or_path=None,*,key=None,path=None,subkey=None):
+    def loadObject(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
         if key_or_path is None:
             if key:
                 key_or_path=key
@@ -79,19 +97,19 @@ class CairioClient():
             if key or path:
                 raise Exception('Invalid call to loadObject.')
 
-        txt=self.loadText(key_or_path=key_or_path,subkey=subkey)
+        txt=self.loadText(key_or_path=key_or_path,subkey=subkey,password=password)
         if txt is None:
             return None
         return json.loads(txt)
 
-    def saveObject(self,object,*,key=None,subkey=None,basename='object.json'):
+    def saveObject(self,object,*,key=None,subkey=None,basename='object.json',password=None):
         if object is None:
-            self.setValue(key=key,subkey=subkey,value=None)
+            self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
-        return self.saveText(text=json.dumps(object),key=key,subkey=subkey,basename=basename)
+        return self.saveText(text=json.dumps(object),key=key,subkey=subkey,basename=basename,password=password)
 
     # load text / save text
-    def loadText(self,key_or_path=None,*,key=None,path=None,subkey=None):
+    def loadText(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
         if key_or_path is None:
             if key:
                 key_or_path=key
@@ -101,39 +119,114 @@ class CairioClient():
             if key or path:
                 raise Exception('Invalid call to loadText.')
 
-        fname=self.realizeFile(key_or_path=key_or_path,subkey=subkey)
+        fname=self.realizeFile(key_or_path=key_or_path,subkey=subkey,password=password)
         if fname is None:
             return None
         with open(fname) as f:
             return f.read()
 
-    def saveText(self,text,*,key=None,subkey=None,basename='file.txt'):
+    def saveText(self,text,*,key=None,subkey=None,basename='file.txt',password=None):
         if text is None:
-            self.setValue(key=key,subkey=subkey,value=None)
+            self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
         tmp_fname=_create_temporary_file_for_text(text=text)
         try:
-            ret=self.saveFile(tmp_fname,key=key,subkey=subkey,basename=basename)
+            ret=self.saveFile(tmp_fname,key=key,subkey=subkey,basename=basename,password=password)
         except:
             os.unlink(tmp_fname)
             raise
         os.unlink(tmp_fname)
         return ret
 
-    def _get_value(self,*,key,subkey):
+    def _get_value(self,*,key,subkey,password=None):
+        if password is not None:
+            key=dict(key=key,password=password)
+        collection=self._remote_config['collection']
+        if collection:
+            return self._remote_client.getValue(key=key,subkey=subkey,collection=collection,url=self._remote_config['url'])
         return self._local_db.getValue(key=key,subkey=subkey)
 
-    def _set_value(self,*,key,subkey,value,overwrite):
+    def _set_value(self,*,key,subkey,value,overwrite,password=None):
+        if password is not None:
+            key=dict(key=key,password=password)
+        collection=self._remote_config['collection']
+        if collection:
+            return self._remote_client.setValue(key=key,subkey=subkey,value=value,overwrite=overwrite,collection=collection,url=self._remote_config['url'],token=self._remote_config['token'])
         return self._local_db.setValue(key=key,subkey=subkey,value=value,overwrite=overwrite)
 
-    def _get_sub_keys(self,*,key):
+    def _get_sub_keys(self,*,key,password=None):
+        if password is not None:
+            key=dict(key=key,password=password)
+        collection=self._remote_config['collection']
+        if collection:
+            return self._remote_client.getSubKeys(key=key)
         return self._local_db.getSubKeys(key=key)
 
     def _realize_file(self,*,path):
-        return self._local_db.realizeFile(path=path)
+        ret=self._local_db.realizeFile(path=path)
+        if ret:
+            return ret
+        share_id=self._remote_config['share_id']
+        if share_id:
+            if path.startswith('sha1://'):
+                list0=path.split('/')
+                sha1=list0[2]
+                url,size=self._find_on_kbucket(share_id=share_id,sha1=sha1)
+                if not url:
+                    return None
+                return self._local_db.realizeFileFromUrl(url=url,sha1=sha1,size=size)
 
     def _save_file(self,*,path,basename):
-        return self._local_db.saveFile(path=path,basename=basename)
+        ret=self._local_db.saveFile(path=path,basename=basename)
+        if not ret:
+            return False
+        share_id=self._remote_config['share_id']
+        upload_token=self._remote_config['upload_token']
+        if (share_id) and (upload_token):
+            sha1=self._local_db.computeFileSha1(path=path)
+            if sha1:
+                url,_=self._find_on_kbucket(share_id=share_id,sha1=sha1)
+                if not url:
+                    cas_upload_server_url=self._get_cas_upload_server_url_for_share(share_id=share_id)
+                    if cas_upload_server_url:
+                        self._remote_client.uploadFile(path=path,sha1=sha1,cas_upload_server_url=cas_upload_server_url,upload_token=upload_token)
+        return ret
+
+    def _find_on_kbucket(self,*,share_id,sha1):
+        kbucket_url=self._local_db.kbucketUrl()
+        if not kbucket_url:
+            return (None,None)
+        url = kbucket_url+'/'+share_id+'/api/find/'+sha1
+        obj = _http_get_json(url)
+        if not obj:
+            return (None,None)
+        if not obj['success']:
+            return (None,None)
+        if not obj['found']:
+            return (None,None)
+        try:
+            size=obj['results'][0]['size']
+        except:
+            size=0
+        urls=obj['urls']
+        node_info=self._local_db.getNodeInfo(share_id=share_id)
+        if node_info and node_info['accessible']:
+            for url0 in urls:
+                if url0.startswith(node_info['listen_url']):
+                    return (url0,size)
+        for url0 in urls:
+            if url0.startswith(self._local_db.kbucketUrl()):
+                return (url0,size)
+        return (None,None)
+
+    def _get_cas_upload_server_url_for_share(self, share_id):
+        node_info = self._local_db.getNodeInfo(share_id=share_id)
+        if not node_info:
+            print('Warning: Unable to get node info for share: '+share_id)
+            return None
+        if 'cas_upload_url' not in node_info:
+            print('Warning: node_info does not have info.cas_upload_url field for share: '+share_id)
+        return node_info.get('cas_upload_url', None)
 
 class CairioLocal():
     def __init__(self):
@@ -203,7 +296,7 @@ class CairioLocal():
         if path.startswith('sha1://'):
             list0=path.split('/')
             sha1=list0[2]
-            return self._realize_file_from_sha1(sha1=sha1);
+            return self._realize_file_from_sha1(sha1=sha1)
         elif path.startswith('kbucket://'):
             sha1, size, url = self._get_kbucket_file_info(path=path)
             if sha1 is None:
@@ -218,6 +311,9 @@ class CairioLocal():
             return path
 
         return None
+
+    def realizeFileFromUrl(self,*,url,sha1,size):
+        return self._sha1_cache.downloadFile(url=url,sha1=sha1,size=size)
 
     def saveFile(self,*,path,basename):
         if basename is None:
@@ -236,6 +332,18 @@ class CairioLocal():
         ret_path = 'sha1://{}/{}'.format(sha1, basename)
         return ret_path
 
+    def computeFileSha1(self,*,path):
+        return self._sha1_cache.computeFileSha1(path=path)
+
+    def getNodeInfo(self,*,share_id):
+        return self._get_node_info(share_id=share_id)
+
+    def getKBucketUrlForShare(self,*,share_id):
+        return self._get_kbucket_url_for_share(share_id=share_id)
+
+    def kbucketUrl(self):
+        return self._kbucket_url
+
     def _get_db_path_for_keyhash(self,keyhash):
         return self._local_database_path+'/{}/{}.db'.format(keyhash[0],keyhash[1:3])
 
@@ -243,38 +351,39 @@ class CairioLocal():
         fname=self._sha1_cache.findFile(sha1)
         if fname is not None:
             return fname
-        return None # For now, we don't search kbucket
+        return None
 
     def _get_node_info(self, *, share_id):
         if share_id in self._nodeinfo_cache:
-            return self._nodeinfo_cache[share_id]
-        url = self._kbucket_url+'/'+share_id+'/api/nodeinfo'
-        obj = _http_get_json(url)
-        if not 'info' in obj:
-            return None
-        ret=obj['info']
-        if ret:
-            self._nodeinfo_cache[share_id] = ret
-        return ret
+            node_info=self._nodeinfo_cache[share_id]
+        else:
+            url = self._kbucket_url+'/'+share_id+'/api/nodeinfo'
+            obj = _http_get_json(url)
+            if not obj:
+                print('Warning: unable to find node info for share {}'.format(share_id))
+                return None    
+            if not 'info' in obj:
+                print('Warning: info not found in node info object for share {}'.format(share_id))
+                return None
+            node_info=obj['info']
+        if node_info:
+            self._nodeinfo_cache[share_id] = node_info
+            if 'accessible' not in node_info:
+                url00=node_info.get('listen_url','')+'/'+share_id+'/api/nodeinfo'
+                print('Testing whether share {} is directly accessible...'.format(share_id))
+                node_info['accessible']=_test_url_accessible(url00,timeout=2)
+                if node_info['accessible']:
+                    print('Share {} is directly accessible.'.format(share_id))
+                else:
+                    print('Share {} is not directly accessible.'.format(share_id))
+        return node_info
 
     def _get_kbucket_url_for_share(self,*,share_id):
         node_info=self._get_node_info(share_id=share_id)
-        if not node_info:
-            print('Warning: unable to find node info for share {}'.format(share_id))
-            return self._kbucket_url
-        if 'accessible' not in node_info:
-            url00=node_info.get('listen_url','')+'/'+share_id+'/api/nodeinfo'
-            print('Testing whether share {} is directly accessible...'.format(share_id))
-            node_info['accessible']=_test_url_accessible(url00,timeout=2)
-            if node_info['accessible']:
-                print('Share {} is directly accessible.'.format(share_id))
-            else:
-                print('Share {} is not directly accessible.'.format(share_id))
-        if node_info['accessible']:
+        if (node_info) and (node_info['accessible']):
             return node_info.get('listen_url',None)
         else:
             return self._kbucket_url # TODO: check the parent hub, etc before jumping right to the top
-
 
     def _get_kbucket_file_info(self,*,path):
         list0 = path.split('/')
