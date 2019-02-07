@@ -1,5 +1,4 @@
-from kbucket import client as kb
-from pairio import client as pa
+from cairio import client as ca
 import random
 import string
 import os
@@ -202,7 +201,7 @@ def assemble_batch(*, batch_name):
                 'Job {} not finished. Status is {}'.format(label, status))
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
-    kb.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
+    ca.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
                   object=dict(results=assembled_results), confirm=True)
     _set_batch_status(batch_name=batch_name,
                       status=dict(status='done_assembling'))
@@ -238,14 +237,14 @@ def stop_batch(*, batch_name):
     if status0 is not None:
         if status0['status'] not in ['finished', 'error']:
             batch_code = 'batch_code_force_stop'
-            pa.set(key=dict(name='batcho_batch_code',
-                            batch_name=batch_name), value=batch_code)
+            ca.setValue(key=dict(name='batcho_batch_code',
+                                 batch_name=batch_name), value=batch_code)
             _set_batch_status(batch_name=batch_name, status=dict(
                 status='error', error='force stopped'))
 
 
 def _get_batch_code(batch_name):
-    return pa.get(key=dict(name='batcho_batch_code', batch_name=batch_name))
+    return ca.getValue(key=dict(name='batcho_batch_code', batch_name=batch_name))
 
 
 def _check_batch_code(batch_name, batch_code):
@@ -259,8 +258,8 @@ def _check_batch_code(batch_name, batch_code):
 
 
 def _set_batch_code(batch_name, batch_code):
-    pa.set(key=dict(name='batcho_batch_code',
-                    batch_name=batch_name), value=batch_code)
+    ca.setValue(key=dict(name='batcho_batch_code',
+                         batch_name=batch_name), value=batch_code)
 
 
 def set_batch(*, batch_name, jobs, compute_resource=None):
@@ -279,7 +278,7 @@ def set_batch(*, batch_name, jobs, compute_resource=None):
 
     # set the batch
     key = dict(name='batcho_batch', batch_name=batch_name)
-    kb.saveObject(key=key, object=dict(jobs=jobs))
+    ca.saveObject(key=key, object=dict(jobs=jobs))
 
     _set_batch_status(batch_name=batch_name, status=dict(status='initialized'))
 
@@ -294,13 +293,13 @@ def add_batch_name_for_compute_resource(compute_resource, batch_name):
         compute_resource=compute_resource
     )
     while True:
-        obj = kb.loadObject(key=key0)
+        obj = ca.loadObject(key=key0)
         if not obj:
             obj = dict(batch_names=[])
         if batch_name in obj['batch_names']:
             return
         obj['batch_names'].append(batch_name)
-        kb.saveObject(key=key0, object=obj)
+        ca.saveObject(key=key0, object=obj)
         # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
         time.sleep(0.2)
 
@@ -311,13 +310,13 @@ def remove_batch_name_for_compute_resource(compute_resource, batch_name):
         compute_resource=compute_resource
     )
     while True:
-        obj = kb.loadObject(key=key0)
+        obj = ca.loadObject(key=key0)
         if not obj:
             obj = dict(batch_names=[])
         if batch_name not in obj['batch_names']:
             return
         obj['batch_names'].remove(batch_name)
-        kb.saveObject(key=key0, object=obj)
+        ca.saveObject(key=key0, object=obj)
         # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
         time.sleep(0.2)
 
@@ -435,7 +434,7 @@ def get_batch_names_for_compute_resource(compute_resource):
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
-    obj = kb.loadObject(key=key0)
+    obj = ca.loadObject(key=key0)
     if not obj:
         obj = dict(batch_names=[])
     return obj.get('batch_names', [])
@@ -443,31 +442,33 @@ def get_batch_names_for_compute_resource(compute_resource):
 
 def get_batch_results(*, batch_name):
     key = dict(name='batcho_batch_results', batch_name=batch_name)
-    return kb.loadObject(key=key)
+    return ca.loadObject(key=key)
 
 
-def get_batch_job_console_output(*, batch_name, job_index, return_url=False, verbose=False):
+def get_batch_job_console_output(*, batch_name, job_index):
     key = dict(name='batcho_job_console_output',
                batch_name=batch_name, job_index=job_index)
-    if return_url:
-        url = kb.findFile(key=key, local=False, remote=True)
-        return url
-    else:
-        fname = kb.realizeFile(key=key, verbose=verbose)
-        if not fname:
-            return None
-        txt = _read_text_file(fname)
-        return txt
+    return ca.loadText(key=key)
+
+    # if return_url:
+    #     url = ca.findFile(key=key, local=False, remote=True)
+    #     return url
+    # else:
+    #     fname = kb.realizeFile(key=key, verbose=verbose)
+    #     if not fname:
+    #         return None
+    #     txt = _read_text_file(fname)
+    #     return txt
 
 
 def _retrieve_batch(batch_name):
     print('Retrieving batch {}'.format(batch_name))
     key = dict(name='batcho_batch', batch_name=batch_name)
-    a = pa.get(key=key)
+    a = ca.getValue(key=key)
     if not a:
         print('Unable to retrieve batch {}. Not found in pairio.'.format(batch_name))
         return None
-    obj = kb.loadObject(key=key)
+    obj = ca.loadObject(key=key)
     if not obj:
         print(
             'Unable to retrieve batch {}. Object not found on kbucket.'.format(batch_name))
@@ -481,7 +482,7 @@ def _retrieve_batch(batch_name):
 def _get_job_status(*, batch_name, job_index):
     key = dict(name='batcho_job_status',
                batch_name=batch_name, job_index=job_index)
-    return pa.get(key=key)
+    return ca.getValue(key=key)
 
 
 def _set_job_status(*, batch_name, job_index, status):
@@ -492,37 +493,37 @@ def _set_job_status(*, batch_name, job_index, status):
     #        return
     key = dict(name='batcho_job_status',
                batch_name=batch_name, job_index=job_index)
-    return pa.set(key=key, value=status)
+    return ca.setValue(key=key, value=status)
 
 
 def get_batch_status(*, batch_name):
     key = dict(name='batcho_batch_status',
                batch_name=batch_name)
-    return kb.loadObject(key=key)
+    return ca.loadObject(key=key)
 
 
 def _set_batch_status(*, batch_name, status):
     key = dict(name='batcho_batch_status',
                batch_name=batch_name)
-    return kb.saveObject(key=key, object=status)
+    return ca.saveObject(key=key, object=status)
 
 
 def _get_job_result(*, batch_name, job_index):
     key = dict(name='batcho_job_result',
                batch_name=batch_name, job_index=job_index)
-    return kb.loadObject(key=key)
+    return ca.loadObject(key=key)
 
 
 def _set_job_result(*, batch_name, job_index, result):
     key = dict(name='batcho_job_result',
                batch_name=batch_name, job_index=job_index)
-    return kb.saveObject(key=key, object=result, confirm=True)
+    return ca.saveObject(key=key, object=result, confirm=True)
 
 
 def _set_job_console_output(*, batch_name, job_index, file_name):
     key = dict(name='batcho_job_console_output',
                batch_name=batch_name, job_index=job_index)
-    return kb.saveFile(key=key, fname=file_name)
+    return ca.saveFile(key=key, path=file_name)
 
 
 def _random_string(num_chars):
@@ -534,19 +535,19 @@ def _acquire_job_lock(*, batch_name, job_index):
     key = dict(name='batcho_job_lock',
                batch_name=batch_name, job_index=job_index)
     code = 'lock_'+_random_string(10)
-    return pa.set(key=key, value=code, overwrite=False)
+    return ca.setValue(key=key, value=code, overwrite=False)
 
 
 # def _get_job_lock_code(*, batch_name, job_index):
 #    key = dict(name='batcho_job_lock',
 #               batch_name=batch_name, job_index=job_index)
-#    return pa.get(key=key)
+#    return ca.getValue(key=key)
 
 
 def _clear_job_lock(*, batch_name, job_index):
     key = dict(name='batcho_job_lock',
                batch_name=batch_name, job_index=job_index)
-    pa.set(key=key, value=None, overwrite=True)
+    ca.setValue(key=key, value=None, overwrite=True)
 
 
 def _read_text_file(fname):

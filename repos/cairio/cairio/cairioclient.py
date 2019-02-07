@@ -46,8 +46,11 @@ class CairioClient():
         return self._remote_client.addCollection(collection=collection,token=token,url=self._remote_config['url'],admin_token=admin_token)
 
     # get value / set value
-    def getValue(self,*,key,subkey=None,password=None):
-        return self._get_value(key=key,subkey=subkey,password=password)
+    def getValue(self,*,key,subkey=None,password=None,parse_json=False,collection=None):
+        ret=self._get_value(key=key,subkey=subkey,password=password,collection=collection)
+        if parse_json:
+            ret=json.loads(ret)
+        return ret
 
     def setValue(self,*,key,subkey=None,value,overwrite=True,password=None):
         return self._set_value(key=key,subkey=subkey,value=value,overwrite=overwrite,password=password)
@@ -140,10 +143,47 @@ class CairioClient():
         os.unlink(tmp_fname)
         return ret
 
-    def _get_value(self,*,key,subkey,password=None):
+    def readDir(self, path, recursive=False, include_sha1=True):
+        if path.startswith('kbucket://'):
+            list = path.split('/')
+            share_id = _filter_share_id(list[2])
+            path0 = '/'.join(list[3:])
+            ret = self._read_kbucket_dir(
+                share_id=share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
+        else:
+            ret = self._read_file_system_dir(
+                path=path, recursive=recursive, include_sha1=include_sha1)
+        return ret
+
+    def computeDirHash(self, path):
+        dd = self.readDir(path=path, recursive=True, include_sha1=True)
+        return _sha1_of_object(dd)
+
+    def computeFileSha1(self, path):
+        if path.startswith('sha1://'):
+            list = path.split('/')
+            sha1 = list[2]
+            return sha1
+        elif path.startswith('kbucket://'):
+            sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
+            return sha1
+        else:
+            return self._local_db.computeFileSha1(path)
+
+    def localCacheDir(self):
+        return self._local_db.localCacheDir()
+
+    def findFileBySha1(self,*,sha1):
+        return self._realize_file(path='sha1://'+sha1,resolve_locally=False)
+
+    def moveToLocalCache(self,*,path):
+        return self._save_file(path=path,prevent_upload=True,return_sha1_url=False)
+
+    def _get_value(self,*,key,subkey,password=None,collection=None):
         if password is not None:
             key=dict(key=key,password=password)
-        collection=self._remote_config['collection']
+        if collection is None:
+            collection=self._remote_config['collection']
         if collection:
             return self._remote_client.getValue(key=key,subkey=subkey,collection=collection,url=self._remote_config['url'])
         return self._local_db.getValue(key=key,subkey=subkey)
@@ -164,7 +204,7 @@ class CairioClient():
             return self._remote_client.getSubKeys(key=key)
         return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self,*,path):
+    def _realize_file(self,*,path,resolve_locally=True):
         ret=self._local_db.realizeFile(path=path)
         if ret:
             return ret
@@ -176,15 +216,18 @@ class CairioClient():
                 url,size=self._find_on_kbucket(share_id=share_id,sha1=sha1)
                 if not url:
                     return None
-                return self._local_db.realizeFileFromUrl(url=url,sha1=sha1,size=size)
+                if resolve_locally:
+                    return self._local_db.realizeFileFromUrl(url=url,sha1=sha1,size=size)
+                else:
+                    return url
 
-    def _save_file(self,*,path,basename,confirm=False):
-        ret=self._local_db.saveFile(path=path,basename=basename)
+    def _save_file(self,*,path,basename,confirm=False,prevent_upload=False,return_sha1_url=True):
+        ret=self._local_db.saveFile(path=path,basename=basename,return_sha1_url=return_sha1_url)
         if not ret:
             return False
         share_id=self._remote_config['share_id']
         upload_token=self._remote_config['upload_token']
-        if (share_id) and (upload_token):
+        if (share_id) and (upload_token) and (not prevent_upload):
             sha1=self._local_db.computeFileSha1(path=path)
             if sha1:
                 url,_=self._find_on_kbucket(share_id=share_id,sha1=sha1)
@@ -240,6 +283,52 @@ class CairioClient():
         if 'cas_upload_url' not in node_info:
             print('Warning: node_info does not have info.cas_upload_url field for share: '+share_id)
         return node_info.get('cas_upload_url', None)
+
+    def _read_kbucket_dir(self, *, share_id, path, recursive, include_sha1):
+        url = self._config['url']+'/'+share_id+'/api/readdir/'+path
+        obj = self._http_get_json(url)
+        if not obj['success']:
+            return None
+
+        ret = dict(
+            files={},
+            dirs={}
+        )
+        for file0 in obj['files']:
+            name0 = file0['name']
+            ret['files'][name0] = dict(
+                size=file0['size']
+            )
+            if include_sha1:
+                if 'prv' in file0:
+                    ret['files'][name0]['sha1'] = file0['prv']['original_checksum']
+        for dir0 in obj['dirs']:
+            name0 = dir0['name']
+            ret['dirs'][name0] = {}
+            if recursive:
+                ret['dirs'][name0] = _read_kbucket_dir(path+'/'+name0)
+        return ret
+
+    def _read_file_system_dir(self, *, path, recursive, include_sha1):
+        ret = dict(
+            files={},
+            dirs={}
+        )
+        list = _safe_list_dir(path)
+        for name0 in list:
+            path0 = path+'/'+name0
+            if os.path.isfile(path0):
+                ret['files'][name0] = dict(
+                    size=os.path.getsize(path0)
+                )
+                if include_sha1:
+                    ret['files'][name0]['sha1'] = self.computeFileSha1(path0)
+            elif os.path.isdir(path0):
+                ret['dirs'][name0] = {}
+                if recursive:
+                    ret['dirs'][name0] = self._read_file_system_dir(
+                        path=path0, recursive=recursive, include_sha1=include_sha1)
+        return ret
 
 class CairioLocal():
     def __init__(self):
@@ -328,7 +417,7 @@ class CairioLocal():
     def realizeFileFromUrl(self,*,url,sha1,size):
         return self._sha1_cache.downloadFile(url=url,sha1=sha1,size=size)
 
-    def saveFile(self,*,path,basename):
+    def saveFile(self,*,path,basename,return_sha1_url=True):
         if basename is None:
             basename = os.path.basename(path)
 
@@ -337,10 +426,13 @@ class CairioLocal():
         if not path:
             raise Exception('Unable to realize file in saveFile: '+path0)
 
-        _, sha1 = self._sha1_cache.copyFileToCache(path)
+        local_path, sha1 = self._sha1_cache.copyFileToCache(path)
 
         if sha1 is None:
             raise Exception('Unable to copy file to cache in saveFile: '+path0)
+
+        if not return_sha1_url:
+            return local_path
 
         ret_path = 'sha1://{}/{}'.format(sha1, basename)
         return ret_path
@@ -356,6 +448,9 @@ class CairioLocal():
 
     def kbucketUrl(self):
         return self._kbucket_url
+
+    def localCacheDir(self):
+        return self._sha1_cache.directory()
 
     def _get_db_path_for_keyhash(self,keyhash):
         return self._local_database_path+'/{}/{}.db'.format(keyhash[0],keyhash[1:3])
@@ -397,6 +492,9 @@ class CairioLocal():
             return node_info.get('listen_url',None)
         else:
             return self._kbucket_url # TODO: check the parent hub, etc before jumping right to the top
+
+    def getKBucketFileInfo(self,*,path):
+        return self._get_kbucket_file_info(path=path)
 
     def _get_kbucket_file_info(self,*,path):
         list0 = path.split('/')
@@ -487,7 +585,10 @@ def _sha1_of_string(txt):
     hh = hashlib.sha1(txt.encode('utf-8'))
     ret = hh.hexdigest()
     return ret
-    
+
+def _sha1_of_object(obj):
+    txt = json.dumps(obj, sort_keys=True, separators=(',', ':'))
+    return _sha1_of_string(txt)
 
 def _create_temporary_file_for_text(*, text):
     tmp_fname = _create_temporary_fname('.txt')

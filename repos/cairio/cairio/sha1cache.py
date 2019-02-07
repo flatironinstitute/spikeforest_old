@@ -14,6 +14,9 @@ class Sha1Cache():
     def __init__(self):
         self._directory = ''
 
+    def directory(self):
+        return self._directory
+
     def setDirectory(self, directory):
         if not os.path.exists(directory):
             os.mkdir(directory)

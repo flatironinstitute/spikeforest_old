@@ -6,8 +6,7 @@ import os
 import shutil
 import tempfile
 import subprocess
-from pairio import client as pairio
-from kbucket import client as kb
+from cairio import client as ca
 import inspect
 from subprocess import Popen, PIPE
 import shlex
@@ -31,13 +30,13 @@ def compute_job_input_signature(val, input_name, *, directory):
             return list[2]
         elif val.startswith('kbucket://'):
             if directory:
-                hash0 = kb.computeDirHash(val)
+                hash0 = ca.computeDirHash(val)
                 if not hash0:
                     raise Exception(
                         'Unable to compute directory hash for input: {}'.format(input_name))
                 return hash0
             else:
-                sha1 = kb.computeFileSha1(val)
+                sha1 = ca.computeFileSha1(val)
                 if not sha1:
                     raise Exception(
                         'Unable to compute file sha-1 for input: {}'.format(input_name))
@@ -46,7 +45,7 @@ def compute_job_input_signature(val, input_name, *, directory):
             if os.path.exists(val):
                 if directory:
                     if os.path.isdir(val):
-                        hash0 = kb.computeDirHash(val)
+                        hash0 = ca.computeDirHash(val)
                         if not hash0:
                             raise Exception(
                                 'Unable to compute hash for directory input: {} ({})'.format(input_name, val))
@@ -56,7 +55,7 @@ def compute_job_input_signature(val, input_name, *, directory):
                             'Input is not a directory: {}'.format(input_name))
                 else:
                     if os.path.isfile(val):
-                        sha1 = kb.computeFileSha1(val)
+                        sha1 = ca.computeFileSha1(val)
                         if not sha1:
                             raise Exception(
                                 'Unable to compute sha-1 of input: {} ({})'.format(input_name, val))
@@ -245,7 +244,7 @@ def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, *
     # Note: if container is '', then we are just executing on the host machine
     singularity_opts = []
     if container:
-        kbucket_cache_dir = kb.getConfig()['local_cache_dir']
+        kbucket_cache_dir = ca.localCacheDir()
         singularity_opts.append(
             '-B {}:{}'.format(kbucket_cache_dir, '/sha1-cache'))
         singularity_opts.append('-B /tmp:/tmp')
@@ -395,7 +394,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
             if not os.path.exists(fname0):
                 raise Exception(
                     'Input {} does not exist: {}'.format(name0, fname0))
-            sha1_url = kb.saveFile(fname0)
+            sha1_url = ca.saveFile(fname0)
             if not sha1_url:
                 raise Exception(
                     'Problem saving input {} to kbucket ({})'.format(name0, fname0))
@@ -426,7 +425,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         if type(_container) == str and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
             pass
         else:
-            _container = kb.saveFile(_container)
+            _container = ca.saveFile(_container)
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
@@ -439,7 +438,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         processor_version=proc.VERSION,
         processor_class_name=proc.__name__,
         processor_source_basename=processor_source_basename,
-        processor_code=kb.saveObject(code, basename='code.json'),
+        processor_code=ca.saveObject(code, basename='code.json'),
         container=_container,
         inputs=inputs,
         outputs=outputs,
@@ -458,13 +457,13 @@ def _prepare_processor_job(job):
     container = job.get('container', None)
     if container:
         print('realizing container: '+container)
-        a = kb.realizeFile(container)
+        a = ca.realizeFile(container)
         if not a:
             raise Exception('Unable to realize container file: '+container)
     files_to_realize = job.get('files_to_realize', [])
     for fname in files_to_realize:
         print('realizing file: '+fname)
-        a = kb.realizeFile(fname)
+        a = ca.realizeFile(fname)
         if not a:
             raise Exception('Unable to realize file: '+fname)
 
@@ -524,7 +523,7 @@ def executeJob(job):
     timer = time.time()
     tempdir = tempfile.mkdtemp()
     try:
-        processor_code = kb.loadObject(path=job['processor_code'])
+        processor_code = ca.loadObject(path=job['processor_code'])
         _write_python_code_to_directory(
             tempdir+'/processor_source', processor_code)
 
@@ -535,7 +534,7 @@ def executeJob(job):
 
         container = job.get('container', None)
         if container:
-            container = kb.realizeFile(container)
+            container = ca.realizeFile(container)
 
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
@@ -584,11 +583,11 @@ if __name__ == "__main__":
         for key in job['outputs']:
             out0 = job['outputs'][key]
             if out0.get('upload', False):
-                ret['outputs'][key] = kb.saveFile(
+                ret['outputs'][key] = ca.saveFile(
                     temporary_output_files[key], basename=key+out0['ext'])
             else:
                 ret['outputs'][key] = 'sha1://' + \
-                    kb.computeFileSha1(
+                    ca.computeFileSha1(
                         temporary_output_files[key])+'/'+key+out0['ext']
         return ret
     except:
@@ -739,7 +738,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     ext0 = _get_output_ext(out0)
                     sha1 = output_sha1s[name0]
                     output_files[name0] = 'sha1://'+sha1+'/'+name0+ext0
-                    fname = kb.findFile(sha1=sha1)
+                    fname = ca.findFileBySha1(sha1=sha1)
                     if not fname:
                         output_files_all_found = False
         if outputs_all_in_pairio and (not output_files_all_found):
@@ -756,7 +755,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     fname2 = getattr(X, name0)
                     if type(fname2) == str:
                         fname2 = os.path.abspath(fname2)
-                        fname1 = kb.realizeFile(fname1)
+                        fname1 = ca.realizeFile(fname1)
                         if fname1 != fname2:
                             if os.path.exists(fname2):
                                 os.remove(fname2)
@@ -766,11 +765,11 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     else:
                         ret.outputs[name0] = fname1
 
-                stats = kb.loadObject(key=stats_signature0)
+                stats = ca.loadObject(key=stats_signature0)
                 if stats:
                     ret.stats = stats
 
-                console_out = kb.loadText(key=console_out_signature0)
+                console_out = ca.loadText(key=console_out_signature0)
                 if console_out:
                     ret.console_out = console_out
                 return ret
@@ -784,7 +783,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             if input0.directory:
                 val1 = val0
             else:
-                val1 = kb.realizeFile(val0)
+                val1 = ca.realizeFile(val0)
                 if not val1:
                     raise Exception(
                         'Unable to realize input file {}: {}'.format(name0, val0))
@@ -827,7 +826,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
     else:
         # in a container
-        container_path = kb.realizeFile(_container)
+        container_path = ca.realizeFile(_container)
         if not container_path:
             print('Unable to realize container file: '+_container)
         tempdir = tempfile.mkdtemp()
@@ -855,10 +854,10 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         name0 = output0.name
         output_fname = getattr(X, name0)
         if output_fname in temporary_output_files:
-            output_fname = kb.moveFileToCache(output_fname)
+            output_fname = ca.moveToLocalCache(output_fname)
         ret.outputs[name0] = output_fname
         if _cache:
-            output_sha1 = kb.computeFileSha1(output_fname)
+            output_sha1 = ca.computeFileSha1(output_fname)
             signature0 = output_signatures[name0]
             pairio.set(signature0, output_sha1)
 
@@ -869,8 +868,8 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     ret.console_out = console_out
 
     if _cache:
-        kb.saveObject(key=stats_signature0, object=ret.stats)
-        kb.saveText(key=console_out_signature0, text=ret.console_out)
+        ca.saveObject(key=stats_signature0, object=ret.stats)
+        ca.saveText(key=console_out_signature0, text=ret.console_out)
 
     return ret
 
