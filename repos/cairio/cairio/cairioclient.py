@@ -10,11 +10,13 @@ import tempfile
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
 from .cairioremoteclient import CairioRemoteClient
+import time
 
 class CairioClient():
     def __init__(self):
         self._remote_config = dict(
-            url='http://localhost:3010',
+            #url='http://localhost:3010',
+            url='https://pairio.org:20443',
             collection=None,
             token=None,
             share_id=None,
@@ -76,11 +78,11 @@ class CairioClient():
         else:
             raise Exception('Invalid type for key_or_path in realizeFile.',type(key_or_path))
 
-    def saveFile(self,path,*,key=None,subkey=None,basename=None,password=None):
+    def saveFile(self,path,*,key=None,subkey=None,basename=None,password=None,confirm=False):
         if path is None:
             self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
-        sha1_path=self._save_file(path=path,basename=basename)
+        sha1_path=self._save_file(path=path,basename=basename,confirm=confirm)
         if key is not None:
             self.setValue(key=key,subkey=subkey,value=sha1_path,password=password)
         return sha1_path
@@ -102,11 +104,11 @@ class CairioClient():
             return None
         return json.loads(txt)
 
-    def saveObject(self,object,*,key=None,subkey=None,basename='object.json',password=None):
+    def saveObject(self,object,*,key=None,subkey=None,basename='object.json',password=None,confirm=False):
         if object is None:
             self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
-        return self.saveText(text=json.dumps(object),key=key,subkey=subkey,basename=basename,password=password)
+        return self.saveText(text=json.dumps(object),key=key,subkey=subkey,basename=basename,password=password,confirm=confirm)
 
     # load text / save text
     def loadText(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
@@ -125,13 +127,13 @@ class CairioClient():
         with open(fname) as f:
             return f.read()
 
-    def saveText(self,text,*,key=None,subkey=None,basename='file.txt',password=None):
+    def saveText(self,text,*,key=None,subkey=None,basename='file.txt',password=None,confirm=False):
         if text is None:
             self.setValue(key=key,subkey=subkey,value=None,password=password)
             return None
         tmp_fname=_create_temporary_file_for_text(text=text)
         try:
-            ret=self.saveFile(tmp_fname,key=key,subkey=subkey,basename=basename,password=password)
+            ret=self.saveFile(tmp_fname,key=key,subkey=subkey,basename=basename,password=password,confirm=confirm)
         except:
             os.unlink(tmp_fname)
             raise
@@ -176,7 +178,7 @@ class CairioClient():
                     return None
                 return self._local_db.realizeFileFromUrl(url=url,sha1=sha1,size=size)
 
-    def _save_file(self,*,path,basename):
+    def _save_file(self,*,path,basename,confirm=False):
         ret=self._local_db.saveFile(path=path,basename=basename)
         if not ret:
             return False
@@ -189,8 +191,19 @@ class CairioClient():
                 if not url:
                     cas_upload_server_url=self._get_cas_upload_server_url_for_share(share_id=share_id)
                     if cas_upload_server_url:
-                        self._remote_client.uploadFile(path=path,sha1=sha1,cas_upload_server_url=cas_upload_server_url,upload_token=upload_token)
+                        if self._remote_client.uploadFile(path=path,sha1=sha1,cas_upload_server_url=cas_upload_server_url,upload_token=upload_token):
+                            if confirm:
+                                self._wait_until_found_on_kbucket(share_id=share_id,sha1=sha1)
         return ret
+
+    def _wait_until_found_on_kbucket(self,*,share_id,sha1,num_retries=10,delay_sec=1):
+        for retry in range(1,num_retries+1):
+            url,_=self._find_on_kbucket(share_id=share_id,sha1=sha1)
+            if url:
+                return True
+            time.sleep(delay_sec)
+        raise Exception('Unable to confirm found on kbucket after {} retries'.format(num_retries))
+        return False
 
     def _find_on_kbucket(self,*,share_id,sha1):
         kbucket_url=self._local_db.kbucketUrl()
