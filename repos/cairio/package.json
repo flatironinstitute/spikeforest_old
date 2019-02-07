@@ -1,0 +1,29 @@
+{
+  "name": "cairio",
+  "version": "0.1.0",
+  "description": "Cairio server and python client",
+  "main": "javascript/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node cairioserver/cairioserver.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/magland/pairio.git"
+  },
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/magland/pairio/issues"
+  },
+  "homepage": "https://github.com/magland/pairio#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cors": "^2.8.4",
+    "dotenv": "^6.1.0",
+    "express": "^4.16.4",
+    "json-stable-stringify": "^1.0.1",
+    "mongodb": "^3.1.8",
+    "request": "^2.88.0"
+  }
+}
