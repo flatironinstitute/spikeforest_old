@@ -384,6 +384,7 @@ function HemlockNodeConfig(hemlock_node_directory, options) {
     if (url == '.') {
       url = `http://localhost:${m_listen_port}`;
     }
+    url=url.split('[port]').join(m_listen_port);
     return url;
   }
 
