@@ -10,6 +10,7 @@ from pairio import client as pairio
 from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 from datetime import datetime as dt
+import time
 
 
 class KBucketClient():
@@ -201,7 +202,7 @@ class KBucketClient():
         dd = self.readDir(path=path, recursive=True, include_sha1=True)
         return _sha1_of_object(dd)
 
-    def _save_file_helper(self, path, share_id=None, upload_token=None, basename=None, remote=None):
+    def _save_file_helper(self, path, share_id=None, upload_token=None, basename=None, remote=None, confirm=False):
         if remote is None:
             remote = self._config['save_remote']
         if not share_id:
@@ -260,14 +261,27 @@ class KBucketClient():
             if not resp_obj['success']:
                 raise Exception(
                     'Problem posting file data: '+resp_obj['error'])
+            if confirm:
+                num_tries = 0
+                found = False
+                while (not found) and (num_tries < 10):
+                    if self.findFile(remote=True, local=False, path=ret_path):
+                        print('Upload confirmed.')
+                        found = True
+                    else:
+                        time.sleep(1)
+                        num_tries = num_tries+1
+                if not found:
+                    raise Exception(
+                        'Uploaded but unable to confirm after {} tries.'.format(num_tries))
         else:
             print('Already on server (*)')
 
         return ret_path
 
-    def saveFile(self, fname, *, key=None, share_id=None, upload_token=None, basename=None, remote=None):
+    def saveFile(self, fname, *, key=None, share_id=None, upload_token=None, basename=None, remote=None, confirm=False):
         ret = self._save_file_helper(
-            fname, share_id=share_id, upload_token=upload_token, basename=basename, remote=remote)
+            fname, share_id=share_id, upload_token=upload_token, basename=basename, remote=remote, confirm=confirm)
 
         if key:
             sha1 = self.computeFileSha1(fname)
@@ -275,7 +289,7 @@ class KBucketClient():
 
         return ret
 
-    def saveObject(self, object, *, key=None, format='json', share_id=None, upload_token=None, remote=None, basename=None):
+    def saveObject(self, object, *, key=None, format='json', share_id=None, upload_token=None, remote=None, basename=None, confirm=False):
         tmp_fname = self._create_temporary_file_for_object(
             object=object, format=format)
         try:
@@ -285,7 +299,7 @@ class KBucketClient():
             raise
         if basename is None:
             basename = 'object.json'
-        return self.saveFile(fname, share_id=share_id, upload_token=upload_token, key=key, basename=basename, remote=remote)
+        return self.saveFile(fname, share_id=share_id, upload_token=upload_token, key=key, basename=basename, remote=remote, confirm=confirm)
 
     def saveText(self, text, *, key=None, share_id=None, upload_token=None, remote=None, basename=None):
         tmp_fname = self._create_temporary_file_for_text(text=text)
