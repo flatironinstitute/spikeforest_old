@@ -13,5 +13,5 @@ pip install jupyterlab
 
 # Additional development packages
 pip install autopep8 # for formatting python code
-git config core.hooksPath .githooks
-pip install --upgrade nbstripout # for stripping output on .ipynb files
+#git config core.hooksPath .githooks
+#pip install --upgrade nbstripout # for stripping output on .ipynb files
