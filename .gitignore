@@ -1,5 +1,7 @@
 # Files to be ignored by git
 
+Untitled*.ipynb
+
 # singularity image files
 *.simg
 

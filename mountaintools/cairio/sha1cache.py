@@ -21,11 +21,16 @@ class Sha1Cache():
         if not os.path.exists(directory):
             os.mkdir(directory)
         self._directory = directory
+        self._alternate_directories = self._determine_alternate_directories()
 
     def findFile(self, sha1):
-        path = self._get_path(sha1, create=False)
+        path, alternate_paths = self._get_path(
+            sha1, create=False, return_alternates=True)
         if os.path.exists(path):
             return path
+        for altpath in alternate_paths:
+            if os.path.exists(altpath):
+                return altpath
         hints_fname = path+'.hints.json'
         if os.path.exists(hints_fname):
             hints = _read_json_file(hints_fname)
@@ -88,6 +93,7 @@ class Sha1Cache():
                 _safe_remove_file(path)
         else:
             _rename_or_move(path, path0)
+
         return path0
 
     def copyFileToCache(self, path):
@@ -143,14 +149,30 @@ class Sha1Cache():
         # todo: use hints for findFile
         return sha1
 
-    def _get_path(self, sha1, *, create=True, directory=None):
+    def _get_path(self, sha1, *, create=True, directory=None, return_alternates=False):
         if directory is None:
             directory = self._directory
-        path0 = directory+'/{}/{}{}'.format(sha1[0], sha1[1], sha1[2])
+        path1 = '/{}/{}{}'.format(sha1[0], sha1[1], sha1[2])
+        path0 = directory+path1
         if create:
             if not os.path.exists(path0):
                 os.makedirs(path0)
-        return path0+'/'+sha1
+        if not return_alternates:
+            return path0+'/'+sha1
+        else:
+            altpaths = []
+            for altdir in self._alternate_directories:
+                altpaths.append(altdir+path1+'/'+sha1)
+            return path0+'/'+sha1, altpaths
+
+    def _determine_alternate_directories(self):
+        ret = []
+        list0 = _safe_list_dir(self._directory+'/alternate')
+        for name0 in list0:
+            path1 = self._directory+'/alternate/'+name0
+            if os.path.isdir(path1) or os.path.islink(path1):
+                ret.append(path1)
+        return ret
 
 
 def _compute_file_sha1(path):
@@ -213,14 +235,28 @@ def _write_json_file(obj, path):
         return json.dump(obj, f)
 
 
+def _safe_list_dir(path):
+    try:
+        ret = os.listdir(path)
+        return ret
+    except:
+        return []
+
+
 def _rename_or_move(path1, path2):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     try:
-        os.rename(path1, path2)
+        if os.path.exists(path2):
+            os.unlink(path2)
+        try:
+            os.rename(path1, path2)
+        except:
+            shutil.copyfile(path1, path2)
+            os.unlink(path1)
     except:
-        shutil.copyfile(path1, path2)
-        os.unlink(path1)
+        raise Exception('Problem renaming file: {} -> {}'.format(path1, path2))
+
 
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
 

@@ -160,9 +160,9 @@ class CairioClient():
 
     def readDir(self, path, recursive=False, include_sha1=True):
         if path.startswith('kbucket://'):
-            list = path.split('/')
-            share_id = list[2]
-            path0 = '/'.join(list[3:])
+            list0 = path.split('/')
+            share_id = list0[2]
+            path0 = '/'.join(list0[3:])
             ret = self._read_kbucket_dir(
                 share_id=share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
         else:
@@ -176,8 +176,8 @@ class CairioClient():
 
     def computeFileSha1(self, path):
         if path.startswith('sha1://'):
-            list = path.split('/')
-            sha1 = list[2]
+            list0 = path.split('/')
+            sha1 = list0[2]
             return sha1
         elif path.startswith('kbucket://'):
             sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
@@ -356,8 +356,8 @@ class CairioClient():
             files={},
             dirs={}
         )
-        list = _safe_list_dir(path)
-        for name0 in list:
+        list0 = _safe_list_dir(path)
+        for name0 in list0:
             path0 = path+'/'+name0
             if os.path.isfile(path0):
                 ret['files'][name0] = dict(
@@ -664,6 +664,15 @@ def _test_url_accessible(url, timeout):
         return (code == 200)
     except:
         return False
+
+
+def _safe_list_dir(path):
+    try:
+        ret = os.listdir(path)
+        return ret
+    except:
+        print('Warning: unable to listdir: '+path)
+        return []
 
 
 # The global module client
