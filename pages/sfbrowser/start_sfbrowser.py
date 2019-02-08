@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
 import os
-os.environ['VDOMR_MODE'] = 'SERVER'
-os.environ['SIMPLOT_SRC_DIR']='../../simplot'
-
 import vdomr as vd
 import spikeforest as sf
 from sfbrowsermainwindow import SFBrowserMainWindow
+os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
+
 
 class TheApp():
     def __init__(self):
@@ -32,7 +31,7 @@ def main():
     APP = TheApp()
     server = vd.VDOMRServer(APP)
     server.start()
-    
+
 
 if __name__ == "__main__":
     main()
