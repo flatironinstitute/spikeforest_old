@@ -3,7 +3,7 @@ import json
 import mlprocessors as mlpr
 import spikeextractors as si
 import spikewidgets as sw
-from kbucket import client as kb
+from cairio import client as ca
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
@@ -98,7 +98,7 @@ def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return
     if return_format=='filename':
       return fname
     else:
-      fname=kb.realizeFile(fname)
+      fname=ca.realizeFile(path=fname)
       with open(fname) as f:
         return json.load(f)
 

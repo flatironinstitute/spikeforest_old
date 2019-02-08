@@ -1,4 +1,4 @@
-from kbucket import client as kb
+from cairio import client as ca
 import spikeextractors as si
 import mlprocessors as mlpr
 import os
@@ -182,9 +182,9 @@ def sort_recording(*,sorter,recording):
         raise Exception('No such sorter: '+processor_name)
 
     if SS_container:
-        print('Locating container: '+SS_container)
-        if not kb.realizeFile(SS_container):
-            raise Exception('Unable to realize container: '+SS_container)
+         print('Locating container: '+SS_container)
+         if not ca.findFile(path=SS_container):
+             raise Exception('Unable to realize container: '+SS_container)
         
     print('Sorting recording {} using {}'.format(dsdir, processor_name))
     X=SS.execute(
@@ -198,9 +198,9 @@ def sort_recording(*,sorter,recording):
     stats=X.stats
     console_out=X.console_out
     print('Saving firings_out...')
-    firings_out=kb.saveFile(outputs['firings_out'])
+    firings_out=ca.saveFile(path=outputs['firings_out'])
     firings_true_path=recording['directory']+'/firings_true.mda'
-    if not kb.findFile(firings_true_path):
+    if not ca.findFile(firings_true_path):
         firings_true_path=None
     print('Assembling result...')
     result=dict(
@@ -215,7 +215,7 @@ def sort_recording(*,sorter,recording):
         processor_name=SS.NAME,
         processor_version=SS.VERSION,
         execution_stats=stats,
-        console_out=kb.saveText(text=console_out,basename='console_out.txt'),
+        console_out=ca.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
         firings=firings_out
     )

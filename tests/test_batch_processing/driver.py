@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import mlprocessors as mlpr
-from kbucket import client as kb
+from cairio import client as ca
 import numpy as np
 import argparse
 import batcho
@@ -38,25 +38,36 @@ def main():
         description='Listen for batches as a compute resource')
     parser.add_argument('command', help='start or stop')
     parser.add_argument('--force_run', help='force run of processors',action="store_true")
+    parser.add_argument('--use_container', help='try running jobs in a singularity container',action='store_true')
 
     args = parser.parse_args()
 
-    batch_name='test1'
+    batch_name='primes_batch_1'
+    container=''
+    if args.use_container:
+        #container='../../mountaintools/containers/mountaintools_basic/mountaintools_basic.simg'
+        container='sha1://228fdbb3e64b1fc463d50c1be9e4ec2d4951aa4a/mountaintools_basic.simg'
+    compute_resource='test_resource_01'
 
     if args.command=='stop':
         batcho.stop_batch(batch_name=batch_name)
     elif args.command=='start':
-        list=np.arange(10001,10011)
+        list=np.arange(10011,10031)
         jobs=[
-            ComputeNthPrime.createJob(n=int(n),output={'ext':'.txt'},_force_run=args.force_run)
+            ComputeNthPrime.createJob(
+                n=int(n),
+                output={'ext':'.txt'},
+                _force_run=args.force_run,
+                _container=container
+            )
             for n in list
         ]
 
-        mlpr.executeBatch(jobs=jobs,num_workers=None,compute_resource='test01',batch_name=batch_name)
+        mlpr.executeBatch(jobs=jobs,num_workers=None,compute_resource=compute_resource,batch_name=batch_name)
 
         for i,n in enumerate(list):
             result0=jobs[i]['result']
-            val=int(kb.loadText(path=result0['outputs']['output']))
+            val=int(ca.loadText(path=result0['outputs']['output']))
             print('The {}th prime number is {}'.format(n,val))
     else:
         raise Exception('Invalid command: {}'.format(command))

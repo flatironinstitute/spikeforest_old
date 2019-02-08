@@ -4,8 +4,7 @@ import json
 from PIL import Image
 import os
 from copy import deepcopy
-from kbucket import client as kb
-from pairio import client as pa
+from cairio import client as ca
 import mlprocessors as mlpr
 from matplotlib import pyplot as plt
 import json
@@ -20,12 +19,11 @@ def sf_summarize_recording(recording):
   )
   channels=recording.get('channels',None)
   units=recording.get('units_true',None)
-  if kb.findFile(firings_true_path):
+  if ca.realizeFile(path=firings_true_path):
     ret['firings_true']=firings_true_path
     ret['plots']['waveforms_true']=create_waveforms_plot(recording,ret['firings_true'])
     true_units_info_fname=compute_units_info(recording_dir=recording['directory'],firings=firings_true_path,return_format='filename',channel_ids=channels,unit_ids=units)
-    kb.saveFile(true_units_info_fname)
-    ret['true_units_info']='sha1://'+kb.computeFileSha1(true_units_info_fname)+'/true_units_info.json'
+    ret['true_units_info']=ca.saveFile(path=true_units_info_fname,basename='true_units_info.json')
   return ret
 
 def read_json_file(fname):
@@ -67,8 +65,8 @@ def compute_recording_info(recording):
     channels=recording.get('channels',[]),
     json_out={'ext':'.json'}
   ).outputs['json_out']
-  kb.saveFile(out)
-  return read_json_file(kb.realizeFile(out))
+  ca.saveFile(path=out)
+  return read_json_file(ca.realizeFile(path=out))
 
 # A MountainLab processor for generating a plot of a portion of the timeseries
 class CreateTimeseriesPlot(mlpr.Processor):
@@ -96,8 +94,7 @@ def create_timeseries_plot(recording):
     channels=recording.get('channels',[]),
     jpg_out={'ext':'.jpg'}
   ).outputs['jpg_out']
-  kb.saveFile(out)
-  return 'sha1://'+kb.computeFileSha1(out)+'/timeseries.jpg'
+  return ca.saveFile(path=out,basename='timeseries.jpg')
 
 # A MountainLab processor for generating a plot of a portion of the timeseries
 class CreateWaveformsPlot(mlpr.Processor):
@@ -135,6 +132,5 @@ def create_waveforms_plot(recording,firings):
     firings=firings,
     jpg_out={'ext':'.jpg'}
   ).outputs['jpg_out']
-  kb.saveFile(out)
-  return 'sha1://'+kb.computeFileSha1(out)+'/waveforms.jpg'
+  return ca.saveFile(path=out,basename='waveforms.jpg')
 

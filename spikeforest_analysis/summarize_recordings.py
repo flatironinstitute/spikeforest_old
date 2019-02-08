@@ -4,12 +4,12 @@ import json
 from PIL import Image
 import os
 from copy import deepcopy
-from kbucket import client as kb
+from cairio import client as ca
 import mlprocessors as mlpr
 from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
 
-def summarize_recordings(recordings):
+def summarize_recordings(recordings, compute_resource=None):
     jobs_info=[]
     jobs_timeseries_plot=[]
     jobs_units_info=[]
@@ -19,19 +19,19 @@ def summarize_recordings(recordings):
         channels=recording.get('channels',None)
         units=recording.get('units_true',None)
 
-        if not kb.findFile(firings_true_path):
+        if not ca.findFile(path=firings_true_path):
             raise Exception('firings_true file not found: '+firings_true_path)
         job=ComputeRecordingInfo.createJob(
             recording_dir=recording['directory'],
             channels=recording.get('channels',[]),
-            json_out={'ext':'.json'}
+            json_out={'ext':'.json','upload':True}
         )
         job['files_to_realize']=[raw_path,firings_true_path]
         jobs_info.append(job)
         job=CreateTimeseriesPlot.createJob(
             recording_dir=recording['directory'],
             channels=recording.get('channels',[]),
-            jpg_out={'ext':'.jpg'}
+            jpg_out={'ext':'.jpg','upload':True}
         )
         jobs_timeseries_plot.append(job)
         job=ComputeUnitsInfo.createJob(
@@ -39,12 +39,12 @@ def summarize_recordings(recordings):
             firings=recording['directory']+'/firings_true.mda',
             unit_ids=units,
             channel_ids=channels,
-            json_out={'ext':'.json'}
+            json_out={'ext':'.json','upload':True}
         )
         jobs_units_info.append(job)
     
     all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
-    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource='jfm-laptop')
+    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
     
     summarized_recordings=[]
     for i,recording in enumerate(recordings):
@@ -53,15 +53,15 @@ def summarize_recordings(recordings):
         summary=dict()
         
         result0=jobs_info[i]['result']
-        summary['computed_info']=kb.loadObject(path=result0['outputs']['json_out'])
+        summary['computed_info']=ca.loadObject(path=result0['outputs']['json_out'])
         
         result0=jobs_timeseries_plot[i]['result']
         summary['plots']=dict(
-            timeseries=kb.saveFile(result0['outputs']['jpg_out'],basename='timeseries.jpg')
+            timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
         )
 
         result0=jobs_units_info[i]['result']
-        summary['true_units_info']=kb.saveFile(result0['outputs']['json_out'],basename='true_units_info.json')
+        summary['true_units_info']=ca.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
 
         rec2=deepcopy(recording)
         rec2['summary']=summary
@@ -77,7 +77,7 @@ def summarize_recordings(recordings):
 #         channels=recording.get('channels',[]),
 #         json_out={'ext':'.json'}
 #     )
-#     computed_info=kb.loadObject(path=A.outputs['json_out'])
+#     computed_info=ca.loadObject(path=A.outputs['json_out'])
 #     summary['computed_info']=computed_info
 
 #     firings_true_path=recording['directory']+'/firings_true.mda'
@@ -88,17 +88,17 @@ def summarize_recordings(recordings):
 #         jpg_out={'ext':'.jpg'}
 #     )
 #     summary['plots']=dict(
-#         timeseries=kb.saveFile(A.outputs['jpg_out'],basename='timeseries.jpg')
+#         timeseries=ca.saveFile(path=A.outputs['jpg_out'],basename='timeseries.jpg')
 #     )
     
 #     channels=recording.get('channels',None)
 #     units=recording.get('units_true',None)
-#     if kb.findFile(firings_true_path):
+#     if ca.realizeFile(firings_true_path):
 #         summary['firings_true']=firings_true_path
 #         #summary['plots']['waveforms_true']=create_waveforms_plot(recording,summary['firings_true'])
 
 #         A=ComputeUnitsInfo.execute(recording_dir=recording['directory'],firings=recording['directory']+'/firings_true.mda',unit_ids=units,channel_ids=channels,json_out={'ext':'.json'})
-#         summary['true_units_info']=kb.saveFile(A.outputs['json_out'],basename='true_units_info.json')
+#         summary['true_units_info']=ca.saveFile(A.outputs['json_out'],basename='true_units_info.json')
 #     else:
 #         raise Exception('firings_true file not found: '+firings_true_path)
 #     rec2=deepcopy(recording)
@@ -196,6 +196,5 @@ def create_waveforms_plot(recording,firings):
     firings=firings,
     jpg_out={'ext':'.jpg'}
   ).outputs['jpg_out']
-  kb.saveFile(out)
-  return 'sha1://'+kb.computeFileSha1(out)+'/waveforms.jpg'
+  return ca.saveFile(out,basename='waveforms.jpg')
 

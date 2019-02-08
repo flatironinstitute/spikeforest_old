@@ -2,7 +2,7 @@
 
 import argparse
 import spikeforest as sf
-from kbucket import client as kb
+from cairio import client as ca
 import os
 import json
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     
     print('Loading batch: '+batch_name)
     sf.kbucketConfigRemote(name='spikeforest1-readwrite',password=spikeforest_password)
-    obj=kb.loadObject(key=dict(batch_name=batch_name))
+    obj=ca.loadObject(key=dict(batch_name=batch_name))
     if not obj:
       raise Exception('Unable to find batches object.')
 

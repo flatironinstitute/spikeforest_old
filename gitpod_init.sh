@@ -4,6 +4,11 @@ set -ex
 # These should already be installed from the container
 pip install -r requirements.txt
 python setup.py develop
+
+cd mountaintools
+pip install -r requirements.txt
+python setup.py develop
+
 pip install jupyterlab
 
 # Additional development packages

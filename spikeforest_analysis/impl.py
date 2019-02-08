@@ -1,11 +1,10 @@
-from kbucket import client as kb
-from pairio import client as pa
+from cairio import client as ca
 import random
 import string
 import datetime
 
 def clearBatch(*,batch_name, test_one=False):
-  batch=kb.loadObject(key=dict(batch_name=batch_name))
+  batch=ca.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
 
   if test_one and (len(jobs)>0):
@@ -23,7 +22,7 @@ def clearBatch(*,batch_name, test_one=False):
 
 
 def prepareBatch(*,batch_name, test_one=False):
-  batch=kb.loadObject(key=dict(batch_name=batch_name))
+  batch=ca.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
 
   if test_one and (len(jobs)>0):
@@ -48,7 +47,7 @@ def prepareBatch(*,batch_name, test_one=False):
 
 def runBatch(*,batch_name, test_one=False):
   print('Loading batch object...')
-  batch=kb.loadObject(key=dict(batch_name=batch_name))
+  batch=ca.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
 
   if test_one and (len(jobs)>0):
@@ -59,7 +58,7 @@ def runBatch(*,batch_name, test_one=False):
     _run_job(job)
 
 def setBatchStatus(*,batch_name,status):
-  pa.set(key=dict(name='spikeforest_batch_status',batch_name=batch_name),value=status)
+  ca.setValue(key=dict(name='spikeforest_batch_status',batch_name=batch_name),value=status)
 
 def _do_sort_recording(job):
   try:
@@ -86,14 +85,14 @@ def _do_run_job(job):
     return dict(error='Invalid job command: '+job['command'])
 
 def _set_job_status(job,status):
-  kb.saveObject(key=dict(name='job_status',job=job),object=status)
+  ca.saveObject(key=dict(name='job_status',job=job),object=status)
 
 def _run_job(job):
-  val=pa.get(key=job)
+  val=ca.getValue(key=job)
   if val:
     return
   code=''.join(random.choice(string.ascii_uppercase) for x in range(10))
-  if not pa.set(key=job,value='in-process-'+code,overwrite=False):
+  if not ca.setValue(key=job,value='in-process-'+code,overwrite=False):
     return
   status=dict(
     time_started=_make_timestamp(),
@@ -108,12 +107,12 @@ def _run_job(job):
     status['time_finished']=_make_timestamp()
     status['status']='error'
     status['error']='Exception in _do_run_job'
-    val=pa.get(key=job)
+    val=ca.getValue(key=job)
     if val=='in-process-'+code:
       _set_job_status(job,status)  
     raise
 
-  val=pa.get(key=job)
+  val=ca.getValue(key=job)
   if val!='in-process-'+code:
     print('Not saving result because in-process code does not match {} <> {}.'.format(val,'in-process-'+code))
     return
@@ -125,20 +124,20 @@ def _run_job(job):
     status['status']='error'
     status['error']=result['error']
     _set_job_status(job,status)
-    pa.set(key=job,value='error-'+code)
+    ca.setValue(key=job,value='error-'+code)
     return
   status['status']='finished'
-  kb.saveObject(key=job,object=result) # Not needed in future, because we should instead use the status object
+  ca.saveObject(key=job,object=result) # Not needed in future, because we should instead use the status object
 
 def assembleBatchResults(*,batch_name):
-  batch=kb.loadObject(key=dict(batch_name=batch_name))
+  batch=ca.loadObject(key=dict(batch_name=batch_name))
   jobs=batch['jobs']
 
   print('Assembling results for batch {} with {} jobs'.format(batch_name,len(jobs)))
   job_results=[]
   for job in jobs:
     print('ASSEMBLING: '+job['label'])
-    result=kb.loadObject(key=job)
+    result=ca.loadObject(key=job)
     if not result:
       raise Exception('Unable to load object for job: '+job['label'])
     job_results.append(dict(
@@ -146,27 +145,27 @@ def assembleBatchResults(*,batch_name):
         result=result
     ))
   print('Saving results...')
-  kb.saveObject(key=dict(name='job_results',batch_name=batch_name),object=dict(job_results=job_results))
+  ca.saveObject(key=dict(name='job_results',batch_name=batch_name),object=dict(job_results=job_results))
   print('Done.')
 
 def _clear_job_results(*,jobs,incomplete_only=True):
   for job in jobs:
-    val=pa.get(key=job)
+    val=ca.getValue(key=job)
     if val:
       if (not incomplete_only) or (val.startswith('in-process')) or (val.startswith('error')):
         print('Clearing job: '+job['label'])
-        pa.set(key=job,value=None)
+        ca.setValue(key=job,value=None)
 
 def _download_recordings(*,jobs):
   for ii,job in enumerate(jobs):
-    val=pa.get(key=job)
+    val=ca.getValue(key=job)
     if not val:
       if 'recording' in job:
         if 'directory' in job['recording']:
           dsdir=job['recording']['directory']
           fname=dsdir+'/raw.mda'
           print('REALIZING FILE: '+fname)
-          kb.realizeFile(fname)
+          ca.realizeFile(path=fname)
 
 def _make_timestamp():
   return str(datetime.datetime.now())
