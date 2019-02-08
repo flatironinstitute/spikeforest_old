@@ -27,13 +27,12 @@ class CairioClient():
         self._local_db=CairioLocal()
         self._remote_client=CairioRemoteClient()
 
-    def autoConfig(self,*,collection,key,ask_password=False):
-        password=None
-        if ask_password:
+    def autoConfig(self,*,collection,key,ask_password=False,password=None):
+        if (ask_password) and (password is None):
             password=getpass('Enter password: ')
         config=self.getValue(collection=collection,key=key,password=password)
         if not config:
-            raise Exception('Unable to find config.')
+            raise Exception('Unable to find config ({}.{}). Perhaps a password is incorrect or missing?'.format(collection,key))
         try:
             config=json.loads(config)
         except:
@@ -51,6 +50,23 @@ class CairioClient():
             self._remote_config['share_id']=share_id
         if upload_token is not None:
             self._remote_config['upload_token']=upload_token
+        
+        c=self._remote_config
+        if c['collection'] and c['token']:
+            config1='remote database {} (readwrite)'.format(c['collection'])
+        elif c['collection'] and (not c['token']):
+            config1='remote database {} (readonly)'.format(c['collection'])
+        else:
+            config1='local database'
+
+        if c['share_id'] and c['upload_token']:
+            config2='remote kb-share {} (readwrite)'.format(c['share_id'])
+        elif c['share_id'] and (not c['upload_token']):
+            config2='remote kb-share {} (readonly)'.format(c['share_id'])
+        else:
+            config2='local sha-1 cache'
+
+        print('CAIRIO CONFIG: {}; {}'.format(config1,config2))
 
     def getRemoteConfig(self):
         ret = self._remote_config.copy()
@@ -62,8 +78,12 @@ class CairioClient():
     # get value / set value
     def getValue(self,*,key,subkey=None,password=None,parse_json=False,collection=None):
         ret=self._get_value(key=key,subkey=subkey,password=password,collection=collection)
-        if parse_json:
-            ret=json.loads(ret)
+        if parse_json and ret:
+            try:
+                ret=json.loads(ret)
+            except:
+                print('Warning: Problem parsing json in cairio.getValue()')
+                return None
         return ret
 
     def setValue(self,*,key,subkey=None,value,overwrite=True,password=None):
@@ -422,7 +442,7 @@ class CairioLocal():
         ret_path = 'sha1://{}/{}'.format(sha1, basename)
         return ret_path
 
-    def computeFileSha1(self,*,path):
+    def computeFileSha1(self,path):
         return self._sha1_cache.computeFileSha1(path=path)
 
     def getNodeInfo(self,*,share_id):
@@ -595,3 +615,8 @@ def _test_url_accessible(url, timeout):
 
 # The global module client
 client = CairioClient()
+
+if os.environ.get('CAIRIO_CONFIG'):
+    a=os.environ.get('CAIRIO_CONFIG').split('.')
+    password=os.environ.get('CAIRIO_CONFIG_PASSWORD',None)
+    client.autoConfig(collection=a[0],key=a[1],password=password)

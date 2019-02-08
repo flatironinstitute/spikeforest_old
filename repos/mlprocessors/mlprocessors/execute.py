@@ -457,13 +457,13 @@ def _prepare_processor_job(job):
     container = job.get('container', None)
     if container:
         print('realizing container: '+container)
-        a = ca.realizeFile(container)
+        a = ca.realizeFile(path=container)
         if not a:
             raise Exception('Unable to realize container file: '+container)
     files_to_realize = job.get('files_to_realize', [])
     for fname in files_to_realize:
         print('realizing file: '+fname)
-        a = ca.realizeFile(fname)
+        a = ca.realizeFile(path=fname)
         if not a:
             raise Exception('Unable to realize file: '+fname)
 
@@ -491,21 +491,30 @@ def executeBatch(*, jobs, num_workers=None, compute_resource=None, batch_name=No
             batch_name = 'batch_'+_random_string(10)
         batcho.set_batch(batch_name=batch_name, jobs=jobs,
                          compute_resource=compute_resource)
+        last_update_string = ''
         while True:
-            status = batcho.get_batch_status(batch_name=batch_name)
-            if status is None:
-                print('Waiting...')
+            batch_status = batcho.get_batch_status(batch_name=batch_name)
+            if batch_status is None:
+                update_string = 'Waiting...'
             else:
-                status0 = status.get('status', '')
-                print('Status: '+status0)
-                if status0 == 'finished':
+                batch_status0 = batch_status.get('status', '')
+                if batch_status0 == 'finished':
+                    print('Finished.')
                     break
-                if status0 == 'error':
-                    err0 = status.get('error', '')
+                if batch_status0 == 'error':
+                    err0 = batch_status.get('error', '')
                     raise Exception('Error executing batch: {}'.format(err0))
-            # statuses = batcho.get_batch_job_statuses(batch_name=batch_name)
-            # print('-'.join(['{}'.format(a['status']) for a in statuses]))
-            time.sleep(3)
+                statuses_list = list(batcho.get_batch_job_statuses(
+                    batch_name=batch_name).values())
+                num_ready = statuses_list.count('ready')
+                num_running = statuses_list.count('running')
+                num_finished = statuses_list.count('finished')
+                update_string = 'Batch {} ({})\nJOBS: {} ready, {} running, {} finished, {} total'.format(
+                    batch_name, batch_status0, num_ready, num_running, num_finished, len(jobs))
+            if update_string != last_update_string:
+                print(update_string)
+            last_update_string = update_string
+            time.sleep(1)
 
         results0 = batcho.get_batch_results(batch_name=batch_name)
         if results0 is None:
@@ -534,7 +543,7 @@ def executeJob(job):
 
         container = job.get('container', None)
         if container:
-            container = ca.realizeFile(container)
+            container = ca.realizeFile(path=container)
 
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
@@ -701,10 +710,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             val0 = kwargs[name0]
         setattr(X, name0, val0)
     if _cache:
-        outputs_all_in_pairio = True
+        outputs_all_in_cairio = True
         output_signatures = dict()
         output_sha1s = dict()
-        cache_collections = set()
 
         stats_signature0 = compute_processor_job_stats_signature(X)
         console_out_signature0 = compute_processor_job_console_out_signature(X)
@@ -713,23 +721,20 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             name0 = output0.name
             signature0 = compute_processor_job_output_signature(X, name0)
             output_signatures[name0] = signature0
-            output_sha1, output_collection = pairio.get(
-                signature0, return_collection=True)
+            output_sha1 = ca.getValue(key=signature0)
             if output_sha1 is not None:
-                print('Found output "{}" in cache collection: {}'.format(
-                    name0, output_collection))
-                cache_collections.add(output_collection)
+                print('Found output "{}" in cairio.'.format(name0))
                 output_sha1s[name0] = output_sha1
 
                 # Do the following because if we have it locally,
                 # we want to make sure it also gets propagated remotely
                 # and vice versa
-                pairio.set(signature0, output_sha1)
+                ca.setValue(key=signature0, value=output_sha1)
             else:
-                outputs_all_in_pairio = False
+                outputs_all_in_cairio = False
         output_files_all_found = False
         output_files = dict()
-        if outputs_all_in_pairio:
+        if outputs_all_in_cairio:
             output_files_all_found = True
             for output0 in proc.OUTPUTS:
                 out0 = getattr(X, name0)
@@ -741,13 +746,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     fname = ca.findFileBySha1(sha1=sha1)
                     if not fname:
                         output_files_all_found = False
-        if outputs_all_in_pairio and (not output_files_all_found):
+        if outputs_all_in_cairio and (not output_files_all_found):
             print('Found job in cache, but not all output files exist.')
 
         if output_files_all_found:
             if not _force_run:
-                print('Using outputs from cache:',
-                      ','.join(list(cache_collections)))
+                print('Using outputs from cache.')
 
                 for output0 in proc.OUTPUTS:
                     name0 = output0.name
@@ -755,7 +759,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     fname2 = getattr(X, name0)
                     if type(fname2) == str:
                         fname2 = os.path.abspath(fname2)
-                        fname1 = ca.realizeFile(fname1)
+                        fname1 = ca.realizeFile(path=fname1)
                         if fname1 != fname2:
                             if os.path.exists(fname2):
                                 os.remove(fname2)
@@ -783,7 +787,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             if input0.directory:
                 val1 = val0
             else:
-                val1 = ca.realizeFile(val0)
+                val1 = ca.realizeFile(path=val0)
                 if not val1:
                     raise Exception(
                         'Unable to realize input file {}: {}'.format(name0, val0))
@@ -826,7 +830,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
     else:
         # in a container
-        container_path = ca.realizeFile(_container)
+        container_path = ca.realizeFile(path=_container)
         if not container_path:
             print('Unable to realize container file: '+_container)
         tempdir = tempfile.mkdtemp()
@@ -859,7 +863,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         if _cache:
             output_sha1 = ca.computeFileSha1(output_fname)
             signature0 = output_signatures[name0]
-            pairio.set(signature0, output_sha1)
+            ca.setValue(key=signature0, value=output_sha1)
 
     ret.stats['start_time'] = start_time
     ret.stats['end_time'] = end_time
