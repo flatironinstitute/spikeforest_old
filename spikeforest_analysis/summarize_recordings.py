@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
 
 def summarize_recordings(recordings, compute_resource=None):
+    container='sha1://228fdbb3e64b1fc463d50c1be9e4ec2d4951aa4a/2019-02-08/mountaintools_basic.simg'
     jobs_info=[]
     jobs_timeseries_plot=[]
     jobs_units_info=[]
@@ -24,14 +25,16 @@ def summarize_recordings(recordings, compute_resource=None):
         job=ComputeRecordingInfo.createJob(
             recording_dir=recording['directory'],
             channels=recording.get('channels',[]),
-            json_out={'ext':'.json','upload':True}
+            json_out={'ext':'.json','upload':True},
+            _container=container
         )
         job['files_to_realize']=[raw_path,firings_true_path]
         jobs_info.append(job)
         job=CreateTimeseriesPlot.createJob(
             recording_dir=recording['directory'],
             channels=recording.get('channels',[]),
-            jpg_out={'ext':'.jpg','upload':True}
+            jpg_out={'ext':'.jpg','upload':True},
+            _container=container
         )
         jobs_timeseries_plot.append(job)
         job=ComputeUnitsInfo.createJob(
@@ -39,7 +42,8 @@ def summarize_recordings(recordings, compute_resource=None):
             firings=recording['directory']+'/firings_true.mda',
             unit_ids=units,
             channel_ids=channels,
-            json_out={'ext':'.json','upload':True}
+            json_out={'ext':'.json','upload':True},
+            _container=container
         )
         jobs_units_info.append(job)
     

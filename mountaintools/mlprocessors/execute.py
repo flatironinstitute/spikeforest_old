@@ -14,6 +14,7 @@ import time
 import sys
 import multiprocessing
 import random
+import fnmatch
 
 
 def sha1(str):
@@ -167,12 +168,17 @@ class ProcessorExecuteOutput():
         self.console_out = ''
 
 
-def _read_python_code_of_directory(dirname):
+def _read_python_code_of_directory(dirname, additional_files=[]):
+    patterns = ['*.py']+additional_files
     files = []
     dirs = []
     for fname in os.listdir(dirname):
         if os.path.isfile(dirname+'/'+fname):
-            if fname.endswith('.py'):
+            matches = False
+            for pattern in patterns:
+                if fnmatch.fnmatch(fname, pattern):
+                    matches = True
+            if matches:
                 with open(dirname+'/'+fname) as f:
                     txt = f.read()
                 files.append(dict(
@@ -422,14 +428,16 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
             val0 = kwargs[name0]
         parameters[name0] = val0
     if _container:
-        if (type(_container) == str) and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
-            pass
-        else:
-            _container = ca.saveFile(_container)
+        newpath = ca.saveFile(_container)
+        if not newpath:
+            raise Exception('Unable to save (or upload) container file.')
+        if not _container.startswith('sha1://'):
+            _container = newpath
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
-    code = _read_python_code_of_directory(processor_source_dirname)
+    code = _read_python_code_of_directory(
+        processor_source_dirname, additional_files=getattr(proc, 'ADDITIONAL_FILES', []))
     processor_job = dict(
         command='execute_mlprocessor',
         label='{} (version: {}) (container: {})'.format(

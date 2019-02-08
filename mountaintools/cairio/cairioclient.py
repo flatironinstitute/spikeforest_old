@@ -240,6 +240,9 @@ class CairioClient():
                     return url
 
     def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
+        path = self.realizeFile(path)
+        if not path:
+            return False
         ret = self._local_db.saveFile(
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:

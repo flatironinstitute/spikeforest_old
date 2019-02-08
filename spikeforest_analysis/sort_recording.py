@@ -171,8 +171,7 @@ Processors=dict(
     KiloSort=(KiloSort,None)
 )
         
-def sort_recording(*,sorter,recording):
-    dsdir=recording['directory']
+def sort_recordings(*,sorter,recordings,compute_resource=None):
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
     if processor_name in Processors:
@@ -186,38 +185,77 @@ def sort_recording(*,sorter,recording):
          if not ca.findFile(path=SS_container):
              raise Exception('Unable to realize container: '+SS_container)
         
-    print('Sorting recording {} using {}'.format(dsdir, processor_name))
-    X=SS.execute(
-        _container=SS_container,
-        recording_dir=dsdir,
-        channels=recording.get('channels',[]),
-        firings_out=dict(ext='.mda'),
-        **sorting_params
-    )
-    outputs=X.outputs
-    stats=X.stats
-    console_out=X.console_out
-    print('Saving firings_out...')
-    firings_out=ca.saveFile(path=outputs['firings_out'])
-    firings_true_path=recording['directory']+'/firings_true.mda'
-    if not ca.findFile(firings_true_path):
-        firings_true_path=None
-    print('Assembling result...')
-    result=dict(
-        recording_name=recording.get('name',None),
-        study_name=recording.get('study',None),
-        sorter_name=sorter.get('name',None),
-        recording_dir=dsdir,
-        channels=recording.get('channels',[]),
-        units_true=recording.get('units_true',[]),
-        firings_true=firings_true_path,
-        sorting_params=sorting_params,
-        processor_name=SS.NAME,
-        processor_version=SS.VERSION,
-        execution_stats=stats,
-        console_out=ca.saveText(text=console_out,basename='console_out.txt'),
-        container=SS_container,
-        firings=firings_out
-    )
-    print('Done sorting.')
-    return result
+    print('Sorting recordings using {}'.format(processor_name))
+
+    sorting_jobs=[]
+    for recording in recordings:
+        dsdir=recording['directory']
+        job=SS.createJob(
+            _container=SS_container,
+            recording_dir=dsdir,
+            channels=recording.get('channels',[]),
+            firings_out=dict(ext='.mda',upload=True),
+            **sorting_params
+        )
+        sorting_jobs.append(job)
+
+    mlpr.executeBatch(jobs=sorting_jobs,compute_resource=compute_resource)
+    
+    sorting_results=[]
+    for i,recording in enumerate(recordings):
+        firings_true_path=recording['directory']+'/firings_true.mda'
+
+        result0=sorting_jobs[i]['result']
+        outputs0=result0['outputs']
+        console_out=result0.get('console_out','')
+
+        result=dict(
+            recording_name=recording.get('name',None),
+            study_name=recording.get('study',None),
+            sorter_name=sorter.get('name',None),
+            recording_dir=dsdir,
+            channels=recording.get('channels',[]),
+            units_true=recording.get('units_true',[]),
+            firings_true=firings_true_path,
+            sorting_params=sorting_params,
+            processor_name=SS.NAME,
+            processor_version=SS.VERSION,
+            #execution_stats=result0['stats'],
+            console_out=ca.saveText(text=console_out,basename='console_out.txt'),
+            container=SS_container,
+            firings=outputs0['firings_out']
+        )
+        sorting_results.append(result)
+
+        # outputs=X.outputs
+        # stats=X.stats
+        # console_out=X.console_out
+        # print('Saving firings_out...')
+        # firings_out=ca.saveFile(path=outputs['firings_out'])
+        # firings_true_path=recording['directory']+'/firings_true.mda'
+        # if not ca.findFile(firings_true_path):
+        #     firings_true_path=None
+        # print('Assembling result...')
+        # result=dict(
+        #     recording_name=recording.get('name',None),
+        #     study_name=recording.get('study',None),
+        #     sorter_name=sorter.get('name',None),
+        #     recording_dir=dsdir,
+        #     channels=recording.get('channels',[]),
+        #     units_true=recording.get('units_true',[]),
+        #     firings_true=firings_true_path,
+        #     sorting_params=sorting_params,
+        #     processor_name=SS.NAME,
+        #     processor_version=SS.VERSION,
+        #     execution_stats=stats,
+        #     console_out=ca.saveText(text=console_out,basename='console_out.txt'),
+        #     container=SS_container,
+        #     firings=firings_out
+        # )
+        # print('Done sorting.')
+        # return result
+
+    return sorting_results
+    
+
+    
