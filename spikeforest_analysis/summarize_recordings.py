@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
 
 def summarize_recordings(recordings, compute_resource=None):
-    container='sha1://228fdbb3e64b1fc463d50c1be9e4ec2d4951aa4a/2019-02-08/mountaintools_basic.simg'
+    container='sha1://51b40c7c244a8d98d33993cbd0baa7e69a0daac0/2019-02-08/mountaintools_basic.simg'
     jobs_info=[]
     jobs_timeseries_plot=[]
     jobs_units_info=[]

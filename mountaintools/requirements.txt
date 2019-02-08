@@ -6,3 +6,4 @@ requests
 pillow
 pandas
 ipython
+h5py
