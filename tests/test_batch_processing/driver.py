@@ -45,7 +45,8 @@ def main():
     batch_name='primes_batch_1'
     container=''
     if args.use_container:
-        container='sha1://a3842053423c633b62e70474be9d76068cdc1ea5/mountainsort4.simg'
+        #container='../../mountaintools/containers/mountaintools_basic/mountaintools_basic.simg'
+        container='sha1://228fdbb3e64b1fc463d50c1be9e4ec2d4951aa4a/mountaintools_basic.simg'
     compute_resource='test_resource_01'
 
     if args.command=='stop':

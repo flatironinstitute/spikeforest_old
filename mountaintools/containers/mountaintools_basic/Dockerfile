@@ -12,7 +12,7 @@ RUN echo "8 February 2019"
 #########################################
 ### mountaintools
 RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2 && cd src/spikeforest2 && git checkout dev2
+RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2 && cd src/spikeforest2 && git checkout 65aac1db740a5d7f0143b4de791e326d44cc02d9
 WORKDIR /src/spikeforest2/mountaintools
 RUN pip install -r requirements.txt
 RUN python setup.py develop

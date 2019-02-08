@@ -384,8 +384,10 @@ def _run_command_and_print_output(cmd):
     return _shell_execute(cmd)
 
 
-def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous=None):
-    if not _retrieve_batch(batch_name):
+def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous=None, allow_uncontainerized=False):
+
+    batch = _retrieve_batch(batch_name)
+    if not batch:
         # In this case the object is not yet ready, so just return false and do not remove
         return False
     try:
@@ -393,6 +395,15 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
         if not batch_code:
             raise Exception(
                 'Unable to get batch code for batch {}'.format(batch_name))
+
+        _set_batch_status(batch_name=batch_name,
+                          status=dict(status='checking'))
+        jobs = batch['jobs']
+        for ii, job in enumerate(jobs):
+            container = job.get('container', '')
+            if (not allow_uncontainerized) and (not container):
+                raise Exception(
+                    'Unable to run uncontainerized job. Specify a container in the job spec or use the --allow_uncontainerized flag on the compute resource.')
 
         _set_batch_status(batch_name=batch_name,
                           status=dict(status='preparing'))
@@ -427,7 +438,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
     return True
 
 
-def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneous=None):
+def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneous=None, allow_uncontainerized=False):
     index = 0
     while True:
         batch_names = get_batch_names_for_compute_resource(compute_resource)
@@ -436,7 +447,7 @@ def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneo
                 index = 0
             batch_name = batch_names[index]
             _try_handle_batch(compute_resource, batch_name,
-                              run_prefix=run_prefix, num_simultaneous=num_simultaneous)
+                              run_prefix=run_prefix, num_simultaneous=num_simultaneous, allow_uncontainerized=allow_uncontainerized)
             index = index+1
         time.sleep(4)
 
@@ -495,7 +506,7 @@ def _get_job_status(*, batch_name, job_index):
     key = dict(name='batcho_job_statuses',
                batch_name=batch_name)
     subkey = str(job_index)
-    return ca.getValue(key=key, subkey=subkey)
+    return ca.loadObject(key=key, subkey=subkey)
 
 
 def _get_job_status_string(*, batch_name, job_index):
@@ -511,18 +522,19 @@ def _set_job_status(*, batch_name, job_index, status):
     #    if code != job_code:
     #        print('Not setting job status because lock code does not match batch code')
     #        return
+    status_string = None
+    if status:
+        status_string = status.get('status', None)
+
     key = dict(name='batcho_job_statuses',
                batch_name=batch_name)
     subkey = str(job_index)
-    if not ca.setValue(key=key, subkey=subkey, value=status):
+    if not ca.saveObject(key=key, subkey=subkey, object=status):
         return False
 
     key = dict(name='batcho_job_status_strings',
                batch_name=batch_name)
     subkey = str(job_index)
-    status_string = None
-    if status:
-        status_string = status.get('status', None)
     if not ca.setValue(key=key, subkey=subkey, value=status_string):
         return False
     return True

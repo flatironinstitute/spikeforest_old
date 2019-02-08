@@ -86,7 +86,7 @@ class CairioRemoteClient():
             print('Warning: Problem checking for upload: '+resp_obj['error'])
             return False
         if not resp_obj['okay_to_upload']:
-            print('Cannot upload: '+resp_obj['message'])
+            print('Cannot upload {}: {}'.format(path, resp_obj['message']))
             return False
 
         if not resp_obj['found']:

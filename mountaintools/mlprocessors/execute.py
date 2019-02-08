@@ -421,8 +421,8 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         else:
             val0 = kwargs[name0]
         parameters[name0] = val0
-    if _container is not None:
-        if type(_container) == str and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
+    if _container:
+        if (type(_container) == str) and ((_container.startswith('sha1://')) or (_container.startswith('kbucket://'))):
             pass
         else:
             _container = ca.saveFile(_container)
