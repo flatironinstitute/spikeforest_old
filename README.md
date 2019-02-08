@@ -49,11 +49,11 @@ You can use spikeforest2 with theiapod.
 
 Prerequisites: [docker](https://docs.docker.com/) and [theiapod](https://github.com/magland/theiapod)
 
-First clone this repo and checkout this branch (currently dev2):
+First clone this repo and checkout this branch (currently dev):
 
 ```
 git clone https://github.com/flatironinstitute/spikeforest2
-git checkout -b dev2
+git checkout -b dev
 ```
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
