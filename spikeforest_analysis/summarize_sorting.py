@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 from PIL import Image
 import mlprocessors as mlpr
-from kbucket import client as kb
+from cairio import client as ca
 import spikeextractors as si
 import spikewidgets as sw
 import os
@@ -12,19 +12,19 @@ def summarize_sorting(sorting):
     #  recording_dir=result['recording_dir'],
     #  channels=result.get('channels',[]),
     #  firings=result['firings'],
-    #  plot_out={'ext':'.jpg'}
+    #  plot_out={'ext':'.jpg','upload':True}
     #).outputs['plot_out']
-    #unit_waveforms=kb.saveFile(unit_waveforms,basename='unit_waveforms.jpg')
+    #unit_waveforms=ca.saveFile(path=unit_waveforms,basename='unit_waveforms.jpg')
     #ret['plots']['unit_waveforms']=unit_waveforms
 
     X=PlotAutoCorrelograms.execute(
       recording_dir=sorting['recording_dir'],
       channels=sorting.get('channels',[]),
       firings=sorting['firings'],
-      plot_out={'ext':'.jpg'}
+      plot_out={'ext':'.jpg','upload':True}
     )
     autocorrelograms=X.outputs['plot_out']
-    autocorrelograms=kb.saveFile(autocorrelograms,basename='autocorrelograms.jpg')
+    autocorrelograms=ca.saveFile(path=autocorrelograms,basename='autocorrelograms.jpg')
     ret['plots']['autocorrelograms']=autocorrelograms
 
     return ret

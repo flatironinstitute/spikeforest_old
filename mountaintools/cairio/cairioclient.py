@@ -96,7 +96,7 @@ class CairioClient():
         return list(self._get_sub_keys(key=key, password=password))
 
     # realize file / save file
-    def realizeFile(self, *, key=None, path=None, subkey=None, password=None):
+    def realizeFile(self, path=None, *, key=None, subkey=None, password=None):
         if path is not None:
             return self._realize_file(path=path)
         elif key is not None:
@@ -107,7 +107,7 @@ class CairioClient():
         else:
             raise Exception('Missing key or path in realizeFile().')
 
-    def saveFile(self, path, *, key=None, subkey=None, basename=None, password=None, confirm=False):
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False):
         if path is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password)
@@ -161,7 +161,7 @@ class CairioClient():
     def readDir(self, path, recursive=False, include_sha1=True):
         if path.startswith('kbucket://'):
             list = path.split('/')
-            share_id = _filter_share_id(list[2])
+            share_id = list[2]
             path0 = '/'.join(list[3:])
             ret = self._read_kbucket_dir(
                 share_id=share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
@@ -191,8 +191,11 @@ class CairioClient():
     def findFileBySha1(self, *, sha1):
         return self._realize_file(path='sha1://'+sha1, resolve_locally=False)
 
-    def moveToLocalCache(self, *, path):
-        return self._save_file(path=path, prevent_upload=True, return_sha1_url=False)
+    def findFile(self, path):
+        return self._realize_file(path=path, resolve_locally=False)
+
+    def moveToLocalCache(self, path, basename=None):
+        return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
     def _get_value(self, *, key, subkey, password=None, collection=None):
         if password is not None:
@@ -244,7 +247,7 @@ class CairioClient():
         share_id = self._remote_config['share_id']
         upload_token = self._remote_config['upload_token']
         if (share_id) and (upload_token) and (not prevent_upload):
-            sha1 = self._local_db.computeFileSha1(path=path)
+            sha1 = self.computeFileSha1(path=path)
             if sha1:
                 url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
                 if not url:
@@ -257,14 +260,27 @@ class CairioClient():
                                     share_id=share_id, sha1=sha1)
         return ret
 
-    def _wait_until_found_on_kbucket(self, *, share_id, sha1, num_retries=10, delay_sec=1):
+    def _wait_until_found_on_kbucket(self, *, share_id, sha1):
+        timer = time.time()
+        wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
+            share_id, sha1)
+        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=2, delay_sec=1):
+            return True
+        print(wait_str)
+        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=2):
+            return True
+        print(wait_str)
+        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=4):
+            return True
+        raise Exception('Unable to find file on kbucket after waiting for {} seconds.'.format(
+            time.time()-timer))
+
+    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, num_retries, delay_sec):
         for retry in range(1, num_retries+1):
             url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
             if url:
                 return True
             time.sleep(delay_sec)
-        raise Exception(
-            'Unable to confirm found on kbucket after {} retries'.format(num_retries))
         return False
 
     def _find_on_kbucket(self, *, share_id, sha1):
@@ -305,9 +321,9 @@ class CairioClient():
         return node_info.get('cas_upload_url', None)
 
     def _read_kbucket_dir(self, *, share_id, path, recursive, include_sha1):
-        url = self._config['url']+'/'+share_id+'/api/readdir/'+path
-        obj = self._http_get_json(url)
-        if not obj['success']:
+        url = self._local_db.kbucketUrl()+'/'+share_id+'/api/readdir/'+path
+        obj = _http_get_json(url)
+        if (not obj) or (not obj['success']):
             return None
 
         ret = dict(

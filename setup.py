@@ -15,7 +15,7 @@ setuptools.setup(
     packages=[
         'spikeforest_batch_run',
         'spikeextractors', 'spikewidgets', 'spiketoolkit',
-        'spikeforest'
+        'spikeforest','spikeforest_analysis'
     ],
     install_requires=[
     ],

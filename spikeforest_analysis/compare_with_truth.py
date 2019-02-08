@@ -3,15 +3,21 @@ import spikeextractors as si
 import spiketoolkit as st
 import mlprocessors as mlpr
 import json
-from kbucket import client as kb
+from cairio import client as ca
 import numpy as np
 
 def compare_with_truth(sorting):
     ret={}
     units_true=sorting.get('units_true',[])
-    out=GenSortingComparisonTable.execute(firings=sorting['firings'],firings_true=sorting['firings_true'],units_true=units_true,json_out={'ext':'.json'},html_out={'ext':'.html'}).outputs
-    ret['json']=kb.saveFile(out['json_out'],basename='table.json')
-    ret['html']=kb.saveFile(out['html_out'],basename='table.html')
+    out=GenSortingComparisonTable.execute(
+        firings=sorting['firings'],
+        firings_true=sorting['firings_true'],
+        units_true=units_true,
+        json_out={'ext':'.json','upload':True},
+        html_out={'ext':'.html','upload':True}
+    ).outputs
+    ret['json']=ca.saveFile(path=out['json_out'],basename='table.json')
+    ret['html']=ca.saveFile(path=out['html_out'],basename='table.html')
     return ret
 
 class GenSortingComparisonTable(mlpr.Processor):

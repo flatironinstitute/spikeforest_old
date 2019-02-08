@@ -593,7 +593,7 @@ if __name__ == "__main__":
             out0 = job['outputs'][key]
             if out0.get('upload', False):
                 ret['outputs'][key] = ca.saveFile(
-                    temporary_output_files[key], basename=key+out0['ext'])
+                    temporary_output_files[key], basename=key+out0['ext'], confirm=True)
             else:
                 ret['outputs'][key] = 'sha1://' + \
                     ca.computeFileSha1(
