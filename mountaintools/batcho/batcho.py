@@ -303,16 +303,17 @@ def add_batch_name_for_compute_resource(compute_resource, batch_name):
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
-    while True:
-        obj = ca.loadObject(key=key0)
-        if not obj:
-            obj = dict(batch_names=[])
-        if batch_name in obj['batch_names']:
-            return
-        obj['batch_names'].append(batch_name)
-        ca.saveObject(key=key0, object=obj)
-        # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
-        time.sleep(0.2)
+    return ca.setValue(key=key0, subkey=batch_name, value='dummy_val')
+    # while True:
+    #     obj = ca.loadObject(key=key0)
+    #     if not obj:
+    #         obj = dict(batch_names=[])
+    #     if batch_name in obj['batch_names']:
+    #         return
+    #     obj['batch_names'].append(batch_name)
+    #     ca.saveObject(key=key0, object=obj)
+    #     # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
+    #     time.sleep(0.2)
 
 
 def remove_batch_name_for_compute_resource(compute_resource, batch_name):
@@ -320,16 +321,18 @@ def remove_batch_name_for_compute_resource(compute_resource, batch_name):
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
-    while True:
-        obj = ca.loadObject(key=key0)
-        if not obj:
-            obj = dict(batch_names=[])
-        if batch_name not in obj['batch_names']:
-            return
-        obj['batch_names'].remove(batch_name)
-        ca.saveObject(key=key0, object=obj)
-        # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
-        time.sleep(0.2)
+    return ca.setValue(key=key0, subkey=batch_name, value=None)
+
+    # while True:
+    #     obj = ca.loadObject(key=key0)
+    #     if not obj:
+    #         obj = dict(batch_names=[])
+    #     if batch_name not in obj['batch_names']:
+    #         return
+    #     obj['batch_names'].remove(batch_name)
+    #     ca.saveObject(key=key0, object=obj)
+    #     # loop through and check again ## Note: there is still a possibility of failure/conflict here -- use locking in future
+    #     time.sleep(0.2)
 
 
 def _helper_call_run_batch(a):
@@ -457,10 +460,11 @@ def get_batch_names_for_compute_resource(compute_resource):
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
-    obj = ca.loadObject(key=key0)
+    obj = ca.getValue(key=key0, parse_json=True)
     if not obj:
-        obj = dict(batch_names=[])
-    return obj.get('batch_names', [])
+        return []
+    batch_names = list(obj.keys())
+    return batch_names
 
 
 def get_batch_results(*, batch_name):

@@ -9,7 +9,7 @@ import mlprocessors as mlpr
 from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
 
-def summarize_recordings(recordings):
+def summarize_recordings(recordings, compute_resource=None):
     jobs_info=[]
     jobs_timeseries_plot=[]
     jobs_units_info=[]
@@ -44,7 +44,7 @@ def summarize_recordings(recordings):
         jobs_units_info.append(job)
     
     all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
-    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource='jfm-laptop')
+    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
     
     summarized_recordings=[]
     for i,recording in enumerate(recordings):
@@ -56,7 +56,6 @@ def summarize_recordings(recordings):
         summary['computed_info']=ca.loadObject(path=result0['outputs']['json_out'])
         
         result0=jobs_timeseries_plot[i]['result']
-        print(result0)
         summary['plots']=dict(
             timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
         )

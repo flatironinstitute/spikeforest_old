@@ -265,15 +265,18 @@ class CairioClient():
         wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
             share_id, sha1)
         if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=2, delay_sec=1):
+            print('File is on kbucket: {}'.format(sha1))
             return True
         print(wait_str)
         if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=2):
+            print('File is on kbucket: {}'.format(sha1))
             return True
         print(wait_str)
         if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=4):
+            print('File is on kbucket: {}'.format(sha1))
             return True
-        raise Exception('Unable to find file on kbucket after waiting for {} seconds.'.format(
-            time.time()-timer))
+        raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
+                                                                                                 time.time()-timer))
 
     def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, num_retries, delay_sec):
         for retry in range(1, num_retries+1):
@@ -428,7 +431,7 @@ class CairioLocal():
         val = self.getValue(key=key, subkey=None)
         try:
             val = json.loads(val)
-            return val.keys()
+            return list(val.keys())
         except:
             return []
 
