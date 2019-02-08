@@ -37,21 +37,19 @@ class RawRecordingExtractor(RecordingExtractor):
         return recordings
 
     @staticmethod
-    def writeRecording(recording, save_path, dtype=None, transpose=False):
+    def writeRecording(recording, save_path, dtype=None, transpose=False, fReversePolarity=False):
         save_path = Path(save_path)
         if dtype == None:
             dtype = np.float32
-        if not transpose:
-            if not save_path.suffix == '.dat':
-                save_path = save_path.parent / (save_path.name + '.dat')
-            with save_path.open('wb') as f:
-                np.transpose(np.array(recording.getTraces(), dtype=dtype)).tofile(f)
-        elif transpose:
-            if not save_path.suffix == '.dat':
-                save_path = save_path.parent / (save_path.name + '.dat')
-            with save_path.open('wb') as f:
-                np.array(recording.getTraces(), dtype=dtype).tofile(f)
-
+        np_Wav = np.array(recording.getTraces(), dtype=dtype)
+        if not save_path.suffix == '.dat':
+            save_path = save_path.parent / (save_path.name + '.dat')        
+        if transpose:
+            np_Wav = np.transpose(np_Wav)
+        if fReversePolarity:
+            np_Wav = np_Wav * -1
+        with save_path.open('wb') as f:
+            np_Wav.tofile(f)
 
 def _read_binary(file, numchan, dtype):
     numchan = int(numchan)

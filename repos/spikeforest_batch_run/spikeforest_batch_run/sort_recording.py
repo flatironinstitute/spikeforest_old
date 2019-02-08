@@ -9,7 +9,7 @@ from . import sorters as sorters
 from .summarize_sorting import summarize_sorting
 from .compare_with_truth import compare_with_truth
 
-from spikesorters import MountainSort4, SpykingCircus
+from spikesorters import MountainSort4, SpykingCircus, yass
 
 # class MountainSort4(mlpr.Processor):
 #     NAME='MountainSort4'
@@ -211,7 +211,8 @@ Processors=dict(
     MountainSort4=(MountainSort4,'MS4_CONTAINER'),
     IronClust=(IronClust,None),
     SpykingCircus=(SpykingCircus,'SC_CONTAINER'),
-    KiloSort=(KiloSort,None)
+    KiloSort=(KiloSort,None),
+    yass=(yass,'YASS_CONTAINER')
 )
         
 def sort_recording(sorter,recording):
