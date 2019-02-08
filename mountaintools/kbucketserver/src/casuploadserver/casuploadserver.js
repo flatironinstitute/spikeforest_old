@@ -99,7 +99,7 @@ function CASUploadServer() {
       error_response(req,res,500,'Invalid signature')
       return;  
     }
-    let file_size=Number(query.size);
+    let file_size=Number(query.size||0);
     let X=new UploadHandler(m_sha1_cache);
     X.setSha1(params.sha1);
     X.setFileSize(file_size);
@@ -406,7 +406,7 @@ function Sha1Cache(directory) {
       callback('Error in statSync: '+err.message);
       return;
     }
-    if (stat.size!=X.file_size) {
+    if ((stat.size||0)!=(X.file_size||0)) {
       callback(`Incorrect file size: ${stat.size}<>${X.file_size}`);
       return;
     }
