@@ -260,7 +260,7 @@ function CairioServer(API) {
       });
       return;
     }
-    if (params.value.length > MAX_VALUE_LENGTH) {
+    if ((params.value)&&(params.value.length > MAX_VALUE_LENGTH)) {
       res.json({
         success: false,
         error: 'Length of value is too long'

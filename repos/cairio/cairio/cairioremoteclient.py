@@ -41,7 +41,8 @@ class CairioRemoteClient():
         return obj['value']
 
     def setValue(self,*,collection,key,subkey,overwrite=False,value,url,token):
-        value_b64=base64.b64encode(value.encode()).decode('utf-8')
+        if value:
+            value_b64=base64.b64encode(value.encode()).decode('utf-8')
         if not url:
             print('Missing url for remote cairio server.')
             return False
@@ -49,10 +50,16 @@ class CairioRemoteClient():
             print('Missing token for remote cairio server.')
             return False
         keyhash=_hash_of_key(key)
-        if subkey is None:
-            path='/set/{}/{}/{}'.format(collection,keyhash,value_b64)
+        if value:
+            if subkey is None:
+                path='/set/{}/{}/{}'.format(collection,keyhash,value_b64)
+            else:
+                path='/set/{}/{}/{}/{}'.format(collection,keyhash,subkey,value_b64)
         else:
-            path='/set/{}/{}/{}/{}'.format(collection,keyhash,subkey,value_b64)
+            if subkey is None:
+                path='/remove/{}/{}'.format(collection,keyhash)
+            else:
+                path='/remove/{}/{}/{}'.format(collection,keyhash,subkey)
         signature = _sha1_of_object({'path': path, 'token': token})
         url0 = url+path 
         url0 = url0+'?signature={}'.format(signature)

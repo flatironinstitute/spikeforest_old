@@ -11,6 +11,7 @@ from datetime import datetime as dt
 from .sha1cache import Sha1Cache
 from .cairioremoteclient import CairioRemoteClient
 import time
+from getpass import getpass
 
 class CairioClient():
     def __init__(self):
@@ -26,7 +27,20 @@ class CairioClient():
         self._local_db=CairioLocal()
         self._remote_client=CairioRemoteClient()
 
-    def setRemoteConfig(self,url=None,collection=None,token=None,share_id=None,upload_token=None):
+    def autoConfig(self,*,collection,key,ask_password=False):
+        password=None
+        if ask_password:
+            password=getpass('Enter password: ')
+        config=self.getValue(collection=collection,key=key,password=password)
+        if not config:
+            raise Exception('Unable to find config.')
+        try:
+            config=json.loads(config)
+        except:
+            raise Exception('Error parsing config.')
+        self.setRemoteConfig(**config)
+
+    def setRemoteConfig(self,*,url=None,collection=None,token=None,share_id=None,upload_token=None):
         if url is not None:
             self._remote_config['url']=url
         if collection is not None:
@@ -59,27 +73,16 @@ class CairioClient():
         return list(self._get_sub_keys(key=key,password=password))
 
     # realize file / save file
-    def realizeFile(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
-        if key_or_path is None:
-            if key:
-                key_or_path=key
-            if path:
-                key_or_path=path
-        else:
-            if key or path:
-                raise Exception('Invalid call to realizeFile.')
-
-        if type(key_or_path)==str:
-            path=key_or_path
+    def realizeFile(self,*,key=None,path=None,subkey=None,password=None):
+        if path is not None:
             return self._realize_file(path=path)
-        elif type(key_or_path)==dict:
-            key=key_or_path
+        elif key is not None:
             val=self.getValue(key=key,subkey=subkey,password=password)
             if not val:
                 return None
             return self.realizeFile(path=val)
         else:
-            raise Exception('Invalid type for key_or_path in realizeFile.',type(key_or_path))
+            raise Exception('Missing key or path in realizeFile().')
 
     def saveFile(self,path,*,key=None,subkey=None,basename=None,password=None,confirm=False):
         if path is None:
@@ -92,17 +95,8 @@ class CairioClient():
 
 
     # load object / save object
-    def loadObject(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
-        if key_or_path is None:
-            if key:
-                key_or_path=key
-            if path:
-                key_or_path=path
-        else:
-            if key or path:
-                raise Exception('Invalid call to loadObject.')
-
-        txt=self.loadText(key_or_path=key_or_path,subkey=subkey,password=password)
+    def loadObject(self,*,key=None,path=None,subkey=None,password=None):
+        txt=self.loadText(key=key,path=path,subkey=subkey,password=password)
         if txt is None:
             return None
         return json.loads(txt)
@@ -114,17 +108,8 @@ class CairioClient():
         return self.saveText(text=json.dumps(object),key=key,subkey=subkey,basename=basename,password=password,confirm=confirm)
 
     # load text / save text
-    def loadText(self,key_or_path=None,*,key=None,path=None,subkey=None,password=None):
-        if key_or_path is None:
-            if key:
-                key_or_path=key
-            if path:
-                key_or_path=path
-        else:
-            if key or path:
-                raise Exception('Invalid call to loadText.')
-
-        fname=self.realizeFile(key_or_path=key_or_path,subkey=subkey,password=password)
+    def loadText(self,*,key=None,path=None,subkey=None,password=None):
+        fname=self.realizeFile(key=key,path=path,subkey=subkey,password=password)
         if fname is None:
             return None
         with open(fname) as f:

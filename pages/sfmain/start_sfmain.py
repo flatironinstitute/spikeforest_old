@@ -15,7 +15,7 @@ class MainWindow(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
         self._contents = [
-            dict(label='Job Monitor', window=MonitorBatchesMainWindow()),
+            #dict(label='Job Monitor', window=MonitorBatchesMainWindow()),
             dict(label='SpikeForest Browser', window=SFBrowserMainWindow())
         ]
         self._current_window = None
