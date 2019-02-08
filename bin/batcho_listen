@@ -6,7 +6,6 @@ import argparse
 import spikeforest as sf
 import batcho
 import time
-from kbucket import client as kb
 import mlprocessors as mlpr ## needed to register the mlprocessors batcho commands
 
 # This can be important for some of the jobs in certain situations

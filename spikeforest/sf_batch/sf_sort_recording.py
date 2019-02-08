@@ -1,4 +1,4 @@
-from kbucket import client as kb
+from cairio import client as ca
 import spikeextractors as si
 import spikeforest as sf
 import spiketoolkit as st
@@ -173,9 +173,9 @@ def sf_sort_recording(sorter,recording):
         firings_out=dict(ext='.mda'),
         **sorting_params
     ).outputs
-    firings_out=kb.saveFile(outputs['firings_out'])
+    firings_out=ca.saveFile(path=outputs['firings_out'])
     firings_true_path=recording['directory']+'/firings_true.mda'
-    if not kb.findFile(firings_true_path):
+    if not ca.realizeFile(path=firings_true_path):
         firings_true_path=None
     result=dict(
         recording_name=recording['name'],

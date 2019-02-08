@@ -1,21 +1,14 @@
-from kbucket import client as kb
-from pairio import client as pa
+from cairio import client as ca
 from PIL import Image
 import json
 import pandas as pd
 import spikeextractors as si
 
 def kb_read_text_file(fname):
-    fname=kb.realizeFile(fname)
-    with open(fname,'r') as f:
-        return f.read()
+    return ca.loadText(fname)
     
 def kb_read_json_file(fname):
-    fname=kb.realizeFile(fname)
-    if not fname:
-        raise Exception('Unable to realize file: ',fname)
-    with open(fname,'r') as f:
-        return json.load(f)
+    return ca.loadObject(fname)
 
 class SFSortingResult():
     def __init__(self,obj,recording):
@@ -38,7 +31,7 @@ class SFSortingResult():
         if format=='url':
             return url
         else:
-            path=kb.realizeFile(url)
+            path=ca.realizeFile(url)
             if format=='image':
                 return Image.open(path)
             elif format=='path':
@@ -80,23 +73,27 @@ class SFRecording():
     def directory(self):
         return self._obj['directory']
     def recordingFileIsLocal(self):
-        fname=self.directory()+'/raw.mda'
-        fname2=kb.findFile(fname)
-        if fname2 and (not _is_url(fname2)):
-            return True
         return False
+        # TODO: fix this
+        # fname=self.directory()+'/raw.mda'
+        # fname2=ca.findFileLocally(fname) # this function does not exist
+        # if fname2 and (not _is_url(fname2)):
+        #     return True
+        # return False
     def realizeRecordingFile(self):
         fname=self.directory()+'/raw.mda'
-        return kb.realizeFile(fname)
+        return ca.realizeFile(fname)
     def firingsTrueFileIsLocal(self):
-        fname=self.directory()+'/firings_true.mda'
-        fname2=kb.findFile(fname)
-        if fname2 and (not _is_url(fname2)):
-            return True
         return False
+        # TODO: fix this
+        # fname=self.directory()+'/firings_true.mda'
+        # fname2=kb.findFileLocally(fname) # this function does not exist
+        # if fname2 and (not _is_url(fname2)):
+        #     return True
+        # return False
     def realizeFiringsTrueFile(self):
         fname=self.directory()+'/firings_true.mda'
-        return kb.realizeFile(fname)
+        return ca.realizeFile(fname)
     def recordingExtractor(self,download=False):
         X=si.MdaRecordingExtractor(dataset_directory=self.directory(),download=download)
         if 'channels' in self._obj:
@@ -116,7 +113,7 @@ class SFRecording():
         if format=='url':
             return url
         else:
-            path=kb.realizeFile(url)
+            path=ca.realizeFile(url)
             if format=='image':
                 return Image.open(path)
             elif format=='path':
@@ -198,7 +195,7 @@ class SFData():
         # old
         if key is None:
             key=dict(name='spikeforest_studies_processed')
-        obj=kb.loadObject(key=key)
+        obj=ca.loadObject(key=key)
         studies=obj['studies']
         for study in studies:
             name=study['name']
@@ -238,7 +235,7 @@ class SFData():
             key=dict(name='batcho_batch_results',batch_name=batch_name)
         if not pa.get(key=key):
             raise Exception('Batch result not found.')
-        obj=kb.loadObject(key=key)
+        obj=ca.loadObject(key=key)
         job_results=obj.get('job_results',obj.get('results')) # transitioning to 'results'
         num_sorting_results=0
         num_recording_summary_results=0

@@ -4,8 +4,8 @@ import os
 import vdomr as vd
 import spikeforest as sf
 from kbucket import client as kb
-from pages.monitor_batches.monitorbatchesmainwindow import MonitorBatchesMainWindow
-from pages.sfbrowser.sfbrowsermainwindow import SFBrowserMainWindow
+from monitor_batches.monitorbatchesmainwindow import MonitorBatchesMainWindow
+from sfbrowser.sfbrowsermainwindow import SFBrowserMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
 # from sfmain import sfmain

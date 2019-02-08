@@ -1,4 +1,0 @@
-===================
-This is the content
-of test.txt
-===================
