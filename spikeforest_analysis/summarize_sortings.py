@@ -5,9 +5,43 @@ from cairio import client as ca
 import spikeextractors as si
 import spikewidgets as sw
 import os
+from copy import deepcopy
 
-def summarize_sorting(sorting):
-    ret={'plots':{}}
+def summarize_sortings(sortings,compute_resource):
+    print('>>>>>> summarize sortings')
+    container='sha1://e800f9c19ad440756cc49cce196bb93126e1d00c/2019-02-08c/mountaintools_basic.simg'
+    jobs_autocor_plot=[]
+    for sorting in sortings:
+        recording_dir=sorting['recording_dir']
+        channels=sorting.get('channels',[])
+        firings=sorting['firings']
+
+        job=PlotAutoCorrelograms.createJob(
+            recording_dir=recording_dir,
+            channels=channels,
+            firings=firings,
+            plot_out={'ext':'.jpg','upload':True},
+            _container=container
+        )
+        jobs_autocor_plot.append(job)
+    
+    all_jobs=jobs_autocor_plot
+    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
+    
+    summarized_sortings=[]
+    for i,sorting in enumerate(sortings):
+        summary=dict()
+        result0=jobs_autocor_plot[i]['result']
+        summary['plots']=dict(
+            autocorrelograms=ca.saveFile(path=result0['outputs']['plot_out'],basename='autocorrelograms.jpg')
+        )
+        sorting2=deepcopy(sorting)
+        sorting2['summary']=summary
+        summarized_sortings.append(sorting2)
+
+    return summarized_sortings
+
+    # TODO: restore this later -- once it becomes more efficient
     #unit_waveforms=PlotUnitWaveforms.execute(
     #  recording_dir=result['recording_dir'],
     #  channels=result.get('channels',[]),
@@ -16,18 +50,6 @@ def summarize_sorting(sorting):
     #).outputs['plot_out']
     #unit_waveforms=ca.saveFile(path=unit_waveforms,basename='unit_waveforms.jpg')
     #ret['plots']['unit_waveforms']=unit_waveforms
-
-    X=PlotAutoCorrelograms.execute(
-      recording_dir=sorting['recording_dir'],
-      channels=sorting.get('channels',[]),
-      firings=sorting['firings'],
-      plot_out={'ext':'.jpg','upload':True}
-    )
-    autocorrelograms=X.outputs['plot_out']
-    autocorrelograms=ca.saveFile(path=autocorrelograms,basename='autocorrelograms.jpg')
-    ret['plots']['autocorrelograms']=autocorrelograms
-
-    return ret
 
 class PlotUnitWaveforms(mlpr.Processor):
     VERSION='0.1.0'

@@ -8,7 +8,7 @@ import string
 from . import sorters as sorters
 
 from spikesorters import MountainSort4, SpykingCircus
-    
+# todo: import yass here    
 
 class IronClust(mlpr.Processor):
     NAME='IronClust'
@@ -170,8 +170,14 @@ Processors=dict(
     SpykingCircus=(SpykingCircus,'sha1://487fe664853285e65f8130a1138a4415f8acc4ca/spyking_circus.simg'),
     KiloSort=(KiloSort,None)
 )
+try:
+    from spikesorters import yass
+    Processors['yass']=(yass,None)
+except:
+    print('Unable to import yass.')
         
 def sort_recordings(*,sorter,recordings,compute_resource=None):
+    print('>>>>>> sort recordings')
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
     if processor_name in Processors:

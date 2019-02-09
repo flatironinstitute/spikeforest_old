@@ -29,7 +29,8 @@ def select_templates(loc, spikes, bin_cat, n_exc, n_inh, min_dist=25, bound_x=No
 
     if drift:
         if len(drift_dir_ang) == 0 or preferred_dir == None:
-            raise Exception('For drift selection provide drifting angles and preferred drift direction')
+            raise Exception(
+                'For drift selection provide drifting angles and preferred drift direction')
 
     for (idxs, num) in zip([exc_idxs, inh_idxs], [n_exc, n_inh]):
         n_sel = 0
@@ -37,7 +38,8 @@ def select_templates(loc, spikes, bin_cat, n_exc, n_inh, min_dist=25, bound_x=No
         while n_sel < num:
             # randomly draw a cell
             id_cell = idxs[np.random.permutation(len(idxs))[0]]
-            dist = np.array([np.linalg.norm(loc[id_cell] - p) for p in pos_sel])
+            dist = np.array([np.linalg.norm(loc[id_cell] - p)
+                             for p in pos_sel])
 
             iter += 1
 
@@ -77,7 +79,8 @@ def select_templates(loc, spikes, bin_cat, n_exc, n_inh, min_dist=25, bound_x=No
                                 n_sel += 1
                             else:
                                 if verbose:
-                                    print('drift violation', loc[id_cell], iter)
+                                    print('drift violation',
+                                          loc[id_cell], iter)
                         else:
                             if verbose:
                                 print('amp violation', amp, iter)
@@ -90,7 +93,8 @@ def select_templates(loc, spikes, bin_cat, n_exc, n_inh, min_dist=25, bound_x=No
                                 n_sel += 1
                             else:
                                 if verbose:
-                                    print('drift violation', loc[id_cell], iter)
+                                    print('drift violation',
+                                          loc[id_cell], iter)
                         else:
                             if verbose:
                                 print('boundary violation', loc[id_cell], iter)

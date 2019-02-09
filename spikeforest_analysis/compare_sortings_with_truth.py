@@ -5,20 +5,40 @@ import mlprocessors as mlpr
 import json
 from cairio import client as ca
 import numpy as np
+from copy import deepcopy
 
-def compare_with_truth(sorting):
-    ret={}
-    units_true=sorting.get('units_true',[])
-    out=GenSortingComparisonTable.execute(
-        firings=sorting['firings'],
-        firings_true=sorting['firings_true'],
-        units_true=units_true,
-        json_out={'ext':'.json','upload':True},
-        html_out={'ext':'.html','upload':True}
-    ).outputs
-    ret['json']=ca.saveFile(path=out['json_out'],basename='table.json')
-    ret['html']=ca.saveFile(path=out['html_out'],basename='table.html')
-    return ret
+def compare_sortings_with_truth(sortings,compute_resource):
+    print('>>>>>> compare sortings with truth')
+    container='sha1://e800f9c19ad440756cc49cce196bb93126e1d00c/2019-02-08c/mountaintools_basic.simg'
+    jobs_gen_table=[]
+    for sorting in sortings:
+        units_true=sorting.get('units_true',[])
+        firings=sorting['firings']
+        firings_true=sorting['firings_true']
+        units_true=units_true
+        job=GenSortingComparisonTable.createJob(
+            firings=firings,
+            firings_true=firings_true,
+            units_true=units_true,
+            json_out={'ext':'.json','upload':True},
+            html_out={'ext':'.html','upload':True},
+            _container=container
+        )
+        jobs_gen_table.append(job)
+    
+    all_jobs=jobs_gen_table
+    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
+    
+    sortings_out=[]
+    for i,sorting in enumerate(sortings):
+        comparison_with_truth=dict()
+        comparison_with_truth['json']=jobs_gen_table[i]['result']['outputs']['json_out']
+        comparison_with_truth['html']=jobs_gen_table[i]['result']['outputs']['html_out']
+        sorting2=deepcopy(sorting)
+        sorting2['comparison_with_truth']=comparison_with_truth
+        sortings_out.append(sorting2)
+
+    return sortings_out
 
 class GenSortingComparisonTable(mlpr.Processor):
     VERSION='0.2.0'

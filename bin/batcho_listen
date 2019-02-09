@@ -25,6 +25,10 @@ def main():
   else:
       num_simultaneous=None
 
+  print('Run prefix = {}'.format(args.run_prefix))
+  print('Num num simultaneous = {}'.format(num_simultaneous))
+  print('Allow uncontainerized = {}'.format(args.allow_uncontainerized))
+  print('Listening as compute resource: {}'.format(args.compute_resource))
   batcho.listen_as_compute_resource(
       args.compute_resource,
       run_prefix=args.run_prefix,
