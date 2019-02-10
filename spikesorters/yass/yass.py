@@ -11,14 +11,13 @@ import random
 import string
 import shutil
 
+
 # yass uses negative polarity by default
 class yass(mlpr.Processor):
     NAME = 'yass'
     VERSION = '0.0.1'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = ['NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-
-
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
         description='List of channels to use.', optional=True, default=[])
@@ -86,7 +85,7 @@ def yass(
     else:
         output_folder = join(output_folder, 'yass')
     output_folder = os.path.abspath(output_folder)
-    if not os.path.isdir(output_folder): 
+    if not os.path.isdir(output_folder):
         os.makedirs(output_folder)
 
     # save prb file:
@@ -95,11 +94,11 @@ def yass(
     se.saveProbeFile(recording, probe_file, format='yass')
 
     # save binary file
-    if file_name is None: 
+    if file_name is None:
         file_name = 'raw.bin'
     bin_file = join_abspath_(output_folder, file_name)
-    si.RawRecordingExtractor.writeRecording(recording=recording,save_path=bin_file, 
-        fReversePolarity=(detect_sign>0), dtype=np.int16)
+    si.RawRecordingExtractor.writeRecording(
+        recording=recording, save_path=bin_file, fReversePolarity=(detect_sign > 0), dtype=np.int16)
 
     # set up yass config file
     with open(join(source_dir, 'config_default.yaml'), 'r') as f:
@@ -125,7 +124,7 @@ def yass(
     num_cores_str = ''
     if int(n_cores) > 1:
         num_cores_str = '-c {}'.format(n_cores)
-    cmd = 'python2 {}\yass {} {} '.format(
+    cmd = 'python2 {}\\yass {} {} '.format(
         yass_path, join(output_folder_cmd, file_name+'.yaml'), num_cores_str)
 
     # I think the merging step requires a gui and some user interaction. TODO: inquire about this

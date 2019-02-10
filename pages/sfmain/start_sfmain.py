@@ -6,6 +6,7 @@ import spikeforest as sf
 from kbucket import client as kb
 from pages.monitor_batches.monitorbatchesmainwindow import MonitorBatchesMainWindow
 from pages.sfbrowser.sfbrowsermainwindow import SFBrowserMainWindow
+from pages.sorting_result_explorer.sortingresultsexplorermainwindow import SortingResultsExplorerMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
 # from sfmain import sfmain
@@ -16,7 +17,8 @@ class MainWindow(vd.Component):
         vd.Component.__init__(self)
         self._contents = [
             dict(label='Job Monitor', window=MonitorBatchesMainWindow()),
-            dict(label='SpikeForest Browser', window=SFBrowserMainWindow())
+            dict(label='SpikeForest Browser', window=SFBrowserMainWindow()),
+            dict(label='Sorting Result Explorer', window=SortingResultsExplorerMainWindow())
         ]
         self._current_window = None
 
