@@ -7,7 +7,7 @@ import random
 import string
 from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, yass
+from spikesorters import MountainSort4, SpykingCircus, YassProcessor
 
 
 class IronClust(mlpr.Processor):
@@ -169,13 +169,8 @@ Processors=dict(
     IronClust=(IronClust,None),
     SpykingCircus=(SpykingCircus,'sha1://487fe664853285e65f8130a1138a4415f8acc4ca/spyking_circus.simg'),
     KiloSort=(KiloSort,None),
-    yass=(yass,'/mnt/home/jjun/src/sf2dev/spikesorters/containers/yass/yass.simg')
+    Yass=(YassProcessor,'sha1://c192559d2df3f99d7328d85cdc6f96248c2b24a3/02-11-2019/yass.simg')
 )
-try:
-    from spikesorters import yass
-    Processors['yass']=(yass,None)
-except:
-    print('Unable to import yass.')
         
 def sort_recordings(*,sorter,recordings,compute_resource=None):
     print('>>>>>> sort recordings')

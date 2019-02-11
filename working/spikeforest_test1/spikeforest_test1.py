@@ -35,10 +35,10 @@ import os
 
 def main():
     # Use this to optionally connect to a kbucket share:
-    # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
+    ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
 
     # Specify the compute resource (see the note above)
-    compute_resource = 'local-computer'
+    compute_resource = 'jfm-laptop'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -131,14 +131,15 @@ def define_sorters():
     )
 
     sorter_yass = dict(
-        name='yass',
-        processor_name='yass',
+        name='Yass',
+        processor_name='Yass',
         params=dict(
             detect_sign=-1,
             adjacency_radius=50
         )
     )
-    return [sorter_ms4_thr3, sorter_sc]
+    #return [sorter_ms4_thr3, sorter_sc, sorter_yass]
+    return [sorter_yass]
 
 
 if __name__ == "__main__":

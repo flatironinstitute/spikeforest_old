@@ -5,10 +5,10 @@ import pandas as pd
 import spikeextractors as si
 
 def kb_read_text_file(fname):
-    return ca.loadText(fname)
+    return ca.loadText(path=fname)
     
 def kb_read_json_file(fname):
-    return ca.loadObject(fname)
+    return ca.loadObject(path=fname)
 
 class SFSortingResult():
     def __init__(self,obj,recording):
@@ -73,24 +73,20 @@ class SFRecording():
     def directory(self):
         return self._obj['directory']
     def recordingFileIsLocal(self):
+        fname=self.directory()+'/raw.mda'
+        fname2=ca.findFile(fname, local_only=True)
+        if fname2 and (not _is_url(fname2)):
+            return True
         return False
-        # TODO: fix this
-        # fname=self.directory()+'/raw.mda'
-        # fname2=ca.findFileLocally(fname) # this function does not exist
-        # if fname2 and (not _is_url(fname2)):
-        #     return True
-        # return False
     def realizeRecordingFile(self):
         fname=self.directory()+'/raw.mda'
         return ca.realizeFile(fname)
     def firingsTrueFileIsLocal(self):
+        fname=self.directory()+'/firings_true.mda'
+        fname2=ca.findFile(fname, local_only=True)
+        if fname2 and (not _is_url(fname2)):
+            return True
         return False
-        # TODO: fix this
-        # fname=self.directory()+'/firings_true.mda'
-        # fname2=kb.findFileLocally(fname) # this function does not exist
-        # if fname2 and (not _is_url(fname2)):
-        #     return True
-        # return False
     def realizeFiringsTrueFile(self):
         fname=self.directory()+'/firings_true.mda'
         return ca.realizeFile(fname)

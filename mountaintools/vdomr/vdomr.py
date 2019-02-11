@@ -1,6 +1,7 @@
 import os
 import traceback
 import threading
+import time
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
@@ -9,9 +10,10 @@ vdomr_global = dict(
     jp_widget=None  # for mode=jp_proxy_widget
 )
 
+default_session=dict(javascript_to_execute=[])
 vdomr_server_global = dict(
-    sessions=dict(),
-    current_session=None
+    sessions=dict(default=default_session),
+    current_session=default_session
 )
 
 
@@ -152,8 +154,18 @@ class PyWebViewApi():
     def __init__(self):
         pass
 
-    def invokeFunction(self, callback_id, b=None, c=None):
-        invoke_callback(callback_id,[],{})
+    def invokeFunction(self, x):
+        callback_id=x['callback_id']
+        args=x['args']
+        kwargs=x['kwargs']
+        import webview
+        webview.evaluate_js('window.show_overlay();')
+        try:
+            invoke_callback(callback_id,argument_list=args,kwargs=kwargs)
+        except:
+            traceback.print_exc()
+            pass
+        webview.evaluate_js('window.hide_overlay();')
 
 def pywebview_start(*,root,title):
     try:
@@ -163,8 +175,50 @@ def pywebview_start(*,root,title):
 
     config_pywebview()
     def load_html():
-        webview.load_html(root._repr_html_())
-        webview.evaluate_js('window.vdomr_invokeFunction=window.pywebview.api.invokeFunction')
+        html="""
+        <html>
+        <head>
+        <style>
+        .overlay {
+            background-color: rgba(1, 1, 1, 0.2);
+            color:white;
+            font-size:24px;
+            bottom: 0;
+            left: 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            text-align: center;
+            padding: 40px;
+        }
+        </style>
+        </head>
+        <body>
+        <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
+        {content}
+        </body>
+        """
+        html=html.replace('{content}',root._repr_html_())
+        webview.load_html(html)
+        script="""
+        window.show_overlay=function() {
+            document.getElementById('overlay').style.visibility='visible'
+        }
+        window.hide_overlay=function() {
+            document.getElementById('overlay').style.visibility='hidden'
+        }
+        window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
+            console.log('vdomr_invokeFunction',callback_id,args,kwargs);
+
+            setTimeout(function() {
+                window.pywebview.api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
+            },0); // the timeout might be important to prevent crashes of pywebview
+            
+        }
+        """
+        webview.evaluate_js(script)
+        js = _take_javascript_to_execute()
+        webview.evaluate_js(js)
 
     t = threading.Thread(target=load_html)
     t.start()

@@ -191,8 +191,8 @@ class CairioClient():
     def findFileBySha1(self, *, sha1):
         return self._realize_file(path='sha1://'+sha1, resolve_locally=False)
 
-    def findFile(self, path):
-        return self._realize_file(path=path, resolve_locally=False)
+    def findFile(self, path, local_only=False):
+        return self._realize_file(path=path, resolve_locally=False, local_only=local_only)
 
     def moveToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
@@ -222,10 +222,12 @@ class CairioClient():
             return self._remote_client.getSubKeys(key=key)
         return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True):
-        ret = self._local_db.realizeFile(path=path)
+    def _realize_file(self, *, path, resolve_locally=True, local_only=False):
+        ret = self._local_db.realizeFile(path=path, local_only=local_only)
         if ret:
             return ret
+        if local_only:
+            return None
         share_id = self._remote_config['share_id']
         if share_id:
             if path.startswith('sha1://'):
@@ -438,7 +440,7 @@ class CairioLocal():
         except:
             return []
 
-    def realizeFile(self, *, path):
+    def realizeFile(self, *, path, local_only=False):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
@@ -450,6 +452,8 @@ class CairioLocal():
             try_local_path = self._sha1_cache.findFile(sha1)
             if try_local_path is not None:
                 return try_local_path
+            if local_only:
+                return None
             return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size)
 
         # If the file exists on the local computer, just use that
@@ -679,6 +683,7 @@ def _safe_list_dir(path):
 client = CairioClient()
 
 if os.environ.get('CAIRIO_CONFIG'):
+    print('configuring cairio...')
     a = os.environ.get('CAIRIO_CONFIG').split('.')
     password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
     client.autoConfig(collection=a[0], key=a[1], password=password)

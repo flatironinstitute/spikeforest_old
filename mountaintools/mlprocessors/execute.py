@@ -168,7 +168,7 @@ class ProcessorExecuteOutput():
         self.console_out = ''
 
 
-def _read_python_code_of_directory(dirname, additional_files=[]):
+def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
     patterns = ['*.py']+additional_files
     files = []
     dirs = []
@@ -178,6 +178,8 @@ def _read_python_code_of_directory(dirname, additional_files=[]):
             for pattern in patterns:
                 if fnmatch.fnmatch(fname, pattern):
                     matches = True
+            if exclude_init and (fname=='__init__.py'):
+                matches=False
             if matches:
                 with open(dirname+'/'+fname) as f:
                     txt = f.read()
@@ -187,7 +189,7 @@ def _read_python_code_of_directory(dirname, additional_files=[]):
                 ))
         elif os.path.isdir(dirname+'/'+fname):
             if (not fname.startswith('__')) and (not fname.startswith('.')):
-                content = _read_python_code_of_directory(dirname+'/'+fname)
+                content = _read_python_code_of_directory(dirname+'/'+fname,exclude_init=False)
                 if len(content['files'])+len(content['dirs']) > 0:
                     dirs.append(dict(
                         name=fname,
@@ -288,9 +290,6 @@ def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, *
 
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
-    processor_source_basename = os.path.basename(processor_source_fname)
-    processor_source_basename_noext = os.path.splitext(
-        processor_source_basename)[0]
     if not processor_source_fname:
         raise Exception(
             'inspect.getsourcefile() returned empty for processor.')
@@ -302,7 +301,7 @@ def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, *
 
     # Code generation
     code = """
-from processor_source.{processor_source_basename_noext} import {processor_class_name}
+from processor_source import {processor_class_name}
 
 def main():
     {processor_class_name}.execute({expanded_kwargs})
@@ -310,8 +309,6 @@ def main():
 if __name__ == "__main__":
     main()
     """
-    code = code.replace('{processor_source_basename_noext}',
-                        processor_source_basename_noext)
     code = code.replace('{processor_class_name}', proc.__name__)
     code = code.replace('{expanded_kwargs}', expanded_kwargs)
 
@@ -330,10 +327,10 @@ if __name__ == "__main__":
     if container:
         singularity_opts.append('--contain')
         singularity_opts.append('-e')
-        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python /execute_in_container/execute_in_container.py"'.format(
+        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python3 /execute_in_container/execute_in_container.py"'.format(
             ' '.join(singularity_opts), container, ' '.join(env_vars))
     else:
-        singularity_cmd = 'python {}/execute_in_container.py'.format(tempdir)
+        singularity_cmd = 'python3 {}/execute_in_container.py'.format(tempdir)
         if _system_call_prefix is not None:
             singularity_cmd = '{} {}'.format(
                 _system_call_prefix, singularity_cmd)
@@ -436,16 +433,19 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
+    processor_source_basename_noext = os.path.splitext(processor_source_basename)[0]
     code = _read_python_code_of_directory(
-        processor_source_dirname, additional_files=getattr(proc, 'ADDITIONAL_FILES', []))
+        processor_source_dirname, additional_files=getattr(proc, 'ADDITIONAL_FILES', []), exclude_init=True)
+    code['files'].append(dict(
+        name='__init__.py',
+        content='from .{} import {}'.format(processor_source_basename_noext,proc.__name__)
+    ))
     processor_job = dict(
         command='execute_mlprocessor',
-        label='{} (version: {}) (container: {})'.format(
-            proc.NAME, proc.VERSION, _container),
+        label='{} (version: {}) (container: {})'.format(proc.NAME, proc.VERSION, _container),
         processor_name=proc.NAME,
         processor_version=proc.VERSION,
         processor_class_name=proc.__name__,
-        processor_source_basename=processor_source_basename,
         processor_code=ca.saveObject(code, basename='code.json'),
         container=_container,
         inputs=inputs,
@@ -545,9 +545,6 @@ def executeJob(job):
             tempdir+'/processor_source', processor_code)
 
         processor_class_name = job['processor_class_name']
-        processor_source_basename = job['processor_source_basename']
-        processor_source_basename_noext = os.path.splitext(
-            processor_source_basename)[0]
 
         container = job.get('container', None)
         if container:
@@ -573,7 +570,7 @@ def executeJob(job):
 
         # Code generation
         code = """
-from processor_source.{processor_source_basename_noext} import {processor_class_name}
+from processor_source import {processor_class_name}
 
 def main():
     {processor_class_name}.execute({expanded_execute_kwargs})
@@ -581,8 +578,6 @@ def main():
 if __name__ == "__main__":
     main()
         """
-        code = code.replace('{processor_source_basename_noext}',
-                            processor_source_basename_noext)
         code = code.replace('{processor_class_name}', processor_class_name)
         code = code.replace('{expanded_execute_kwargs}',
                             expanded_execute_kwargs)
@@ -590,7 +585,7 @@ if __name__ == "__main__":
         _write_text_file(tempdir+'/execute.py', code)
 
         retcode, console_out = _run_command_and_print_output(
-            'python {}/execute.py'.format(tempdir))
+            'python3 {}/execute.py'.format(tempdir))
         if retcode != 0:
             raise Exception('Non-zero return code when running processor job')
         ret = dict(

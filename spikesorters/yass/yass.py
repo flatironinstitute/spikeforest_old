@@ -14,8 +14,8 @@ import shutil
 # yass uses negative polarity by default
 
 
-class yass(mlpr.Processor):
-    NAME = 'yass'
+class YassProcessor(mlpr.Processor):
+    NAME = 'YassProcessor'
     VERSION = '0.0.1'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
