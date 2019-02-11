@@ -167,6 +167,8 @@ def saveProbeFile(recording, probe_file, format=None, radius=100, dimensions=Non
                                      "'location' property to save .csv probe file")
     elif probe_file.suffix == '.prb':
         _export_prb_file(recording, probe_file, format, radius=radius, dimensions=dimensions)
+    elif probe_file.suffix == '.npy': #YASS foramt
+        _export_prb_file(recording, probe_file, format)
     else:
         raise NotImplementedError("Only .csv and .prb probe files can be saved.")
 
@@ -261,7 +263,7 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
     file_name: str
         probe filename to be exported to
     format: str
-        'klusta' | 'spiking_circus' (defualt=None)
+        'klusta' | 'spiking_circus' | 'yass' (defualt=None) 
     adjacency_distance: float
         distance to consider 2 channels adjacent (if 'location' is a property)
     graph: bool
@@ -277,6 +279,9 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
     elif format == 'spyking_circus':
         graph = False
         geometry = True
+    elif format == 'yass':
+        graph = False
+        geometry = True
     else:
         graph = True
         geometry = True
@@ -289,7 +294,7 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
         if 'location' in recording.getChannelPropertyNames():
             positions = np.array([recording.getChannelProperty(chan, 'location')
                                   for chan in recording.getChannelIds()])
-            if dimensions is not None:
+            if dimensions is not None and dimensions is not 'all':
                 positions = positions[:, dimensions]
         else:
             print("'location' property is not available and it will not be saved.")
@@ -332,6 +337,10 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
                         if elecs[i] != elecs[j]:
                             group_graph.append((elecs[i], elecs[j]))
                 adj_graph.append(group_graph)
+
+    if format == 'yass':
+        np.save(str(file_name), positions)
+        return
 
     with abspath.open('w') as f:
         f.write('\n')

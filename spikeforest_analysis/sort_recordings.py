@@ -7,8 +7,8 @@ import random
 import string
 from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus
-# todo: import yass here    
+from spikesorters import MountainSort4, SpykingCircus, yass
+
 
 class IronClust(mlpr.Processor):
     NAME='IronClust'
@@ -168,7 +168,8 @@ Processors=dict(
     MountainSort4=(MountainSort4,'sha1://a3842053423c633b62e70474be9d76068cdc1ea5/mountainsort4.simg'),
     IronClust=(IronClust,None),
     SpykingCircus=(SpykingCircus,'sha1://487fe664853285e65f8130a1138a4415f8acc4ca/spyking_circus.simg'),
-    KiloSort=(KiloSort,None)
+    KiloSort=(KiloSort,None),
+    yass=(yass,'/mnt/home/jjun/src/sf2dev/spikesorters/containers/yass/yass.simg')
 )
 try:
     from spikesorters import yass

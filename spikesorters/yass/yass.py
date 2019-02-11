@@ -20,6 +20,7 @@ class yass(mlpr.Processor):
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
+    ADDITIONAL_FILES = ['*.yaml']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
@@ -54,7 +55,6 @@ class yass(mlpr.Processor):
                 file_name=None,
                 detect_sign=self.detect_sign,
                 adjacency_radius=self.adjacency_radius,
-                spike_thresh=self.spike_thresh,
                 template_width_ms=self.template_width_ms,
                 filter=self.filter,
                 n_cores=num_workers,
@@ -74,7 +74,7 @@ def yass_helper(
     probe_file=None,
     file_name=None,
     detect_sign=-1,  # -1 - 1 - 0
-    template_width_ms=1,  # Spyking circus parameter
+    template_width_ms=1,  # yass parameter
     filter=True,
     adjacency_radius=100,
     n_cores=None
@@ -100,10 +100,11 @@ def yass_helper(
     if file_name is None:
         file_name = 'raw.bin'
     bin_file = join_abspath_(output_folder, file_name)
-    si.RawRecordingExtractor.writeRecording(recording=recording, save_path=bin_file,
+    se.RawRecordingExtractor.writeRecording(recording=recording, save_path=bin_file,
                                             fReversePolarity=(detect_sign > 0), dtype=np.int16)
 
     # set up yass config file
+    print(source_dir)
     with open(join(source_dir, 'config_default.yaml'), 'r') as f:
         yass_config = f.readlines()
 
@@ -117,30 +118,27 @@ def yass_helper(
     with open(join(output_folder, file_name + '.params'), 'w') as f:
         f.writelines(yass_config)
 
-    print('Running spyking circus...')
+    print('Running yass...')
     t_start_proc = time.time()
     if n_cores is None:
         n_cores = np.maximum(1, int(os.cpu_count()/2))
 
     output_folder_cmd = output_folder
 
-    num_cores_str = ''
+    yass_path = '/usr/local/bin'
+    num_cores_str = ''    
     if int(n_cores) > 1:
         num_cores_str = '-c {}'.format(n_cores)
     cmd = 'python2 {}/yass {} {} '.format(
         yass_path, join(output_folder_cmd, file_name+'.yaml'), num_cores_str)
 
-    # I think the merging step requires a gui and some user interaction. TODO: inquire about this
-    # cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
-    # cmd_convert = 'spyking-circus {} -m converting'.format(join(output_folder, file_name+'.npy'))
-
     retcode = run_command_and_print_output(cmd)
     if retcode != 0:
-        raise Exception('Spyking circus returned a non-zero exit code')
+        raise Exception('yass returned a non-zero exit code')
 
     # retcode = run_command_and_print_output(cmd_merge)
     # if retcode != 0:
-    #    raise Exception('Spyking circus merging returned a non-zero exit code')
+    #    raise Exception('yass merging returned a non-zero exit code')
     processing_time = time.time() - t_start_proc
     print('Elapsed time: ', processing_time)
     sorting = se.yassSortingExtractor(output_folder)

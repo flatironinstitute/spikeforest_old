@@ -3,7 +3,7 @@ import vdomr as vd
 import spikeforest as sf
 from kbucket import client as kb
 import spikeforestwidgets as SFW
-from sortingresultexplorer import SortingResultExplorer
+from .sortingresultexplorer import SortingResultExplorer
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
 

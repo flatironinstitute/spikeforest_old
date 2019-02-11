@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN echo "7 February 2019"
+RUN echo "11c February 2019"
 
 #########################################
 ### Python, etc                                                                                                                
@@ -9,6 +9,9 @@ RUN apt-get install -y python3 python3-pip
 RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
+
+RUN apt-get install -y python2.7 python-pip
+#RUN ln -s /usr/bin/python2.7 /usr/bin/python2
 
 #########################################
 ### spikeforest2
@@ -20,10 +23,11 @@ RUN python setup.py develop
 
 #########################################
 ### Install yass, a previous version
-RUN mkdir /src
+#RUN mkdir /src
 RUN git clone https://github.com/paninski-lab/yass.git /src/yass
 WORKDIR /src/yass
 RUN git checkout tags/0.5
-RUN python2 setup.py develop
+RUN pip2 install -r requirements.txt
+RUN python2 setup.py install
 
 ## call yass via python2 /path/to/binary/yass
