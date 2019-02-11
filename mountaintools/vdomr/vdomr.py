@@ -1,10 +1,11 @@
 import os
 import traceback
+import threading
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
-    mode='server',  # colab, jp_proxy_widget, or server -- by default we are in server mode
-    invokable_functions={},  # for mode=jp_proxy_widget or server
+    mode='server',  # colab, jp_proxy_widget, server, or pywebview -- by default we are in server mode
+    invokable_functions={},  # for mode=jp_proxy_widget, server, or pywebview
     jp_widget=None  # for mode=jp_proxy_widget
 )
 
@@ -43,7 +44,7 @@ def register_callback(callback_id, callback):
         colab_output.register_callback(callback_id, the_callback)
         exec_javascript(
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
-    elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server'):
+    elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pywebview'):
         vdomr_global['invokable_functions'][callback_id] = the_callback
 
 
@@ -59,6 +60,9 @@ def exec_javascript(js):
             SS['javascript_to_execute'].append(js)
         else:
             print('Warning: current session is not set. Unable to execute javascript.')
+    elif vdomr_global['mode'] == 'pywebview':
+        import webview
+        webview.evaluate_js(js)
     else:
         from IPython.display import Javascript
         display(Javascript(js))
@@ -140,6 +144,34 @@ def config_colab():
 def config_server():
     vdomr_global['mode'] = 'server'
 
+def config_pywebview():
+    vdomr_global['mode'] = 'pywebview'
+
+
+class PyWebViewApi():
+    def __init__(self):
+        pass
+
+    def invokeFunction(self, callback_id, b=None, c=None):
+        invoke_callback(callback_id,[],{})
+
+def pywebview_start(*,root,title):
+    try:
+        import webview
+    except:
+        raise Exception('Cannot import webview. Perhaps you need to install pywebview via: pip install pywebview')
+
+    config_pywebview()
+    def load_html():
+        webview.load_html(root._repr_html_())
+        webview.evaluate_js('window.vdomr_invokeFunction=window.pywebview.api.invokeFunction')
+
+    t = threading.Thread(target=load_html)
+    t.start()
+
+    api = PyWebViewApi()
+    webview.create_window(title, js_api=api, min_size=(600, 450), debug=True)
+
 
 def mode():
     return vdomr_global['mode']
@@ -156,3 +188,7 @@ if os.environ.get('VDOMR_MODE', '') == 'COLAB':
 if os.environ.get('VDOMR_MODE', '') == 'SERVER':
     print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
     config_server()
+
+if os.environ.get('VDOMR_MODE', '') == 'PYWEBVIEW':
+    print('vdomr: using PYWEBVIEW mode because of VDOMR_MODE environment variable')
+    config_pywebview()
