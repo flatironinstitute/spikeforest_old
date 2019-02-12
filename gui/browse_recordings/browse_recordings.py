@@ -1,7 +1,7 @@
 import os
 import vdomr as vd
 import spikeforest as sf
-from cairio import client as ca 
+from cairio import client as ca
 #import spikeforestwidgets as SFW
 from sfrecordingwidget import SFRecordingWidget
 
@@ -29,8 +29,8 @@ class MainWindow(vd.Component):
         if not group_name:
             return
         a = ca.loadObject(
-            #key=dict(name='spikeforest_recording_group',group_name=group_name))
-            key=dict(name='spikeforest_results',output_id='spikeforest_test2'))
+            # key=dict(name='spikeforest_recording_group',group_name=group_name))
+            key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
         SF = sf.SFData()
         SF.loadStudies(a['studies'])
         SF.loadRecordings2(a['recordings'])
@@ -86,12 +86,12 @@ class TheApp():
 
 def main():
     # Configure readonly access to kbucket
-    ca.autoConfig(collection='spikeforest',key='spikeforest2-readonly')
+    ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
 
     APP = TheApp()
     server = vd.VDOMRServer(APP)
     server.start()
-    #W=MainWindow()
+    # W=MainWindow()
     #vd.pywebview_start(root=W,title='Browse Recordings')
 
 
