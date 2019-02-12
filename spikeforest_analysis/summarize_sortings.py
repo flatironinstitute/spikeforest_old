@@ -12,7 +12,7 @@ def summarize_sortings(sortings,compute_resource):
     container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
     jobs_autocor_plot=[]
     for sorting in sortings:
-        recording_dir=sorting['recording_dir']
+        recording_dir=sorting['recording']['directory']
         channels=sorting.get('channels',[])
         firings=sorting['firings']
 

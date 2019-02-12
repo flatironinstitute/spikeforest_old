@@ -474,7 +474,6 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         outputs=outputs,
         parameters=parameters
     )
-    print(processor_job['inputs'])
     if _force_run:
         processor_job['_force_run'] = True
     if _cache:
@@ -551,7 +550,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 num_ready = statuses_list.count('ready')
                 num_running = statuses_list.count('running')
                 num_finished = statuses_list.count('finished')
-                update_string = '({})\n{} BATCH {}: JOBS: {} ready, {} running, {} finished, {} total'.format(
+                update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
                     batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
             if update_string != last_update_string:
                 print(update_string)

@@ -21,16 +21,20 @@ import shutil
 
 
 def main():
-    # generate toy dataset
+    # generate toy recordings
+    delete_recordings = True
     for num in range(1, 3):
         name = 'toy_example{}'.format(num)
-        if os.path.exists(name):
-            shutil.rmtree(name)
-        rx, sx_true = se.example_datasets.toy_example1(
-            duration=10, num_channels=4, samplerate=30000, K=10)
-        se.MdaRecordingExtractor.writeRecording(recording=rx, save_path=name)
-        se.MdaSortingExtractor.writeSorting(
-            sorting=sx_true, save_path=name+'/firings_true.mda')
+        if delete_recordings:
+            if os.path.exists(name):
+                shutil.rmtree(name)
+        if not os.path.exists(name):
+            rx, sx_true = se.example_datasets.toy_example1(
+                duration=60, num_channels=4, samplerate=30000, K=10)
+            se.MdaRecordingExtractor.writeRecording(
+                recording=rx, save_path=name)
+            se.MdaSortingExtractor.writeSorting(
+                sorting=sx_true, save_path=name+'/firings_true.mda')
 
     # Use this to optionally connect to a kbucket share:
     # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
@@ -51,10 +55,18 @@ def main():
         dict(
             recording_name='toy_example{}'.format(num),
             study_name='toy_examples',
-            study_set='toy_examples',
-            directory='toy_example{}'.format(num)
+            directory=os.path.abspath('toy_example{}'.format(num))
         )
         for num in range(1, 3)
+    ]
+
+    studies = [
+        dict(
+            name='toy_examples',
+            study_set='toy_examples',
+            directory=os.path.abspath('.'),
+            description='Toy examples.'
+        )
     ]
 
     # Summarize the recordings
@@ -100,6 +112,7 @@ def main():
             output_id=output_id
         ),
         object=dict(
+            studies=studies,
             recordings=recordings_B,
             sorting_results=sorting_results
         )

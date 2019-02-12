@@ -50,7 +50,6 @@ def _create_component(tag_name, allow_children=True, callbacks=[]):
                     js = "window.vdomr_invokeFunction('{callback_id}', [], {kwargs})"
                     js = js.replace('{callback_id}', callback_id)
                     js = js.replace('{kwargs}', cb['kwargs'])
-                    print(js)
                     attributes[cbname] = js
                 else:
                     attributes[cbname] = ''

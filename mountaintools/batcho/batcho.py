@@ -197,20 +197,30 @@ def assemble_batch(*, batch_name):
         command = job['command']
         job_label = job['label']
 
-        status_string = status_strings.get(str(ii), None)
-        if status_string == 'finished':
-            print('ASSEMBLING job result for {}'.format(job_label))
-            result = _get_job_result(batch_name=batch_name, job_index=ii)
-            assembled_results.append(dict(
-                job=job,
-                result=result
-            ))
-        else:
-            errstr = 'Problem assembling job {}. Status is {}.'.format(
-                ii, status_string)
-            _set_batch_status(batch_name=batch_name, status=dict(
-                status='error', error=errstr))
-            raise Exception(errstr)
+        # there is sometimes a mysterious error. For now, let's solve it by doing a couple retries
+        # TODO: solve this properly
+        num_passes = 3
+        for pass0 in range(1, num_passes+1):
+            status_string = status_strings.get(str(ii), None)
+            if status_string == 'finished':
+                print('ASSEMBLING job result for {}'.format(job_label))
+                result = _get_job_result(batch_name=batch_name, job_index=ii)
+                assembled_results.append(dict(
+                    job=job,
+                    result=result
+                ))
+                break
+            else:
+                errstr = 'Problem assembling job {}. Status is {}.'.format(
+                    ii, status_string)
+
+                if pass0 < num_passes:
+                    print('Retrying in 2 seconds...')
+                    time.sleep(2)
+                else:
+                    _set_batch_status(batch_name=batch_name, status=dict(
+                        status='error', error=errstr))
+                    raise Exception(errstr)
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
     ca.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),

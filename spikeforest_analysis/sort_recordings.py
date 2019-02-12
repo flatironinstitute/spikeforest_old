@@ -213,14 +213,9 @@ def sort_recordings(*,sorter,recordings,compute_resource=None):
         console_out=result0.get('console_out','')
 
         result=dict(
-            recording_name=recording.get('name',None),
-            study_name=recording.get('study',None),
-            sorter_name=sorter.get('name',None),
-            recording_dir=dsdir,
-            channels=recording.get('channels',[]),
-            units_true=recording.get('units_true',[]),
+            recording=recording,
+            sorter=sorter,
             firings_true=firings_true_path,
-            sorting_params=sorting_params,
             processor_name=SS.NAME,
             processor_version=SS.VERSION,
             #execution_stats=result0['stats'],

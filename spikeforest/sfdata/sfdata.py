@@ -19,7 +19,7 @@ class SFSortingResult():
     def recording(self):
         return self._recording
     def sorterName(self):
-        return self._obj['sorter_name']
+        return self._obj['sorter']['name']
     def plotNames(self):
         plots=self._obj['summary'].get('plots',dict())
         return list(plots.keys())
@@ -67,7 +67,7 @@ class SFRecording():
     def study(self):
         return self._study
     def name(self):
-        return self._obj['name']
+        return self._obj.get('recording_name',self._obj.get('name'))
     def description(self):
         return self._obj['description']
     def directory(self):
@@ -129,7 +129,7 @@ class SFRecording():
     def setSummaryResult(self,obj):
         self._summary_result=obj
     def addSortingResult(self,obj):
-        sorter_name=obj['sorter_name']
+        sorter_name=obj['sorter']['name']
         if sorter_name in self._sorting_results_by_name:
             print ('Sorting result already in recording: {}'.format(sorter_name))
         else:
@@ -149,11 +149,11 @@ class SFStudy():
     def getObject(self):
         return self._obj
     def name(self):
-        return self._obj['name']
+        return self._obj.get('recording_name',self._obj.get('name'))
     def description(self):
         return self._obj['description']
     def addRecording(self,obj):
-        name=obj['name']
+        name=obj.get('recording_name',obj.get('name'))
         if name in self._recordings_by_name:
             print ('Recording already in study: '+name)
         else:
@@ -182,7 +182,7 @@ class SFData():
         for study in studies:
             self.loadStudy(study)
     def loadRecording(self,recording):
-        study=recording['study']
+        study=recording.get('study_name',recording.get('study_name',recording.get('study')))
         self._studies_by_name[study].addRecording(recording)
     def loadRecordings2(self,recordings):
         for recording in recordings:
@@ -205,7 +205,7 @@ class SFData():
         print('recordings ===================================================================')
         print(recordings)
         for ds in recordings:
-            study=ds['study']
+            study=ds.get('study_name',ds.get('study'))
             self._studies_by_name[study].addRecording(ds)
         if verbose:
             print ('Loaded {} recordings'.format(len(recordings)))
@@ -213,15 +213,14 @@ class SFData():
         for result in sorting_results:
             self.loadSortingResult(result)
     def loadSortingResult(self,X):
-        study_name=X['recording']['study']
-        recording_name=X['recording']['name']
+        study_name=X['recording'].get('study_name',X['recording'].get('study'))
+        recording_name=X['recording'].get('recording_name',X['recording'].get('name'))
         sorter_name=X['sorter']['name']
-        sorting=X['sorting']
         S=self.study(study_name)
         if S:
             D=S.recording(recording_name)
             if D:
-                D.addSortingResult(sorting)
+                D.addSortingResult(X)
             else:
                 print ('Warning: recording not found: '+recording_name)
         else:
