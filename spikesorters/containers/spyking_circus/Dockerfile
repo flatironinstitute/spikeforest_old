@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN echo "30 January 2019"
+RUN echo "12 February 2019"
 
 #########################################
 ### Python, etc                                                                                                                
@@ -13,10 +13,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 #########################################
 ### spikeforest2
 RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2
+RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2 && cd /src/spikeforest2 && git checkout dev
 WORKDIR /src/spikeforest2
-RUN pip install -r requirements.txt
-RUN python setup.py develop
+RUN ./setup_python.sh
 
 #########################################
 ### Spyking Circus

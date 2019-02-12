@@ -21,6 +21,7 @@ class CairioClient():
             collection=None,
             token=None,
             share_id=None,
+            alternate_share_ids=None,
             upload_token=None
         )
         self._verbose = False
@@ -41,7 +42,7 @@ class CairioClient():
             raise Exception('Error parsing config.')
         self.setRemoteConfig(**config)
 
-    def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None):
+    def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
         if url is not None:
             self._remote_config['url'] = url
         if collection is not None:
@@ -50,6 +51,8 @@ class CairioClient():
             self._remote_config['token'] = token
         if share_id is not None:
             self._remote_config['share_id'] = share_id
+        if alternate_share_ids is not None:
+            self._remote_config['alternate_share_ids'] = alternate_share_ids
         if upload_token is not None:
             self._remote_config['upload_token'] = upload_token
 
@@ -69,6 +72,8 @@ class CairioClient():
             config2 = 'local sha-1 cache'
 
         print('CAIRIO CONFIG: {}; {}'.format(config1, config2))
+        if c['alternate_share_ids']:
+            print('Alternate share ids:', c['alternate_share_ids'])
 
     def getRemoteConfig(self):
         ret = self._remote_config.copy()
@@ -96,14 +101,14 @@ class CairioClient():
         return list(self._get_sub_keys(key=key, password=password))
 
     # realize file / save file
-    def realizeFile(self, path=None, *, key=None, subkey=None, password=None):
+    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, share_id=None):
         if path is not None:
-            return self._realize_file(path=path)
+            return self._realize_file(path=path, share_id=share_id)
         elif key is not None:
             val = self.getValue(key=key, subkey=subkey, password=password)
             if not val:
                 return None
-            return self.realizeFile(path=val)
+            return self.realizeFile(path=val, share_id=share_id)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
@@ -188,11 +193,11 @@ class CairioClient():
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
-    def findFileBySha1(self, *, sha1):
-        return self._realize_file(path='sha1://'+sha1, resolve_locally=False)
+    def findFileBySha1(self, *, sha1, share_id=None):
+        return self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id)
 
-    def findFile(self, path, local_only=False):
-        return self._realize_file(path=path, resolve_locally=False, local_only=local_only)
+    def findFile(self, path, local_only=False, share_id=None):
+        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
 
     def moveToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
@@ -222,24 +227,34 @@ class CairioClient():
             return self._remote_client.getSubKeys(key=key)
         return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True, local_only=False):
+    def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None):
         ret = self._local_db.realizeFile(path=path, local_only=local_only)
         if ret:
             return ret
         if local_only:
             return None
-        share_id = self._remote_config['share_id']
-        if share_id:
+        if share_id is not None:
+            share_ids = [share_id]
+        else:
+            if self._remote_config['share_id'] is not None:
+                share_ids = [self._remote_config['share_id']]
+            else:
+                share_ids = []
+            if self._remote_config['alternate_share_ids'] is not None:
+                share_ids = share_ids + \
+                    self._remote_config['alternate_share_ids']
+        for share_id0 in share_ids:
             if path.startswith('sha1://'):
                 list0 = path.split('/')
                 sha1 = list0[2]
-                url, size = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-                if not url:
-                    return None
-                if resolve_locally:
-                    return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size)
-                else:
-                    return url
+                url, size = self._find_on_kbucket(
+                    share_id=share_id0, sha1=sha1)
+                if url:
+                    if resolve_locally:
+                        return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size)
+                    else:
+                        return url
+        return None
 
     def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
@@ -687,3 +702,7 @@ if os.environ.get('CAIRIO_CONFIG'):
     a = os.environ.get('CAIRIO_CONFIG').split('.')
     password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
     client.autoConfig(collection=a[0], key=a[1], password=password)
+if os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS'):
+    tmp = os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS')
+    list0 = tmp.split(',')
+    client.setRemoteConfig(alternate_share_ids=list0)

@@ -23,21 +23,22 @@ def clear_batch_jobs(*, batch_name, job_index=None):
     batch = _retrieve_batch(batch_name)
     if not batch:
         return False
+    batch_label = batch.get('label', 'unknown')
     jobs = batch['jobs']
-    print('Batch has {} jobs.'.format(len(jobs)))
+    print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
     num_cleared = 0
     for ii, job in enumerate(jobs):
         if (job_index is None) or (job_index == ii):
             command = job['command']
-            label = job['label']
+            job_label = job['label']
             status = _get_job_status(batch_name=batch_name, job_index=ii)
             if status:
                 _set_job_status(batch_name=batch_name,
                                 job_index=ii, status=None)
                 _clear_job_lock(batch_name=batch_name, job_index=ii)
                 num_cleared = num_cleared+1
-    print('Cleared {} jobs.'.format(num_cleared))
+    print('Cleared {} jobs for batch: {}.'.format(num_cleared, batch_label))
     return True
 
 
@@ -49,12 +50,13 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
 
     _set_batch_status(batch_name=batch_name, status=dict(status='preparing'))
     batch = _retrieve_batch(batch_name)
+    batch_label = batch.get('label', 'unknown')
     if not batch:
         _set_batch_status(batch_name=batch_name, status=dict(
             status='error', error='Unable to retrieve batch in prepare_batch.'))
         return False
     jobs = batch['jobs']
-    print('Batch has {} jobs.'.format(len(jobs)))
+    print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
     num_prepared = 0
     for ii, job in enumerate(jobs):
@@ -62,7 +64,7 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
             _set_batch_status(batch_name=batch_name, status=dict(
                 status='preparing', job_index=ii))
             command = job['command']
-            label = job['label']
+            job_label = job['label']
             status = _get_job_status(batch_name=batch_name, job_index=ii)
             if clear_jobs:
                 if status:
@@ -75,16 +77,17 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
                     _set_batch_status(batch_name=batch_name, status=dict(
                         status='error', job_index=ii, error='Command not registerd.'))
                     raise Exception(
-                        'Problem preparing job {}: command not registered: {}'.format(label, command))
+                        'Problem preparing job {}: command not registered: {}'.format(job_label, command))
                 X = _registered_commands[command]
-                print('Preparing job {}'.format(label))
+                print('Preparing job {} in batch:'.format(
+                    job_label, batch_label))
                 _check_batch_code(batch_name, batch_code)
                 try:
                     X['prepare'](job)
                 except:
                     _set_batch_status(batch_name=batch_name, status=dict(
                         status='error', job_index=ii, error='Error preparing job.'))
-                    print('Error preparing job {}'.format(label))
+                    print('Error preparing job {}'.format(job_label))
                     raise
                 _check_batch_code(batch_name, batch_code)
                 num_prepared = num_prepared+1
@@ -94,7 +97,7 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
     _check_batch_code(batch_name, batch_code)
     _set_batch_status(batch_name=batch_name,
                       status=dict(status='done_preparing'))
-    print('Prepared {} jobs.'.format(num_prepared))
+    print('Prepared {} jobs for batch: {}'.format(num_prepared, batch_label))
     return True
 
 
@@ -105,10 +108,11 @@ def run_batch(*, batch_name, job_index=None):
             'Unable to get batch code for batch {}'.format(batch_name))
 
     batch = _retrieve_batch(batch_name)
+    batch_label = batch.get('label', 'unknown')
     if not batch:
         return False
     jobs = batch['jobs']
-    print('Batch has {} jobs.'.format(len(jobs)))
+    print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
     num_ran = 0
     for ii, job in enumerate(jobs):
@@ -116,19 +120,21 @@ def run_batch(*, batch_name, job_index=None):
             _check_batch_code(batch_name, batch_code)
 
             command = job['command']
-            label = job['label']
+            job_label = job['label']
             status = _get_job_status_string(
                 batch_name=batch_name, job_index=ii)
             if status == 'ready':
                 if _acquire_job_lock(batch_name=batch_name, job_index=ii):
-                    print('Acquired lock for job {}'.format(label))
+                    print('Acquired lock for job {} in batch: {}'.format(
+                        job_label, batch_label))
                     if command not in _registered_commands:
                         raise Exception(
-                            'Problem preparing job {}: command not registered: {}'.format(label, command))
+                            'Problem preparing job {}: command not registered: {}'.format(job_label, command))
                     _set_job_status(batch_name=batch_name,
                                     job_index=ii, status=dict(status='running'))
                     X = _registered_commands[command]
-                    print('Running job {}'.format(label))
+                    print('Running job {} in batch: {}'.format(
+                        job_label, batch_label))
 
                     console_fname = _start_writing_to_file()
 
@@ -138,7 +144,7 @@ def run_batch(*, batch_name, job_index=None):
                     except:
                         _stop_writing_to_file()
 
-                        print('Error running job {}'.format(label))
+                        print('Error running job {}'.format(job_label))
                         _set_job_status(
                             batch_name=batch_name, job_index=ii, status=dict(status='error'))
 
@@ -173,12 +179,13 @@ def assemble_batch(*, batch_name):
 
     _set_batch_status(batch_name=batch_name, status=dict(status='assembling'))
     batch = _retrieve_batch(batch_name)
+    batch_label = batch.get('label', 'unknown')
     if not batch:
         _set_batch_status(batch_name=batch_name, status=dict(
             status='error', error='Unable to retrieve batch in assemble_batch.'))
         return False
     jobs = batch['jobs']
-    print('Batch has {} jobs.'.format(len(jobs)))
+    print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
     status_strings = get_batch_job_statuses(batch_name=batch_name)
     print(status_strings)
     num_ran = 0
@@ -188,11 +195,11 @@ def assemble_batch(*, batch_name):
         _set_batch_status(batch_name=batch_name, status=dict(
             status='assembling', job_index=ii))
         command = job['command']
-        label = job['label']
+        job_label = job['label']
 
         status_string = status_strings.get(str(ii), None)
         if status_string == 'finished':
-            print('ASSEMBLING job result for {}'.format(label))
+            print('ASSEMBLING job result for {}'.format(job_label))
             result = _get_job_result(batch_name=batch_name, job_index=ii)
             assembled_results.append(dict(
                 job=job,
@@ -273,7 +280,9 @@ def _set_batch_code(batch_name, batch_code):
                          batch_name=batch_name), value=batch_code)
 
 
-def set_batch(*, batch_name, jobs, compute_resource=None):
+def set_batch(*, batch_name, jobs, label=None, compute_resource=None):
+    if label is None:
+        label = batch_name
     status0 = get_batch_status(batch_name=batch_name)
     if status0 is not None:
         if status0['status'] not in ['finished', 'error']:
@@ -289,7 +298,7 @@ def set_batch(*, batch_name, jobs, compute_resource=None):
 
     # set the batch
     key = dict(name='batcho_batch', batch_name=batch_name)
-    ca.saveObject(key=key, object=dict(jobs=jobs))
+    ca.saveObject(key=key, object=dict(label=label, jobs=jobs))
 
     _set_batch_status(batch_name=batch_name, status=dict(status='initialized'))
 
@@ -388,8 +397,8 @@ def _run_command_and_print_output(cmd):
 
 
 def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous=None, allow_uncontainerized=False):
-
     batch = _retrieve_batch(batch_name)
+    batch_label = batch.get('label', 'unknown')
     if not batch:
         # In this case the object is not yet ready, so just return false and do not remove
         return False
@@ -397,7 +406,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
         batch_code = _get_batch_code(batch_name)
         if not batch_code:
             raise Exception(
-                'Unable to get batch code for batch {}'.format(batch_name))
+                'Unable to get batch code for batch {} ({})'.format(batch_name, batch_label))
 
         _set_batch_status(batch_name=batch_name,
                           status=dict(status='checking'))

@@ -11,7 +11,7 @@ from .compute_units_info import ComputeUnitsInfo
 
 def summarize_recordings(recordings, compute_resource=None):
     print('>>>>>> summarize recordings')
-    container='sha1://e800f9c19ad440756cc49cce196bb93126e1d00c/2019-02-08c/mountaintools_basic.simg'
+    container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
     jobs_info=[]
     jobs_timeseries_plot=[]
     jobs_units_info=[]
@@ -49,7 +49,8 @@ def summarize_recordings(recordings, compute_resource=None):
         jobs_units_info.append(job)
     
     all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
-    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
+    label='Summarize recordings'
+    mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
     summarized_recordings=[]
     for i,recording in enumerate(recordings):

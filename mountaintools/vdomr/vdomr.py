@@ -10,7 +10,7 @@ vdomr_global = dict(
     jp_widget=None  # for mode=jp_proxy_widget
 )
 
-default_session=dict(javascript_to_execute=[])
+default_session = dict(javascript_to_execute=[])
 vdomr_server_global = dict(
     sessions=dict(default=default_session),
     current_session=default_session
@@ -146,6 +146,7 @@ def config_colab():
 def config_server():
     vdomr_global['mode'] = 'server'
 
+
 def config_pywebview():
     vdomr_global['mode'] = 'pywebview'
 
@@ -155,27 +156,30 @@ class PyWebViewApi():
         pass
 
     def invokeFunction(self, x):
-        callback_id=x['callback_id']
-        args=x['args']
-        kwargs=x['kwargs']
+        callback_id = x['callback_id']
+        args = x['args']
+        kwargs = x['kwargs']
         import webview
         webview.evaluate_js('window.show_overlay();')
         try:
-            invoke_callback(callback_id,argument_list=args,kwargs=kwargs)
+            invoke_callback(callback_id, argument_list=args, kwargs=kwargs)
         except:
             traceback.print_exc()
             pass
         webview.evaluate_js('window.hide_overlay();')
 
-def pywebview_start(*,root,title):
+
+def pywebview_start(*, root, title):
     try:
         import webview
     except:
-        raise Exception('Cannot import webview. Perhaps you need to install pywebview via: pip install pywebview')
+        raise Exception(
+            'Cannot import webview. Perhaps you need to install pywebview via: pip install pywebview')
 
     config_pywebview()
+
     def load_html():
-        html="""
+        html = """
         <html>
         <head>
         <style>
@@ -198,9 +202,9 @@ def pywebview_start(*,root,title):
         {content}
         </body>
         """
-        html=html.replace('{content}',root._repr_html_())
+        html = html.replace('{content}', root._repr_html_())
         webview.load_html(html)
-        script="""
+        script = """
         window.show_overlay=function() {
             document.getElementById('overlay').style.visibility='visible'
         }
@@ -213,7 +217,6 @@ def pywebview_start(*,root,title):
             setTimeout(function() {
                 window.pywebview.api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
             },0); // the timeout might be important to prevent crashes of pywebview
-            
         }
         """
         webview.evaluate_js(script)

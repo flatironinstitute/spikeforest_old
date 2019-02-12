@@ -14,7 +14,7 @@ import shutil
 
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
-    VERSION = '0.2.0'
+    VERSION = '0.2.1'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
@@ -40,7 +40,7 @@ class SpykingCircus(mlpr.Processor):
     def run(self):
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/ironclust-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/spyking-circus-tmp-'+code
 
         num_workers = os.environ.get('NUM_WORKERS', 1)
 

@@ -21,8 +21,9 @@ class MainWindow(vd.Component):
         self._contents = [
             dict(label='Job Monitor', window=MonitorBatchesMainWindow()),
             dict(label='SpikeForest Browser', window=SFBrowserMainWindow()),
-            dict(label='Sorting Result Explorer', window=SortingResultsExplorerMainWindow())
-        ]        
+            dict(label='Sorting Result Explorer',
+                 window=SortingResultsExplorerMainWindow())
+        ]
         self._current_window = None
 
     def _open_item(self, item):

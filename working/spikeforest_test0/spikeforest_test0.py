@@ -2,65 +2,60 @@
 
 import spikeforest_analysis as sa
 from cairio import client as ca
+import spikeextractors as se
 import os
+import shutil
 
-# This file runs a spikeforest processing pipeline with the following steps:
-#    * Attach to the desire kbucket share and compute resources
-#    * Collect recordings and sorters
+# This file runs a spikeforest processing pipeline locally (no internet connection, except for downloading singularity containers if needed)
+#    * Generate synthetic recordings (toy recordings)
 #    * Summarize the recordings
 #    * Sort the recordings
 #    * Summarize the sortings
 #    * Compare with ground truth
-#    * Save results to kbucket for later retrieval by GUIs, website, etc
+#    * Save results to kbucket (local) for later retrieval by GUIs, website, etc
 #
-#    NOTE: the required singularity containers for running all processing
-#          will automatically be downloaded to the compute resource.
-#          If you are using your local machine as compute resource (see below),
-#          this may take some time depending on your internet connection.
-#          Downloaded containers are cached so they only need to be downloaded
-#          once.
+#    NOTE: For now the singularity containers need to be on your system --
+#          will improve this functionality in the future
 #
-# Usage:
-#
-#    First make sure that your compute resource is set up and listening.
-#    If you want to just use your local machine, you can either
-#    set `compute_resource=None` below or use the preferred method of
-#    listening on your local machine as 'local-computer'. Note that if you
-#    want to use a remote resource, then you will need to connect to the
-#    appropriate kbucket share with read/write privileges. See docs (in progress)
-#    for more information.
-#
-#    Modify the settings below and then run this file using python
+#    Modify the settings below and then run this file using python 3
 
 
 def main():
+    # generate toy dataset
+    for num in range(1, 3):
+        name = 'toy_example{}'.format(num)
+        if os.path.exists(name):
+            shutil.rmtree(name)
+        rx, sx_true = se.example_datasets.toy_example1(
+            duration=10, num_channels=4, samplerate=30000, K=10)
+        se.MdaRecordingExtractor.writeRecording(recording=rx, save_path=name)
+        se.MdaSortingExtractor.writeSorting(
+            sorting=sx_true, save_path=name+'/firings_true.mda')
+
     # Use this to optionally connect to a kbucket share:
-    ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite', ask_password=True)
+    # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
+    # for downloading containers if needed
+    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)
-    compute_resource = 'jfm-laptop'
+    compute_resource = 'local-computer'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'spikeforest_test1'
+    output_id = 'spikeforest_test0'
 
-    # Grab a couple recordings for testing
-    recording1 = dict(
-        recording_name='001_synth',
-        study_name='datasets_noise10_K10_C4-test',
-        study_set='magland_synth-test',
-        directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/001_synth'
-    )
-    recording2 = dict(
-        recording_name='002_synth',
-        study_name='datasets_noise10_K10_C4-test',
-        study_set='magland_synth-test',
-        directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/002_synth'
-    )
-    recordings = [recording1, recording2]
+    # Grab the recordings for testing
+    recordings = [
+        dict(
+            recording_name='toy_example{}'.format(num),
+            study_name='toy_examples',
+            study_set='toy_examples',
+            directory='toy_example{}'.format(num)
+        )
+        for num in range(1, 3)
+    ]
 
     # Summarize the recordings
     recordings_B = sa.summarize_recordings(
@@ -140,7 +135,7 @@ def define_sorters():
         )
     )
     # return [sorter_ms4_thr3, sorter_sc, sorter_yass]
-    return [sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc]
 
 
 if __name__ == "__main__":

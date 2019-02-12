@@ -2,6 +2,10 @@
 
 Untitled*.ipynb
 
+*.mda
+geom.csv
+params.json
+
 # singularity image files
 *.simg
 

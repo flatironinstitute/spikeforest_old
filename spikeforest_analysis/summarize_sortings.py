@@ -9,7 +9,7 @@ from copy import deepcopy
 
 def summarize_sortings(sortings,compute_resource):
     print('>>>>>> summarize sortings')
-    container='sha1://e800f9c19ad440756cc49cce196bb93126e1d00c/2019-02-08c/mountaintools_basic.simg'
+    container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
     jobs_autocor_plot=[]
     for sorting in sortings:
         recording_dir=sorting['recording_dir']
@@ -26,7 +26,8 @@ def summarize_sortings(sortings,compute_resource):
         jobs_autocor_plot.append(job)
     
     all_jobs=jobs_autocor_plot
-    mlpr.executeBatch(jobs=all_jobs,num_workers=None,compute_resource=compute_resource)
+    label='Summarize sortings'
+    mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
     summarized_sortings=[]
     for i,sorting in enumerate(sortings):

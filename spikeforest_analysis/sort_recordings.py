@@ -165,11 +165,11 @@ class KiloSort(mlpr.Processor):
 #sf.sorters.ironclust(*, recording, tmpdir, detect_sign=-1, adjacency_radius=-1, detect_threshold=5, merge_thresh=0.98, freq_min=300, freq_max=6000, pc_per_chan=3, prm_template_name, ironclust_src=None)
         
 Processors=dict(
-    MountainSort4=(MountainSort4,'sha1://a3842053423c633b62e70474be9d76068cdc1ea5/mountainsort4.simg'),
+    MountainSort4=(MountainSort4,'sha1://009406add7a55687cec176be912bc7685c2a4b1d/02-12-2019/mountainsort4.simg'),
     IronClust=(IronClust,None),
-    SpykingCircus=(SpykingCircus,'sha1://487fe664853285e65f8130a1138a4415f8acc4ca/spyking_circus.simg'),
+    SpykingCircus=(SpykingCircus,'sha1://914becce45aec56a84dd1dd4bca4037b09c50373/02-12-2019/spyking_circus.simg'),
     KiloSort=(KiloSort,None),
-    Yass=(YassProcessor,'sha1://c192559d2df3f99d7328d85cdc6f96248c2b24a3/02-11-2019/yass.simg')
+    Yass=(YassProcessor,'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg')
 )
         
 def sort_recordings(*,sorter,recordings,compute_resource=None):
@@ -201,7 +201,8 @@ def sort_recordings(*,sorter,recordings,compute_resource=None):
         )
         sorting_jobs.append(job)
 
-    mlpr.executeBatch(jobs=sorting_jobs,compute_resource=compute_resource)
+    label='Sort recordings ({})'.format(processor_name)
+    mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource)
     
     sorting_results=[]
     for i,recording in enumerate(recordings):

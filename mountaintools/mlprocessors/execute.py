@@ -178,8 +178,8 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
             for pattern in patterns:
                 if fnmatch.fnmatch(fname, pattern):
                     matches = True
-            if exclude_init and (fname=='__init__.py'):
-                matches=False
+            if exclude_init and (fname == '__init__.py'):
+                matches = False
             if matches:
                 with open(dirname+'/'+fname) as f:
                     txt = f.read()
@@ -189,7 +189,8 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
                 ))
         elif os.path.isdir(dirname+'/'+fname):
             if (not fname.startswith('__')) and (not fname.startswith('.')):
-                content = _read_python_code_of_directory(dirname+'/'+fname,exclude_init=False)
+                content = _read_python_code_of_directory(
+                    dirname+'/'+fname, exclude_init=False)
                 if len(content['files'])+len(content['dirs']) > 0:
                     dirs.append(dict(
                         name=fname,
@@ -290,14 +291,24 @@ def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, *
 
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
+
+    # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
+    mountaintools_source_dirname = os.path.abspath(
+        os.path.dirname(os.path.realpath(__file__))+'/..')
+
     if not processor_source_fname:
         raise Exception(
             'inspect.getsourcefile() returned empty for processor.')
     if container:
         singularity_opts.append(
             '-B {}:/execute_in_container/processor_source'.format(processor_source_dirname))
+        # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
+        singularity_opts.append(
+            '-B {}:/execute_in_container/mountaintools'.format(mountaintools_source_dirname))
     else:
         os.symlink(processor_source_dirname, tempdir+'/processor_source')
+        # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
+        os.symlink(mountaintools_source_dirname, tempdir+'/mountaintools')
 
     # Code generation
     code = """
@@ -327,7 +338,8 @@ if __name__ == "__main__":
     if container:
         singularity_opts.append('--contain')
         singularity_opts.append('-e')
-        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python3 /execute_in_container/execute_in_container.py"'.format(
+        # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
+        singularity_cmd = 'singularity exec {} {} bash -c "PYTHONPATH=/execute_in_container/mountaintools KBUCKET_CACHE_DIR=/sha1-cache {} python3 /execute_in_container/execute_in_container.py"'.format(
             ' '.join(singularity_opts), container, ' '.join(env_vars))
     else:
         singularity_cmd = 'python3 {}/execute_in_container.py'.format(tempdir)
@@ -394,14 +406,18 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         if fname0.startswith('kbucket://') or fname0.startswith('sha1://'):
             pass
         else:
+            fname0 = os.path.abspath(fname0)
             if not os.path.exists(fname0):
                 raise Exception(
                     'Input {} does not exist: {}'.format(name0, fname0))
-            sha1_url = ca.saveFile(fname0)
-            if not sha1_url:
-                raise Exception(
-                    'Problem saving input {} to kbucket ({})'.format(name0, fname0))
-            fname0 = sha1_url
+            if os.path.isfile(fname0):
+                sha1_url = ca.saveFile(fname0)
+                if not sha1_url:
+                    raise Exception(
+                        'Problem saving input {} to kbucket ({})'.format(name0, fname0))
+                fname0 = sha1_url
+            else:
+                pass  # TODO: think about how to handle directories -- probably just give a warning message
         inputs[name0] = fname0
     outputs = dict()
     for output0 in proc.OUTPUTS:
@@ -425,24 +441,30 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
             val0 = kwargs[name0]
         parameters[name0] = val0
     if _container:
-        newpath = ca.saveFile(_container)
-        if not newpath:
-            raise Exception('Unable to save (or upload) container file.')
-        if not _container.startswith('sha1://'):
-            _container = newpath
+        if _container.startswith('kbucket://') or _container.startswith('sha1://'):
+            pass
+        else:
+            newpath = ca.saveFile(_container)
+            if not newpath:
+                raise Exception('Unable to save (or upload) container file.')
+            if not _container.startswith('sha1://'):
+                _container = newpath
     processor_source_fname = inspect.getsourcefile(proc)
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
-    processor_source_basename_noext = os.path.splitext(processor_source_basename)[0]
+    processor_source_basename_noext = os.path.splitext(
+        processor_source_basename)[0]
     code = _read_python_code_of_directory(
         processor_source_dirname, additional_files=getattr(proc, 'ADDITIONAL_FILES', []), exclude_init=True)
     code['files'].append(dict(
         name='__init__.py',
-        content='from .{} import {}'.format(processor_source_basename_noext,proc.__name__)
+        content='from .{} import {}'.format(
+            processor_source_basename_noext, proc.__name__)
     ))
     processor_job = dict(
         command='execute_mlprocessor',
-        label='{} (version: {}) (container: {})'.format(proc.NAME, proc.VERSION, _container),
+        label='{} (version: {}) (container: {})'.format(
+            proc.NAME, proc.VERSION, _container),
         processor_name=proc.NAME,
         processor_version=proc.VERSION,
         processor_class_name=proc.__name__,
@@ -452,6 +474,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         outputs=outputs,
         parameters=parameters
     )
+    print(processor_job['inputs'])
     if _force_run:
         processor_job['_force_run'] = True
     if _cache:
@@ -481,7 +504,18 @@ def _random_string(num_chars):
     return ''.join(random.choice(chars) for _ in range(num_chars))
 
 
-def executeBatch(*, jobs, num_workers=None, compute_resource=None, batch_name=None):
+def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+
+    # make sure the files to realize are absolute paths
+    for job in jobs:
+        if 'files_to_realize' in job:
+            for i, fname in enumerate(job['files_to_realize']):
+                if fname.startswith('kbucket://') or fname.startswith('sha1://'):
+                    pass
+                else:
+                    fname = os.path.abspath(fname)
+                job['files_to_realize'][i] = fname
+
     if num_workers is not None:
         if compute_resource is not None:
             raise Exception('Cannot specify num_workers and compute_resource.')
@@ -497,7 +531,7 @@ def executeBatch(*, jobs, num_workers=None, compute_resource=None, batch_name=No
         import batcho
         if batch_name is None:
             batch_name = 'batch_'+_random_string(10)
-        batcho.set_batch(batch_name=batch_name, jobs=jobs,
+        batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
                          compute_resource=compute_resource)
         last_update_string = ''
         while True:
@@ -517,8 +551,8 @@ def executeBatch(*, jobs, num_workers=None, compute_resource=None, batch_name=No
                 num_ready = statuses_list.count('ready')
                 num_running = statuses_list.count('running')
                 num_finished = statuses_list.count('finished')
-                update_string = 'Batch {} ({})\nJOBS: {} ready, {} running, {} finished, {} total'.format(
-                    batch_name, batch_status0, num_ready, num_running, num_finished, len(jobs))
+                update_string = '({})\n{} BATCH {}: JOBS: {} ready, {} running, {} finished, {} total'.format(
+                    batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
             if update_string != last_update_string:
                 print(update_string)
             last_update_string = update_string

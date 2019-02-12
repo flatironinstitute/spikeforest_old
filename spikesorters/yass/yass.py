@@ -126,7 +126,7 @@ def yass_helper(
     output_folder_cmd = output_folder
 
     yass_path = '/usr/local/bin'
-    num_cores_str = ''    
+    num_cores_str = ''
     if int(n_cores) > 1:
         num_cores_str = '-c {}'.format(n_cores)
     cmd = 'python2 {}/yass {} {} '.format(

@@ -17,7 +17,7 @@ class SpykingCircusSortingExtractor(SortingExtractor):
                 results = f
                 break
         if results is None:
-            raise Exception(spykingcircus_folder, " is not a spyking circus folder")
+            raise Exception(spykingcircus_folder, " is not a spyking circus folder. No file found: result.hdf5 or result-merged.hdf5.")
         f_results = h5py.File(results)
         self._spiketrains = []
         self._unit_ids = []

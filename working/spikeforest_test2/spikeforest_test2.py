@@ -35,8 +35,8 @@ import os
 
 def main():
     # Use this to optionally connect to a kbucket share:
-    ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite', ask_password=True)
+    ca.autoConfig(collection='spikeforest', key='spikeforest2-readwrite',
+                  ask_password=True, password=os.environ.get('SPIKEFOREST_PASSWORD', None))
 
     # Specify the compute resource (see the note above)
     compute_resource = 'jfm-laptop'
@@ -45,22 +45,15 @@ def main():
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'spikeforest_test1'
+    output_id = 'spikeforest_test2'
 
-    # Grab a couple recordings for testing
-    recording1 = dict(
-        recording_name='001_synth',
-        study_name='datasets_noise10_K10_C4-test',
-        study_set='magland_synth-test',
-        directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/001_synth'
-    )
-    recording2 = dict(
-        recording_name='002_synth',
-        study_name='datasets_noise10_K10_C4-test',
-        study_set='magland_synth-test',
-        directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/002_synth'
-    )
-    recordings = [recording1, recording2]
+    group_name = 'magland_synth_test'
+
+    a = ca.loadObject(
+        key=dict(name='spikeforest_recording_group', group_name=group_name))
+
+    recordings = a['recordings']
+    studies = a['studies']
 
     # Summarize the recordings
     recordings_B = sa.summarize_recordings(
@@ -105,6 +98,7 @@ def main():
             output_id=output_id
         ),
         object=dict(
+            studies=studies,
             recordings=recordings_B,
             sorting_results=sorting_results
         )
@@ -132,15 +126,14 @@ def define_sorters():
     )
 
     sorter_yass = dict(
-        name='Yass',
-        processor_name='Yass',
+        name='yass',
+        processor_name='yass',
         params=dict(
             detect_sign=-1,
             adjacency_radius=50
         )
     )
-    # return [sorter_ms4_thr3, sorter_sc, sorter_yass]
-    return [sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc]
 
 
 if __name__ == "__main__":
