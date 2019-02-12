@@ -39,7 +39,7 @@ def main():
                   ask_password=True, password=os.environ.get('SPIKEFOREST_PASSWORD', None))
 
     # Specify the compute resource (see the note above)
-    compute_resource = 'ccmlin008-default'
+    compute_resource = 'ccmlin008-80'
     compute_resource_ks = 'ccmlin008-kilosort'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
@@ -48,7 +48,8 @@ def main():
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = 'spikeforest_test2'
 
-    group_name = 'magland_synth_test'
+    #group_name = 'magland_synth_test'
+    group_name = 'magland_synth'
 
     a = ca.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))

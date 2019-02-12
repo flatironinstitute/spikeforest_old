@@ -559,6 +559,7 @@ def _set_job_status(*, batch_name, job_index, status):
                batch_name=batch_name)
     subkey = str(job_index)
     if not ca.setValue(key=key, subkey=subkey, value=status_string):
+        print('WARNING: problem setting batch job status for subkey {}: {}'.format(subkey, status_string))
         return False
     return True
 

@@ -42,7 +42,7 @@ class CairioRemoteClient():
             return None
         return obj['value']
 
-    def setValue(self, *, collection, key, subkey, overwrite=False, value, url, token):
+    def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token):
         if value:
             value_b64 = base64.b64encode(value.encode()).decode('utf-8')
         if not url:
@@ -70,7 +70,8 @@ class CairioRemoteClient():
             url0 = url0+'&overwrite=false'
         obj = _http_get_json(url0)
         if not obj.get('success'):
-            # print('Problem setting value in collection {}: {}'.format(collection, obj.get('error', '')))
+            if overwrite:
+                raise Exception('Problem setting value in collection {}: {}'.format(collection, obj.get('error', '')))
             return False
         return True
 
