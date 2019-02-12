@@ -180,7 +180,8 @@ def define_sorters():
             adjacency_radius=50
         )
     )
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
+    #return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
 
 
 if __name__ == "__main__":

@@ -145,8 +145,12 @@ class CairioClient():
             key=key, path=path, subkey=subkey, password=password)
         if fname is None:
             return None
-        with open(fname) as f:
-            return f.read()
+        try:
+            with open(fname) as f:
+                return f.read()
+        except:
+            print('Unexpected problem reading file in loadText: '+fname)
+            return None
 
     def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False):
         if text is None:
