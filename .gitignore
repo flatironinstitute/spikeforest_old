@@ -5,6 +5,7 @@ Untitled*.ipynb
 *.mda
 geom.csv
 params.json
+output.txt
 
 # singularity image files
 *.simg
