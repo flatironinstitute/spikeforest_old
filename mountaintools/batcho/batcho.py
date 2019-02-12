@@ -479,7 +479,7 @@ def get_batch_names_for_compute_resource(compute_resource):
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
-    obj = ca.getValue(key=key0, parse_json=True)
+    obj = ca.getValue(key=key0, subkey='-', parse_json=True)
     if not obj:
         return []
     batch_names = list(obj.keys())
