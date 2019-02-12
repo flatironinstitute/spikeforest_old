@@ -3,7 +3,7 @@
 import os
 import vdomr as vd
 from cairio import client as ca
-from sortingresultsexplorermainwindow import SortingResultsExplorerMainWindow
+from sfbrowsermainwindow import SFBrowserMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
 
@@ -13,7 +13,7 @@ class TheApp():
 
     def createSession(self):
         print('creating main window')
-        W = SortingResultsExplorerMainWindow()
+        W = SFBrowserMainWindow()
         print('done creating main window')
         return W
 

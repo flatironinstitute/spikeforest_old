@@ -24,8 +24,9 @@ class SortingResultSelectWidget(vd.Component):
         vd.devel.loadBootstrap()
 
     def initialize(self):
-        self._output_ids = ['spikeforest_test0','spikeforest_test1','spikeforest_test2']
-        #kb.loadObject(
+        self._output_ids = ['spikeforest_test0',
+                            'spikeforest_test1', 'spikeforest_test2']
+        # kb.loadObject(
         #    key=dict(name='spikeforest_batch_group_names'))
         self._SEL_output_id.setOptions(['']+self._output_ids)
         self._on_output_id_changed(value=self._SEL_output_id.value())
@@ -51,13 +52,14 @@ class SortingResultSelectWidget(vd.Component):
         output_id = self._SEL_output_id.value()
         if not output_id:
             return
-        key=dict(
+        key = dict(
             name='spikeforest_results',
             output_id=output_id
         )
         a = ca.loadObject(key=key)
         if a is None:
-            raise Exception('Unable to load spikeforest result: {}'.format(output_id))
+            raise Exception(
+                'Unable to load spikeforest result: {}'.format(output_id))
         SF = sf.SFData()
         SF.loadStudies(a['studies'])
         SF.loadRecordings2(a['recordings'])
