@@ -70,8 +70,7 @@ class CairioRemoteClient():
             url0 = url0+'&overwrite=false'
         obj = _http_get_json(url0)
         if not obj.get('success'):
-            print('Problem setting value in collection {}: {}'.format(
-                collection, obj.get('error', '')))
+            # print('Problem setting value in collection {}: {}'.format(collection, obj.get('error', '')))
             return False
         return True
 

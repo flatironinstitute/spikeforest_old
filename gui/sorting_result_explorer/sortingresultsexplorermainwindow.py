@@ -24,7 +24,7 @@ class SortingResultSelectWidget(vd.Component):
         vd.devel.loadBootstrap()
 
     def initialize(self):
-        self._output_ids = ['spikeforest_test0','spikeforest_test1']
+        self._output_ids = ['spikeforest_test0','spikeforest_test1','spikeforest_test2']
         #kb.loadObject(
         #    key=dict(name='spikeforest_batch_group_names'))
         self._SEL_output_id.setOptions(['']+self._output_ids)

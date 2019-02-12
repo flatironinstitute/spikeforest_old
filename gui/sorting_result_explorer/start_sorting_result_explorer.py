@@ -20,7 +20,7 @@ class TheApp():
 
 def main():
     # Configure readonly access to kbucket
-    # ca.autoConfig(collection='spikeforest',key='spikeforest2-readonly')
+    ca.autoConfig(collection='spikeforest',key='spikeforest2-readonly')
 
     APP = TheApp()
     server = vd.VDOMRServer(APP)

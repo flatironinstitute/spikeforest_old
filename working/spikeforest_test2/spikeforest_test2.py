@@ -39,7 +39,7 @@ def main():
                   ask_password=True, password=os.environ.get('SPIKEFOREST_PASSWORD', None))
 
     # Specify the compute resource (see the note above)
-    compute_resource = 'jfm-laptop'
+    compute_resource = 'ccmlin008-default'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
