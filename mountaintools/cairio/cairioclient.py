@@ -593,13 +593,18 @@ class CairioLocal():
         return (sha1, size, url_download)
 
 
-def _http_get_json(url, verbose=False):
+def _http_get_json(url, verbose=False, num_http_retries=2):
     if verbose:
         print('_http_get_json::: '+url)
     try:
         req = request.urlopen(url)
     except:
-        raise Exception('Unable to open url: '+url)
+        if num_http_retries > 0:
+            print('Retrying http request to: '+url)
+            _http_get_json(url, verbose=verbose,
+                           num_http_retries=num_http_retries-1)
+        else:
+            raise Exception('Unable to open url: '+url)
     try:
         ret = json.load(req)
     except:

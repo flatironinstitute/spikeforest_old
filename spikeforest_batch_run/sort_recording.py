@@ -162,7 +162,8 @@ class IronClust(mlpr.Processor):
 
 class KiloSort(mlpr.Processor):
     NAME='KiloSort'
-    VERSION='0.1.0' # wrapper version
+    VERSION='0.1.1' # wrapper version
+    ADDITIONAL_FILES=['*.m']
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
