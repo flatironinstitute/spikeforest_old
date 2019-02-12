@@ -50,11 +50,11 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
 
     _set_batch_status(batch_name=batch_name, status=dict(status='preparing'))
     batch = _retrieve_batch(batch_name)
-    batch_label = batch.get('label', 'unknown')
     if not batch:
         _set_batch_status(batch_name=batch_name, status=dict(
             status='error', error='Unable to retrieve batch in prepare_batch.'))
         return False
+    batch_label = batch.get('label', 'unknown')
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
@@ -108,9 +108,9 @@ def run_batch(*, batch_name, job_index=None):
             'Unable to get batch code for batch {}'.format(batch_name))
 
     batch = _retrieve_batch(batch_name)
-    batch_label = batch.get('label', 'unknown')
     if not batch:
         return False
+    batch_label = batch.get('label', 'unknown')
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
@@ -179,11 +179,11 @@ def assemble_batch(*, batch_name):
 
     _set_batch_status(batch_name=batch_name, status=dict(status='assembling'))
     batch = _retrieve_batch(batch_name)
-    batch_label = batch.get('label', 'unknown')
     if not batch:
         _set_batch_status(batch_name=batch_name, status=dict(
             status='error', error='Unable to retrieve batch in assemble_batch.'))
         return False
+    batch_label = batch.get('label', 'unknown')
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
     status_strings = get_batch_job_statuses(batch_name=batch_name)
@@ -408,10 +408,10 @@ def _run_command_and_print_output(cmd):
 
 def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous=None, allow_uncontainerized=False):
     batch = _retrieve_batch(batch_name)
-    batch_label = batch.get('label', 'unknown')
     if not batch:
         # In this case the object is not yet ready, so just return false and do not remove
         return False
+    batch_label = batch.get('label', 'unknown')
     try:
         batch_code = _get_batch_code(batch_name)
         if not batch_code:
