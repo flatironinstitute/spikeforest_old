@@ -381,7 +381,7 @@ function CairioApi(DB) {
   let that = this;
   this.DB = DB;
   this.get = async function(collection, key, subkey) {
-    let doc = await DB.getCollectionPair(collection, key);
+    let doc = await DB.getCollectionPair(collection, key, subkey);
     if (!doc) {
       return {
         success: false,
@@ -395,70 +395,24 @@ function CairioApi(DB) {
         error: 'Unexpected: value is null or empty in document: ' + value
       };
     }
-    if (!subkey) {
-      return {
-        success: true,
-        value: value
-      };
-    } else {
-      //subkey
-      let valobj;
-      try {
-        valobj = JSON.parse(value);
-      } catch (err) {
-        return {
-          success: false,
-          error: 'Unable to get subkey because unable to parse JSON value.'
-        };
-      }
-      if (!(subkey in valobj)) {
-        return {
-          success: false,
-          error: 'Subkey not found'
-        };
-      }
-      return {
-        success: true,
-        value: valobj[subkey]
-      }
+    return {
+      success: true,
+      value: value
     }
   };
 
   this.set = async function(collection, key, subkey, value, overwrite) {
-    if (subkey) {
-      let tmp = await that.get(collection, key, null);
-      let val = tmp.value || {};
-      let valobj;
-      try {
-        valobj = JSON.parse(val);
-      } catch (err) {
-        valobj = {};
-      }
-      //todo: implement overwrite
-      if (!overwrite) {
-        if (subkey in valobj) {
-          return {
-            success: false,
-            error: "Unable to overwrite value"
-          }
-        }
-      }
-      valobj[subkey] = value;
-      return await that.set(collection, key, null, JSON.stringify(valobj), true);
-    } else {
-      try {
-        await DB.setCollectionPair(collection, key, value, overwrite);
-      }
-      catch(err) {
+    try {
+        await DB.setCollectionPair(collection, key, subkey, value, overwrite);
+    }
+    catch(err) {
         return {
-          success: false,
-          error: 'Error setting collection pair: '+err.message
+            success: false,
+            error: 'Error setting collection pair: '+err.message
         };
-        return;
-      }
-      return {
+    }
+    return {
         success:true
-      }
     }
   };
 
@@ -513,38 +467,76 @@ function CairioDB() {
     });
     m_db = client.db(db_name);
   }
-  this.getCollectionPair = async function(collection, key) {
+  this.getCollectionPair = async function(collection, key, subkey) {
     if (!m_db) {
       throw new Error('Not connected to database');
     }
+    let record;
+    if (subkey) {
+        if (subkey=='-') {
+            record={
+                collection: collection,
+                key: key,
+                subkey: {$exists: true}
+            }    
+        }
+        else {
+            record={
+                collection: collection,
+                key: key,
+                subkey: subkey
+            }
+        }
+    }
+    else {
+        record={
+            collection: collection,
+            key: key,
+            subkey: {$exists: false}
+        }
+    }
     let collec = m_db.collection("collectionpairs");
-    let cursor = collec.find({
-      collection: collection,
-      key: key
-    });
+    let cursor = collec.find(record);
     let docs = await cursor.toArray();
+    if (subkey=='-') {
+        let val00={};
+        for (let ii=0; ii<docs.length; ii++) {
+            val00[docs[ii].subkey]=docs[ii].value;
+        }
+        return {collection:collection,key:key,subkey:subkey,value:JSON.stringify(val00)};
+    }
     if (docs.length > 1) {
+      
       console.warn('Warning: unexpected: more than one document found in getCollectionPair');
     }
     if (docs.length != 1) return null;
     return docs[0];
   };
-  this.setCollectionPair = async function(collection, key, value, overwrite) {
+  this.setCollectionPair = async function(collection, key, subkey, value, overwrite) {
     if (!m_db) {
       throw new Error('Not connected to database');
     }
+    let record;
+    if (subkey) {
+        record={
+            collection: collection,
+            key: key,
+            subkey: subkey
+        }
+    }
+    else {
+        record={
+            collection: collection,
+            key: key
+        }
+    }
+
     let collec = m_db.collection("collectionpairs");
     if (!value) {
       //await collec.remove({collection:collection,key:key});
-      await collec.deleteOne({
-        collection: collection,
-        key: key
-      });
+      await collec.deleteOne(record);
     } else if (overwrite) {
-      await collec.updateOne({
-        collection: collection,
-        key: key
-      }, {
+      await collec.updateOne(record, {
         $set: {
           value: value
         }
@@ -552,10 +544,7 @@ function CairioDB() {
         upsert: true
       });
     } else {
-      let tmp = await collec.updateOne({
-        collection: collection,
-        key: key
-      }, {
+      let tmp = await collec.updateOne(record, {
         $setOnInsert: {
           value: value
         }

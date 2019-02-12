@@ -241,7 +241,7 @@ def get_batch_jobs(*, batch_name):
 def get_batch_job_statuses(*, batch_name, job_index=None):
     key = dict(name='batcho_job_status_strings',
                batch_name=batch_name)
-    obj = ca.getValue(key=key, parse_json=True)
+    obj = ca.getValue(key=key, subkey='-', parse_json=True)
     if not obj:
         return dict()
     return obj
