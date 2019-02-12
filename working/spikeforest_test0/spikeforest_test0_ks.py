@@ -23,7 +23,7 @@ import shutil
 def main():
     # generate toy recordings
     delete_recordings = False
-    num_recordings=1
+    num_recordings = 1
     for num in range(1, num_recordings+1):
         name = 'toy_example{}'.format(num)
         if delete_recordings:
@@ -148,7 +148,7 @@ def define_sorters():
             adjacency_radius=50
         )
     )
-    sorter_ks=dict(
+    sorter_ks = dict(
         name='KiloSort',
         processor_name='KiloSort',
         params=dict(

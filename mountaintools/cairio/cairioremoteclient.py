@@ -71,7 +71,8 @@ class CairioRemoteClient():
         obj = _http_get_json(url0)
         if not obj.get('success'):
             if overwrite:
-                raise Exception('Problem setting value in collection {}: {}'.format(collection, obj.get('error', '')))
+                raise Exception('Problem setting value in collection {}: {}'.format(
+                    collection, obj.get('error', '')))
             return False
         return True
 
@@ -131,8 +132,8 @@ def _http_get_json(url, verbose=False, num_http_retries=2):
     except:
         if num_http_retries > 0:
             print('Retrying http request to: '+url)
-            _http_get_json(url, verbose=verbose,
-                           num_http_retries=num_http_retries-1)
+            return _http_get_json(url, verbose=verbose,
+                                  num_http_retries=num_http_retries-1)
         else:
             raise Exception('Unable to open url: '+url)
     try:
