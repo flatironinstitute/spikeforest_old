@@ -190,7 +190,7 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
         elif os.path.isdir(dirname+'/'+fname):
             if (not fname.startswith('__')) and (not fname.startswith('.')):
                 content = _read_python_code_of_directory(
-                    dirname+'/'+fname, exclude_init=False)
+                    dirname+'/'+fname, additional_files=additional_files, exclude_init=False)
                 if len(content['files'])+len(content['dirs']) > 0:
                     dirs.append(dict(
                         name=fname,
