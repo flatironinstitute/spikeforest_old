@@ -121,7 +121,8 @@ def run_batch(*, batch_name, job_index=None, randomize_order=False):
         indices = np.arange(len(jobs))
 
     num_ran = 0
-    for ii in indices:
+    for jj in indices:
+        ii = int(jj)
         job = jobs[ii]
         if (job_index is None) or (job_index == ii):
             _check_batch_code(batch_name, batch_code)
