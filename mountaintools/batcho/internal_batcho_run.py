@@ -17,11 +17,14 @@ def main():
     parser = argparse.ArgumentParser(
         description='Listen for batches as a compute resource')
     parser.add_argument('batch_name', help='Name of the batch to run')
+    parser.add_argument(
+        '--randomize_order', help='Run jobs in randomized order (helpful for parallel processing)', action='store_true')
 
     args = parser.parse_args()
 
     try:
-        batcho.run_batch(batch_name=args.batch_name)
+        batcho.run_batch(batch_name=args.batch_name,
+                         randomize_order=args.randomize_order)
     except Exception as err:
         traceback.print_exc()
         print('Error running batch:', err)

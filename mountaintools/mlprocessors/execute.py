@@ -483,13 +483,19 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
     return processor_job
 
 
+_realized_containers = set()
+
+
 def _prepare_processor_job(job):
     container = job.get('container', None)
     if container:
-        print('realizing container: '+container)
-        a = ca.realizeFile(path=container)
-        if not a:
-            raise Exception('Unable to realize container file: '+container)
+        if container not in _realized_containers:
+            print('realizing container: '+container)
+            a = ca.realizeFile(path=container)
+            if a:
+                _realized_containers.add(container)
+            else:
+                raise Exception('Unable to realize container file: '+container)
     files_to_realize = job.get('files_to_realize', [])
     for fname in files_to_realize:
         print('realizing file: '+fname)

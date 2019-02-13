@@ -8,6 +8,7 @@ import time
 import subprocess
 import traceback
 import multiprocessing
+import numpy as np
 
 _registered_commands = dict()
 
@@ -101,7 +102,7 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
     return True
 
 
-def run_batch(*, batch_name, job_index=None):
+def run_batch(*, batch_name, job_index=None, randomize_order=False):
     batch_code = _get_batch_code(batch_name)
     if not batch_code:
         raise Exception(
@@ -114,8 +115,14 @@ def run_batch(*, batch_name, job_index=None):
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
+    if randomize_order:
+        indices = np.random.permutation(len(jobs))
+    else:
+        indices = np.arange(len(jobs))
+
     num_ran = 0
-    for ii, job in enumerate(jobs):
+    for ii in indices:
+        job = jobs[ii]
         if (job_index is None) or (job_index == ii):
             _check_batch_code(batch_name, batch_code)
 
@@ -358,12 +365,12 @@ def _helper_call_run_batch(a):
     return _call_run_batch(**a)
 
 
-def _call_run_batch(batch_name, run_prefix, num_simultaneous=None):
+def _call_run_batch(batch_name, run_prefix, num_simultaneous=None, randomize_order=False):
     if num_simultaneous is not None:
         print('Running in parallel (num_simultaneous={}).'.format(num_simultaneous))
         pool = multiprocessing.Pool(num_simultaneous)
         results = pool.map(_helper_call_run_batch, [dict(
-            batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=None) for i in range(num_simultaneous)])
+            batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=None, randomize_order=True) for i in range(num_simultaneous)])
         pool.close()
         pool.join()
         for result in results:
@@ -376,8 +383,11 @@ def _call_run_batch(batch_name, run_prefix, num_simultaneous=None):
         run_prefix = ''
     if run_prefix:
         run_prefix = run_prefix+' '
-    cmd = '{}python {}/internal_batcho_run.py {}'.format(
-        run_prefix, source_dir, batch_name)
+    opts = []
+    if randomize_order:
+        opts.append('--randomize_order')
+    cmd = '{}python {}/internal_batcho_run.py {} {}'.format(
+        run_prefix, source_dir, batch_name, ' '.join(opts))
 
     try:
         ret_code = _run_command_and_print_output(cmd)
@@ -434,7 +444,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
         _check_batch_code(batch_name, batch_code)
 
         _set_batch_status(batch_name=batch_name, status=dict(status='running'))
-        if not _call_run_batch(batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=num_simultaneous):
+        if not _call_run_batch(batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=num_simultaneous, randomize_order=True):
             raise Exception('Problem running batch.')
         _check_batch_code(batch_name, batch_code)
 

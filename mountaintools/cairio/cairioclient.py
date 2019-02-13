@@ -15,9 +15,10 @@ from getpass import getpass
 
 class CairioClient():
     def __init__(self):
+        self._default_url = 'https://pairio.org:20443'
         self._remote_config = dict(
             # url='http://localhost:3010',
-            url='https://pairio.org:20443',
+            url=None,
             collection=None,
             token=None,
             share_id=None,
@@ -80,7 +81,7 @@ class CairioClient():
         return ret
 
     def addRemoteCollection(self, collection, token, admin_token):
-        return self._remote_client.addCollection(collection=collection, token=token, url=self._remote_config['url'], admin_token=admin_token)
+        return self._remote_client.addCollection(collection=collection, token=token, url=self._remote_config.get('url') or self._default_url, admin_token=admin_token)
 
     # get value / set value
     def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None):
@@ -212,7 +213,7 @@ class CairioClient():
         if collection is None:
             collection = self._remote_config['collection']
         if collection:
-            return self._remote_client.getValue(key=key, subkey=subkey, collection=collection, url=self._remote_config['url'])
+            return self._remote_client.getValue(key=key, subkey=subkey, collection=collection, url=self._remote_config.get('url') or self._default_url)
         return self._local_db.getValue(key=key, subkey=subkey)
 
     def _set_value(self, *, key, subkey, value, overwrite, password=None):
@@ -220,7 +221,7 @@ class CairioClient():
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
         if collection:
-            return self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config['url'], token=self._remote_config['token'])
+            return self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token'])
         return self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite)
 
     def _get_sub_keys(self, *, key, password=None):
