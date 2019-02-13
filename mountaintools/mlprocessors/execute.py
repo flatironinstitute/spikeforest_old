@@ -397,6 +397,12 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         else:
             _force_run = False
 
+    if _keep_temp_files is None:
+        if os.environ.get('MLPROCESSORS_KEEP_TEMP_FILES', '') == 'TRUE':
+            _keep_temp_files = True
+        else:
+            _keep_temp_files = False
+
     inputs = dict()
     for input0 in proc.INPUTS:
         name0 = input0.name
