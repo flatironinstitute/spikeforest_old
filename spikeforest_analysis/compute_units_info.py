@@ -24,12 +24,12 @@ def get_random_spike_waveforms(*,recording,sorting,unit,snippet_len,max_num,chan
       spikes=np.zeros((recording.getNumChannels(),snippet_len,0))
     return spikes
 
-def compute_unit_templates(*,recording,sorting,unit_ids,snippet_len=50):
+def compute_unit_templates(*,recording,sorting,unit_ids,snippet_len=50,max_num=100,channels=None):
     ret=[]
     for unit in unit_ids:
-        #print('Unit {} of {}'.format(unit,len(unit_ids)))
-        waveforms=get_random_spike_waveforms(recording=recording,sorting=sorting,unit=unit,snippet_len=snippet_len,max_num=100)
-        template=np.mean(waveforms,axis=2)
+        # print('Unit {} of {}'.format(unit,len(unit_ids)))
+        waveforms=get_random_spike_waveforms(recording=recording,sorting=sorting,unit=unit,snippet_len=snippet_len,max_num=max_num,channels=None)
+        template=np.median(waveforms,axis=2)
         ret.append(template)
     return ret
 
@@ -54,7 +54,7 @@ def compute_channel_noise_levels(recording):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.4'
+  VERSION='0.1.5k'
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
   unit_ids=mlpr.IntegerListParameter(description='List of units to use.',optional=True,default=[])
@@ -65,25 +65,36 @@ class ComputeUnitsInfo(mlpr.Processor):
     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if (self.channel_ids) and (len(self.channel_ids)>0):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
-    recording=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
+    
+    recording = R0
+    # recording=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
+
     sorting=si.MdaSortingExtractor(firings_file=self.firings)
     unit_ids=self.unit_ids
     if (not unit_ids) or (len(unit_ids)==0):
       unit_ids=sorting.getUnitIds()
   
     channel_noise_levels=compute_channel_noise_levels(recording=recording)
-    print('computing templates...')
+
     # No longer use subset to compute the templates
-    templates=compute_unit_templates(recording=recording,sorting=sorting,unit_ids=unit_ids)
-    print('.')
+    templates=compute_unit_templates(recording=recording,sorting=sorting,unit_ids=unit_ids,max_num=100)
+
     ret=[]
     for i,unit_id in enumerate(unit_ids):
       template=templates[i]
+      max_p2p_amps_on_channels=np.max(template,axis=1)-np.min(template,axis=1)
+      peak_channel_index=np.argmax(max_p2p_amps_on_channels)
+      peak_channel=recording.getChannelIds()[peak_channel_index]
+      R1=si.SubRecordingExtractor(parent_recording=recording,channel_ids=[peak_channel_index])
+      R1f=sw.lazyfilters.bandpass_filter(recording=R1,freq_min=300,freq_max=6000)
+      templates2=compute_unit_templates(recording=R1f,sorting=sorting,unit_ids=[unit_id],max_num=100)
+      template2=templates2[0]
       info0=dict()
       info0['unit_id']=int(unit_id)
-      info0['snr']=compute_template_snr(template,channel_noise_levels)
-      peak_channel_index=np.argmax(np.max(np.abs(template),axis=1))
-      info0['peak_channel']=int(recording.getChannelIds()[peak_channel_index])
+      info0['snr']=np.max(np.abs(template2))/channel_noise_levels[peak_channel_index]
+      #info0['snr']=compute_template_snr(template,channel_noise_levels)
+      #peak_channel_index=np.argmax(np.max(np.abs(template),axis=1))
+      info0['peak_channel']=int(recording.getChannelIds()[peak_channel])
       train=sorting.getUnitSpikeTrain(unit_id=unit_id)
       info0['num_events']=int(len(train))
       info0['firing_rate']=float(len(train)/(recording.getNumFrames()/recording.getSamplingFrequency()))

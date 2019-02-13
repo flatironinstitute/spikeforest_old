@@ -31,13 +31,13 @@ def summarize_recordings(recordings, compute_resource=None):
         )
         job['files_to_realize']=[raw_path,firings_true_path]
         jobs_info.append(job)
-        job=CreateTimeseriesPlot.createJob(
-            recording_dir=recording['directory'],
-            channels=recording.get('channels',[]),
-            jpg_out={'ext':'.jpg','upload':True},
-            _container=container
-        )
-        jobs_timeseries_plot.append(job)
+        # job=CreateTimeseriesPlot.createJob(
+        #     recording_dir=recording['directory'],
+        #     channels=recording.get('channels',[]),
+        #     jpg_out={'ext':'.jpg','upload':True},
+        #     _container=container
+        # )
+        # jobs_timeseries_plot.append(job)
         job=ComputeUnitsInfo.createJob(
             recording_dir=recording['directory'],
             firings=recording['directory']+'/firings_true.mda',
@@ -48,7 +48,8 @@ def summarize_recordings(recordings, compute_resource=None):
         )
         jobs_units_info.append(job)
     
-    all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
+    # all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
+    all_jobs=jobs_info+jobs_units_info
     label='Summarize recordings'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
@@ -61,10 +62,11 @@ def summarize_recordings(recordings, compute_resource=None):
         result0=jobs_info[i]['result']
         summary['computed_info']=ca.loadObject(path=result0['outputs']['json_out'])
         
-        result0=jobs_timeseries_plot[i]['result']
-        summary['plots']=dict(
-            timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
-        )
+        # result0=jobs_timeseries_plot[i]['result']
+        # summary['plots']=dict(
+        #     timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
+        # )
+        summary['plots']=dict()
 
         result0=jobs_units_info[i]['result']
         summary['true_units_info']=ca.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
@@ -120,13 +122,6 @@ def read_json_file(fname):
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
     json.dump(obj, f)
-    
-def save_plot(fname,quality=40):
-    plt.savefig(fname+'.png')
-    plt.close()
-    im=Image.open(fname+'.png').convert('RGB')
-    os.remove(fname+'.png')
-    im.save(fname,quality=quality)
 
 # A MountainLab processor for generating the summary info for a recording
 class ComputeRecordingInfo(mlpr.Processor):
@@ -145,6 +140,13 @@ class ComputeRecordingInfo(mlpr.Processor):
     ret['num_channels']=len(recording.getChannelIds())
     ret['duration_sec']=recording.getNumFrames()/ret['samplerate']
     write_json_file(self.json_out,ret)
+
+def save_plot(fname,quality=40):
+    plt.savefig(fname+'.png')
+    plt.close()
+    im=Image.open(fname+'.png').convert('RGB')
+    os.remove(fname+'.png')
+    im.save(fname,quality=quality)
 
 # A MountainLab processor for generating a plot of a portion of the timeseries
 class CreateTimeseriesPlot(mlpr.Processor):
