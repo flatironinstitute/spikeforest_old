@@ -371,7 +371,7 @@ def _call_run_batch(batch_name, run_prefix, num_simultaneous=None, randomize_ord
         print('Running in parallel (num_simultaneous={}).'.format(num_simultaneous))
         pool = multiprocessing.Pool(num_simultaneous)
         results = pool.map(_helper_call_run_batch, [dict(
-            batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=None, randomize_order=True) for i in range(num_simultaneous)])
+            batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=None, randomize_order=False) for i in range(num_simultaneous)])
         pool.close()
         pool.join()
         for result in results:
@@ -445,7 +445,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
         _check_batch_code(batch_name, batch_code)
 
         _set_batch_status(batch_name=batch_name, status=dict(status='running'))
-        if not _call_run_batch(batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=num_simultaneous, randomize_order=True):
+        if not _call_run_batch(batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=num_simultaneous, randomize_order=False):
             raise Exception('Problem running batch.')
         _check_batch_code(batch_name, batch_code)
 
