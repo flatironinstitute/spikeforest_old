@@ -43,52 +43,29 @@ The repo/ directory contains a snapshot of a number of different dependent proje
 
 Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/spikeforest-docs/blob/master/docs/index.md)
 
-## Installation using theiapod
+## Installation using codepod
 
-You can use spikeforest2 with theiapod.
+You can use spikeforest2 with codepod.
 
-Prerequisites: [docker](https://docs.docker.com/) and [theiapod](https://github.com/magland/theiapod)
+Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.com/magland/codepod)
 
-First clone this repo and checkout this branch (currently dev):
+First clone this repo and checkout this branch (currently dev-unicorn):
 
 ```
 git clone https://github.com/flatironinstitute/spikeforest2
-git checkout -b dev
+git checkout -b dev-unicorn
 ```
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-Then create and run a script such as the following.
+Then run the ./codepod.sh convenience script in the repo
 
 ```
-#!/bin/bash
-set -ex
-
-OPTS=""
-
-# Ports
-OPTS="$OPTS --port 3000"
-
-# git configuration
-if [ -f "$HOME/.gitconfig" ]; then
-  OPTS="$OPTS -v $HOME/.gitconfig:/home/theiapod/.gitconfig"
-fi
-if [ -d "$HOME/.git-credential-cache" ]; then
-  OPTS="$OPTS -v $HOME/.git-credential-cache:/home/theiapod/.git-credential-cache"
-fi
-
-# KBucket cache directory
-if [ ! -z "$KBUCKET_CACHE_DIR" ]; then
-  OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache"
-fi
-
-# Need --privileged in order to run singularity containers
-OPTS="$OPTS --docker_opts \"--privileged\""
-
-# Run the container
-theiapod -w $PWD/spikeforest2 $OPTS
+cd spikeforest2 # make sure you are on the dev-unicorn branch
+./codepod.sh
 ```
 
-This will create a container with the theia browser-based IDE. You can then start interacting with the project by pointing your web browser (preferably chrome) to `http://localhost:3000`.
-
-You run jupyter lab or other web services within the container and then connect to them via other tabs in your web browser.
+This will download a docker image and put you in a container where you can run
+```
+code .
+```
