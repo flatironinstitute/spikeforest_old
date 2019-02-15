@@ -2,7 +2,7 @@
 
 ## Installation
 
-(See below for instructions on opening this project in a docker container via theiapod)
+(See below for instructions on opening this project in a docker container via codepod)
 
 This is a meta repository that is meant to be used in development/editable mode.
 
