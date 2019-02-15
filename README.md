@@ -41,8 +41,6 @@ In addition, if you want to use some of the interactive graphics within jupyterl
 
 The repo/ directory contains a snapshot of a number of different dependent projects. These may or may not be up-to-date with the associated stand-alone packages. In this way, spikeforest2 is a snapshot project that contains all the necessary code, and is less susceptible to breaking changes in other packages.
 
-Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/spikeforest-docs/blob/master/docs/index.md)
-
 ## Installation using codepod
 
 You can use spikeforest2 with codepod.
