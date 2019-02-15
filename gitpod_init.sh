@@ -2,16 +2,9 @@
 set -ex
 
 # These should already be installed from the container
-pip install -r requirements.txt
-python setup.py develop
-
-cd mountaintools
-pip install -r requirements.txt
-python setup.py develop
-
-pip install jupyterlab
+./setup_python.sh
 
 # Additional development packages
-pip install autopep8 # for formatting python code
+# pip install autopep8 # for formatting python code
 #git config core.hooksPath .githooks
 #pip install --upgrade nbstripout # for stripping output on .ipynb files

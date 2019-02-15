@@ -63,6 +63,8 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
+    recordings=[recordings[0]]
+
     # Summarize the recordings
     recordings_B = sa.summarize_recordings(
         recordings=recordings, compute_resource=compute_resource)

@@ -14,3 +14,8 @@ RUN . /venv/bin/activate && jupyter labextension install @jupyter-widgets/jupyte
 # Singularity
 RUN apt-get install -y libarchive-dev
 RUN VERSION=2.5.2 && wget https://github.com/singularityware/singularity/releases/download/$VERSION/singularity-$VERSION.tar.gz && tar xvf singularity-$VERSION.tar.gz && cd singularity-$VERSION && ./configure --prefix=/usr/local && make && make install
+
+#########################################
+### PyQt5.QtWebEngine
+RUN apt-get update && apt-get install -y python3-pyqt5.qtwebengine
+ENV PYTHONPATH=/usr/lib/python3/dist-packages

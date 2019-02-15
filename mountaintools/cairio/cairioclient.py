@@ -407,12 +407,16 @@ class CairioLocal():
 
     def getValue(self, *, key, subkey=None):
         if subkey is not None:
-            val = self.getValue(key=key, subkey=None)
+            val = self.getValue(key=dict(subkeys=True, key=key))
             try:
                 val = json.loads(val)
-                return val.get(subkey, None)
             except:
-                return None
+                val = None
+            if val is None:
+                val = dict()
+            if subkey == '-':
+                return json.dumps(val)
+            return val.get(subkey, None)
         keyhash = _hash_of_key(key)
         db_path = self._get_db_path_for_keyhash(keyhash)
         db = _db_load(db_path)
@@ -424,7 +428,7 @@ class CairioLocal():
 
     def setValue(self, *, key, subkey, value, overwrite):
         if subkey is not None:
-            val = self.getValue(key=key)
+            val = self.getValue(key=dict(subkeys=True, key=key))
             try:
                 val = json.loads(val)
             except:
@@ -436,7 +440,7 @@ class CairioLocal():
             else:
                 if subkey in val:
                     del val[subkey]
-            return self.setValue(key=key, value=json.dumps(val), subkey=None, overwrite=overwrite)
+            return self.setValue(key=dict(subkeys=True,key=key), value=json.dumps(val), subkey=None, overwrite=overwrite)
         keyhash = _hash_of_key(key)
         db_path = self._get_db_path_for_keyhash(keyhash)
         db = _db_load(db_path)
