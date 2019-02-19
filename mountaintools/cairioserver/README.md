@@ -14,7 +14,14 @@ docker run -it --net=host magland/cairioserver test_admin_token mongodb://localh
 
 ## To test a running server:
 
-From python:
+First make sure cairio python module is available. You can do this by installing spikeforest2 or by running
+
+```
+cd mountaintools
+python setup.py develop
+```
+
+Then, from python run the following test:
 
 ```
 from cairio import client as ca
