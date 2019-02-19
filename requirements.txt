@@ -11,3 +11,8 @@ numpy
 matplotlib
 scipy
 ipython
+
+pytest
+pytest-cov
+idna
+autopep8

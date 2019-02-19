@@ -81,7 +81,12 @@ class CairioClient():
         return ret
 
     def addRemoteCollection(self, collection, token, admin_token):
-        return self._remote_client.addCollection(collection=collection, token=token, url=self._remote_config.get('url') or self._default_url, admin_token=admin_token)
+        return self._remote_client.addCollection(
+            collection=collection,
+            token=token,
+            url=self._remote_config.get('url') or self._default_url,
+            admin_token=admin_token
+        )
 
     # get value / set value
     def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None):
@@ -90,7 +95,7 @@ class CairioClient():
         if parse_json and ret:
             try:
                 ret = json.loads(ret)
-            except:
+            except:  # pragma: no cover
                 print('Warning: Problem parsing json in cairio.getValue()')
                 return None
         return ret
