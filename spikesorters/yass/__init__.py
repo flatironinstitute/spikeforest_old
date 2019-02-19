@@ -1,1 +1,1 @@
-from .yass import YassProcessor
+from .yass import YASS

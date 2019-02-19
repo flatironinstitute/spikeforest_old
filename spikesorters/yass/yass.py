@@ -10,13 +10,14 @@ import shlex
 import random
 import string
 import shutil
+from .yasssortingextractor import yassSortingExtractor
 
 # yass uses negative polarity by default
 
 
-class YassProcessor(mlpr.Processor):
-    NAME = 'YassProcessor'
-    VERSION = '0.0.1'
+class YASS(mlpr.Processor):
+    NAME = 'YASS'
+    VERSION = '0.0.3a'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -28,6 +29,7 @@ class YassProcessor(mlpr.Processor):
     channels = mlpr.IntegerListParameter(
         description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
+    #paramfile_out = mlpr.Output('YASS yaml config file')
 
     detect_sign = mlpr.IntegerParameter(description='-1, 1, or 0')
     adjacency_radius = mlpr.FloatParameter(
@@ -41,8 +43,8 @@ class YassProcessor(mlpr.Processor):
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/yass-tmp-'+code
 
-        num_workers = os.environ.get('NUM_WORKERS', 1)
-
+        #num_workers = os.environ.get('NUM_WORKERS', 1)
+        #print('num_workers: {}'.format(num_workers))
         try:
             recording = se.MdaRecordingExtractor(self.recording_dir)
             if len(self.channels) > 0:
@@ -50,7 +52,7 @@ class YassProcessor(mlpr.Processor):
                     parent_recording=recording, channel_ids=self.channels)
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
-            sorting = yass_helper(
+            sorting, yaml_file = yass_helper(
                 recording=recording,
                 output_folder=tmpdir,
                 probe_file=None,
@@ -58,11 +60,10 @@ class YassProcessor(mlpr.Processor):
                 detect_sign=self.detect_sign,
                 adjacency_radius=self.adjacency_radius,
                 template_width_ms=self.template_width_ms,
-                filter=self.filter,
-                n_cores=num_workers,
-            )
+                filter=self.filter)
             se.MdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
+            #shutil.copyfile(yaml_file, self.paramfile_out)
         except:
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
@@ -78,9 +79,7 @@ def yass_helper(
     detect_sign=-1,  # -1 - 1 - 0
     template_width_ms=1,  # yass parameter
     filter=True,
-    adjacency_radius=100,
-    n_cores=None
-):
+    adjacency_radius=100):
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -102,37 +101,41 @@ def yass_helper(
     if file_name is None:
         file_name = 'raw.bin'
     bin_file = join_abspath_(output_folder, file_name)
-    se.RawRecordingExtractor.writeRecording(recording=recording, save_path=bin_file,
-                                            fReversePolarity=(detect_sign > 0), dtype=np.int16)
+    #print('bin_file:{}'.format(bin_file))
+    writeRecording_(recording=recording, save_path=bin_file,
+                    fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=10)
+    #print('bin_file exists? {}'.format(os.path.exists(bin_file)))
 
     # set up yass config file
     print(source_dir)
     with open(join(source_dir, 'config_default.yaml'), 'r') as f:
-        yass_config = f.readlines()
+        yass_config = f.read()
 
     # get the order
     # root_folder, recordings, geometry, dtype, sampling_rate, n_channels, spatial_radius, spike_size_ms, filter
     n_channels = recording.getNumChannels()
     sampling_rate = recording.getSamplingFrequency()
 
-    yass_config = ''.join(yass_config).format(
-        output_folder, bin_file, probe_file, 'int16', sampling_rate, n_channels, adjacency_radius, template_width_ms, filter)
-    with open(join(output_folder, file_name + '.params'), 'w') as f:
-        f.writelines(yass_config)
+    #print('sampling_rate={}'.format(sampling_rate))
+
+    yaml_file = join(output_folder, file_name + '.yaml')
+    yass_config = yass_config.format(
+        output_folder, bin_file, probe_file, 'single', int(sampling_rate), n_channels, adjacency_radius, template_width_ms, filter)
+    with open(yaml_file, 'w') as f:
+        f.write(yass_config)
+
+    with open(yaml_file) as ff:
+        print('YASS CONFIG:')
+        print(ff.read())
 
     print('Running yass...')
     t_start_proc = time.time()
-    if n_cores is None:
-        n_cores = np.maximum(1, int(os.cpu_count()/2))
-
-    output_folder_cmd = output_folder
 
     yass_path = '/usr/local/bin'
     num_cores_str = ''
-    if int(n_cores) > 1:
-        num_cores_str = '-c {}'.format(n_cores)
-    cmd = 'python2 {}/yass {} {} '.format(
-        yass_path, join(output_folder_cmd, file_name+'.yaml'), num_cores_str)
+    #cmd = 'python2 {}/yass {} {} '.format(
+    #    yass_path, join(output_folder, file_name+'.yaml'), num_cores_str)
+    cmd = 'yass {}'.format(join(output_folder, file_name+'.yaml'))
 
     retcode = run_command_and_print_output(cmd)
     if retcode != 0:
@@ -143,9 +146,9 @@ def yass_helper(
     #    raise Exception('yass merging returned a non-zero exit code')
     processing_time = time.time() - t_start_proc
     print('Elapsed time: ', processing_time)
-    sorting = se.yassSortingExtractor(output_folder)
+    sorting = yassSortingExtractor(join_abspath_(output_folder, 'tmp'))
 
-    return sorting
+    return sorting, yaml_file
 
 
 def run_command_and_print_output(command):
@@ -167,3 +170,19 @@ def run_command_and_print_output(command):
 def join_abspath_(path1, path2):
     path_abs = os.path.abspath(os.path.join(path1, path2))
     return path_abs
+
+
+def writeRecording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=10):
+    #save_path = Path(save_path)
+    print('writeRecording2: {}'.format(str(save_path)))
+
+    if dtype == None:
+        dtype = np.float32
+    np_Wav = np.array(recording.getTraces(), dtype=dtype)
+    if transpose:
+        np_Wav = np.transpose(np_Wav)
+    if fReversePolarity:
+        np_Wav = np_Wav * -1
+    np_Wav = np_Wav * scale_factor
+    with open(save_path, 'wb') as f:
+        np_Wav.tofile(f)
