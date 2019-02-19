@@ -2,7 +2,7 @@
 
 ## Installation
 
-(See below for instructions on opening this project in a docker container via theiapod)
+(See below for instructions on opening this project in a docker container via codepod)
 
 This is a meta repository that is meant to be used in development/editable mode.
 
@@ -41,54 +41,29 @@ In addition, if you want to use some of the interactive graphics within jupyterl
 
 The repo/ directory contains a snapshot of a number of different dependent projects. These may or may not be up-to-date with the associated stand-alone packages. In this way, spikeforest2 is a snapshot project that contains all the necessary code, and is less susceptible to breaking changes in other packages.
 
-Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/spikeforest-docs/blob/master/docs/index.md)
+## Installation using codepod
 
-## Installation using theiapod
+You can use spikeforest2 with codepod.
 
-You can use spikeforest2 with theiapod.
+Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.com/magland/codepod)
 
-Prerequisites: [docker](https://docs.docker.com/) and [theiapod](https://github.com/magland/theiapod)
-
-First clone this repo and checkout this branch (currently dev):
+First clone this repo and checkout this branch (currently dev-unicorn):
 
 ```
 git clone https://github.com/flatironinstitute/spikeforest2
-git checkout -b dev
+git checkout -b dev-unicorn
 ```
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-Then create and run a script such as the following.
+Then run the ./codepod.sh convenience script in the repo
 
 ```
-#!/bin/bash
-set -ex
-
-OPTS=""
-
-# Ports
-OPTS="$OPTS --port 3000"
-
-# git configuration
-if [ -f "$HOME/.gitconfig" ]; then
-  OPTS="$OPTS -v $HOME/.gitconfig:/home/theiapod/.gitconfig"
-fi
-if [ -d "$HOME/.git-credential-cache" ]; then
-  OPTS="$OPTS -v $HOME/.git-credential-cache:/home/theiapod/.git-credential-cache"
-fi
-
-# KBucket cache directory
-if [ ! -z "$KBUCKET_CACHE_DIR" ]; then
-  OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache"
-fi
-
-# Need --privileged in order to run singularity containers
-OPTS="$OPTS --docker_opts \"--privileged\""
-
-# Run the container
-theiapod -w $PWD/spikeforest2 $OPTS
+cd spikeforest2 # make sure you are on the dev-unicorn branch
+./codepod.sh
 ```
 
-This will create a container with the theia browser-based IDE. You can then start interacting with the project by pointing your web browser (preferably chrome) to `http://localhost:3000`.
-
-You run jupyter lab or other web services within the container and then connect to them via other tabs in your web browser.
+This will download a docker image and put you in a container where you can run
+```
+code .
+```
