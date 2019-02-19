@@ -23,7 +23,7 @@ class YASS(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.yaml']
     CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
-    CONTAINER_SHARE_ID = '69432e9201d0' # place to look for container
+    CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
@@ -72,14 +72,14 @@ class YASS(mlpr.Processor):
 
 
 def yass_helper(
-    recording,
-    output_folder=None,  # Temporary working directory
-    probe_file=None,
-    file_name=None,
-    detect_sign=-1,  # -1 - 1 - 0
-    template_width_ms=1,  # yass parameter
-    filter=True,
-    adjacency_radius=100):
+        recording,
+        output_folder=None,  # Temporary working directory
+        probe_file=None,
+        file_name=None,
+        detect_sign=-1,  # -1 - 1 - 0
+        template_width_ms=1,  # yass parameter
+        filter=True,
+        adjacency_radius=100):
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -101,7 +101,7 @@ def yass_helper(
     if file_name is None:
         file_name = 'raw.bin'
     bin_file = join_abspath_(output_folder, file_name)
-    #print('bin_file:{}'.format(bin_file))
+    # print('bin_file:{}'.format(bin_file))
     writeRecording_(recording=recording, save_path=bin_file,
                     fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=10)
     #print('bin_file exists? {}'.format(os.path.exists(bin_file)))
@@ -116,7 +116,7 @@ def yass_helper(
     n_channels = recording.getNumChannels()
     sampling_rate = recording.getSamplingFrequency()
 
-    #print('sampling_rate={}'.format(sampling_rate))
+    # print('sampling_rate={}'.format(sampling_rate))
 
     yaml_file = join(output_folder, file_name + '.yaml')
     yass_config = yass_config.format(
@@ -133,7 +133,7 @@ def yass_helper(
 
     yass_path = '/usr/local/bin'
     num_cores_str = ''
-    #cmd = 'python2 {}/yass {} {} '.format(
+    # cmd = 'python2 {}/yass {} {} '.format(
     #    yass_path, join(output_folder, file_name+'.yaml'), num_cores_str)
     cmd = 'yass {}'.format(join(output_folder, file_name+'.yaml'))
 

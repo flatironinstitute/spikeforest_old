@@ -102,32 +102,36 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
     print('Prepared {} jobs for batch: {}'.format(num_prepared, batch_label))
     return True
 
-def _init_next_batch_job_index_to_run(*,batch_name):
-    key = dict(name='batcho_next_batch_job_index_to_run',
-               batch_name=batch_name)
-    ca.setValue(key=key,value=0)
 
-def _take_next_batch_job_index_to_run(*,batch_name):
+def _init_next_batch_job_index_to_run(*, batch_name):
     key = dict(name='batcho_next_batch_job_index_to_run',
                batch_name=batch_name)
-    last_attempted_job_index=-1
-    last_attempted_job_index_timestamp=time.time()
+    ca.setValue(key=key, value=0)
+
+
+def _take_next_batch_job_index_to_run(*, batch_name):
+    key = dict(name='batcho_next_batch_job_index_to_run',
+               batch_name=batch_name)
+    last_attempted_job_index = -1
+    last_attempted_job_index_timestamp = time.time()
     while True:
         val = ca.getValue(key=key)
         if val is None:
             return None
         job_index = int(val)
         if _acquire_job_lock(batch_name=batch_name, job_index=job_index):
-            ca.setValue(key=key,value=job_index+1)
+            ca.setValue(key=key, value=job_index+1)
             return job_index
         else:
-            if job_index==last_attempted_job_index:
-                elapsed0=time.time()-last_attempted_job_index_timestamp
-                if elapsed0>10:
-                    raise Exception('Unexpected problem where we cannot obtain the job lock, and yet the current job index remains at {} for {} seconds.'.format(job_index,elapsed0))
-            last_attempted_job_index=job_index
-            last_attempted_job_index_timestamp=time.time()
-            time.sleep(random.uniform(0,2))
+            if job_index == last_attempted_job_index:
+                elapsed0 = time.time()-last_attempted_job_index_timestamp
+                if elapsed0 > 10:
+                    raise Exception('Unexpected problem where we cannot obtain the job lock, and yet the current job index remains at {} for {} seconds.'.format(
+                        job_index, elapsed0))
+            last_attempted_job_index = job_index
+            last_attempted_job_index_timestamp = time.time()
+            time.sleep(random.uniform(0, 2))
+
 
 def run_batch(*, batch_name, job_index=None):
     batch_code = _get_batch_code(batch_name)
@@ -143,11 +147,11 @@ def run_batch(*, batch_name, job_index=None):
     print('RUN: Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
     while True:
-        ii=_take_next_batch_job_index_to_run(batch_name=batch_name)
-        if (ii is None) or (ii>=len(jobs)):
+        ii = _take_next_batch_job_index_to_run(batch_name=batch_name)
+        if (ii is None) or (ii >= len(jobs)):
             break
-        job=jobs[ii]
-        num_ran=0
+        job = jobs[ii]
+        num_ran = 0
         if (job_index is None) or (job_index == ii):
             _check_batch_code(batch_name, batch_code)
 

@@ -1,18 +1,18 @@
-#%% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
+# %% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
 import os
 try:
-	os.chdir(os.path.join(os.getcwd(), 'working/spikeforest_test1'))
-	print(os.getcwd())
+    os.chdir(os.path.join(os.getcwd(), 'working/spikeforest_test1'))
+    print(os.getcwd())
 except:
-	pass
+    pass
 
-#%%
+# %%
 import spikeforest_analysis as sa
 from cairio import client as ca
 import os
 
 
-#%%
+# %%
 
 def define_sorters():
     sorter_ms4_thr3 = dict(
@@ -45,7 +45,7 @@ def define_sorters():
     return [sorter_ms4_thr3, sorter_sc]
 
 
-#%%
+# %%
 compute_resource = 'local-computer'
 
 # Use this to control whether we force the processing to re-run (by default it uses cached results)
@@ -117,4 +117,4 @@ ca.saveObject(
     )
 )
 
-#%%
+# %%

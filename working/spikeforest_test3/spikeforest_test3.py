@@ -42,8 +42,8 @@ def main():
     # Specify the compute resource (see the note above)
     #compute_resource = 'ccmlin008-80'
     #compute_resource_ks = 'ccmlin008-kilosort'
-    compute_resource=None
-    compute_resource_ks=None
+    compute_resource = None
+    compute_resource_ks = None
 
     #compute_resource = 'ccmlin000-80'
     #compute_resource_ks = 'ccmlin000-kilosort'
@@ -63,7 +63,7 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    recordings=[recordings[0]]
+    recordings = [recordings[0]]
 
     # Summarize the recordings
     recordings_B = sa.summarize_recordings(
@@ -190,7 +190,7 @@ def define_sorters():
         )
     )
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    #return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
     return [sorter_ms4_thr3]
 
 

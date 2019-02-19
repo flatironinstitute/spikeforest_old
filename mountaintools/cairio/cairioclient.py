@@ -440,7 +440,7 @@ class CairioLocal():
             else:
                 if subkey in val:
                     del val[subkey]
-            return self.setValue(key=dict(subkeys=True,key=key), value=json.dumps(val), subkey=None, overwrite=overwrite)
+            return self.setValue(key=dict(subkeys=True, key=key), value=json.dumps(val), subkey=None, overwrite=overwrite)
         keyhash = _hash_of_key(key)
         db_path = self._get_db_path_for_keyhash(keyhash)
         db = _db_load(db_path)

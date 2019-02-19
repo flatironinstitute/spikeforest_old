@@ -405,7 +405,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
 
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
-            _container=proc.CONTAINER
+            _container = proc.CONTAINER
             print('Using container: '+_container)
 
     inputs = dict()
@@ -718,7 +718,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
 
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
-            _container=proc.CONTAINER
+            _container = proc.CONTAINER
             print('Using container: '+_container)
 
     timer = time.time()

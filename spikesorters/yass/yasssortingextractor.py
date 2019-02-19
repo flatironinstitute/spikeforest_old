@@ -5,6 +5,8 @@ from pathlib import Path
 # written for yass v0.5
 # James Jun, 2017 Feb 8
 # modified from spykingcircussortingextractor.py
+
+
 class yassSortingExtractor(SortingExtractor):
     def __init__(self, yass_folder):
         SortingExtractor.__init__(self)
@@ -18,11 +20,11 @@ class yassSortingExtractor(SortingExtractor):
         if results is None:
             raise Exception(yass_folder, " is not a yass folder")
         np_results = np.load(results)
-        spike_times = np_results[:,0].astype(int)
-        spike_clusters = np_results[:,1].astype(int)
+        spike_times = np_results[:, 0].astype(int)
+        spike_clusters = np_results[:, 1].astype(int)
 
         self._spiketrains = []
-        clust_id = np.unique(np_results[:,1])
+        clust_id = np.unique(np_results[:, 1])
         self._unit_ids = list(clust_id)
         for clust in self._unit_ids:
             idx = np.where(spike_clusters == clust)[0]
@@ -64,5 +66,5 @@ class yassSortingExtractor(SortingExtractor):
         sorting_idxs = np.argsort(spike_times)
         spike_times = spike_times[sorting_idxs]
         spike_clusters = spike_templates[sorting_idxs]
-        np_results = np.stack((spike_times, spike_clusters),axis=1)
+        np_results = np.stack((spike_times, spike_clusters), axis=1)
         np.save(save_path, np_results.astype(int))
