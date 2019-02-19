@@ -80,6 +80,8 @@ GET:/admin/create/[new_collection]/[new_collection_token]?signature=[signature]
 The admin token is stored in the environment variable CAIRIO_ADMIN_TOKEN
 on the server.
 
+The mongodb url is stored in the environment variable MONGODB_URL
+
 Information about a collection may be obtained via
 
 GET:/admin/get/[collection]/info?signature=[signature]
@@ -109,6 +111,8 @@ const fs = require('fs');
 const MAX_KEY_LENGTH = 40;
 //const MAX_VALUE_LENGTH=40;
 const MAX_VALUE_LENGTH = 10000; // should be 80
+
+const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017'
 
 function CairioServer(API) {
   this.app = function() {
@@ -602,7 +606,7 @@ async function main() {
 
   let DB = new CairioDB();
   try {
-    await DB.connect('mongodb://localhost:27017', 'cairio');
+    await DB.connect(MONGODB_URL, 'cairio');
   } catch (err) {
     console.error(err);
     console.error('Error connecting to database: ' + err.message);
