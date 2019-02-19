@@ -4,7 +4,7 @@ import os, sys
 #     if dir0 not in sys.path:
 #         sys.path.append(dir0)
 # append_to_path(os.getcwd()+'/..')
-from spikesorters import MountainSort4, SpykingCircus, YassProcessor
+from spikesorters import MountainSort4, SpykingCircus, YASS
 import spikeextractors as se
 import tempfile
 import shutil
@@ -55,19 +55,18 @@ def test_spyking_circus(tmpdir):
     )
     assert os.path.exists(tmpdir+'/firings.mda')
 
-# Not quite ready: James to debug
-# def test_yass(tmpdir):
-#     tmpdir=str(tmpdir)
+def test_yass(tmpdir):
+    tmpdir=str(tmpdir)
 
-#     rx, sx = se.example_datasets.toy_example1()
-#     se.MdaRecordingExtractor.writeRecording(recording=rx,save_path=tmpdir+'/recording')
-#     se.MdaSortingExtractor.writeSorting(sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
+    rx, sx = se.example_datasets.toy_example1()
+    se.MdaRecordingExtractor.writeRecording(recording=rx,save_path=tmpdir+'/recording')
+    se.MdaSortingExtractor.writeSorting(sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
     
-#     YassProcessor.execute(
-#         recording_dir=tmpdir+'/recording',
-#         firings_out=tmpdir+'/firings.mda',
-#         detect_sign=-1,
-#         adjacency_radius=50,
-#         _container='default'
-#     )
-#     assert os.path.exists(tmpdir+'/firings.mda')
+    YASS.execute(
+        recording_dir=tmpdir+'/recording',
+        firings_out=tmpdir+'/firings.mda',
+        detect_sign=-1,
+        adjacency_radius=50,
+        _container='default'
+    )
+    assert os.path.exists(tmpdir+'/firings.mda')
