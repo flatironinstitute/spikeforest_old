@@ -184,9 +184,11 @@ def sort_recordings(*,sorter,recordings,compute_resource=None):
         raise Exception('No such sorter: '+processor_name)
 
     if SS_container:
-         print('Locating container: '+SS_container)
-         if not ca.findFile(path=SS_container):
-             raise Exception('Unable to realize container: '+SS_container)
+        if SS_container=='default':
+            SS_container=SS.CONTAINER
+        print('Locating container: '+SS_container)
+        if not ca.findFile(path=SS_container):
+            raise Exception('Unable to realize container: '+SS_container)
         
     print('Sorting recordings using {}'.format(processor_name))
 

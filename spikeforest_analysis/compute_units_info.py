@@ -2,8 +2,9 @@ import numpy as np
 import json
 import mlprocessors as mlpr
 import spikeextractors as si
-import spikewidgets as sw
 from cairio import client as ca
+
+_CONTAINER='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
@@ -55,6 +56,7 @@ def compute_channel_noise_levels(recording):
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
   VERSION='0.1.5k'
+  CONTAINER=_CONTAINER
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
   unit_ids=mlpr.IntegerListParameter(description='List of units to use.',optional=True,default=[])
@@ -62,6 +64,8 @@ class ComputeUnitsInfo(mlpr.Processor):
   json_out=mlpr.Output('The info as a .json file')
   
   def run(self):
+    import spikewidgets as sw
+    
     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if (self.channel_ids) and (len(self.channel_ids)>0):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
@@ -104,7 +108,14 @@ class ComputeUnitsInfo(mlpr.Processor):
   
 ## return format can be 'json' or 'filename'
 def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return_format='json'):
-    out=ComputeUnitsInfo.execute(recording_dir=recording_dir,firings=firings,unit_ids=unit_ids,channel_ids=channel_ids,json_out={'ext':'.json'}).outputs
+    out=ComputeUnitsInfo.execute(
+      recording_dir=recording_dir,
+      firings=firings,
+      unit_ids=unit_ids,
+      channel_ids=channel_ids,
+      json_out={'ext':'.json'},
+      _container='default'
+    ).outputs
     fname=out['json_out']
     if return_format=='filename':
       return fname
