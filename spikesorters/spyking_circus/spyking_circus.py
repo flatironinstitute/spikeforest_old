@@ -14,7 +14,7 @@ import shutil
 
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
-    VERSION = '0.2.1'
+    VERSION = '0.2.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
@@ -137,18 +137,23 @@ def spyking_circus(
 
     # set up spykingcircus config file
     with open(join(source_dir, 'config_default.params'), 'r') as f:
-        circus_config = f.readlines()
+        circus_config = f.read()
     if merge_spikes:
         auto = 1e-5
     else:
         auto = 0
-    circus_config = ''.join(circus_config).format(
+    circus_config = circus_config.format(
         float(recording.getSamplingFrequency()
               ), probe_file, template_width_ms, spike_thresh, detect_sign, filter,
         whitening_max_elts, clustering_max_elts, auto
     )
-    with open(join(output_folder, file_name + '.params'), 'w') as f:
-        f.writelines(circus_config)
+    params_file = join(output_folder, file_name + '.params')
+    with open(params_file, 'w') as f:
+        f.write(circus_config)
+
+    #with open(params_file) as ff:
+    #    print('CIRCUS CONFIG:')
+    #    print(ff.read())
 
     print('Running spyking circus...')
     t_start_proc = time.time()

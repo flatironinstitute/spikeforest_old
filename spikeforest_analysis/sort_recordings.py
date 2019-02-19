@@ -7,7 +7,7 @@ import random
 import string
 from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, YassProcessor
+from spikesorters import MountainSort4, SpykingCircus, YASS
 
 
 class IronClust(mlpr.Processor):
@@ -168,9 +168,11 @@ class KiloSort(mlpr.Processor):
 Processors=dict(
     MountainSort4=(MountainSort4,'sha1://009406add7a55687cec176be912bc7685c2a4b1d/02-12-2019/mountainsort4.simg'),
     IronClust=(IronClust,None),
-    SpykingCircus=(SpykingCircus,'sha1://914becce45aec56a84dd1dd4bca4037b09c50373/02-12-2019/spyking_circus.simg'),
+    #SpykingCircus=(SpykingCircus,'sha1://914becce45aec56a84dd1dd4bca4037b09c50373/02-12-2019/spyking_circus.simg'),
+    SpykingCircus=(SpykingCircus,None),
     KiloSort=(KiloSort,None),
-    Yass=(YassProcessor,'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg')
+    #YASS=(YASS,'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg')
+    YASS=(YASS,None)
 )
         
 def sort_recordings(*,sorter,recordings,compute_resource=None):

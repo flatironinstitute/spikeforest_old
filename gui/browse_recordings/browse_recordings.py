@@ -29,8 +29,8 @@ class MainWindow(vd.Component):
         if not group_name:
             return
         a = ca.loadObject(
-            # key=dict(name='spikeforest_recording_group',group_name=group_name))
-            key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
+             key=dict(name='spikeforest_recording_group',group_name=group_name))
+            #key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
         SF = sf.SFData()
         SF.loadStudies(a['studies'])
         SF.loadRecordings2(a['recordings'])
