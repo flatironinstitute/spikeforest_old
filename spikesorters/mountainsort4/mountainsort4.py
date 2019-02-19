@@ -7,6 +7,8 @@ class MountainSort4(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
+    CONTAINER = 'sha1://009406add7a55687cec176be912bc7685c2a4b1d/02-12-2019/mountainsort4.simg'
+    CONTAINER_SHARE_ID = '69432e9201d0' # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
@@ -40,8 +42,6 @@ class MountainSort4(mlpr.Processor):
         num_workers = os.environ.get('NUM_WORKERS', None)
         if num_workers:
             num_workers = int(num_workers)
-
-        print('Using {} workers', num_workers)
 
         # Bandpass filter
         if self.freq_min or self.freq_max:

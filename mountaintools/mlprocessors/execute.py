@@ -403,6 +403,11 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         else:
             _keep_temp_files = False
 
+    if _container == 'default':
+        if hasattr(proc, 'CONTAINER'):
+            _container=proc.CONTAINER
+            print('Using container: '+_container)
+
     inputs = dict()
     for input0 in proc.INPUTS:
         name0 = input0.name
@@ -711,6 +716,11 @@ class ConsoleCapture():
 
 def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, **kwargs):
 
+    if _container == 'default':
+        if hasattr(proc, 'CONTAINER'):
+            _container=proc.CONTAINER
+            print('Using container: '+_container)
+
     timer = time.time()
     if _system_call:
         if _container is not None:
@@ -880,7 +890,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         # in a container
         container_path = ca.realizeFile(path=_container)
         if not container_path:
-            print('Unable to realize container file: '+_container)
+            raise Exception('Unable to realize container file: '+_container)
         tempdir = tempfile.mkdtemp()
         try:
             # Do not use cache inside container... we handle caching outside container

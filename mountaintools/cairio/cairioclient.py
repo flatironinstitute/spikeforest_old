@@ -482,7 +482,7 @@ class CairioLocal():
 
         # If the file exists on the local computer, just use that
         if os.path.exists(path):
-            return path
+            return os.path.abspath(path)
 
         return None
 
@@ -530,7 +530,7 @@ class CairioLocal():
     def _realize_file_from_sha1(self, *, sha1):
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
-            return fname
+            return os.path.abspath(fname)
         return None
 
     def _get_node_info(self, *, share_id):

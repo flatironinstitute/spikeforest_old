@@ -166,11 +166,11 @@ class KiloSort(mlpr.Processor):
 #sf.sorters.ironclust(*, recording, tmpdir, detect_sign=-1, adjacency_radius=-1, detect_threshold=5, merge_thresh=0.98, freq_min=300, freq_max=6000, pc_per_chan=3, prm_template_name, ironclust_src=None)
         
 Processors=dict(
-    MountainSort4=(MountainSort4,'sha1://009406add7a55687cec176be912bc7685c2a4b1d/02-12-2019/mountainsort4.simg'),
+    MountainSort4=(MountainSort4, 'default'),
     IronClust=(IronClust,None),
-    SpykingCircus=(SpykingCircus,'sha1://914becce45aec56a84dd1dd4bca4037b09c50373/02-12-2019/spyking_circus.simg'),
+    SpykingCircus=(SpykingCircus,'default'),
     KiloSort=(KiloSort,None),
-    Yass=(YassProcessor,'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg')
+    Yass=(YassProcessor,'default')
 )
         
 def sort_recordings(*,sorter,recordings,compute_resource=None):
