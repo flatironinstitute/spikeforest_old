@@ -523,11 +523,23 @@ function CairioDB() {
     }
     let record;
     if (subkey) {
-        record={
-            collection: collection,
-            key: key,
-            subkey: subkey
-        }
+      if (subkey=='-') {
+          if (value) {
+            throw new Error('Cannot set value with subkey of "-"');
+          }
+          record={
+              collection: collection,
+              key: key,
+              subkey: {$exists: true}
+          }    
+      }
+      else {
+          record={
+              collection: collection,
+              key: key,
+              subkey: subkey
+          }
+      }
     }
     else {
         record={
@@ -539,7 +551,12 @@ function CairioDB() {
     let collec = m_db.collection("collectionpairs");
     if (!value) {
       //await collec.remove({collection:collection,key:key});
-      await collec.deleteOne(record);
+      if (subkey=='-') {
+        await collec.delete(record);
+      }
+      else {
+        await collec.deleteOne(record);
+      }
     } else if (overwrite) {
       await collec.updateOne(record, {
         $set: {
