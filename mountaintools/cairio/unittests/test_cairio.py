@@ -9,11 +9,11 @@ import signal
 
 
 def test_cairio(tmpdir):
-    tmpdir=str(tmpdir)
-    os.environ['KBUCKET_CACHE_DIR']=tmpdir+'/sha1-cache'
+    tmpdir = str(tmpdir)
+    os.environ['KBUCKET_CACHE_DIR'] = tmpdir+'/sha1-cache'
 
     from cairio import CairioClient
-    cc=CairioClient()
+    cc = CairioClient()
 
     # Setting values (these should be short strings, <=80 characters)
     cc.setValue(key=dict(name='some-key1'), value='hello 1')
@@ -91,7 +91,7 @@ def test_cairio(tmpdir):
 
 def test_cairio_subkeys():
     from cairio import CairioClient
-    cc=CairioClient()
+    cc = CairioClient()
 
     # data for the first pass
     subkeys = ['key1', 'key2', 'key3']
@@ -109,11 +109,15 @@ def test_cairio_subkeys():
         subkeys = ['key1']
         subvals = ['val1b']
 
+
 @pytest.fixture
 def cairioserver(request):
-    port=20010
-    cmd='CAIRIO_ADMIN_TOKEN=test_admin_token PORT={} node /home/project/mountaintools/cairioserver/cairioserver/cairioserver.js'.format(port)
-    popen = subprocess.Popen(cmd, stdout=sys.stdout, universal_newlines=True, shell=True)
+    port = 20010
+    cmd = 'CAIRIO_ADMIN_TOKEN=test_admin_token PORT={} node /home/project/mountaintools/cairioserver/cairioserver/cairioserver.js'.format(
+        port)
+    popen = subprocess.Popen(cmd, stdout=sys.stdout,
+                             universal_newlines=True, shell=True)
+
     def finalize():
         print('Terminating cairio server...')
         os.killpg(os.getpgid(popen.pid), signal.SIGTERM)
@@ -122,6 +126,7 @@ def cairioserver(request):
         url='http://localhost:{}'.format(port)
     )
 
+
 @pytest.mark.exclude
 @pytest.mark.cairioserver
 def test_cairioserver(cairioserver):
@@ -129,14 +134,16 @@ def test_cairioserver(cairioserver):
     time.sleep(2)
 
     from cairio import CairioClient
-    cc=CairioClient()
+    cc = CairioClient()
     cc.setRemoteConfig(url=cairioserver['url'])
-    cc.addRemoteCollection(collection='test_collection1',token='test_token1',admin_token='test_admin_token')
+    cc.addRemoteCollection(collection='test_collection1',
+                           token='test_token1', admin_token='test_admin_token')
 
     # Configure to point to the new collection
-    cc.setRemoteConfig(url=cairioserver['url'],collection='test_collection1',token='test_token1')
+    cc.setRemoteConfig(
+        url=cairioserver['url'], collection='test_collection1', token='test_token1')
 
     # Test setting/getting
-    cc.setValue(key='test_key1',value='test_value1')
-    assert cc.getValue(key='test_key1')=='test_value1'
+    cc.setValue(key='test_key1', value='test_value1')
+    assert cc.getValue(key='test_key1') == 'test_value1'
     print('okay!')
