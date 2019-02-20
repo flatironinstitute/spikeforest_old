@@ -234,7 +234,7 @@ class CairioClient():
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
         if collection:
-            return self._remote_client.getSubKeys(key=key)
+            return self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
         return self._local_db.getSubKeys(key=key)
 
     def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None):

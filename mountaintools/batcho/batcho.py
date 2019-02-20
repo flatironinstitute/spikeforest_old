@@ -106,7 +106,7 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
 def _init_next_batch_job_index_to_run(*, batch_name):
     key = dict(name='batcho_next_batch_job_index_to_run',
                batch_name=batch_name)
-    ca.setValue(key=key, value=0)
+    ca.setValue(key=key, value=str(0))
 
 
 def _take_next_batch_job_index_to_run(*, batch_name):
@@ -120,7 +120,7 @@ def _take_next_batch_job_index_to_run(*, batch_name):
             return None
         job_index = int(val)
         if _acquire_job_lock(batch_name=batch_name, job_index=job_index):
-            ca.setValue(key=key, value=job_index+1)
+            ca.setValue(key=key, value=str(job_index+1))
             return job_index
         else:
             if job_index == last_attempted_job_index:
@@ -231,30 +231,24 @@ def assemble_batch(*, batch_name):
         command = job['command']
         job_label = job['label']
 
-        # there is sometimes a mysterious error. For now, let's solve it by doing a couple retries
-        # TODO: solve this properly
-        num_passes = 3
-        for pass0 in range(1, num_passes+1):
-            status_string = status_strings.get(str(ii), None)
-            if status_string == 'finished':
-                print('ASSEMBLING job result for {}'.format(job_label))
-                result = _get_job_result(batch_name=batch_name, job_index=ii)
-                assembled_results.append(dict(
-                    job=job,
-                    result=result
-                ))
-                break
-            else:
-                errstr = 'Problem assembling job {}. Status is {}.'.format(
-                    ii, status_string)
+        # there is sometimes a mysterious error here....
+        status_string = status_strings.get(str(ii), None)
+        if status_string == 'finished':
+            print('ASSEMBLING job result for {}'.format(job_label))
+            result = _get_job_result(batch_name=batch_name, job_index=ii)
+            assembled_results.append(dict(
+                job=job,
+                result=result
+            ))
+            break
+        else:
+            errstr = 'Problem assembling job {}. Status is {}.'.format(
+                ii, status_string)
 
-                if pass0 < num_passes:
-                    print('Retrying in 2 seconds...')
-                    time.sleep(2)
-                else:
-                    _set_batch_status(batch_name=batch_name, status=dict(
-                        status='error', error=errstr))
-                    raise Exception(errstr)
+            _set_batch_status(batch_name=batch_name, status=dict(
+                    status='error', error=errstr))
+            raise Exception(errstr)
+                
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
     ca.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
@@ -293,6 +287,10 @@ def get_batch_job_statuses(*, batch_name, job_index=None):
     #         ))
     # return ret
 
+def _get_job_status_string(*, batch_name, job_index):
+    key = dict(name='batcho_job_status_strings',
+               batch_name=batch_name)
+    return ca.getValue(key=key, subkey=str(job_index))
 
 def stop_batch(*, batch_name):
     status0 = get_batch_status(batch_name=batch_name)
@@ -565,13 +563,6 @@ def _get_job_status(*, batch_name, job_index):
                batch_name=batch_name)
     subkey = str(job_index)
     return ca.loadObject(key=key, subkey=subkey)
-
-
-def _get_job_status_string(*, batch_name, job_index):
-    status = _get_job_status(batch_name=batch_name, job_index=job_index)
-    if not status:
-        return None
-    return status.get('status', None)
 
 
 def _set_job_status(*, batch_name, job_index, status):
