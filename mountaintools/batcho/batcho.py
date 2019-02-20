@@ -492,6 +492,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
 
 
 def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneous=None, allow_uncontainerized=False):
+    _clear_batch_names_for_compute_resource(compute_resource)
     index = 0
     while True:
         batch_names = get_batch_names_for_compute_resource(compute_resource)
@@ -515,6 +516,13 @@ def get_batch_names_for_compute_resource(compute_resource):
         return []
     batch_names = list(obj.keys())
     return batch_names
+
+def _clear_batch_names_for_compute_resource(compute_resource):
+    key0 = dict(
+        name='compute_resource_batch_names',
+        compute_resource=compute_resource
+    )
+    obj = ca.setValue(key=key0, subkey='-', value=None)
 
 
 def get_batch_results(*, batch_name):
