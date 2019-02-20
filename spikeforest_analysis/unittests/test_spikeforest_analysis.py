@@ -7,6 +7,7 @@ import os
 import shutil
 import spikeforest as sf
 import numpy as np
+import pytest
 
 # This file runs a spikeforest processing pipeline locally (no internet connection, except for downloading singularity containers if needed)
 #    * Generate synthetic recordings (toy recordings)
@@ -22,6 +23,7 @@ import numpy as np
 #    Modify the settings below and then run this file using python 3
 
 
+@pytest.mark.slow
 def test_spikeforest_analysis(tmpdir):
     tmpdir = str(tmpdir)
 

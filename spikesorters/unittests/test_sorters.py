@@ -10,6 +10,7 @@ import spikeextractors as se
 import tempfile
 import shutil
 from cairio import client as ca
+import pytest
 
 
 def setup_module(module):
@@ -33,6 +34,7 @@ def teardown_function(function):
     pass
 
 
+@pytest.mark.slow
 def test_mountainsort4(tmpdir):
     tmpdir = str(tmpdir)
 
@@ -52,6 +54,7 @@ def test_mountainsort4(tmpdir):
     assert os.path.exists(tmpdir+'/firings.mda')
 
 
+@pytest.mark.slow
 def test_spyking_circus(tmpdir):
     tmpdir = str(tmpdir)
 
@@ -71,6 +74,7 @@ def test_spyking_circus(tmpdir):
     assert os.path.exists(tmpdir+'/firings.mda')
 
 
+@pytest.mark.slow
 def test_yass(tmpdir):
     tmpdir = str(tmpdir)
 

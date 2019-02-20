@@ -1,5 +1,6 @@
 from cairio import client as ca
 import json
+import subprocess
 
 
 def test_cairio():
@@ -71,3 +72,32 @@ def test_cairio():
     txt = ca.loadText(path=path)
     print(txt)
     assert txt == 'some file content'
+
+    sha1 = ca.computeFileSha1(path=ca.realizeFile(path))
+    txt2 = ca.loadText(path='sha1://'+sha1)
+    assert txt2 == 'some file content'
+
+
+def test_cairio_subkeys():
+    # data for the first pass
+    subkeys = ['key1', 'key2', 'key3']
+    subvals = ['val1-', 'val2-', 'val3-']
+    for pass0 in range(1, 3):  # two passes
+        ca.setValue(key='parent_key', subkey='-', value=None)  # clear it out
+        for sk, sv in zip(subkeys, subvals):
+            ca.setValue(key='parent_key', subkey=sk, value=sv)
+        for sk, sv in zip(subkeys, subvals):
+            val0 = ca.getValue(key='parent_key', subkey=sk)
+            assert val0 == sv
+        tmp = ca.getSubKeys(key='parent_key')
+        assert set(tmp) == set(subkeys)
+        # data for the second pass
+        subkeys = ['key1']
+        subvals = ['val1b']
+
+# @pytest.fixture
+# def cairioserver(request):
+#     cmd='node /home/project/mountaintools/cairioserver/cairioserver/cairioserver.js'
+#     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+#     request.addfinalizer(lambda: popen.kill())
+#     return popen

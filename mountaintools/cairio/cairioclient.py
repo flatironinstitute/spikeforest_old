@@ -95,7 +95,7 @@ class CairioClient():
         if parse_json and ret:
             try:
                 ret = json.loads(ret)
-            except:  # pragma: no cover
+            except:
                 print('Warning: Problem parsing json in cairio.getValue()')
                 return None
         return ret
@@ -443,8 +443,11 @@ class CairioLocal():
             if value is not None:
                 val[subkey] = value
             else:
-                if subkey in val:
-                    del val[subkey]
+                if subkey == '-':
+                    val = dict()
+                else:
+                    if subkey in val:
+                        del val[subkey]
             return self.setValue(key=dict(subkeys=True, key=key), value=json.dumps(val), subkey=None, overwrite=overwrite)
         keyhash = _hash_of_key(key)
         db_path = self._get_db_path_for_keyhash(keyhash)
@@ -462,7 +465,7 @@ class CairioLocal():
         return True
 
     def getSubKeys(self, *, key):
-        val = self.getValue(key=key, subkey=None)
+        val = self.getValue(key=key, subkey='-')
         try:
             val = json.loads(val)
             return list(val.keys())
