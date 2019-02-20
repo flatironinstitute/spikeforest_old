@@ -133,6 +133,7 @@ function CairioServer(API) {
     await handle_get(req, res);
   });
   async function handle_get(req, res) {
+    console.log('handle_get',req.params);
     let params = req.params;
     if (params.key.length > MAX_KEY_LENGTH) {
       res.json({
