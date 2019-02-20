@@ -518,11 +518,13 @@ def get_batch_names_for_compute_resource(compute_resource):
     return batch_names
 
 def _clear_batch_names_for_compute_resource(compute_resource):
+    print('Clearing batch names for compute resource: '+compute_resource)
     key0 = dict(
         name='compute_resource_batch_names',
         compute_resource=compute_resource
     )
     obj = ca.setValue(key=key0, subkey='-', value=None)
+    print('-----------------------',get_batch_names_for_compute_resource(compute_resource))
 
 
 def get_batch_results(*, batch_name):
