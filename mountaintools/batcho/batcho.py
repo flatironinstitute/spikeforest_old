@@ -222,7 +222,6 @@ def assemble_batch(*, batch_name):
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
     status_strings = get_batch_job_statuses(batch_name=batch_name)
-    num_ran = 0
     assembled_results = []
     for ii, job in enumerate(jobs):
         _check_batch_code(batch_name, batch_code)
@@ -240,7 +239,6 @@ def assemble_batch(*, batch_name):
                 job=job,
                 result=result
             ))
-            break
         else:
             errstr = 'Problem assembling job {}. Status is {}.'.format(
                 ii, status_string)
@@ -571,6 +569,7 @@ def _set_job_status(*, batch_name, job_index, status):
     #    if code != job_code:
     #        print('Not setting job status because lock code does not match batch code')
     #        return
+    print('=============================== _set_job_status',batch_name,job_index,status)
     status_string = None
     if status:
         status_string = status.get('status', None)

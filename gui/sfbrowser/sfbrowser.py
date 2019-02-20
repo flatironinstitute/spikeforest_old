@@ -57,7 +57,8 @@ class SFBrowser(vd.Component):
         self._output_id = output_id
 
         a = ca.loadObject(
-            key=dict(name='spikeforest_results', output_id=output_id)
+            key=dict(name='spikeforest_results'),
+            subkey=output_id
         )
         if not a:
             print('ERROR: unable to open results: '+output_id)

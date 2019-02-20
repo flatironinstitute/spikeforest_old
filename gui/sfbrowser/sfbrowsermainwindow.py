@@ -17,8 +17,7 @@ class OutputIdSelectWidget(vd.Component):
         vd.devel.loadBootstrap()
 
     def initialize(self):
-        self._output_ids = ['spikeforest_test0',
-                            'spikeforest_test1', 'spikeforest_test2', 'spikeforest_test3', 'spikeforest_test4']
+        self._output_ids = ca.getSubKeys(key=dict(name='spikeforest_results'))
         self._SEL_output_id.setOptions(['']+self._output_ids)
         self._on_output_id_changed(value=self._SEL_output_id.value())
 
