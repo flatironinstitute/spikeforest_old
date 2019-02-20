@@ -21,7 +21,7 @@ function SteadyFileIterator(directory) {
   var m_running = false;
   var m_on_update_file_handlers = [];
   var m_on_remove_file_handlers = [];
-  var m_time_between_runs_sec = 5;
+  var m_time_between_runs_sec = 3;
   var m_files_found_in_last_iteration = {};
   var m_files_reported = {};
 
@@ -136,7 +136,7 @@ function SteadyFileIterator(directory) {
         function goto_next() {
           setTimeout(function() {
             cb();
-          }, 10);
+          }, 1);
         }
       }, iterate_subdirs);
 
@@ -146,7 +146,7 @@ function SteadyFileIterator(directory) {
           iterate_directory(relpath0, function() {
             setTimeout(function() {
               cb();
-            }, 10);
+            }, 1);
           });
         },function() {
           callback();
