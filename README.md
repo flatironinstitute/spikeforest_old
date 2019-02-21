@@ -8,11 +8,10 @@ You can use and/or develop SpikeForest2 with codepod. Tested in Linux, should al
 
 Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.com/magland/codepod)
 
-First clone this repo and checkout this branch (currently dev):
+First clone this repo:
 
 ```
 git clone https://github.com/flatironinstitute/spikeforest2
-git checkout -b dev
 ```
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
@@ -20,7 +19,7 @@ Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached f
 Then run the ./codepod_run.sh convenience script in the repo
 
 ```
-cd spikeforest2 # make sure you are on the dev branch (or which ever is appropriate)
+cd spikeforest2
 ./codepod_run.sh
 ```
 
