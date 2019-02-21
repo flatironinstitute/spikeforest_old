@@ -68,7 +68,7 @@ class YASS(mlpr.Processor):
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
             raise
-        shutil.rmtree(tmpdir)
+        shutil.rmtree(tmpdir) #TODO: check the flag to decide whether to delete or not
 
 
 def yass_helper(
@@ -103,7 +103,7 @@ def yass_helper(
     bin_file = join_abspath_(output_folder, file_name)
     # print('bin_file:{}'.format(bin_file))
     writeRecording_(recording=recording, save_path=bin_file,
-                    fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=10)
+                    fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=1)
     #print('bin_file exists? {}'.format(os.path.exists(bin_file)))
 
     # set up yass config file
@@ -172,7 +172,7 @@ def join_abspath_(path1, path2):
     return path_abs
 
 
-def writeRecording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=10):
+def writeRecording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=1):
     #save_path = Path(save_path)
     print('writeRecording2: {}'.format(str(save_path)))
 
@@ -185,4 +185,4 @@ def writeRecording_(recording, save_path, dtype=None, transpose=False, fReverseP
         np_Wav = np_Wav * -1
     np_Wav = np_Wav * scale_factor
     with open(save_path, 'wb') as f:
-        np_Wav.tofile(f)
+        np.ravel(np_Wav, order='F').tofile(f)

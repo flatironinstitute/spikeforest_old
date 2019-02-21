@@ -9,14 +9,14 @@ except:
 # %%
 import spikeforest_analysis as sa
 from spikeforest_analysis.compare_sortings_with_truth import GenSortingComparisonTable
-from cairio import client as ca
+#from cairio import client as ca
 import spikeextractors as se
 import os
 from spikesorters import YASS
 from spiketoolkit.comparison.sortingcomparison import SortingComparison
 import spikewidgets as sw
 
-# %%SortingComparison
+# %%SortingComparisonyass_test1/recording/raw.mda
 tmpdir = 'yass_test1'
 if not os.path.isdir(tmpdir):
     os.mkdir(tmpdir)
@@ -35,7 +35,9 @@ YASS.execute(
     firings_out=tmpdir+'/firings_out.mda',
     detect_sign=-1,
     adjacency_radius=50,
-    _container='default'
+    _container=None,
+    _force_run=True,
+    _keep_temp_files=True
 )
 firings_out = tmpdir+'/firings_out.mda'
 assert os.path.exists(firings_out)
@@ -49,10 +51,10 @@ print('firings_true: {}'.format(firings_true))
 GenSortingComparisonTable.execute(
     firings=firings_out,
     firings_true=firings_true,
-    units_true=None,
+    units_true=[],
     json_out=os.path.join(tmpdir, 'out.json'),
     html_out=os.path.join(tmpdir, 'out.html'),
-    _container='default'
+    _container=None
 )
 
 

@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN echo "12 February 2019"
+RUN echo "21 February 2019"
 
 #########################################
 ### Python, etc                                                                                                                
@@ -20,16 +20,16 @@ RUN ./setup_python.sh
 #########################################
 # python2 and pip2 (but keep python 3 as the default)
 RUN apt-get install -y python-pip
-RUN apt-get install -y libyaml-dev libpython2.7-dev
-RUN rm /usr/bin/python && ln -s python3 /usr/bin/python
-RUN rm /usr/bin/pip && ln -s pip3 /usr/bin/pip
+RUN apt-get install -y libyaml-dev #libpython2.7-dev
+#RUN rm /usr/bin/python && ln -s python3 /usr/bin/python
+#RUN rm /usr/bin/pip && ln -s pip3 /usr/bin/pip
 
 #########################################
 ### Install yass, a previous version
 #RUN mkdir /src
 RUN git clone https://github.com/paninski-lab/yass.git /src/yass && cd /src/yass && git checkout tags/0.5
 WORKDIR /src/yass
-RUN pip2 install -r requirements.txt
-RUN python2 setup.py install
+RUN pip install -r requirements.txt
+RUN python setup.py install
 
 ## call yass via python2 /path/to/binary/yass
