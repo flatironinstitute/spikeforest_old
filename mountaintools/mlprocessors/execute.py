@@ -725,7 +725,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     if _system_call:
         if _container is not None:
             raise Exception('Cannot use container with system call.')
-        _container = ''
+        _container = None
     else:
         if _system_call_prefix is not None:
             raise Exception(
