@@ -15,4 +15,4 @@ export CAIRIO_CONFIG_PASSWORD=$SPIKEFOREST_PASSWORD
 # find containers (look in spikeforest2)
 export CAIRIO_ALTERNATE_SHARE_IDS=69432e9201d0
 
-../../../bin/batcho_listen ccmlin000-gpu --allow_uncontainerized  2>&1 | tee output.txt
+../../../bin/batcho_listen ccmlin008-kilosort --allow_uncontainerized  2>&1 | tee output.txt
