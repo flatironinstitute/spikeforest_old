@@ -17,7 +17,7 @@ from .yasssortingextractor import yassSortingExtractor
 
 class YASS(mlpr.Processor):
     NAME = 'YASS'
-    VERSION = '0.0.3a'
+    VERSION = '0.1.0'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -68,7 +68,8 @@ class YASS(mlpr.Processor):
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
             raise
-        shutil.rmtree(tmpdir) #TODO: check the flag to decide whether to delete or not
+        if not getattr(self, '_keep_temp_files', False):
+            shutil.rmtree(tmpdir)
 
 
 def yass_helper(
