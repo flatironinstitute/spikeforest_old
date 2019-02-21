@@ -17,7 +17,7 @@ def summarize_recordings(recordings, compute_resource=None):
     jobs_timeseries_plot=[]
     jobs_units_info=[]
     for recording in recordings:
-        print('Creating jobs for recording: {}/{}'.format(recording['study'],recording['name']))
+        print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
         raw_path=recording['directory']+'/raw.mda'
         firings_true_path=recording['directory']+'/firings_true.mda'
         channels=recording.get('channels',None)

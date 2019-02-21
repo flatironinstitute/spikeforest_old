@@ -583,8 +583,6 @@ def _set_job_status(*, batch_name, job_index, status):
     #    if code != job_code:
     #        print('Not setting job status because lock code does not match batch code')
     #        return
-    print('=============================== _set_job_status',
-          batch_name, job_index, status)
     status_string = None
     if status:
         status_string = status.get('status', None)

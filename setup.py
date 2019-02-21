@@ -13,7 +13,6 @@ setuptools.setup(
     description="Spike sorting validation and comparison system",
     url="https://github.com/flatironinstitute/spikeforest2",
     packages=[
-        'spikeforest_batch_run',
         'spikeextractors', 'spikewidgets', 'spiketoolkit',
         'spikeforest','spikeforest_analysis'
     ],
