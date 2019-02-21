@@ -16,3 +16,4 @@ pytest
 pytest-cov
 idna
 autopep8
+pylint
