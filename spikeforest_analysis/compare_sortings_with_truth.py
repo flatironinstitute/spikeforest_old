@@ -52,7 +52,7 @@ class GenSortingComparisonTable(mlpr.Processor):
     def run(self):
         sorting=si.MdaSortingExtractor(firings_file=self.firings)
         sorting_true=si.MdaSortingExtractor(firings_file=self.firings_true)
-        if len(self.units_true)>0:
+        if (self.units_true is not None) and (len(self.units_true)>0):
             sorting_true=si.SubSortingExtractor(parent_sorting=sorting_true,unit_ids=self.units_true)
         SC=st.comparison.SortingComparison(sorting_true,sorting)
         df=get_comparison_data_frame(comparison=SC)

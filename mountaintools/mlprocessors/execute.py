@@ -249,7 +249,7 @@ def _get_expanded_args(args):
     return expanded_args
 
 
-def _execute_in_container(proc, X, *, container, tempdir, _system_call_prefix, **kwargs):
+def _execute_helper(proc, X, *, container, tempdir, _system_call_prefix, **kwargs):
     # Note: if container is '', then we are just executing on the host machine
     singularity_opts = []
     if container:
@@ -895,7 +895,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         tempdir = tempfile.mkdtemp()
         try:
             # Do not use cache inside container... we handle caching outside container
-            console_out = _execute_in_container(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
+            console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
                                                 _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
         except:
             if _keep_temp_files:
