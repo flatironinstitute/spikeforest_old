@@ -779,15 +779,15 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             name0 = output0.name
             signature0 = compute_processor_job_output_signature(X, name0)
             output_signatures[name0] = signature0
-            output_sha1 = ca.getValue(key=signature0)
+            output_sha1 = ca.getValue(key=signature0, local_first=True)
             if output_sha1 is not None:
-                print('Found output "{}" in cairio.'.format(name0))
+                print('Found output "{}" in cache.'.format(name0))
                 output_sha1s[name0] = output_sha1
 
                 # Do the following because if we have it locally,
                 # we want to make sure it also gets propagated remotely
                 # and vice versa
-                ca.setValue(key=signature0, value=output_sha1)
+                ca.setValue(key=signature0, value=output_sha1, local_also=True)
             else:
                 outputs_all_in_cairio = False
         output_files_all_found = False
@@ -827,11 +827,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     else:
                         ret.outputs[name0] = fname1
 
-                stats = ca.loadObject(key=stats_signature0)
+                stats = ca.loadObject(key=stats_signature0, local_first=True)
                 if stats:
                     ret.stats = stats
 
-                console_out = ca.loadText(key=console_out_signature0)
+                console_out = ca.loadText(
+                    key=console_out_signature0, local_first=True)
                 if console_out:
                     ret.console_out = console_out
                 return ret
@@ -921,7 +922,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         if _cache:
             output_sha1 = ca.computeFileSha1(output_fname)
             signature0 = output_signatures[name0]
-            ca.setValue(key=signature0, value=output_sha1)
+            ca.setValue(key=signature0, value=output_sha1, local_also=True)
 
     ret.stats['start_time'] = start_time
     ret.stats['end_time'] = end_time
@@ -930,8 +931,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     ret.console_out = console_out
 
     if _cache:
-        ca.saveObject(key=stats_signature0, object=ret.stats)
-        ca.saveText(key=console_out_signature0, text=ret.console_out)
+        ca.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
+        ca.saveText(key=console_out_signature0,
+                    text=ret.console_out, local_also=True)
 
     return ret
 

@@ -89,9 +89,9 @@ class CairioClient():
         )
 
     # get value / set value
-    def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None):
+    def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
         ret = self._get_value(key=key, subkey=subkey,
-                              password=password, collection=collection)
+                              password=password, collection=collection, local_first=local_first)
         if parse_json and ret:
             try:
                 ret = json.loads(ret)
@@ -100,55 +100,56 @@ class CairioClient():
                 return None
         return ret
 
-    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None):
-        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password)
+    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
+        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
 
     def getSubKeys(self, key, password=None):
         return list(self._get_sub_keys(key=key, password=password))
 
     # realize file / save file
-    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, share_id=None):
+    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, share_id=None, local_first=False):
         if path is not None:
             return self._realize_file(path=path, share_id=share_id)
         elif key is not None:
-            val = self.getValue(key=key, subkey=subkey, password=password)
+            val = self.getValue(key=key, subkey=subkey,
+                                password=password, local_first=local_first)
             if not val:
                 return None
             return self.realizeFile(path=val, share_id=share_id)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False):
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
         if path is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password)
+                          value=None, password=password, local_also=local_also)
             return None
         sha1_path = self._save_file(
             path=path, basename=basename, confirm=confirm)
         if key is not None:
             self.setValue(key=key, subkey=subkey,
-                          value=sha1_path, password=password)
+                          value=sha1_path, password=password, local_also=local_also)
         return sha1_path
 
     # load object / save object
-    def loadObject(self, *, key=None, path=None, subkey=None, password=None):
+    def loadObject(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
         txt = self.loadText(key=key, path=path,
-                            subkey=subkey, password=password)
+                            subkey=subkey, password=password, local_first=local_first)
         if txt is None:
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
         if object is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm)
+        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
 
     # load text / save text
-    def loadText(self, *, key=None, path=None, subkey=None, password=None):
+    def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
         fname = self.realizeFile(
-            key=key, path=path, subkey=subkey, password=password)
+            key=key, path=path, subkey=subkey, password=password, local_first=local_first)
         if fname is None:
             return None
         try:
@@ -158,15 +159,15 @@ class CairioClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False):
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
         if text is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password)
+                          value=None, password=password, local_also=local_also)
             return None
         tmp_fname = _create_temporary_file_for_text(text=text)
         try:
             ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
-                                basename=basename, password=password, confirm=confirm)
+                                basename=basename, password=password, confirm=confirm, local_also=local_also)
         except:
             os.unlink(tmp_fname)
             raise
@@ -212,22 +213,33 @@ class CairioClient():
     def moveToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
-    def _get_value(self, *, key, subkey, password=None, collection=None):
+    def _get_value(self, *, key, subkey, password=None, collection=None, local_first=False):
         if password is not None:
             key = dict(key=key, password=password)
         if collection is None:
             collection = self._remote_config['collection']
+        if local_first or not collection:
+            ret = self._local_db.getValue(key=key, subkey=subkey)
+            if ret is not None:
+                return ret
         if collection:
-            return self._remote_client.getValue(key=key, subkey=subkey, collection=collection, url=self._remote_config.get('url') or self._default_url)
-        return self._local_db.getValue(key=key, subkey=subkey)
+            ret = self._remote_client.getValue(
+                key=key, subkey=subkey, collection=collection, url=self._remote_config.get('url') or self._default_url)
+            if ret is not None:
+                return ret
+        return None
 
-    def _set_value(self, *, key, subkey, value, overwrite, password=None):
+    def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
+        if local_also or (not collection):
+            if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
+                return False
         if collection:
-            return self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token'])
-        return self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite)
+            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
+                return False
+        return True
 
     def _get_sub_keys(self, *, key, password=None):
         if password is not None:

@@ -1,14 +1,9 @@
 FROM magland/codepod:latest
 
-RUN . /venv/bin/activate && pip install jupyterlab numpy matplotlib requests pillow pandas h5py scipy ipython ipywidgets
+# python packages
+RUN . /venv/bin/activate && pip install jupyterlab numpy matplotlib requests pillow pandas h5py scipy ipython ipywidgets six
+RUN . /venv/bin/activate && pip install pytest pytest-cov idna autopep8
 
-# Node and Yarn
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-RUN apt-get update && apt-get install -y nodejs
-RUN npm install -g yarn
-
-# nodemon
-RUN npm install -g nodemon
 
 # jp_proxy_widget for vdomr in jupyterlab
 # RUN . /venv/bin/activate && pip install jp_proxy_widget

@@ -12,7 +12,10 @@ import pytest
 
 def main():
     ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite', ask_password=True)
+                  key='spikeforest2-readwrite',
+                  ask_password=True,
+                  password=os.environ.get('SPIKEFOREST_PASSWORD', None)
+                  )
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
@@ -20,16 +23,16 @@ def main():
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    compute_resource = None
+    compute_resource = 'ccmlin008-default'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'spikeforest_magland_synth'
+    output_id = 'magland_synth'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth_test'
+    group_name = 'magland_synth'
 
     a = ca.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -37,7 +40,7 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    recordings = [recordings[0]]
+    # recordings = [recordings[0]]
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
@@ -57,43 +60,42 @@ def main():
             compute_resource=compute_resource
         )
 
-        # Summarize the sortings
-        sortings = sa.summarize_sortings(
-            sortings=sortings,
-            compute_resource=compute_resource
-        )
-
-        # Compare with ground truth
-        sortings = sa.compare_sortings_with_truth(
-            sortings=sortings,
-            compute_resource=compute_resource
-        )
-
         # Append to results
         sorting_results = sorting_results+sortings
 
-    # TODO: collect all the units for aggregated analysis
+    # Summarize the sortings
+    sorting_results = sa.summarize_sortings(
+        sortings=sorting_results,
+        compute_resource=compute_resource
+    )
 
-    compiled_sorting_results = sa.compile_sorting_results(
+    # Compare with ground truth
+    sorting_results = sa.compare_sortings_with_truth(
+        sortings=sorting_results,
+        compute_resource=compute_resource
+    )
+
+    # Aggregate the results
+    aggregated_sorting_results = sa.aggregate_sorting_results(
         studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
     ca.saveObject(
         key=dict(
-            name='spikeforest_results',
-            output_id=output_id
+            name='spikeforest_results'
         ),
+        subkey=output_id,
         object=dict(
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            compiled_sorting_results=ca.saveObject(
-                object=compiled_sorting_results)
+            aggregated_sorting_results=ca.saveObject(
+                object=aggregated_sorting_results)
         )
     )
 
-    for sr in compiled_sorting_results['study_sorting_results']:
+    for sr in aggregated_sorting_results['study_sorting_results']:
         study_name = sr['study']
         sorter_name = sr['sorter']
         n1 = np.array(sr['num_matches'])
@@ -178,8 +180,8 @@ def _define_sorters():
         )
     )
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
-    return [sorter_ms4_thr3]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
+    # return [sorter_ms4_thr3]
 
 
 if __name__ == "__main__":

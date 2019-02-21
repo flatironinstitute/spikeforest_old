@@ -1,12 +1,12 @@
 import spikeforest as sf
 
-def compile_sorting_results(studies, recordings, sorting_results):
+def aggregate_sorting_results(studies, recordings, sorting_results):
     SF = sf.SFData()
     SF.loadStudies(studies=studies)
     SF.loadRecordings2(recordings=recordings)
     SF.loadSortingResults(sorting_results=sorting_results)
 
-    compiled_sorting_results = dict(
+    aggregated_sorting_results = dict(
         recording_sorting_results=[],
         study_sorting_results=[]
     )
@@ -79,7 +79,7 @@ def compile_sorting_results(studies, recordings, sorting_results):
                         num_false_positives=recording_results0['num_false_positives'],
                         num_false_negatives=recording_results0['num_false_negatives']
                     )
-                    compiled_sorting_results['recording_sorting_results'].append(recording_sorting_result)
+                    aggregated_sorting_results['recording_sorting_results'].append(recording_sorting_result)
                 else:
                     print('Warning: '+error)
 
@@ -103,6 +103,6 @@ def compile_sorting_results(studies, recordings, sorting_results):
                 num_false_positives=study_results0['num_false_positives'],
                 num_false_negatives=study_results0['num_false_negatives']
             )
-            compiled_sorting_results['study_sorting_results'].append(study_sorting_result)
+            aggregated_sorting_results['study_sorting_results'].append(study_sorting_result)
     
-    return compiled_sorting_results
+    return aggregated_sorting_results

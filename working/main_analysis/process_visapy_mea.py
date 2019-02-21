@@ -29,7 +29,7 @@ def main():
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'spikeforest_visapy_mea'
+    output_id = 'visapy_mea'
 
     # Grab the recordings for testing
     group_name = 'visapy_mea'
@@ -77,7 +77,7 @@ def main():
     )
 
     # Aggregate the results
-    compiled_sorting_results = sa.compile_sorting_results(
+    aggregated_sorting_results = sa.aggregate_sorting_results(
         studies, recordings, sorting_results)
 
     # Save the output
@@ -91,12 +91,12 @@ def main():
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            compiled_sorting_results=ca.saveObject(
-                object=compiled_sorting_results)
+            aggregated_sorting_results=ca.saveObject(
+                object=aggregated_sorting_results)
         )
     )
 
-    for sr in compiled_sorting_results['study_sorting_results']:
+    for sr in aggregated_sorting_results['study_sorting_results']:
         study_name = sr['study']
         sorter_name = sr['sorter']
         n1 = np.array(sr['num_matches'])
