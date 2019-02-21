@@ -12,7 +12,7 @@ from spikesorters import MountainSort4, SpykingCircus, YASS
 
 class IronClust(mlpr.Processor):
     NAME='IronClust'
-    VERSION='4.2.8'
+    VERSION='4.3.0'
     
     recording_dir=mlpr.Input('Directory of recording',directory=True)
     channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
