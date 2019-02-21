@@ -51,7 +51,7 @@ class RawRecordingExtractor(RecordingExtractor):
         if fReversePolarity:
             np_Wav = np_Wav * -1
         with save_path.open('wb') as f:
-            np_Wav.tofile(f)
+            np_Wav.ravel(order='F').tofile(f)
 
 def _read_binary(file, numchan, dtype):
     numchan = int(numchan)

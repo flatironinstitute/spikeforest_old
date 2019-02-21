@@ -20,7 +20,7 @@ import spikewidgets as sw
 tmpdir = 'yass_test1'
 if not os.path.isdir(tmpdir):
     os.mkdir(tmpdir)
-rx, sx = se.example_datasets.yass_example(set_id = 1)
+rx, sx = se.example_datasets.yass_example(set_id=1)
 
 # %%
 firings_true = tmpdir+'/recording/firings_true.mda'
@@ -58,5 +58,4 @@ GenSortingComparisonTable.execute(
 )
 
 
-
-#%%
+# %%

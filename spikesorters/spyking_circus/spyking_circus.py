@@ -75,7 +75,8 @@ class SpykingCircus(mlpr.Processor):
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
             raise
-        shutil.rmtree(tmpdir)
+        if not getattr(self, '_keep_temp_files', False):
+            shutil.rmtree(tmpdir)
 
 
 def spyking_circus(
@@ -128,7 +129,7 @@ def spyking_circus(
     elif file_name.endswith('.npy'):
         file_name = file_name[file_name.find('.npy')]
     np.save(join(output_folder, file_name),
-            recording.getTraces().astype('float32'))
+            recording.getTraces().astype('float32', order='F'))
 
     if detect_sign < 0:
         detect_sign = 'negative'

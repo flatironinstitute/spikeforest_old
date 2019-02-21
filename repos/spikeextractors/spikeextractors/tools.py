@@ -201,7 +201,7 @@ def writeBinaryDatFormat(recording, save_path, transpose=False, dtype='float32')
         if not save_path.suffix == '.dat':
             save_path = save_path.parent / (save_path.name + '.dat')
         with save_path.open('wb') as f:
-            np.array(recording.getTraces(), dtype=dtype).tofile(f)
+            np.array(recording.getTraces(), dtype=dtype, order='F').tofile(f)
     return save_path
 
 

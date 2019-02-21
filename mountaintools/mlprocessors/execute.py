@@ -869,6 +869,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
         console_capture = ConsoleCapture()
         console_capture.start_capturing()
+        setattr(X, '_keep_temp_files', _keep_temp_files)
         try:
             X.run()
         except:
@@ -896,7 +897,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         try:
             # Do not use cache inside container... we handle caching outside container
             console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
-                                                _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
+                                          _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
         except:
             if _keep_temp_files:
                 print(
