@@ -59,14 +59,14 @@ class Sha1Cache():
                 _safe_remove_file(hints_fname)
         return None
 
-    def downloadFile(self, url, sha1, target_path=None, size=None, verbose=True):
+    def downloadFile(self, url, sha1, target_path=None, size=None, verbose=False):
         alternate_target_path = False
         if target_path is None:
             target_path = self._get_path(sha1, create=True)
         else:
             alternate_target_path = True
         path_tmp = target_path+'.downloading'
-        if verbose:
+        if (verbose) or (size > 10000):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)

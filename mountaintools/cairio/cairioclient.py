@@ -250,7 +250,8 @@ class CairioClient():
         return self._local_db.getSubKeys(key=key)
 
     def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None):
-        ret = self._local_db.realizeFile(path=path, local_only=local_only)
+        ret = self._local_db.realizeFile(
+            path=path, local_only=local_only, resolve_locally=resolve_locally)
         if ret:
             return ret
         if local_only:
@@ -484,7 +485,7 @@ class CairioLocal():
         except:
             return []
 
-    def realizeFile(self, *, path, local_only=False):
+    def realizeFile(self, *, path, local_only=False, resolve_locally=True):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
@@ -498,6 +499,8 @@ class CairioLocal():
                 return try_local_path
             if local_only:
                 return None
+            if not resolve_locally:
+                return path  # hmmm, should we return url here?
             return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size)
 
         # If the file exists on the local computer, just use that

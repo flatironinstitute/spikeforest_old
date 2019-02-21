@@ -390,7 +390,6 @@ def _run_command_and_print_output_old(command):
 
 
 def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
-
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE':
             _force_run = True
@@ -406,7 +405,6 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
             _container = proc.CONTAINER
-            print('Using container: '+_container)
 
     inputs = dict()
     for input0 in proc.INPUTS:
@@ -430,6 +428,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
             else:
                 pass  # TODO: think about how to handle directories -- probably just give a warning message
         inputs[name0] = fname0
+
     outputs = dict()
     for output0 in proc.OUTPUTS:
         name0 = output0.name
@@ -522,6 +521,7 @@ def _random_string(num_chars):
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
 
+    print('executeBatch')
     # make sure the files to realize are absolute paths
     for job in jobs:
         if 'files_to_realize' in job:

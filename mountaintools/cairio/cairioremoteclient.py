@@ -95,8 +95,10 @@ class CairioRemoteClient():
             signature = _sha1_of_object(
                 {'path': url_path0, 'token': upload_token})
             url = cas_upload_server_url+url_path0+'?signature='+signature
-            print('Uploading file --- ({}): {} -> {}'.format(
-                _format_file_size(os.path.getsize(path)), path, url))
+            size0 = os.path.getsize(path)
+            if size0 > 10000:
+                print(
+                    'Uploading file --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
             resp_obj = _http_post_file_data(url, path)
             if not resp_obj.get('success', False):
                 print('Problem posting file data: '+resp_obj.get('error', ''))
