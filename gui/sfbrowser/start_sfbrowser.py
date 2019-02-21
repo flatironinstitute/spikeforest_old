@@ -23,8 +23,14 @@ def main():
     ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
 
     APP = TheApp()
-    server = vd.VDOMRServer(APP)
-    server.start()
+
+    # vd.config_server()
+    # server = vd.VDOMRServer(APP)
+    # server.start()
+
+    vd.config_pyqt5()
+    W = APP.createSession()
+    vd.pyqt5_start(root=W, title='SFBrowser')
 
 
 if __name__ == "__main__":

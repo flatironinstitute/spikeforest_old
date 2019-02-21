@@ -108,11 +108,12 @@ class CairioRemoteClient():
 
     def getSubKeys(self, *, collection, key, url):
         # TODO - fix this - do not require downloading the entire object - will prob require modifying api of server
-        val=self.getValue(collection=collection, key=key, url=url, subkey='-')
+        val = self.getValue(collection=collection,
+                            key=key, url=url, subkey='-')
         if val is None:
             return []
         try:
-            val=json.loads(val)
+            val = json.loads(val)
             return val.keys()
         except:
             return []

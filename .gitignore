@@ -6,6 +6,7 @@ Untitled*.ipynb
 geom.csv
 params.json
 output.txt
+tmp
 
 # singularity image files
 *.simg

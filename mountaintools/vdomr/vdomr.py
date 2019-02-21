@@ -2,12 +2,14 @@ import os
 import traceback
 import threading
 import time
+import sys
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
     mode='server',  # colab, jp_proxy_widget, server, or pywebview -- by default we are in server mode
-    invokable_functions={},  # for mode=jp_proxy_widget, server, or pywebview
-    jp_widget=None  # for mode=jp_proxy_widget
+    invokable_functions={},  # for mode=jp_proxy_widget, server, or pyqt5
+    jp_widget=None,  # for mode=jp_proxy_widget
+    pyqt5_view=None  # for mode=pyqt5
 )
 
 default_session = dict(javascript_to_execute=[])
@@ -46,7 +48,7 @@ def register_callback(callback_id, callback):
         colab_output.register_callback(callback_id, the_callback)
         exec_javascript(
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
-    elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pywebview'):
+    elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pyqt5'):
         vdomr_global['invokable_functions'][callback_id] = the_callback
 
 
@@ -62,9 +64,12 @@ def exec_javascript(js):
             SS['javascript_to_execute'].append(js)
         else:
             print('Warning: current session is not set. Unable to execute javascript.')
-    elif vdomr_global['mode'] == 'pywebview':
-        import webview
-        webview.evaluate_js(js)
+    elif vdomr_global['mode'] == 'pyqt5':
+        if vdomr_global['pyqt5_view']:
+            vdomr_global['pyqt5_view'].page().runJavaScript(js)
+        else:
+            SS = vdomr_server_global['current_session']
+            SS['javascript_to_execute'].append(js)
     else:
         from IPython.display import Javascript
         display(Javascript(js))
@@ -147,87 +152,141 @@ def config_server():
     vdomr_global['mode'] = 'server'
 
 
-def config_pywebview():
-    vdomr_global['mode'] = 'pywebview'
+def config_pyqt5():
+    vdomr_global['mode'] = 'pyqt5'
 
 
-class PyWebViewApi():
-    def __init__(self):
-        pass
+# class PyWebViewApi():
+#     def __init__(self):
+#         pass
 
-    def invokeFunction(self, x):
-        callback_id = x['callback_id']
-        args = x['args']
-        kwargs = x['kwargs']
-        import webview
-        webview.evaluate_js('window.show_overlay();')
-        try:
-            invoke_callback(callback_id, argument_list=args, kwargs=kwargs)
-        except:
-            traceback.print_exc()
-            pass
-        webview.evaluate_js('window.hide_overlay();')
+#     def invokeFunction(self, x):
+#         callback_id = x['callback_id']
+#         args = x['args']
+#         kwargs = x['kwargs']
+#         import webview
+#         webview.evaluate_js('window.show_overlay();')
+#         try:
+#             invoke_callback(callback_id, argument_list=args, kwargs=kwargs)
+#         except:
+#             traceback.print_exc()
+#             pass
+#         webview.evaluate_js('window.hide_overlay();')
 
 
-def pywebview_start(*, root, title):
+def pyqt5_start(*, root, title):
     try:
-        import webview
+        # from PyQt5.QtCore import *
+        from PyQt5.QtCore import QObject, QVariant, pyqtSlot
+        from PyQt5.QtWebChannel import QWebChannel
+        from PyQt5.QtWebEngineWidgets import QWebEngineView
+        from PyQt5.QtWidgets import QApplication
     except:
         raise Exception(
-            'Cannot import webview. Perhaps you need to install pywebview via: pip install pywebview')
+            'Cannot import PyQt5 and friends. Perhaps you need to install PyQt5 and QtWebEngine')
 
-    config_pywebview()
+    class PyQt5Api(QObject):
+        def __init__(self):
+            super(PyQt5Api, self).__init__()
 
-    def load_html():
-        html = """
-        <html>
-        <head>
-        <style>
-        .overlay {
-            background-color: rgba(1, 1, 1, 0.2);
-            color:white;
-            font-size:24px;
-            bottom: 0;
-            left: 0;
-            position: fixed;
-            right: 0;
-            top: 0;
-            text-align: center;
-            padding: 40px;
-        }
-        </style>
-        </head>
-        <body>
-        <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
-        {content}
-        </body>
-        """
-        html = html.replace('{content}', root._repr_html_())
-        webview.load_html(html)
-        script = """
-        window.show_overlay=function() {
-            document.getElementById('overlay').style.visibility='visible'
-        }
-        window.hide_overlay=function() {
-            document.getElementById('overlay').style.visibility='hidden'
-        }
-        window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
-            console.log('vdomr_invokeFunction',callback_id,args,kwargs);
+        @pyqtSlot(QVariant, result=QVariant)
+        def invokeFunction(self, x):
+            callback_id = x['callback_id']
+            args = x['args']
+            kwargs = x['kwargs']
+            try:
+                invoke_callback(callback_id, argument_list=args, kwargs=kwargs)
+            except:
+                traceback.print_exc()
+                pass
+            return None
 
-            setTimeout(function() {
-                window.pywebview.api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
-            },0); // the timeout might be important to prevent crashes of pywebview
-        }
-        """
-        webview.evaluate_js(script)
-        js = _take_javascript_to_execute()
-        webview.evaluate_js(js)
+        @pyqtSlot(str, result=QVariant)
+        def console_log(self, a):
+            return None
 
-    t = threading.Thread(target=load_html)
-    t.start()
+    class VdomrWebView(QWebEngineView):
+        def __init__(self, root):
+            super(VdomrWebView, self).__init__()
 
-    api = PyWebViewApi()
-    webview.create_window(title, js_api=api, min_size=(600, 450), debug=True)
+            self._root = root
+
+            self._channel = QWebChannel()
+            self._pyqt5_api = PyQt5Api()
+            self._channel.registerObject('pyqt5_api', self._pyqt5_api)
+            self.page().setWebChannel(self._channel)
+
+            html = """
+                <html>
+                <head>
+                <style>
+                .overlay {
+                    background-color: rgba(1, 1, 1, 0.8);
+                    color:white;
+                    font-size:24px;
+                    bottom: 0;
+                    left: 0;
+                    position: fixed;
+                    right: 0;
+                    top: 0;
+                    text-align: center;
+                    padding: 40px;
+                }
+                </style>
+                <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+                <script>
+                {script}
+                </script>
+                </head>
+                <body>
+                <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
+                {content}
+                <script language="JavaScript">
+                    new QWebChannel(qt.webChannelTransport, function (channel) {
+                        window.pyqt5_api = channel.objects.pyqt5_api;
+                        console.log=function(a,b,c) {
+                            let txt;
+                            if (c) txt=a+' '+b+' '+c;
+                            else if (b) txt=a+' '+b;
+                            else txt=a+'';
+                            pyqt5_api.console_log(txt);
+                        }
+                    });
+                </script>
+                </body>
+            """
+            html = html.replace('{content}', root._repr_html_())
+
+            script = """
+                window.show_overlay=function() {
+                    document.getElementById('overlay').style.visibility='visible'
+                }
+                window.hide_overlay=function() {
+                    document.getElementById('overlay').style.visibility='hidden'
+                }
+                window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
+                    window.show_overlay();
+                    setTimeout(function() {
+                        pyqt5_api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
+                        window.hide_overlay();
+                    },100); // the timeout might be important to prevent crashes, not sure
+                }
+            """
+            html = html.replace('{script}', script)
+
+            self.page().setHtml(html)
+
+    app = QApplication([])
+    view = VdomrWebView(root=root)
+    vdomr_global['pyqt5_view'] = view
+    view.show()
+    js = _take_javascript_to_execute()
+    exec_javascript(js)
+    app.exec_()
+
+    # webview.evaluate_js(script)
+    # js = _take_javascript_to_execute()
+    # webview.evaluate_js(js)
 
 
 def mode():
@@ -246,6 +305,6 @@ if os.environ.get('VDOMR_MODE', '') == 'SERVER':
     print('vdomr: using SERVER mode because of VDOMR_MODE environment variable')
     config_server()
 
-if os.environ.get('VDOMR_MODE', '') == 'PYWEBVIEW':
-    print('vdomr: using PYWEBVIEW mode because of VDOMR_MODE environment variable')
-    config_pywebview()
+if os.environ.get('VDOMR_MODE', '') == 'PYQT5':
+    print('vdomr: using PYQT5 mode because of VDOMR_MODE environment variable')
+    config_pyqt5()

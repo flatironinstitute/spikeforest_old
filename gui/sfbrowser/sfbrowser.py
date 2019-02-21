@@ -105,6 +105,7 @@ class SFBrowser(vd.Component):
             accuracy_threshold=accuracy_threshold)
         self._accuracy_table = self._to_table(
             self._accuracy_table_data, ['study']+self._sorters)
+        print(self._accuracy_table_data)
         self.refresh()
 
     def _open_study_sorter_fig(self, *, sorter, study):
@@ -160,8 +161,6 @@ class SFBrowser(vd.Component):
         return vd.table(rows, class_='table')
 
     def render(self):
-        SF = self._SF_data
-
         return vd.div(
             vd.table(
                 vd.tr(

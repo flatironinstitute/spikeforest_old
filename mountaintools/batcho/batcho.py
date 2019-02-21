@@ -244,9 +244,9 @@ def assemble_batch(*, batch_name):
                 ii, status_string)
 
             _set_batch_status(batch_name=batch_name, status=dict(
-                    status='error', error=errstr))
+                status='error', error=errstr))
             raise Exception(errstr)
-                
+
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
     ca.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
@@ -285,10 +285,12 @@ def get_batch_job_statuses(*, batch_name, job_index=None):
     #         ))
     # return ret
 
+
 def _get_job_status_string(*, batch_name, job_index):
     key = dict(name='batcho_job_status_strings',
                batch_name=batch_name)
     return ca.getValue(key=key, subkey=str(job_index))
+
 
 def stop_batch(*, batch_name):
     status0 = get_batch_status(batch_name=batch_name)
@@ -517,6 +519,7 @@ def get_batch_names_for_compute_resource(compute_resource):
     batch_names = list(obj.keys())
     return batch_names
 
+
 def _clear_batch_names_for_compute_resource(compute_resource):
     print('Clearing batch names for compute resource: '+compute_resource)
     key0 = dict(
@@ -524,7 +527,8 @@ def _clear_batch_names_for_compute_resource(compute_resource):
         compute_resource=compute_resource
     )
     obj = ca.setValue(key=key0, subkey='-', value=None)
-    print('-----------------------',get_batch_names_for_compute_resource(compute_resource))
+    print('-----------------------',
+          get_batch_names_for_compute_resource(compute_resource))
 
 
 def get_batch_results(*, batch_name):
@@ -579,7 +583,8 @@ def _set_job_status(*, batch_name, job_index, status):
     #    if code != job_code:
     #        print('Not setting job status because lock code does not match batch code')
     #        return
-    print('=============================== _set_job_status',batch_name,job_index,status)
+    print('=============================== _set_job_status',
+          batch_name, job_index, status)
     status_string = None
     if status:
         status_string = status.get('status', None)
