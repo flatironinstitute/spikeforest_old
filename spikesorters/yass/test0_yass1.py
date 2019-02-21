@@ -8,113 +8,53 @@ except:
 
 # %%
 import spikeforest_analysis as sa
+from spikeforest_analysis.compare_sortings_with_truth import GenSortingComparisonTable
 from cairio import client as ca
+import spikeextractors as se
 import os
+from spikesorters import YASS
+from spiketoolkit.comparison.sortingcomparison import SortingComparison
+import spikewidgets as sw
 
-
-# %%
-
-def define_sorters():
-    sorter_ms4_thr3 = dict(
-        name='MountainSort4-thr3',
-        processor_name='MountainSort4',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=3.1
-        )
-    )
-
-    sorter_sc = dict(
-        name='SpykingCircus',
-        processor_name='SpykingCircus',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )
-
-    sorter_yass = dict(
-        name='yass',
-        processor_name='yass',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )
-    return [sorter_ms4_thr3, sorter_sc]
-
+# %%SortingComparison
+tmpdir = 'yass_test1'
+if not os.path.isdir(tmpdir):
+    os.mkdir(tmpdir)
+rx, sx = se.example_datasets.yass_example(set_id = 1)
 
 # %%
-compute_resource = 'local-computer'
+firings_true = tmpdir+'/recording/firings_true.mda'
+recording_path = tmpdir+'/recording'
+se.MdaRecordingExtractor.writeRecording(
+    recording=rx, save_path=recording_path)
+se.MdaSortingExtractor.writeSorting(
+    sorting=sx, save_path=firings_true)
 
-# Use this to control whether we force the processing to re-run (by default it uses cached results)
-os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
-
-# This is the id of the output -- for later retrieval by GUI's, etc
-output_id = 'spikeforest_test1'
-
-# Grab a couple recordings for testing
-recording1 = dict(
-    recording_name='001_synth',
-    study_name='datasets_noise10_K10_C4-test',
-    study_set='magland_synth-test',
-    directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/001_synth'
+YASS.execute(
+    recording_dir=tmpdir+'/recording',
+    firings_out=tmpdir+'/firings_out.mda',
+    detect_sign=-1,
+    adjacency_radius=50,
+    _container='default'
 )
-recording2 = dict(
-    recording_name='002_synth',
-    study_name='datasets_noise10_K10_C4-test',
-    study_set='magland_synth-test',
-    directory='kbucket://15734439d8cf/groundtruth/magland_synth/datasets_noise10_K10_C4/002_synth'
-)
-recordings = [recording1, recording2]
-
-# Summarize the recordings
-recordings_B = sa.summarize_recordings(
-    recordings=recordings, compute_resource=compute_resource)
-
-# Sorters (algs and params) are defined below
-sorters = define_sorters()
-
-# We will be assembling the sorting results here
-sorting_results = []
-
-for sorter in sorters:
-    # Sort the recordings
-    sortings_A = sa.sort_recordings(
-        sorter=sorter,
-        recordings=recordings_B,
-        compute_resource=compute_resource
-    )
-
-    # Summarize the sortings
-    sortings_B = sa.summarize_sortings(
-        sortings=sortings_A,
-        compute_resource=compute_resource
-    )
-
-    # Compare with ground truth
-    sortings_C = sa.compare_sortings_with_truth(
-        sortings=sortings_B,
-        compute_resource=compute_resource
-    )
-
-    # Append to results
-    sorting_results = sorting_results+sortings_C
-
-# TODO: collect all the units for aggregated analysis
-
-# Save the output
-print('Saving the output')
-ca.saveObject(
-    key=dict(
-        name='spikeforest_results',
-        output_id=output_id
-    ),
-    object=dict(
-        recordings=recordings_B,
-        sorting_results=sorting_results
-    )
-)
+firings_out = tmpdir+'/firings_out.mda'
+assert os.path.exists(firings_out)
 
 # %%
+print('recording: {}'.format(recording_path))
+print('firings_out: {}'.format(firings_out))
+print('firings_true: {}'.format(firings_true))
+
+# %%
+GenSortingComparisonTable.execute(
+    firings=firings_out,
+    firings_true=firings_true,
+    units_true=None,
+    json_out=os.path.join(tmpdir, 'out.json'),
+    html_out=os.path.join(tmpdir, 'out.html'),
+    _container='default'
+)
+
+
+
+#%%
