@@ -14,4 +14,5 @@ python setup.py develop
 # vscode extensions
 code --install-extension ms-python.python
 code --install-extension eamodio.gitlens
+code --install-extension bierner.markdown-preview-github-styles
 # code --install-extension rduldulao.py-coverage-view
