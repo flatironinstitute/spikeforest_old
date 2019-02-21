@@ -39,6 +39,8 @@ class RawRecordingExtractor(RecordingExtractor):
     @staticmethod
     def writeRecording(recording, save_path, dtype=None, transpose=False, fReversePolarity=False):
         save_path = Path(save_path)
+        #print('writeRecording2: {}'.format(str(save_path)))
+
         if dtype == None:
             dtype = np.float32
         np_Wav = np.array(recording.getTraces(), dtype=dtype)

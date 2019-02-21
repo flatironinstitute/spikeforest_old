@@ -1,0 +1,3 @@
+image: "magland/codepod_spikeforest2"
+tasks:
+- command: ./devel/codepod_init.sh

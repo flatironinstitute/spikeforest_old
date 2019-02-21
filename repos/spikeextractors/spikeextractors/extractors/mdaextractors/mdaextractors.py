@@ -8,16 +8,16 @@ import os
 
 def _load_required_modules():
     try:
-        from kbucket import client as kbucket
+        from cairio import client as ca
     except ModuleNotFoundError:
         raise ModuleNotFoundError("To use the MdaExtractors, install mountainlab_pytools and kbucket: \n\n"
                                   "pip install mountainlab_pytools kbucket\n\n")
-    return kbucket
+    return ca
 
 
 class MdaRecordingExtractor(RecordingExtractor):
     def __init__(self, dataset_directory, *, download=True):
-        kbucket = _load_required_modules()
+        ca = _load_required_modules()
 
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
@@ -25,17 +25,17 @@ class MdaRecordingExtractor(RecordingExtractor):
         self._dataset_params = read_dataset_params(dataset_directory)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if is_kbucket_url(timeseries0):
-            download_needed = is_url(kbucket.findFile(timeseries0))
+            download_needed = is_url(ca.findFile(path=timeseries0))
         else:
             download_needed = is_url(timeseries0)
         if download and download_needed:
             print('Downloading file: ' + timeseries0)
-            self._timeseries_path = kbucket.realizeFile(timeseries0)
+            self._timeseries_path = ca.realizeFile(path=timeseries0)
             print('Done.')
         else:
-            self._timeseries_path = kbucket.findFile(timeseries0)
+            self._timeseries_path = ca.findFile(path=timeseries0)
         geom0 = dataset_directory + '/geom.csv'
-        self._geom_fname = kbucket.realizeFile(geom0)
+        self._geom_fname = ca.realizeFile(path=geom0)
         self._geom = np.genfromtxt(self._geom_fname, delimiter=',')
         X = DiskReadMda(self._timeseries_path)
         if self._geom.shape[0] != X.N1():
@@ -57,7 +57,7 @@ class MdaRecordingExtractor(RecordingExtractor):
         return self._samplerate
 
     def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
-        kbucket = _load_required_modules()
+        ca = _load_required_modules()
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
@@ -71,7 +71,7 @@ class MdaRecordingExtractor(RecordingExtractor):
 
     @staticmethod
     def writeRecording(recording, save_path):
-        kbucket = _load_required_modules()
+        ca = _load_required_modules()
         channel_ids = recording.getChannelIds()
         M = len(channel_ids)
         N = recording.getNumFrames()
@@ -96,19 +96,19 @@ class MdaRecordingExtractor(RecordingExtractor):
 
 class MdaSortingExtractor(SortingExtractor):
     def __init__(self, firings_file):
-        kbucket = _load_required_modules()
+        ca = _load_required_modules()
 
         SortingExtractor.__init__(self)
         if is_kbucket_url(firings_file):
-            download_needed = is_url(kbucket.findFile(firings_file))
+            download_needed = is_url(ca.findFile(path=firings_file))
         else:
             download_needed = is_url(firings_file)
         if download_needed:
             print('Downloading file: ' + firings_file)
-            self._firings_path = kbucket.realizeFile(firings_file)
+            self._firings_path = ca.realizeFile(path=firings_file)
             print('Done.')
         else:
-            self._firings_path = kbucket.realizeFile(firings_file)
+            self._firings_path = ca.realizeFile(path=firings_file)
         self._firings = readmda(self._firings_path)
         self._times = self._firings[1, :]
         self._labels = self._firings[2, :]
@@ -127,7 +127,7 @@ class MdaSortingExtractor(SortingExtractor):
 
     @staticmethod
     def writeSorting(sorting, save_path):
-        kbucket = _load_required_modules()
+        ca = _load_required_modules()
         unit_ids = sorting.getUnitIds()
         if len(unit_ids) > 0:
             K = np.max(unit_ids)
@@ -168,10 +168,10 @@ def is_url(path):
 
 
 def read_dataset_params(dsdir):
-    kbucket = _load_required_modules()
+    ca = _load_required_modules()
 
     fname1=dsdir+'/params.json'
-    fname2=kbucket.realizeFile(fname1)
+    fname2=ca.realizeFile(path=fname1)
     if not fname2:
         raise Exception('Unable to find file: '+fname1)
     if not os.path.exists(fname2):

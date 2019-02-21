@@ -2,4 +2,5 @@
 set -ex
 
 # you must first pip install autopep8
-autopep8 -ir batcho kbucket mlprocessors pages pairio spikesorters vdomr
+autopep8 -ir mountaintools pages spikesorters working gui
+

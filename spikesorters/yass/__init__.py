@@ -1,1 +1,1 @@
-from .yass import yass
+from .yass import YASS

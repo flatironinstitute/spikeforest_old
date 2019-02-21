@@ -1,3 +1,0 @@
-image: "magland/theiapod_spikeforest2"
-tasks:
-- command: ./gitpod_init.sh

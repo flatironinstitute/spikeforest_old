@@ -13,14 +13,8 @@ setuptools.setup(
     description="Spike sorting validation and comparison system",
     url="https://github.com/flatironinstitute/spikeforest2",
     packages=[
-        'vdomr',
-        'spikeforest_batch_run',
         'spikeextractors', 'spikewidgets', 'spiketoolkit',
-        'mlprocessors',
-        'kbucket', 'pairio',
-        'spikeforest',
-        'batcho',
-        'spikeforestwidgets'
+        'spikeforest','spikeforest_analysis'
     ],
     install_requires=[
     ],

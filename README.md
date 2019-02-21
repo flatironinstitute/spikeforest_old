@@ -1,8 +1,103 @@
 ## SpikeForest2
 
-## Installation
+## Opening in codepod
 
-(See below for instructions on opening this project in a docker container via theiapod)
+(See also "Alternative installation" below)
+
+You can use and/or develop SpikeForest2 with codepod. Tested in Linux, should also work on a Mac.
+
+Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.com/magland/codepod)
+
+First clone this repo and checkout this branch (currently dev):
+
+```
+git clone https://github.com/flatironinstitute/spikeforest2
+git checkout -b dev
+```
+
+Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
+
+Then run the ./codepod_run.sh convenience script in the repo
+
+```
+cd spikeforest2 # make sure you are on the dev branch (or which ever is appropriate)
+./codepod_run.sh
+```
+
+This will download a docker image (may take some time depending on your internet connection) and put you in a container with a fully-functional development environment.
+
+Once inside the container you can run the following to open vscode
+```
+code .
+```
+
+## Unit tests
+
+Once in codepod, you may run the unit tests via
+
+```
+pytest
+```
+
+To run the slower, more thorough, tests:
+```
+pytest -m slow -s
+# The -s flag is for verbose output, which may not be what you want
+# This will download singularity containers, which may take some time
+# depending on your internet connection
+```
+
+## Directory structure
+
+(Please notify if the following gets out-of-sync with the project directory structure)
+
+`devel`: Utilities specific to development of SpikeForest, including instructions on preparing the docker image for codepod, a script to run when codepod is started, and a script for auto-formatting the python code for pep8 compliance.
+
+`mountaintools`: Contains the MountainTools such as batcho, cairio, kbucket, mlprocessors, and vdomr. These tools are not specific to spike sorting.
+
+`repos`: Related repositories. See note below.
+
+`simplot`: A work-in-progress JavaScript library for interactive plotting.
+
+`spikextractors`: A snapshot of the SpikeExtractors project.
+
+`spikeforest`: A python module used for both spike sorting and visualization.
+
+`spikeforest_analysis`: A python module using by spike sorting scripts and analysis scripts. Contains the core processing routines.
+
+`spikeforestwidgets`: Some vdomr widgets used by the GUIs.
+
+`spikesorters`: Wrappers of the spike sorting algorithms.
+
+`spiketoolkit`: An old snapshot of the SpikeToolkit project.
+
+`spikewidgets`: An old snapshot of the SpikeWidgets project.
+
+`working`: The SpikeForest analysis scripts. Contains scripts for preparing recordings, running spike sorting, comparing with ground truth, and assembling results for the websites.
+
+`.codepod.yml`: Configuration file for codepod
+
+`.gitignore`: Files that git should ignore
+
+`codepod_run.sh`: Run this to open the project using codepod (see above).
+
+`pytest.ini`: Configuration file for pytest
+
+`README.md`: This readme file
+
+`LICENSE`: The license file for this project. See also license files for individual components within subdirectories.
+
+`requirements.txt`: The python package dependencies
+
+`setup_colab.sh`: Convenience script to set up a google colaboratory runtime
+
+`setup_jp_proxy_widget.sh`: Convenience script for using vdomr in jupyter notebooks
+
+`setup_python.sh`: Convenience script for installing python dependencies (not necessary when using codepod, see below)
+
+`setup.py`: The setup file for this python package (see below)
+
+## Alternative installation
 
 This is a meta repository that is meant to be used in development/editable mode.
 
@@ -17,6 +112,10 @@ Then run the following
 
 ```
 # See: setup_python.sh
+pip install -r requirements.txt
+python setup.py develop
+
+cd mountaintools
 pip install -r requirements.txt
 python setup.py develop
 ```
@@ -37,35 +136,3 @@ In addition, if you want to use some of the interactive graphics within jupyterl
 
 The repo/ directory contains a snapshot of a number of different dependent projects. These may or may not be up-to-date with the associated stand-alone packages. In this way, spikeforest2 is a snapshot project that contains all the necessary code, and is less susceptible to breaking changes in other packages.
 
-Further documentation: [spikeforest-docs](https://github.com/flatironinstitute/spikeforest-docs/blob/master/docs/index.md)
-
-## Installation using theiapod
-
-You can use spikeforest2 with theiapod.
-
-Prerequisites: [docker](https://docs.docker.com/) and [theiapod](https://github.com/magland/theiapod)
-
-First clone this repo:
-
-```
-git clone https://github.com/flatironinstitute/spikeforest2
-```
-
-Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
-
-Then create and run a script such as the following.
-
-```
-#!/bin/bash
-
-OPTS=""
-OPTS="$OPTS -v $HOME/.gitconfig:/home/theiapod/.gitconfig"
-OPTS="$OPTS --port 3000 -p 3005-3009"
-OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache"
-
-theiapod -w $PWD/spikeforest2 $OPTS
-```
-
-This will create a container with the theia browser-based IDE. You can then start interacting with the project by pointing your web browser (preferably chrome) to `http://localhost:3000`.
-
-Note that, according to the above script, ports 3005-3009 will be exposed. You can use these for jupyter lab or other web services.

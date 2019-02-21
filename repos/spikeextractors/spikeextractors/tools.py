@@ -294,7 +294,7 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
         if 'location' in recording.getChannelPropertyNames():
             positions = np.array([recording.getChannelProperty(chan, 'location')
                                   for chan in recording.getChannelIds()])
-            if dimensions is not None:
+            if dimensions is not None and dimensions is not 'all':
                 positions = positions[:, dimensions]
         else:
             print("'location' property is not available and it will not be saved.")
