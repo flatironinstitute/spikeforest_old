@@ -1,5 +1,7 @@
 ## SpikeForest2
 
+**Note**: *This software is in alpha stage of development*
+
 ## Opening in codepod
 
 (See also "Alternative installation" below)
