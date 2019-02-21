@@ -14,7 +14,11 @@ class VDOMRServer():
     def __init__(self, vdomr_app):
         self._vdomr_app = vdomr_app
         self._sessions = dict()
+        self._port = None
         pass
+
+    def setPort(self, port):
+        self._port = port
 
     def start(self):
         try:
@@ -211,7 +215,11 @@ class VDOMRServer():
                 else:
                     self.write('//nothing to do')
 
-        port = os.environ.get('PORT', 3005)
+        if self._port is not None:
+            port = self._port
+        else:
+            port = os.environ.get('PORT', 3005)
+
         application = tornado.web.Application([
             (r"/", RootHandler),
             (r"/invoke/", InvokeHandler),
