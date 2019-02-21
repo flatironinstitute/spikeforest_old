@@ -6,6 +6,7 @@ import pytest
 import time
 import os
 import signal
+import tempfile
 
 
 def test_cairio(tmpdir):
@@ -73,9 +74,9 @@ def test_cairio(tmpdir):
     assert json.dumps(some_other_object) == json.dumps(obj)
 
     # You can do the same with files
-    with open('test___.txt', 'w') as f:
+    with open(tempfile.gettempdir()+'/test___.txt', 'w') as f:
         f.write('some file content')
-    path = cc.saveFile('test___.txt')
+    path = cc.saveFile(tempfile.gettempdir()+'/test___.txt')
     print(path)
     # Output: sha1://ee025361a15e3e8074e9c0b44b4f98aabc829b3d/test___.txt
 
