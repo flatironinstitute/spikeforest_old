@@ -24,6 +24,7 @@ def main():
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
     compute_resource = 'ccmlin008-default'
+    compute_resource_ks = 'ccmlin008-kilosort'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -55,10 +56,13 @@ def main():
 
     for sorter in sorters:
         # Sort the recordings
+        compute_resource0 = compute_resource
+        if sorter['name'] == 'KiloSort':
+            compute_resource0 = compute_resource_ks
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
-            compute_resource=compute_resource
+            compute_resource=compute_resource0
         )
 
         # Append to results
@@ -190,9 +194,7 @@ def _define_sorters():
         )
     )
 
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode]
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static]
 
 
 if __name__ == "__main__":
