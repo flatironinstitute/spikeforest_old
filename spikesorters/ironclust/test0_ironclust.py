@@ -8,8 +8,8 @@ except:
     pass
 
 # %% python magic
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
+#get_ipython().run_line_magic('load_ext', 'autoreload')
+#get_ipython().run_line_magic('autoreload', '2')
 
 # %%
 import spikeforest_analysis as sa
@@ -23,22 +23,28 @@ import spikewidgets as sw
 from spikesorters import IronClust
 
 # %%SortingComparisonyass_test1/recording/raw.mda
-tmpdir = 'irc_test1'
-if not os.path.isdir(tmpdir):
-    os.mkdir(tmpdir)
-rx, sx = se.example_datasets.yass_example(set_id=1)
+""" recording_path = 'irc_test1'
+if not os.path.isdir(recording_path):
+    os.mkdir(recording_path)
+rx, sx = se.example_datasets.yass_example(set_id=1) """
 
 # %%
-firings_true = tmpdir+'/recording/firings_true.mda'
-recording_path = tmpdir+'/recording'
-se.MdaRecordingExtractor.writeRecording(
-    recording=rx, save_path=recording_path)
-se.MdaSortingExtractor.writeSorting(
-    sorting=sx, save_path=firings_true)
+recording_path = 'kbucket://15734439d8cf/groundtruth/visapy_mea/set1'
+firings_true = recording_path+'/firings_true.mda'
+#recording_path = recording_path+'/recording'
+#se.MdaRecordingExtractor.writeRecording(
+    #recording=rx, save_path=recording_path)
+#se.MdaSortingExtractor.writeSorting(
+    #sorting=sx, save_path=firings_true)
+result_path = os.path.abspath('test_irc')
+if not os.path.exists(result_path):
+    os.mkdir(result_path)
+firings_out = os.path.join(result_path, 'firings_out.mda')
+print('output stored in: ', firings_out)
 
 IronClust.execute(
-    recording_dir=tmpdir+'/recording',
-    firings_out=tmpdir+'/firings_out.mda',
+    recording_dir=recording_path,
+    firings_out=firings_out,
     prm_template_name='static',
     detect_sign=-1,
     adjacency_radius=50,
@@ -46,7 +52,7 @@ IronClust.execute(
     _force_run=True,
     _keep_temp_files=True
 )
-firings_out = tmpdir+'/firings_out.mda'
+#firings_out = recording_path+'/firings_out.mda'
 assert os.path.exists(firings_out)
 
 
@@ -63,10 +69,13 @@ GenSortingComparisonTable.execute(
     firings=firings_out,
     firings_true=firings_true,
     units_true=[],
-    json_out=os.path.join(tmpdir, 'out.json'),
-    html_out=os.path.join(tmpdir, 'out.html'),
+    json_out=os.path.join(recording_path, 'out.json'),
+    html_out=os.path.join(recording_path, 'out.html'),
     _container=None
 )
 
 
 # %%
+
+
+#%%

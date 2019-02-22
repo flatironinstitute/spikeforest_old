@@ -108,7 +108,7 @@ def ironclust_helper(*,
     duration_minutes=num_timepoints/samplerate/60
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(num_channels,num_timepoints,duration_minutes))
 
-    print('Creating .params file...')
+    print('Creating argfile.txt...')
     txt=''
     txt+='samplerate={}\n'.format(samplerate)
     txt+='detect_sign={}\n'.format(detect_sign)
@@ -119,6 +119,7 @@ def ironclust_helper(*,
     txt+='freq_max={}\n'.format(freq_max)    
     txt+='pc_per_chan={}\n'.format(pc_per_chan)
     txt+='prm_template_name={}\n'.format(prm_template_name)
+    txt+='scale_factor={}\n'.format(params["scale_factor"])
     _write_text_file(dataset_dir+'/argfile.txt',txt)
         
     print('Running IronClust...')
