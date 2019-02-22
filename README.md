@@ -2,7 +2,7 @@
 
 **Note**: *This software is in alpha stage of development*
 
-## Opening in codepod
+## Opening in codepod (containerized VS Code IDE)
 
 (See also "Alternative installation" below)
 
@@ -109,7 +109,7 @@ pytest -m slow -s
 
 `setup.py`: The setup file for this python package (see below)
 
-## Alternative installation
+## Alternative installation (not using codepod)
 
 This is a meta repository that is meant to be used in development/editable mode.
 
@@ -130,6 +130,15 @@ python setup.py develop
 cd mountaintools
 pip install -r requirements.txt
 python setup.py develop
+```
+
+To run GUI tools, run
+```
+conda install -c anaconda pyqt
+```
+and test using
+```
+gui/sfbrowser/start_sfbrowser.py
 ```
 
 To run colab jupyter notebooks in a local runtime, we recommend chrome browser or chromium-browser. Firefox browser may not properly connect to the local runtime environment. You must run the following prior to using colab with a local runtime:
