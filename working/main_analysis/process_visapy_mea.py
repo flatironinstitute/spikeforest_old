@@ -22,9 +22,10 @@ def main():
     ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)
-    # compute_resource = 'local-computer'
-    compute_resource = 'ccmlin008-default'
-    compute_resource_ks = 'ccmlin008-kilosort'
+    compute_resource = 'default'
+    #compute_resource = 'local-computer'
+    #compute_resource = 'ccmlin008-default'
+    #compute_resource_ks = 'ccmlin008-kilosort'
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -124,6 +125,11 @@ def _define_sorters():
         )
     )
 
+    #sorter_irc_tetrode = sorter_irc_template('tetrode')
+    #sorter_irc_drift = sorter_irc_template('drift')
+    sorter_irc_static = sorter_irc_template('static')
+
+    """
     sorter_irc_tetrode = dict(
         name='IronClust-tetrode',
         processor_name='IronClust',
@@ -154,15 +160,17 @@ def _define_sorters():
             prm_template_name="static_template.prm"
         )
     )
+    """
 
-    def sorter_irc_template(prm_template_name):
+    def sorter_irc_template(prm_template_name, detect_threshold=5):
         sorter_irc = dict(
             name='IronClust-{}'.format(prm_template_name),
             processor_name='IronClust',
             params=dict(
                 detect_sign=-1,
                 adjacency_radius=50,
-                prm_template_name="{}_template.prm".format(prm_template_name)
+                prm_template_name="{}_template.prm".format(prm_template_name),
+                detect_threshold=detect_threshold
             )
         )
         return sorter_irc
@@ -194,7 +202,7 @@ def _define_sorters():
         )
     )
 
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static]
 
 
 if __name__ == "__main__":

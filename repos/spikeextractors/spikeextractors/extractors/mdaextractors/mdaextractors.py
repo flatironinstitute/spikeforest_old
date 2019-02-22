@@ -70,7 +70,7 @@ class MdaRecordingExtractor(RecordingExtractor):
         return recordings
 
     @staticmethod
-    def writeRecording(recording, save_path):
+    def writeRecording(recording, save_path, params=dict()):
         ca = _load_required_modules()
         channel_ids = recording.getChannelIds()
         M = len(channel_ids)
@@ -85,10 +85,7 @@ class MdaRecordingExtractor(RecordingExtractor):
         if not os.path.isdir(save_path):
             os.mkdir(save_path)
         writemda32(raw, save_path + '/raw.mda')
-        params = dict(
-            samplerate=recording.getSamplingFrequency(),
-            spike_sign=-1
-        )
+        params["samplerate"] = recording.getSamplingFrequency()
         with open(save_path + '/params.json','w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')

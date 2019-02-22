@@ -7,9 +7,9 @@ import random
 import string
 from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, YASS
+from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort
 
-
+"""
 class IronClust(mlpr.Processor):
     NAME='IronClust'
     VERSION='4.3.0'
@@ -59,7 +59,8 @@ class IronClust(mlpr.Processor):
                 shutil.rmtree(tmpdir)
             raise
         shutil.rmtree(tmpdir)
-        
+"""
+
 # class SpykingCircus(mlpr.Processor):
 #     NAME='SpykingCircus'
 #     VERSION='0.1.7'
@@ -117,6 +118,8 @@ class IronClust(mlpr.Processor):
 #             raise
 #         shutil.rmtree(tmpdir)
 
+
+"""
 class KiloSort(mlpr.Processor):
     NAME='KiloSort'
     VERSION='0.1.1' # wrapper VERSION
@@ -162,7 +165,7 @@ class KiloSort(mlpr.Processor):
                 shutil.rmtree(tmpdir)
             raise
         shutil.rmtree(tmpdir)
-
+"""
 #sf.sorters.ironclust(*, recording, tmpdir, detect_sign=-1, adjacency_radius=-1, detect_threshold=5, merge_thresh=0.98, freq_min=300, freq_max=6000, pc_per_chan=3, prm_template_name, ironclust_src=None)
         
 Processors=dict(
