@@ -18,6 +18,17 @@ git clone https://github.com/flatironinstitute/spikeforest2
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
+If you want to use a conda virtual environment (e.g. `spikeforest2`), run 
+```
+conda create -n spikeforest2 python=3.6
+conda activate spikeforest2
+```
+
+Install codepod
+```
+pip install spikeforest2
+```
+
 Then run the ./codepod_run.sh convenience script in the repo
 
 ```
