@@ -72,8 +72,9 @@ class SpykingCircus(mlpr.Processor):
             se.MdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            if os.path.exists(tmpdir):
-                shutil.rmtree(tmpdir)
+            if not getattr(self, '_keep_temp_files', False):
+                if os.path.exists(tmpdir):
+                    shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
             shutil.rmtree(tmpdir)

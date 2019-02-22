@@ -76,14 +76,14 @@ class VDOMRServer():
                 xhr.send(data);
                 }
                 function inject_script(url,callback) {
-                var head = document.getElementsByTagName('head')[0];
-                var script = document.createElement('script');
-                script.type = 'text/javascript';
-                script.onload = function() {
-                    callback();
-                }
-                script.src = url;
-                head.appendChild(script);
+                    var head = document.getElementsByTagName('head')[0];
+                    var script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.onload = function() {
+                        callback();
+                    }
+                    script.src = url;
+                    head.appendChild(script);
                 }
             </script>
 
@@ -107,14 +107,15 @@ class VDOMRServer():
 
             <script>
                 function get_script() {
-                inject_script('/script.js?session_id={session_id}',function() {
-                    setTimeout(function() {
-                    get_script();
-                    },100);
-                });
+                    console.log('get_script');
+                    inject_script('/script.js?session_id={session_id}',function() {
+                        setTimeout(function() {
+                            get_script();
+                        },100);
+                    });
                 }
                 setTimeout(function() {
-                get_script();
+                    get_script();
                 },1000);
             </script>
 
@@ -194,10 +195,15 @@ class VDOMRServer():
                 num_delays = 10
                 for i in range(num_delays):
                     vd._set_server_session(session_id)
-                    js = vd._take_javascript_to_execute()
-                    if js:
-                        self.write(js)
-                        return
+                    js_list = []
+                    while True:
+                        js = vd._take_javascript_to_execute()
+                        if js is None:
+                            break
+                        js_list.append(js)
+                    if len(js_list) > 0:
+                        self.write('\n\n'.join(js_list))
+                        break
                     yield async_sleep(delay)
                 self.write("//nothing to do")
 
@@ -209,11 +215,16 @@ class VDOMRServer():
                     self.write('//no session_id')
                     return
                 vd._set_server_session(session_id)
-                js = vd._take_javascript_to_execute()
-                if js:
-                    self.write(js)
+                js_list = []
+                while True:
+                    js = vd._take_javascript_to_execute()
+                    if js is None:
+                        break
+                    js_list.append(js)
+                if len(js_list) > 0:
+                    self.write('\n\n'.join(js_list))
                 else:
-                    self.write('//nothing to do')
+                    self.write('//nothing to do---')
 
         if self._port is not None:
             port = self._port

@@ -6,7 +6,7 @@ import sys
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
-    mode='server',  # colab, jp_proxy_widget, server, or pywebview -- by default we are in server mode
+    mode='server',  # colab, jp_proxy_widget, server, or pyqt5 -- by default we are in server mode
     invokable_functions={},  # for mode=jp_proxy_widget, server, or pyqt5
     jp_widget=None,  # for mode=jp_proxy_widget
     pyqt5_view=None  # for mode=pyqt5
@@ -79,8 +79,10 @@ def _take_javascript_to_execute():
     SS = vdomr_server_global['current_session']
     if len(SS['javascript_to_execute']) == 0:
         return None
-    js = '\n'.join(SS['javascript_to_execute'])
-    SS['javascript_to_execute'] = []
+    js = SS['javascript_to_execute'][0]
+    SS['javascript_to_execute'] = SS['javascript_to_execute'][1:]
+    #js = '\n'.join(SS['javascript_to_execute'])
+    #SS['javascript_to_execute'] = []
     return js
 
 
@@ -203,6 +205,7 @@ def pyqt5_start(*, root, title):
 
         @pyqtSlot(str, result=QVariant)
         def console_log(self, a):
+            print('JS:', a)
             return None
 
     class VdomrWebView(QWebEngineView):
@@ -235,6 +238,8 @@ def pyqt5_start(*, root, title):
                 </style>
                 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
                 <script>
+                // we do the following so we can get all console.log messages on the python console
+                console.log=console.error;
                 {script}
                 </script>
                 </head>
@@ -244,6 +249,8 @@ def pyqt5_start(*, root, title):
                 <script language="JavaScript">
                     new QWebChannel(qt.webChannelTransport, function (channel) {
                         window.pyqt5_api = channel.objects.pyqt5_api;
+                        /*
+                        // instead of doing the following, we map console.log to console.error above
                         console.log=function(a,b,c) {
                             let txt;
                             if (c) txt=a+' '+b+' '+c;
@@ -251,6 +258,7 @@ def pyqt5_start(*, root, title):
                             else txt=a+'';
                             pyqt5_api.console_log(txt);
                         }
+                        */
                     });
                 </script>
                 </body>
@@ -272,6 +280,11 @@ def pyqt5_start(*, root, title):
                     },100); // the timeout might be important to prevent crashes, not sure
                 }
             """
+            while True:
+                js = _take_javascript_to_execute()
+                if js is None:
+                    break
+                script = script+'\n'+js
             html = html.replace('{script}', script)
 
             self.page().setHtml(html)
@@ -280,8 +293,6 @@ def pyqt5_start(*, root, title):
     view = VdomrWebView(root=root)
     vdomr_global['pyqt5_view'] = view
     view.show()
-    js = _take_javascript_to_execute()
-    exec_javascript(js)
     app.exec_()
 
     # webview.evaluate_js(script)
