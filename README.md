@@ -1,4 +1,5 @@
 ## SpikeForest2
+[![Build Status](https://travis-ci.org/flatiron/spikeforest2.svg?branch=master)](https://travis-ci.org/flatiron/spikeforest2)
 
 **Note**: *This software is in alpha stage of development*
 

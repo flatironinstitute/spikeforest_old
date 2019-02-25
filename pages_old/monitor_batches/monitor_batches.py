@@ -1,5 +1,6 @@
 import os
 import vdomr as vd
+import spikeforest as sf
 from monitorbatchesmainwindow import MonitorBatchesMainWindow
 import spikeforest as sf
 
