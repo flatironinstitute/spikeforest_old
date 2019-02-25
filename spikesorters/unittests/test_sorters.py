@@ -96,6 +96,7 @@ def test_yass(tmpdir):
     )
     assert os.path.exists(tmpdir+'/firings.mda')
 
+
 @pytest.mark.exclude
 @pytest.mark.kilosort
 def test_kilosort(tmpdir):

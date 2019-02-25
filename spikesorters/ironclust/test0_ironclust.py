@@ -32,10 +32,10 @@ rx, sx = se.example_datasets.yass_example(set_id=1) """
 recording_path = 'kbucket://15734439d8cf/groundtruth/visapy_mea/set1'
 firings_true = recording_path+'/firings_true.mda'
 #recording_path = recording_path+'/recording'
-#se.MdaRecordingExtractor.writeRecording(
-    #recording=rx, save_path=recording_path)
-#se.MdaSortingExtractor.writeSorting(
-    #sorting=sx, save_path=firings_true)
+# se.MdaRecordingExtractor.writeRecording(
+# recording=rx, save_path=recording_path)
+# se.MdaSortingExtractor.writeSorting(
+# sorting=sx, save_path=firings_true)
 result_path = os.path.abspath('test_irc')
 if not os.path.exists(result_path):
     os.mkdir(result_path)
@@ -54,9 +54,6 @@ IronClust.execute(
 )
 #firings_out = recording_path+'/firings_out.mda'
 assert os.path.exists(firings_out)
-
-
-
 
 
 # %%
@@ -78,4 +75,4 @@ GenSortingComparisonTable.execute(
 # %%
 
 
-#%%
+# %%

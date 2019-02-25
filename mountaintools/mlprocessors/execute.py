@@ -719,7 +719,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
             _container = proc.CONTAINER
-            print('Using container: ',_container)
+            print('Using container: ', _container)
 
     timer = time.time()
     if _system_call:

@@ -10,5 +10,6 @@
     "confirm_share": "yes",
     "listen_url": ".",
     "parent_hub_url": "http://localhost:63240",
-    "parent_hub_passcode": "passcode_test_kbhub1"
+    "parent_hub_passcode": "passcode_test_kbhub1",
+    "cas_upload_url": "http://localhost:63250"
 }

@@ -4,8 +4,9 @@ from os.path import join
 import time
 from spiketoolkit.sorters.tools import run_command_and_print_output
 
+
 def klusta(
-        recording, # The recording extractor
+        recording,  # The recording extractor
         output_folder=None,
         probe_file=None,
         file_name=None,
@@ -17,7 +18,7 @@ def klusta(
         n_features_per_channel=3,
         pca_n_waveforms_max=10000,
         num_starting_clusters=50
-        ):
+):
     try:
         import klusta
         import klustakwik2
@@ -39,7 +40,8 @@ def klusta(
 
     # save prb file:
     if probe_file is None:
-        si.saveProbeFile(recording, join(output_folder, 'probe.prb'), format='klusta')
+        si.saveProbeFile(recording, join(
+            output_folder, 'probe.prb'), format='klusta')
         probe_file = join(output_folder, 'probe.prb')
     # save binary file
     if file_name is None:
@@ -53,8 +55,10 @@ def klusta(
         klusta_config = f.readlines()
 
     klusta_config = ''.join(klusta_config).format(
-        join(output_folder, file_name), probe_file, float(recording.getSamplingFrequency()), recording.getNumChannels(), "'float32'",
-        threshold_strong_std_factor, threshold_weak_std_factor, "'"+detect_spikes+"'", extract_s_before, extract_s_after,
+        join(output_folder, file_name), probe_file, float(
+            recording.getSamplingFrequency()), recording.getNumChannels(), "'float32'",
+        threshold_strong_std_factor, threshold_weak_std_factor, "'" +
+        detect_spikes+"'", extract_s_before, extract_s_after,
         n_features_per_channel, pca_n_waveforms_max, num_starting_clusters
     )
 
@@ -70,6 +74,7 @@ def klusta(
         raise Exception('Klusta returned a non-zero exit code')
     print('Elapsed time: ', time.time() - t_start_proc)
 
-    sorting = si.KlustaSortingExtractor(join(output_folder, file_name +'.kwik'))
+    sorting = si.KlustaSortingExtractor(
+        join(output_folder, file_name + '.kwik'))
 
     return sorting
