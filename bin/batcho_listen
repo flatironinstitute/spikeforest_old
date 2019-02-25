@@ -6,7 +6,6 @@ import argparse
 import spikeforest as sf
 import batcho
 import time
-from kbucket import client as kb
 import mlprocessors as mlpr ## needed to register the mlprocessors batcho commands
 
 # This can be important for some of the jobs in certain situations
@@ -16,26 +15,26 @@ def main():
   parser = argparse.ArgumentParser(description = 'Listen for batches as a compute resource')
   parser.add_argument('compute_resource',help='Name of the compute resource')
   parser.add_argument('--run_prefix',help='Prefix for running jobs (e.g., srun)',required=False,default=None)
+  parser.add_argument('--parallel',help='Number of jobs to run in parallel (should not be run in combination with a tool like srun)',required=False,default=None)
+  parser.add_argument('--allow_uncontainerized',help='Allow jobs to run outside of containers (potentially dangerous)',action='store_true')
 
   args = parser.parse_args()
 
-  BATCHO_CONFIG_NAME=os.environ.get('BATCHO_CONFIG_NAME',None)
-  BATCHO_CONFIG_COLLECTION=os.environ.get('BATCHO_CONFIG_COLLECTION',None)
-  BATCHO_CONFIG_PASSWORD=os.environ.get('BATCHO_CONFIG_PASSWORD',None)
-  BATCHO_LOCAL=os.environ.get('BATCHO_LOCAL',None)
-
-  if (BATCHO_LOCAL=='true') or (BATCHO_CONFIG_NAME and BATCHO_CONFIG_COLLECTION and BATCHO_CONFIG_PASSWORD):
-      pass
+  if args.parallel:
+      num_simultaneous=int(args.parallel)
   else:
-      print('You must set the environment variables: BATCHO_CONFIG_NAME, BATCHO_CONFIG_COLLECTION, BATCHO_CONFIG_PASSWORD, or set BATCHO_LOCAL=true')
-      sys.exit(-1)
+      num_simultaneous=None
 
-  if BATCHO_LOCAL=='true':
-      sf.kbucketConfigLocal()
-  else:
-    sf.kbucketConfigRemote(name=BATCHO_CONFIG_NAME,collection=BATCHO_CONFIG_COLLECTION,password=BATCHO_CONFIG_PASSWORD)
-
-  batcho.listen_as_compute_resource(args.compute_resource,run_prefix=args.run_prefix)
+  print('Run prefix = {}'.format(args.run_prefix))
+  print('Num num simultaneous = {}'.format(num_simultaneous))
+  print('Allow uncontainerized = {}'.format(args.allow_uncontainerized))
+  print('Listening as compute resource: {}'.format(args.compute_resource))
+  batcho.listen_as_compute_resource(
+      args.compute_resource,
+      run_prefix=args.run_prefix,
+      num_simultaneous=num_simultaneous,
+      allow_uncontainerized=args.allow_uncontainerized
+  )
 
 if __name__== "__main__":
   main()

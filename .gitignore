@@ -1,5 +1,13 @@
 # Files to be ignored by git
 
+Untitled*.ipynb
+
+*.mda
+geom.csv
+params.json
+output.txt
+tmp
+
 # singularity image files
 *.simg
 

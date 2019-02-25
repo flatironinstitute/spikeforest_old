@@ -1,17 +1,19 @@
 # spikeforest2 dependencies
 # you can install these via: pip install -r requirements.txt
-jsonschema
-numexpr
-ipywidgets
-numpydoc
-# altair - no longer needed
 
+numexpr
+h5py
+requests
+numpydoc
+
+ipywidgets
 numpy
 matplotlib
-requests
-fasteners
-pillow
-pandas
-h5py
 scipy
 ipython
+
+pytest
+pytest-cov
+idna
+autopep8
+pylint

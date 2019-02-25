@@ -1,0 +1,9 @@
+# mountaintools dependencies
+# you can install these via: pip install -r requirements.txt
+numpy
+matplotlib
+requests
+pillow
+pandas
+ipython
+h5py
