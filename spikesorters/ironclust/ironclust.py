@@ -136,7 +136,8 @@ def ironclust_helper(*,
     txt += 'freq_max={}\n'.format(freq_max)
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
     txt += 'prm_template_name={}\n'.format(prm_template_name)
-    txt += 'scale_factor={}\n'.format(params["scale_factor"])
+    if 'scale_factor' in params:
+        txt += 'scale_factor={}\n'.format(params["scale_factor"])
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
     print('Running IronClust...')
