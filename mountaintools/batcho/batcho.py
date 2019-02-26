@@ -10,6 +10,9 @@ import traceback
 import multiprocessing
 import numpy as np
 
+from cairio import _init_async_session
+from cairio import _run_async_tasks
+
 _registered_commands = dict()
 
 
@@ -59,42 +62,46 @@ def prepare_batch(*, batch_name, clear_jobs=False, job_index=None):
     jobs = batch['jobs']
     print('Batch ({}) has {} jobs.'.format(batch_label, len(jobs)))
 
+    for ii, job in enumerate(jobs):
+        if (job_index is None) or (job_index == ii):
+            command = job['command']
+            job_label = job['label']
+            if clear_jobs:
+                # make async
+                _set_job_status(batch_name=batch_name,
+                                job_index=ii, status=None)
+                # make async but wait at end of the loop
+                _clear_job_lock(batch_name=batch_name, job_index=ii)
+
     num_prepared = 0
     for ii, job in enumerate(jobs):
         if (job_index is None) or (job_index == ii):
+            ## make async
             _set_batch_status(batch_name=batch_name, status=dict(
                 status='preparing', job_index=ii))
             command = job['command']
             job_label = job['label']
-            status = _get_job_status(batch_name=batch_name, job_index=ii)
-            if clear_jobs:
-                if status:
-                    _set_job_status(batch_name=batch_name,
-                                    job_index=ii, status=None)
-                    _clear_job_lock(batch_name=batch_name, job_index=ii)
-                    status = None
-            if (status != 'finished'):
-                if command not in _registered_commands:
-                    _set_batch_status(batch_name=batch_name, status=dict(
-                        status='error', job_index=ii, error='Command not registerd.'))
-                    raise Exception(
-                        'Problem preparing job {}: command not registered: {}'.format(job_label, command))
-                X = _registered_commands[command]
-                print('Preparing job {} in batch:'.format(
-                    job_label, batch_label))
-                _check_batch_code(batch_name, batch_code)
-                try:
-                    X['prepare'](job)
-                except:
-                    _set_batch_status(batch_name=batch_name, status=dict(
-                        status='error', job_index=ii, error='Error preparing job.'))
-                    print('Error preparing job {}'.format(job_label))
-                    raise
-                _check_batch_code(batch_name, batch_code)
-                num_prepared = num_prepared+1
-                _set_job_status(batch_name=batch_name,
-                                job_index=ii, status=dict(status='ready'))
-                _clear_job_lock(batch_name=batch_name, job_index=ii)
+            
+            if command not in _registered_commands:
+                _set_batch_status(batch_name=batch_name, status=dict(
+                    status='error', job_index=ii, error='Command not registerd.'))
+                raise Exception(
+                    'Problem preparing job {}: command not registered: {}'.format(job_label, command))
+            X = _registered_commands[command]
+            print('Preparing job {} in batch:'.format(
+                job_label, batch_label))
+            #_check_batch_code(batch_name, batch_code)
+            try:
+                X['prepare'](job)
+            except:
+                _set_batch_status(batch_name=batch_name, status=dict(
+                    status='error', job_index=ii, error='Error preparing job.'))
+                print('Error preparing job {}'.format(job_label))
+                raise
+            #_check_batch_code(batch_name, batch_code)
+            num_prepared = num_prepared+1
+            _set_job_status(batch_name=batch_name,
+                            job_index=ii, status=dict(status='ready'))
     _check_batch_code(batch_name, batch_code)
     _set_batch_status(batch_name=batch_name,
                       status=dict(status='done_preparing'))
@@ -464,9 +471,10 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
 
         _set_batch_status(batch_name=batch_name,
                           status=dict(status='preparing'))
+        _init_async_session()
         if not prepare_batch(batch_name=batch_name, clear_jobs=True):
             raise Exception('Problem preparing batch.')
-        _check_batch_code(batch_name, batch_code)
+        _run_async_tasks()
 
         _set_batch_status(batch_name=batch_name, status=dict(status='running'))
         _call_run_batch(batch_name=batch_name, run_prefix=run_prefix,
@@ -616,7 +624,7 @@ def get_batch_status(*, batch_name):
 def _set_batch_status(*, batch_name, status):
     key = dict(name='batcho_batch_status',
                batch_name=batch_name)
-    return ca.saveObject(key=key, object=status)
+    ca.saveObjectAsync(key=key, object=status)
 
 
 def _get_job_result(*, batch_name, job_index, retry_delays=[]):

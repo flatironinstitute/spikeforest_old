@@ -105,7 +105,7 @@ function SteadyFileIterator(directory) {
         return;
       }
 
-      let steady_timeout=100;
+      let steady_timeout=1;
 
       var subdirs = [];
       async.eachSeries(list, function(item, cb) {

@@ -102,8 +102,8 @@ class CairioClient():
                 return None
         return ret
 
-    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
-        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
+    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False, blocking=True):
+        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also, blocking=True)
 
     def getSubKeys(self, key, password=None):
         return list(self._get_sub_keys(key=key, password=password))
@@ -121,16 +121,16 @@ class CairioClient():
         else:
             raise Exception('Missing key or path in realizeFile().')
 
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False, blocking=True):
         if path is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password, local_also=local_also)
+                          value=None, password=password, local_also=local_also, blocking=blocking)
             return None
         sha1_path = self._save_file(
             path=path, basename=basename, confirm=confirm)
         if key is not None:
             self.setValue(key=key, subkey=subkey,
-                          value=sha1_path, password=password, local_also=local_also)
+                          value=sha1_path, password=password, local_also=local_also, blocking=blocking)
         return sha1_path
 
     # load object / save object
@@ -141,12 +141,15 @@ class CairioClient():
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False, blocking=True):
         if object is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also, blocking=blocking)
+
+    def saveObjectAsync(self, object, **kwargs):
+        return self.saveObject(object=object, **kwargs, blocking=False)
 
     # load text / save text
     def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
@@ -161,7 +164,7 @@ class CairioClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False, blocking=True):
         if text is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password, local_also=local_also)
@@ -169,7 +172,7 @@ class CairioClient():
         tmp_fname = _create_temporary_file_for_text(text=text)
         try:
             ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
-                                basename=basename, password=password, confirm=confirm, local_also=local_also)
+                                basename=basename, password=password, confirm=confirm, local_also=local_also, blocking=blocking)
         except:
             os.unlink(tmp_fname)
             raise
@@ -231,7 +234,7 @@ class CairioClient():
                 return ret
         return None
 
-    def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
+    def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False, blocking=True):
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
@@ -239,7 +242,7 @@ class CairioClient():
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
                 return False
         if collection:
-            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
+            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token'], blocking=blocking):
                 return False
         return True
 
@@ -269,17 +272,18 @@ class CairioClient():
                 share_ids = share_ids + \
                     self._remote_config['alternate_share_ids']
         for share_id0 in share_ids:
-            if path.startswith('sha1://'):
-                list0 = path.split('/')
-                sha1 = list0[2]
-                url, size = self._find_on_kbucket(
-                    share_id=share_id0, sha1=sha1)
-                if url:
-                    if resolve_locally:
-                        return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size)
-                    else:
-                        return url
-        return None
+            info = self._local_db.getNodeInfo(share_id=share_id0)
+            if info is not None:
+                if path.startswith('sha1://'):
+                    list0 = path.split('/')
+                    sha1 = list0[2]
+                    url, size = self._find_on_kbucket(
+                        share_id=share_id0, sha1=sha1)
+                    if url:
+                        if resolve_locally:
+                            return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size)
+                        else:
+                            return url
 
     def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
@@ -572,7 +576,10 @@ class CairioLocal():
             node_info = self._nodeinfo_cache[share_id]
         else:
             url = self._kbucket_url+'/'+share_id+'/api/nodeinfo'
-            obj = _http_get_json(url)
+            try:
+                obj = _http_get_json(url,retry_delays=[])
+            except:
+                obj = None
             if not obj:
                 print('Warning: unable to find node info for share {}'.format(share_id))
                 return None
@@ -581,8 +588,8 @@ class CairioLocal():
                     'Warning: info not found in node info object for share {}'.format(share_id))
                 return None
             node_info = obj['info']
+        self._nodeinfo_cache[share_id] = node_info
         if node_info:
-            self._nodeinfo_cache[share_id] = node_info
             if 'accessible' not in node_info:
                 url00 = node_info.get('listen_url', '') + \
                     '/'+share_id+'/api/nodeinfo'

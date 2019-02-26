@@ -5,6 +5,14 @@ import base64
 import os
 import requests
 import time
+import aiohttp
+import asyncio
+
+_global_data=dict(
+    session=None,
+    loop=None,
+    tasks=[]
+)
 
 
 class CairioRemoteClient():
@@ -43,7 +51,7 @@ class CairioRemoteClient():
             return None
         return obj['value']
 
-    def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token):
+    def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token, blocking=True):
         if value:
             value_b64 = base64.b64encode(value.encode()).decode('utf-8')
         if not url:
@@ -69,13 +77,16 @@ class CairioRemoteClient():
         url0 = url0+'?signature={}'.format(signature)
         if not overwrite:
             url0 = url0+'&overwrite=false'
-        obj = _http_get_json(url0)
-        if not obj.get('success'):
-            if overwrite:
-                raise Exception('Problem setting value in collection {}: {}'.format(
-                    collection, obj.get('error', '')))
-            return False
-        return True
+        obj = _http_get_json(url0, blocking=blocking)
+        if blocking:
+            if not obj.get('success'):
+                if overwrite:
+                    raise Exception('Problem setting value in collection {}: {}'.format(
+                        collection, obj.get('error', '')))
+                return False
+            return True
+        else:
+            return obj
 
     def uploadFile(self, *, path, sha1, cas_upload_server_url, upload_token):
         url_check_path0 = '/check/'+sha1
@@ -138,8 +149,30 @@ def _sha1_of_object(obj):
     txt = json.dumps(obj, sort_keys=True, separators=(',', ':'))
     return _sha1_of_string(txt)
 
+def _init_async_session():
+    loop=asyncio.get_event_loop()
+    _global_data['tasks']=[]
+    _global_data['loop']=loop
+    _global_data['session']=aiohttp.ClientSession(loop=loop)
 
-def _http_get_json(url, verbose=None, retry_delays=None):
+def _run_async_tasks():
+    tasks=_global_data['tasks']
+    loop=_global_data['loop']
+    loop.run_until_complete(asyncio.gather(*tasks))
+    _global_data['session'].close()
+    
+
+async def _async_http_get_json(url):
+    session=_global_data['session']
+    with aiohttp.Timeout(10):
+        async with session.get(url) as response:
+            assert response.status == 200
+            task = await response.json()
+            _global_data['tasks'].append(task)
+            print(task)
+            return task
+
+def _http_get_json(url, verbose=None, retry_delays=None, blocking=True):
     if retry_delays is None:
         retry_delays = [0.2, 0.5, 1, 2, 4]
     if verbose is None:
@@ -147,22 +180,36 @@ def _http_get_json(url, verbose=None, retry_delays=None):
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
         print('_http_get_json::: '+url)
-    try:
-        req = request.urlopen(url)
-    except:
-        if len(retry_delays) > 0:
-            print('Retrying http request to in {} sec: {}'.format(
-                retry_delays[0], url))
-            time.sleep(retry_delays[0])
-            return _http_get_json(url, verbose=verbose, retry_delays=retry_delays[1:])
-        else:
-            raise Exception('Unable to open url: '+url)
-    try:
-        ret = json.load(req)
-    except:
-        raise Exception('Unable to load json from url: '+url)
+    
+    if blocking:
+        try:
+            req = request.urlopen(url)
+        except:
+            if len(retry_delays) > 0:
+                print('Retrying http request to in {} sec: {}'.format(
+                    retry_delays[0], url))
+                time.sleep(retry_delays[0])
+                return _http_get_json(url, verbose=verbose, retry_delays=retry_delays[1:], blocking=blocking)
+            else:
+                raise Exception('Unable to open url: '+url)
+        try:
+            ret = json.load(req)
+        except:
+            raise Exception('Unable to load json from url: '+url)
+    else:
+        ret = _async_http_get_json(url)
+
+    elapsed_sec = time.time()-timer
     if verbose:
-        print('Elapsed time for _http_get_json: {}'.format(time.time()-timer))
+        print('Elapsed time for _http_get_json: {} sec {}'.format(elapsed_sec, url))
+    if elapsed_sec > 2:
+        print('WARNING: Elapsed time for _http_get_json: {} sec {}'.format(elapsed_sec, url))
+    if os.environ.get('HTTP_DELAY',None):
+        delay_sec=float(os.environ.get('HTTP_DELAY'))
+        if verbose:
+            print('http delay for {} seconds...'.format(delay_sec))
+        time.sleep(delay_sec)
+        
     return ret
 
 

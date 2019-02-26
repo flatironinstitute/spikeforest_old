@@ -831,6 +831,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 if stats:
                     ret.stats = stats
 
+                print('---- loading text --', ca.getRemoteConfig())
                 console_out = ca.loadText(
                     key=console_out_signature0, local_first=True)
                 if console_out:
