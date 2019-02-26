@@ -15,4 +15,4 @@ before_install:
 #  - ./setup_python.sh
 
 script:
-  - docker run magland/codepod_spikeforest2 /bin/sh -c "./setup_python.sh && pytest"
+  - docker run magland/codepod_spikeforest2 /bin/sh -c "alex && ./setup_python.sh && pytest"
