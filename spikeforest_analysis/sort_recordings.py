@@ -176,7 +176,7 @@ Processors=dict(
     Yass=(YASS,'default')
 )
         
-def sort_recordings(*,sorter,recordings,compute_resource=None):
+def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
     print('>>>>>> sort recordings')
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
@@ -208,7 +208,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None):
         sorting_jobs.append(job)
 
     label='Sort recordings ({})'.format(processor_name)
-    mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource)
+    mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
     
     sorting_results=[]
     for i,recording in enumerate(recordings):

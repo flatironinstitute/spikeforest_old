@@ -12,25 +12,25 @@ import pytest
 
 def main():
     # generate toy recordings
-    delete_recordings = True
-    for num in range(1, 3):
-        name = 'toy_example{}'.format(num)
-        if delete_recordings:
-            if os.path.exists(name):
-                shutil.rmtree(name)
-        if not os.path.exists(name):
-            rx, sx_true = se.example_datasets.toy_example1(
-                duration=60, num_channels=4, samplerate=30000, K=10)
-            se.MdaRecordingExtractor.writeRecording(
-                recording=rx, save_path=name)
-            se.MdaSortingExtractor.writeSorting(
-                sorting=sx_true, save_path=name+'/firings_true.mda')
+    if not os.path.exists('recordings'):
+        os.mkdir('recordings')
+
+    delete_recordings = False
+
+    recpath='recordings/example1'
+    if os.path.exists(recpath) and (delete_recordings):
+        shutil.rmtree(recpath)
+    if not os.path.exists(recpath):
+        rx, sx_true = se.example_datasets.toy_example1(duration=60, num_channels=4, samplerate=30000, K=10)
+        se.MdaRecordingExtractor.writeRecording(recording=rx, save_path=recpath)
+        se.MdaSortingExtractor.writeSorting(sorting=sx_true, save_path=recpath+'/firings_true.mda')        
 
     # for downloading containers if needed
     ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource
     compute_resource = None
+    num_workers = 10
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -41,18 +41,19 @@ def main():
     # Grab the recordings for testing
     recordings = [
         dict(
-            recording_name='toy_example{}'.format(num),
+            recording_name='example1',
             study_name='toy_examples',
-            directory=os.path.abspath('toy_example{}'.format(num))
+            directory=os.path.abspath('recordings/example1')
         )
-        for num in range(1, 3)
     ]
+
+    recordings=recordings*10
 
     studies = [
         dict(
             name='toy_examples',
             study_set='toy_examples',
-            directory=os.path.abspath('.'),
+            directory=os.path.abspath('recordings'),
             description='Toy examples.'
         )
     ]
@@ -71,7 +72,8 @@ def main():
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
-            compute_resource=compute_resource0
+            compute_resource=compute_resource0,
+            num_workers=num_workers
         )
 
         # Append to results
@@ -86,7 +88,8 @@ def main():
     # Compare with ground truth
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
-        compute_resource=compute_resource
+        compute_resource=compute_resource,
+        num_workers=num_workers
     )
 
     # Save the output

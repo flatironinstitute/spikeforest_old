@@ -7,7 +7,7 @@ from cairio import client as ca
 import numpy as np
 from copy import deepcopy
 
-def compare_sortings_with_truth(sortings,compute_resource):
+def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')
     container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
     jobs_gen_table=[]
@@ -28,7 +28,7 @@ def compare_sortings_with_truth(sortings,compute_resource):
     
     all_jobs=jobs_gen_table
     label='Compare sortings with truth'
-    mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
+    mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=num_workers,compute_resource=compute_resource)
     
     sortings_out=[]
     for i,sorting in enumerate(sortings):
