@@ -6,7 +6,7 @@ services:
   - docker
 
 before_install:
-- docker pull magland/code_spikeforest
+- docker pull magland/codepod_spikeforest2
 #- docker run -d -p 127.0.0.1:80:4567 carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"
 #- docker ps -a
 
@@ -15,4 +15,4 @@ before_install:
 #  - ./setup_python.sh
 
 script:
-  - docker run magland/code_spikeforest /bin/sh -c "./setup_python.sh && pytest"
+  - docker run magland/codepod_spikeforest2 /bin/sh -c "./setup_python.sh && pytest"
