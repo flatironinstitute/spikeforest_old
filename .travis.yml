@@ -1,9 +1,18 @@
 language: python
 python:
   - "3.6"
-# command to install dependencies
-install:
-  - ./setup_python.sh
 # command to run tests
+services:
+  - docker
+
+before_install:
+- docker pull magland/code_spikeforest
+#- docker run -d -p 127.0.0.1:80:4567 carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"
+#- docker ps -a
+
+# command to install dependencies
+# install:
+#  - ./setup_python.sh
+
 script:
-  - pytest
+  - docker run magland/code_spikeforest /bin/sh -c "./setup_python.sh && pytest"
