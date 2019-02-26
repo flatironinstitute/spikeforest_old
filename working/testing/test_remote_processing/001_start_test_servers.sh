@@ -8,8 +8,7 @@ export CAS_UPLOAD_DIR=kbucketserver/test_nodes/test_kbshare1/sha1-cache
 export CAS_UPLOAD_TOKEN=test_upload_token
 PORT=63250 node kbucketserver/src/casuploadserver/casuploadserver.js &
 
-export CAIRIO_ADMIN_TOKEN="test_admin_token"
-PORT=10001 node cairioserver/cairioserver/cairioserver.js &
+CAIRIO_ADMIN_TOKEN="test_admin_token" PORT=10001 node cairioserver/cairioserver/cairioserver.js &
 
 sleep 2
 
