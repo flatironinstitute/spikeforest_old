@@ -19,11 +19,15 @@ function KBNodeShareIndexer(config) {
     m_queued_files = {};
     m_file_iterator.restart();
   };
-  this.getPrvForIndexedFile = function(relpath) {
-    if (!(relpath in m_indexed_files)) {
-      return null;
+  this.getPrvForIndexedFile = function(relpath, callback) {
+    if (relpath in m_indexed_files) {
+      callback(null, m_indexed_files[relpath].prv);
     }
-    return m_indexed_files[relpath].prv;
+    else {
+      compute_prv(relpath,function(err, prv) {
+        callback(err, prv);
+      });
+    }
   };
   this.waitForPrvForIndexedFile = function(relpath, callback) {
     function check_it() {
@@ -229,9 +233,14 @@ function KBNodeShareIndexer(config) {
       return;
     }
     const fullpath = require('path').join(config.hemlockNodeDirectory(), relpath);
-    console.info(`Computing prv for: ${relpath}`);
     //computePrvObject(fullpath, function(err, obj) {
     // Note: it's important to do it like the following, because node-sha1 sometimes crashes (if the file disappears) so we want to separate this into a different process
+    if (!require('fs').existsSync(fullpath)) {
+      callback('File does not exist: '+fullpath);
+      return;
+    }
+
+    console.info(`Computing prv for: ${relpath}`);
     run_prv_create(fullpath, function(err,obj) {
       if (err) {
         console.error('Error computing prv ***: '+err);

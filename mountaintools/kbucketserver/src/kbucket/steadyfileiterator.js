@@ -105,6 +105,8 @@ function SteadyFileIterator(directory) {
         return;
       }
 
+      let steady_timeout=100;
+
       var subdirs = [];
       async.eachSeries(list, function(item, cb) {
         if ((item == '.') || (item == '..') || (item == '.kbucket')) {
@@ -136,7 +138,7 @@ function SteadyFileIterator(directory) {
         function goto_next() {
           setTimeout(function() {
             cb();
-          }, 1);
+          }, steady_timeout);
         }
       }, iterate_subdirs);
 
@@ -146,7 +148,7 @@ function SteadyFileIterator(directory) {
           iterate_directory(relpath0, function() {
             setTimeout(function() {
               cb();
-            }, 1);
+            }, steady_timeout);
           });
         },function() {
           callback();

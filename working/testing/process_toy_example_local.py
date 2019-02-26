@@ -17,13 +17,16 @@ def main():
 
     delete_recordings = False
 
-    recpath='recordings/example1'
+    recpath = 'recordings/example1'
     if os.path.exists(recpath) and (delete_recordings):
         shutil.rmtree(recpath)
     if not os.path.exists(recpath):
-        rx, sx_true = se.example_datasets.toy_example1(duration=60, num_channels=4, samplerate=30000, K=10)
-        se.MdaRecordingExtractor.writeRecording(recording=rx, save_path=recpath)
-        se.MdaSortingExtractor.writeSorting(sorting=sx_true, save_path=recpath+'/firings_true.mda')        
+        rx, sx_true = se.example_datasets.toy_example1(
+            duration=60, num_channels=4, samplerate=30000, K=10)
+        se.MdaRecordingExtractor.writeRecording(
+            recording=rx, save_path=recpath)
+        se.MdaSortingExtractor.writeSorting(
+            sorting=sx_true, save_path=recpath+'/firings_true.mda')
 
     # for downloading containers if needed
     ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
@@ -47,7 +50,7 @@ def main():
         )
     ]
 
-    recordings=recordings*10
+    recordings = recordings*10
 
     studies = [
         dict(

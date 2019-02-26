@@ -4,6 +4,7 @@ import urllib.request as request
 import base64
 import os
 import requests
+import time
 
 
 class CairioRemoteClient():
@@ -138,16 +139,22 @@ def _sha1_of_object(obj):
     return _sha1_of_string(txt)
 
 
-def _http_get_json(url, verbose=False, num_http_retries=2):
+def _http_get_json(url, verbose=None, retry_delays=None):
+    if retry_delays is None:
+        retry_delays = [0.2, 0.5, 1, 2, 4]
+    if verbose is None:
+        timer = time.time()
+        verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
         print('_http_get_json::: '+url)
     try:
         req = request.urlopen(url)
     except:
-        if num_http_retries > 0:
-            print('Retrying http request to: '+url)
-            return _http_get_json(url, verbose=verbose,
-                                  num_http_retries=num_http_retries-1)
+        if len(retry_delays) > 0:
+            print('Retrying http request to in {} sec: {}'.format(
+                retry_delays[0], url))
+            time.sleep(retry_delays[0])
+            return _http_get_json(url, verbose=verbose, retry_delays=retry_delays[1:])
         else:
             raise Exception('Unable to open url: '+url)
     try:
@@ -155,12 +162,16 @@ def _http_get_json(url, verbose=False, num_http_retries=2):
     except:
         raise Exception('Unable to load json from url: '+url)
     if verbose:
-        print(ret)
-        print('done.')
+        print('Elapsed time for _http_get_json: {}'.format(time.time()-timer))
     return ret
 
 
-def _http_post_file_data(url, fname):
+def _http_post_file_data(url, fname, verbose=None):
+    if verbose is None:
+        timer = time.time()
+        verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
+    if verbose:
+        print('_http_post_file_data::: '+fname)
     with open(fname, 'rb') as f:
         try:
             obj = requests.post(url, data=f)
@@ -169,6 +180,8 @@ def _http_post_file_data(url, fname):
     if obj.status_code != 200:
         raise Exception('Error posting file data: {} {}'.format(
             obj.status_code, obj.content.decode('utf-8')))
+    if verbose:
+        print('Elapsed time for _http_post_file_Data: {}'.format(time.time()-timer))
     return json.loads(obj.content)
 
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size

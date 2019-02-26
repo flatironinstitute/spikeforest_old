@@ -16,5 +16,5 @@ export MKL_NUM_THREADS=$NUM_WORKERS
 export NUMEXPR_NUM_THREADS=$NUM_WORKERS
 export OMP_NUM_THREADS=$NUM_WORKERS
 
-../../../bin/batcho_listen testing-resource --allow_uncontainerized
+../../../bin/batcho_listen testing-resource --allow_uncontainerized "$@"
 #######################################################

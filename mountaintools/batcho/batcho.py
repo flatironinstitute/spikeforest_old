@@ -234,7 +234,8 @@ def assemble_batch(*, batch_name):
         status_string = status_strings.get(str(ii), None)
         if status_string == 'finished':
             print('ASSEMBLING job result for {}'.format(job_label))
-            result = _get_job_result(batch_name=batch_name, job_index=ii)
+            result = _get_job_result(
+                batch_name=batch_name, job_index=ii, retry_delays=[0.5, 1, 2, 4, 8])
             assembled_results.append(dict(
                 job=job,
                 result=result
@@ -250,7 +251,7 @@ def assemble_batch(*, batch_name):
     _check_batch_code(batch_name, batch_code)
     print('Assembling {} results'.format(len(assembled_results)))
     ca.saveObject(key=dict(name='batcho_batch_results', batch_name=batch_name),
-                  object=dict(results=assembled_results), confirm=True)
+                  object=dict(results=assembled_results), confirm=False)
     _set_batch_status(batch_name=batch_name,
                       status=dict(status='done_assembling'))
     return True
@@ -400,7 +401,8 @@ def _call_run_batch(batch_name, run_prefix, num_simultaneous=None):
         pool.join()
         for result in results:
             if not result:
-                return result
+                raise Exception(
+                    'Unexpected: result not found in _call_run_batch')
         return True
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
@@ -467,8 +469,8 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
         _check_batch_code(batch_name, batch_code)
 
         _set_batch_status(batch_name=batch_name, status=dict(status='running'))
-        if not _call_run_batch(batch_name=batch_name, run_prefix=run_prefix, num_simultaneous=num_simultaneous):
-            raise Exception('Problem running batch.')
+        _call_run_batch(batch_name=batch_name, run_prefix=run_prefix,
+                        num_simultaneous=num_simultaneous)
         _check_batch_code(batch_name, batch_code)
 
         _set_batch_status(batch_name=batch_name,
@@ -496,6 +498,7 @@ def _try_handle_batch(compute_resource, batch_name, run_prefix, num_simultaneous
 def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneous=None, allow_uncontainerized=False):
     _clear_batch_names_for_compute_resource(compute_resource)
     index = 0
+    next_delay = 1
     while True:
         batch_names = get_batch_names_for_compute_resource(compute_resource)
         if len(batch_names) > 0:
@@ -505,7 +508,10 @@ def listen_as_compute_resource(compute_resource, run_prefix=None, num_simultaneo
             _try_handle_batch(compute_resource, batch_name,
                               run_prefix=run_prefix, num_simultaneous=num_simultaneous, allow_uncontainerized=allow_uncontainerized)
             index = index+1
-        time.sleep(4)
+            next_delay = 0
+        time.sleep(next_delay)
+        if next_delay < 4:
+            next_delay = next_delay+0.5
 
 
 def get_batch_names_for_compute_resource(compute_resource):
@@ -527,8 +533,6 @@ def _clear_batch_names_for_compute_resource(compute_resource):
         compute_resource=compute_resource
     )
     obj = ca.setValue(key=key0, subkey='-', value=None)
-    print('-----------------------',
-          get_batch_names_for_compute_resource(compute_resource))
 
 
 def get_batch_results(*, batch_name):
@@ -615,16 +619,27 @@ def _set_batch_status(*, batch_name, status):
     return ca.saveObject(key=key, object=status)
 
 
-def _get_job_result(*, batch_name, job_index):
+def _get_job_result(*, batch_name, job_index, retry_delays=[]):
     key = dict(name='batcho_job_result',
                batch_name=batch_name, job_index=job_index)
-    return ca.loadObject(key=key)
+    ret = ca.loadObject(key=key)
+    if ret is None:
+        if len(retry_delays) > 0:
+            print('Unable to load job {} result in batch {}... retrying in {} seconds...'.format(
+                job_index, batch_name, retry_delays[0]))
+            time.sleep(retry_delays[0])
+            return _get_job_result(batch_name=batch_name, job_index=job_index, retry_delays=retry_delays[1:])
+        else:
+            raise Exception('Unable to load job {} result in batch {}.').format(
+                job_index, batch_name)
+    return ret
 
 
 def _set_job_result(*, batch_name, job_index, result):
     key = dict(name='batcho_job_result',
                batch_name=batch_name, job_index=job_index)
-    return ca.saveObject(key=key, object=result, confirm=True)
+    # changed to conform=False on 2/26/19 and set used retries in loading results during assembly instead
+    return ca.saveObject(key=key, object=result, confirm=False)
 
 
 def _set_job_console_output(*, batch_name, job_index, file_name):

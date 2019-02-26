@@ -380,13 +380,12 @@ function Sha1Cache(directory) {
     let X=m_uploads[upload_id];
     delete m_uploads[upload_id];
 
-    verify_and_move_temporary_file_to_final_location(X,function(err) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      callback(null);
-    });
+    if (!verify_and_move_temporary_file_to_final_location(X)) {
+      callback('Error verifying and moving uploaded file: '+X.tmp_fname);
+      return;
+    }
+    console.log ('Uploaded file: '+X.sha1);
+    callback(null);
   }
   function close_file(file,callback) {
     file.close(function(err) {
@@ -397,23 +396,23 @@ function Sha1Cache(directory) {
       callback(null);
     });
   }
-  function verify_and_move_temporary_file_to_final_location(X,callback) {
+  function verify_and_move_temporary_file_to_final_location(X) {
     let stat;
     try {
       stat=fs.statSync(X.tmp_fname);
     }
     catch(err) {
-      callback('Error in statSync: '+err.message);
-      return;
+      console.error(`Error in statSync for ${X.tmp_fname}: ${err.message}`);
+      return false;
     }
     if ((stat.size||0)!=(X.file_size||0)) {
-      callback(`Incorrect file size: ${stat.size}<>${X.file_size}`);
-      return;
+      console.error(`Incorrect file size for ${X.tmp_fname}: ${stat.size} <> ${X.file_size}`);
+      return false;
     }
     let sha1_calc=X.shasum.digest('hex');
     if (sha1_calc!=X.sha1) {
-      callback(`SHA-1 does not match: ${sha1_calc}<>${X.sha1}`);
-      return;
+      console.error(`SHA-1 does not match for ${X.tmp_fname}: ${sha1_calc} <> ${X.sha1}`);
+      return false;
     }
     let rel_fname=get_rel_upload_path(X.sha1);
     let fname=directory+'/'+rel_fname;
@@ -421,13 +420,13 @@ function Sha1Cache(directory) {
       fs.renameSync(X.tmp_fname,fname);
     }
     catch(err) {
-      callback('Error renaming file: '+err.message);
-      return;
+      console.error(`Error renaming file ${X.tmp_fname} -> ${fname}`);
+      return false;
     }
     for (i in m_file_added_handlers) {
     	m_file_added_handlers[i](rel_fname);
     }
-    callback(null);
+    return true;
   }
   /*
   function write_chunk_to_file(file,chunk,callback) {

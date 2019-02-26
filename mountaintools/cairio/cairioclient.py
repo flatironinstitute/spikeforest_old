@@ -9,13 +9,15 @@ import tempfile
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
 from .cairioremoteclient import CairioRemoteClient
+from .cairioremoteclient import _http_get_json
 import time
 from getpass import getpass
 
 
 class CairioClient():
     def __init__(self):
-        self._default_url = os.environ.get('CAIRIO_URL','https://pairio.org:20443')
+        self._default_url = os.environ.get(
+            'CAIRIO_URL', 'https://pairio.org:20443')
         self._remote_config = dict(
             # url='http://localhost:3010',
             url=None,
@@ -307,29 +309,38 @@ class CairioClient():
         timer = time.time()
         wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
             share_id, sha1)
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=2, delay_sec=1):
-            print('File is on kbucket: {}'.format(sha1))
-            return True
         print(wait_str)
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=2):
-            print('File is on kbucket: {}'.format(sha1))
-            return True
-        print(wait_str)
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, num_retries=10, delay_sec=4):
+        retry_delays = [0.25, 0.5, 1, 2, 4, 8]
+        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
             print('File is on kbucket: {}'.format(sha1))
             return True
         raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
                                                                                                  time.time()-timer))
 
-    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, num_retries, delay_sec):
-        for retry in range(1, num_retries+1):
+    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
+        ii = 0  # index for retry delays
+        while True:
             url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
             if url:
                 return True
-            time.sleep(delay_sec)
-        return False
+            if ii < len(retry_delays):
+                print('Retrying in {} seconds...'.format(retry_delays[ii]))
+                time.sleep(retry_delays[ii])
+                ii = ii+1
+            else:
+                return False
 
     def _find_on_kbucket(self, *, share_id, sha1):
+        # first check in the upload location
+        (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(
+            path='kbucket://'+share_id+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
+        if sha1_0 is not None:
+            if sha1_0 == sha1:
+                return (url_0, size_0)
+            else:
+                print('Unexpected issue where checksums do not match on _find_on_kbucket: {} <> {}'.format(
+                    sha1, sha1_0))
+
         kbucket_url = self._local_db.kbucketUrl()
         if not kbucket_url:
             return (None, None)
@@ -623,28 +634,6 @@ class CairioLocal():
 
         url_download = kbucket_url+'/'+kbshare_id+'/download/'+path0
         return (sha1, size, url_download)
-
-
-def _http_get_json(url, verbose=False, num_http_retries=2):
-    if verbose:
-        print('_http_get_json::: '+url)
-    try:
-        req = request.urlopen(url)
-    except:
-        if num_http_retries > 0:
-            print('Retrying http request to: '+url)
-            return _http_get_json(url, verbose=verbose,
-                                  num_http_retries=num_http_retries-1)
-        else:
-            raise Exception('Unable to open url: '+url)
-    try:
-        ret = json.load(req)
-    except:
-        raise Exception('Unable to load json from url: '+url)
-    if verbose:
-        print(ret)
-        print('done.')
-    return ret
 
 
 # TODO: make this thread-safe

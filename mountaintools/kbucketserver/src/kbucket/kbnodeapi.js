@@ -159,11 +159,15 @@ function KBNodeApi(context) {
                   name: item,
                   size: stat0.size,
                 };
-                var prv0 = m_context.share_indexer.getPrvForIndexedFile(require('path').join(subdirectory, file0.name));
-                if (prv0) {
+                m_context.share_indexer.getPrvForIndexedFile(require('path').join(subdirectory, file0.name), function(err, prv0) {
+                  if (err) {
+                    send_500(res, `Error computing or retrieving prv for file ${item}: ${err}`);
+                    return;
+                  }
                   file0.prv = prv0;
-                }
-                files.push(file0);
+                  files.push(file0);
+                  cb();
+                });
               }
             } else if (stat0.isDirectory()) {
               if (!is_excluded_directory_name(item)) {
@@ -171,8 +175,8 @@ function KBNodeApi(context) {
                   name: item
                 });
               }
+              cb();
             }
-            cb();
           });
         }
       }, function() {
@@ -333,12 +337,16 @@ function KBNodeApi(context) {
       return;
     }
 
-    let prv0 = m_context.share_indexer.getPrvForIndexedFile(filename);
-    if (!prv0) {
-      send_500(res, 'File is not yet indexed or does not exist: '+filename);
-      return;
-    }
-    res.json(prv0);
+    m_context.share_indexer.getPrvForIndexedFile(filename, function(err, prv0) {
+      if (err) {
+        res.json({
+          success:false,
+          error:err
+        });
+        return;
+      }
+      res.json(prv0);
+    });
   }
 
   function handle_find_in_share(kbshare_id, sha1, filename, req, res) {
