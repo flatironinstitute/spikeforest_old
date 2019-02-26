@@ -117,7 +117,7 @@ This is a meta repository that is meant to be used in development/editable mode.
 To install using conda, first create a conda environment with python 3.6:
 
 ```
-conda create -n spikeforest2 python=3.6
+conda create -n spikeforest2 python=3.6 jupyterlab
 conda activate spikeforest2
 ```
 
