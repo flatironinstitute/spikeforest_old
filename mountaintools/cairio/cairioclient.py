@@ -15,7 +15,7 @@ from getpass import getpass
 
 class CairioClient():
     def __init__(self):
-        self._default_url = 'https://pairio.org:20443'
+        self._default_url = os.environ.get('CAIRIO_URL','https://pairio.org:20443')
         self._remote_config = dict(
             # url='http://localhost:3010',
             url=None,

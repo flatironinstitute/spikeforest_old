@@ -1,3 +1,5 @@
+sha1-cache
+
 # Files to be ignored by git
 
 Untitled*.ipynb
