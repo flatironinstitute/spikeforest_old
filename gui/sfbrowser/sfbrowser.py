@@ -1,5 +1,5 @@
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from cairio import client as ca
 import pandas as pd
 import numpy as np

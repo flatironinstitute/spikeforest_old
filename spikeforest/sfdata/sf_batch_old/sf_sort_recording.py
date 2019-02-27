@@ -1,6 +1,6 @@
 from cairio import client as ca
 import spikeextractors as si
-import spikeforest as sf
+import sfdata as sf
 import spiketoolkit as st
 import mlprocessors as mlpr
 import os

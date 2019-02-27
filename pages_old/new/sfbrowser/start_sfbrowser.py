@@ -2,7 +2,7 @@
 
 import os
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from sfbrowsermainwindow import SFBrowserMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 

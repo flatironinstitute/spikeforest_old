@@ -1,1 +1,0 @@
-from .sfdata import SFData

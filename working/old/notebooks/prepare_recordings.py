@@ -1,6 +1,6 @@
 # %% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
 from cairio import client as ca
-import spikeforest as sf
+import sfdata as sf
 import os
 try:
     os.chdir(os.path.join(os.getcwd(), 'working/notebooks'))

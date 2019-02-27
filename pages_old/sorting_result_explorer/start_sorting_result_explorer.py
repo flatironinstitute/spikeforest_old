@@ -1,6 +1,6 @@
 import os
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from sortingresultsexplorermainwindow import SortingResultsExplorerMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
