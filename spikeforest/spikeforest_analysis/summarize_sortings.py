@@ -1,6 +1,6 @@
 import mlprocessors as mlpr
 from cairio import client as ca
-import spikeextractors as si
+import spikeforest.spikeextractors as si
 import os
 from copy import deepcopy
 

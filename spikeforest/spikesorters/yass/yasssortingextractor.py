@@ -1,4 +1,4 @@
-from spikeextractors import SortingExtractor
+from spikeforest.spikeextractors import SortingExtractor
 import numpy as np
 from pathlib import Path
 

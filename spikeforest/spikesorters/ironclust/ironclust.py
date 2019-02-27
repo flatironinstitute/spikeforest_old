@@ -1,5 +1,5 @@
 import mlprocessors as mlpr
-import spikeextractors as se
+import spikeforest.spikeextractors as se
 
 import os
 import time
@@ -10,8 +10,8 @@ import shlex
 import random
 import string
 import shutil
-from spikeextractors import mdaio
-import spikeextractors as se
+from spikeforest.spikeextractors import mdaio
+import spikeforest.spikeextractors as se
 from cairio import client as ca
 import json
 

@@ -1,8 +1,8 @@
-import spikeextractors as si
+import spikeforest.spikeextractors as si
 import os
 from os.path import join
 import time
-from spiketoolkit.sorters.tools import run_command_and_print_output
+from spikeforest.spiketoolkit.sorters.tools import run_command_and_print_output
 
 def klusta(
         recording, # The recording extractor

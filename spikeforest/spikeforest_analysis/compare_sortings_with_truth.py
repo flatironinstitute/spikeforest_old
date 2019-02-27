@@ -1,6 +1,6 @@
-import spikeextractors as si
-#import spikewidgets as sw
-import spiketoolkit as st
+import spikeforest.spikeextractors as si
+#import spikeforest.spikewidgets as sw
+import spikeforest.spiketoolkit as st
 import mlprocessors as mlpr
 import json
 from cairio import client as ca
