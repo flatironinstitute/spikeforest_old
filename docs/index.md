@@ -1,5 +1,7 @@
 # SpikeForest topics
 
+![Basic flow chart - SpikeForest](basic_flow_chart_spikeforest.jpg?raw=true "Basic flow chart - SpikeForest")
+
 ## Codepod
 
 The SpikeForest development environment can be opened in a docker container using [codepod](https://github.com/magland/codepod). Inspired by [gitpod](https://www.gitpod.io/), codepod allows users and co-developers to obtain identical development environments simply by cloning the repository and then running:
