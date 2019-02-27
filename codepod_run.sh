@@ -13,4 +13,4 @@ if [ ! -z "$KBUCKET_CACHE_DIR" ]; then
   OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache -v /dev/shm:/dev/shm"
 fi
 
-eval "codepod -g $PWD $OPTS $@"
+eval "codepod -g -w $PWD $OPTS $@"

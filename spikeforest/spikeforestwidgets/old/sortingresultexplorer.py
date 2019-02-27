@@ -1,6 +1,6 @@
 import vdomr as vd
-import spikeforest.spiketoolkit as st
-import spikeforest.spikeextractors as se
+from spikeforest import spiketookit as st
+from spikeforest import spikeextractors as se
 from .unitwaveformswidget import UnitWaveformsWidget
 from .correlogramswidget import CorrelogramsWidget
 from .timeserieswidget import TimeseriesWidget

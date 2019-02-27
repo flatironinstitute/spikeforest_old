@@ -11,7 +11,7 @@ def append_to_path(dir0):  # A convenience function
 
 
 append_to_path(os.getcwd() + '/..')
-import spikeextractors as se
+from spikeforest import spikeextractors as se
 
 
 class TestExtractors(unittest.TestCase):

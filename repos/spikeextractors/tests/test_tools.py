@@ -2,7 +2,7 @@ import numpy as np
 import os, sys
 import unittest
 import tempfile, shutil
-import spikeextractors as se
+from spikeforest import spikeextractors as se
 
 
 class TestTools(unittest.TestCase):

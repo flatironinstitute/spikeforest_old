@@ -1,11 +1,11 @@
 import os, sys
 import unittest
 
-import spikeextractors as se
-import spiketoolkit as st
+from spikeforest import spikeextractors as se
+from spikeforest import spiketookit as st
 
 
-# import spikewidgets as sw
+# from spikeforest import spikewidgets as sw
 
 
 class TestToolkit(unittest.TestCase):

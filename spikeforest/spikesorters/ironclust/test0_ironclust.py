@@ -15,11 +15,11 @@ except:
 import spikeforest_analysis as sa
 from spikeforest_analysis.compare_sortings_with_truth import GenSortingComparisonTable
 #from cairio import client as ca
-import spikeforest.spikeextractors as se
+from spikeforest import spikeextractors as se
 import os
 from spikeforest_analysis.sorters import ironclust
 from spikeforest.spiketoolkit.comparison.sortingcomparison import SortingComparison
-import spikeforest.spikewidgets as sw
+from spikeforest import spikewidgets as sw
 from spikesorters import IronClust
 
 # %%SortingComparisonyass_test1/recording/raw.mda

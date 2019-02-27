@@ -2,8 +2,8 @@ import uuid
 import json
 from matplotlib import pyplot as plt
 import numpy as np
-import spikeextractors as se
-import spiketoolkit as st
+from spikeforest import spikeextractors as se
+from spikeforest import spiketookit as st
 import spikeforestwidgets as SFW
 from kbucket import client as kb
 import vdomr as vd

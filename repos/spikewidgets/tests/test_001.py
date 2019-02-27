@@ -9,7 +9,7 @@ def append_to_path(dir0):  # A convenience function
 
 
 append_to_path(os.getcwd() + '/..')
-import spikewidgets as sw
+from spikeforest import spikewidgets as sw
 
 
 class Test001(unittest.TestCase):

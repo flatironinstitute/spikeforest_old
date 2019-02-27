@@ -1,8 +1,8 @@
 import numpy as np
 import json
 import mlprocessors as mlpr
-import spikeextractors as si
-import spikewidgets as sw
+from spikeforest import spikeextractors as si
+from spikeforest import spikewidgets as sw
 from kbucket import client as kb
 
 def write_json_file(fname,obj):

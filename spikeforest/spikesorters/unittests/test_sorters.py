@@ -6,7 +6,7 @@ import sys
 #         sys.path.append(dir0)
 # append_to_path(os.getcwd()+'/..')
 from spikesorters import MountainSort4, SpykingCircus, YASS, KiloSort
-import spikeforest.spikeextractors as se
+from spikeforest import spikeextractors as se
 import tempfile
 import shutil
 from cairio import client as ca

@@ -1,6 +1,6 @@
 try:
     # if we are running this outside the container
-    import spikeforest.spikeextractors as se
+    from spikeforest import spikeextractors as se
 except:
     # if we are in the container
     import spikeextractors as se

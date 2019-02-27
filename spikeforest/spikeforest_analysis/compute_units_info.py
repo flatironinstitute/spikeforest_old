@@ -5,8 +5,8 @@ from cairio import client as ca
 
 try:
   # if we are running this outside the container
-  import spikeforest.spikeextractors as si
-  import spikeforest.spikewidgets as sw
+  from spikeforest import spikeextractors as si
+  from spikeforest import spikewidgets as sw
 except:
   # if we are in the container
   import spikeextractors as si

@@ -1,4 +1,4 @@
-import spikeforest.spikeextractors as si
+from spikeforest import spikeextractors as si
 import os
 from spikeforest.spikeextractors import mdaio
 import subprocess, shlex

@@ -1,11 +1,11 @@
 try:
     # if we are running this outside the container
-    import spikeforest.spikeextractors as si
+    from spikeforest import spikeextractors as si
 except:
     # if we are in the container
     import spikeextractors as si
 
-# import spikeforest.spikewidgets as sw
+# from spikeforest import spikewidgets as sw
 import json
 from PIL import Image
 import os

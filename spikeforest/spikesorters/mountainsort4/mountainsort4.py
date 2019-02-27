@@ -35,8 +35,8 @@ class MountainSort4(mlpr.Processor):
     def run(self):
         try:
             # if we are running this outside the container
-            import spikeforest.spikeextractors as se
-            import spikeforest.spiketoolkit as st
+            from spikeforest import spikeextractors as se
+            from spikeforest import spiketookit as st
         except:
             # if we are in the container
             import spikeextractors as se

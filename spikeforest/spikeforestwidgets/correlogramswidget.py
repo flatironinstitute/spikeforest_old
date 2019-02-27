@@ -76,7 +76,7 @@ class CorrelogramWidget(vd.Component):
     )
 
 import time
-import spikeforest.spikewidgets as sw
+from spikeforest import spikewidgets as sw
 class _CorrelogramPlot(vd.components.Pyplot):
   def __init__(self,*,sorting,samplerate,unit1_id,unit2_id):
     vd.components.Pyplot.__init__(self)

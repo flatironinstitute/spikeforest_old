@@ -1,4 +1,4 @@
-#import spikeforest.spikewidgets as sw
+#from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
 import json
 from cairio import client as ca
@@ -7,10 +7,10 @@ from copy import deepcopy
 
 try:
     # if we are running this outside the container
-    import spikeforest.spikeextractors as si
-    import spikeforest.spiketoolkit as st
+    from spikeforest import spikeextractors as si
+    from spikeforest import spiketoolkit as st
 except:
-    # if we are in the container
+# if we are in the container
     import spikeextractors as si
     import spiketoolkit as st
 

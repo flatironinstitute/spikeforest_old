@@ -1,4 +1,4 @@
-import spikeforest.spikeextractors as si
+from spikeforest import spikeextractors as si
 import os
 from os.path import join
 import time

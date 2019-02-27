@@ -1,5 +1,5 @@
 import mlprocessors as mlpr
-import spikeforest.spikeextractors as se
+from spikeforest import spikeextractors as se
 
 import os
 import time
@@ -11,7 +11,7 @@ import random
 import string
 import shutil
 from spikeforest.spikeextractors import mdaio
-import spikeforest.spikeextractors as se
+from spikeforest import spikeextractors as se
 import sys
 import shlex
 #import h5py

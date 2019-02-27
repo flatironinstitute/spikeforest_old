@@ -1,6 +1,6 @@
 import sys
 
-import spikeextractors as si
+from spikeforest import spikeextractors as si
 
 import os
 from shutil import copyfile

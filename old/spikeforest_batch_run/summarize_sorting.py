@@ -2,8 +2,8 @@ from matplotlib import pyplot as plt
 from PIL import Image
 import mlprocessors as mlpr
 from kbucket import client as kb
-import spikeextractors as si
-import spikewidgets as sw
+from spikeforest import spikeextractors as si
+from spikeforest import spikewidgets as sw
 import os
 
 def summarize_sorting(result):
