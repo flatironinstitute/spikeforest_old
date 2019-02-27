@@ -9,13 +9,91 @@ import tempfile
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
 from .cairioremoteclient import CairioRemoteClient
-from .cairioremoteclient import _http_get_json
 import time
 from getpass import getpass
 import shutil
+import asyncio
+import nest_asyncio
+import inspect
 
+# We need to do this to make _sync() -see below- work in jupyterlab!
+nest_asyncio.apply()
 
 class CairioClient():
+    def __init__(self):
+        self._a=AsyncCairioClient()
+    def autoConfig(self, *, collection, key, ask_password=False, password=None):
+        return _sync(self._a.autoConfig(collection=collection,key=key,ask_password=ask_password,password=password))
+    def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
+        return _sync(self._a.setRemoteConfig(url=url,collection=collection,token=token,share_id=share_id,upload_token=upload_token,alternate_share_ids=alternate_share_ids))
+    def getRemoteConfig(self):
+        return _sync(self._a.getRemoteConfig())
+    def addRemoteCollection(self, collection, token, admin_token):
+        return _sync(self._a.addRemoteCollection(collection=collection,token=token,admin_token=admin_token))    
+    def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
+        return _sync(self._a.getValue(key=key,subkey=subkey,password=password,parse_json=parse_json,collection=collection,local_first=local_first))
+    def getValueAsync(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
+        return self._a.getValue(key=key,subkey=subkey,password=password,parse_json=parse_json,collection=collection,local_first=local_first)
+    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
+        return _sync(self._a.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also))
+    def setValueAsync(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
+        return self._a.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
+    def getSubKeys(self, key, password=None):
+        return _sync(self._a.getSubKeys(key=key,password=password))
+    def getSubKeysAsync(self, key, password=None):
+        return self._a.getSubKeys(key=key,password=password)
+    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
+        return _sync(self._a.realizeFile(path=path, key=key, subkey=subkey, password=password, dest_path=dest_path, share_id=share_id, local_first=local_first))
+    def realizeFileAsync(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
+        return self._a.realizeFile(path=path, key=key, subkey=subkey, password=password, dest_path=dest_path, share_id=share_id, local_first=local_first)
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
+        return _sync(self._a.saveFile(path=path, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also))
+    def saveFileAsync(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
+        return self._a.saveFile(path=path, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+    def loadObject(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        return _sync(self._a.loadObject(key=key, path=path, subkey=subkey, password=password, local_first=local_first))
+    def loadObjectAsync(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        return self._a.loadObject(key=key, path=path, subkey=subkey, password=password, local_first=local_first)
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
+        return _sync(self._a.saveObject(object=object, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also))
+    def saveObjectAsync(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
+        return self._a.saveObject(object=object, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+    def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        return _sync(self._a.loadText(key=key, path=path, subkey=subkey, password=password, local_first=local_first))
+    def loadTextAsync(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        return self._a.loadText(key=key, path=path, subkey=subkey, password=password, local_first=local_first)
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
+        return _sync(self._a.saveText(text=text, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also))
+    def saveTextAsync(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
+        return self._a.saveText(text=text, key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+    def readDir(self, path, recursive=False, include_sha1=True):
+        return _sync(self._a.readDir(path=path, recursive=recursive, include_sha1=include_sha1))
+    def readDirAsync(self, path, recursive=False, include_sha1=True):
+        return self._a.readDir(path=path, recursive=recursive, include_sha1=include_sha1)
+    def computeDirHash(self, path):
+        return _sync(self._a.computeDirHash(path=path))
+    def computeDirHashAsync(self, path):
+        return self._a.computeDirHash(path=path)
+    def computeFileSha1(self, path):
+        return _sync(self._a.computeFileSha1(path=path))
+    def computeFileSha1Async(self, path):
+        return self._a.computeFileSha1(path=path)
+    def localCacheDir(self):
+        return _sync(self._a.localCacheDir())
+    def findFileBySha1(self, *, sha1, share_id=None):
+        return _sync(self._a.findFileBySha1(sha1=sha1, share_id=share_id))
+    def findFileBySha1Async(self, *, sha1, share_id=None):
+        return self._a.findFileBySha1(sha1=sha1, share_id=share_id)
+    def findFile(self, path, local_only=False, share_id=None):
+        return _sync(self._a.findFile(path=path,local_only=local_only,share_id=share_id))
+    def findFileAsync(self, path, local_only=False, share_id=None):
+        return self._a.findFile(path=path,local_only=local_only,share_id=share_id)
+    def moveToLocalCache(self, path, basename=None):
+        return _sync(self._a.moveToLocalCache(path=path,basename=basename))
+    def moveToLocalCacheAsync(self, path, basename=None):
+        return self._a.moveToLocalCache(path=path,basename=basename)
+    
+class AsyncCairioClient():
     def __init__(self):
         self._default_url = os.environ.get(
             'CAIRIO_URL', 'https://pairio.org:20443')
@@ -29,13 +107,13 @@ class CairioClient():
             upload_token=None
         )
         self._verbose = False
-        self._local_db = CairioLocal()
         self._remote_client = CairioRemoteClient()
+        self._local_db = CairioLocal(self._remote_client)
 
-    def autoConfig(self, *, collection, key, ask_password=False, password=None):
+    async def autoConfig(self, *, collection, key, ask_password=False, password=None):
         if (ask_password) and (password is None):
             password = getpass('Enter password: ')
-        config = self.getValue(collection=collection,
+        config = await self.getValue(collection=collection,
                                key=key, password=password)
         if not config:
             raise Exception(
@@ -83,8 +161,8 @@ class CairioClient():
         ret = self._remote_config.copy()
         return ret
 
-    def addRemoteCollection(self, collection, token, admin_token):
-        return self._remote_client.addCollection(
+    async def addRemoteCollection(self, collection, token, admin_token):
+        return await self._remote_client.addCollection(
             collection=collection,
             token=token,
             url=self._remote_config.get('url') or self._default_url,
@@ -92,8 +170,8 @@ class CairioClient():
         )
 
     # get value / set value
-    def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
-        ret = self._get_value(key=key, subkey=subkey,
+    async def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
+        ret = await self._get_value(key=key, subkey=subkey,
                               password=password, collection=collection, local_first=local_first)
         if parse_json and ret:
             try:
@@ -103,55 +181,55 @@ class CairioClient():
                 return None
         return ret
 
-    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
-        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
+    async def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
+        return await self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
 
-    def getSubKeys(self, key, password=None):
-        return list(self._get_sub_keys(key=key, password=password))
+    async def getSubKeys(self, key, password=None):
+        return list(await self._get_sub_keys(key=key, password=password))
 
     # realize file / save file
-    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
+    async def realizeFile(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
         if path is not None:
-            return self._realize_file(path=path, share_id=share_id, dest_path=dest_path)
+            return await self._realize_file(path=path, share_id=share_id, dest_path=dest_path)
         elif key is not None:
-            val = self.getValue(key=key, subkey=subkey,
+            val = await self.getValue(key=key, subkey=subkey,
                                 password=password, local_first=local_first)
             if not val:
                 return None
-            return self.realizeFile(path=val, share_id=share_id, dest_path=dest_path)
+            return await self.realizeFile(path=val, share_id=share_id, dest_path=dest_path)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
+    async def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
         if path is None:
-            self.setValue(key=key, subkey=subkey,
+            await self.setValue(key=key, subkey=subkey,
                           value=None, password=password, local_also=local_also)
             return None
-        sha1_path = self._save_file(
+        sha1_path = await self._save_file(
             path=path, basename=basename, confirm=confirm)
         if key is not None:
-            self.setValue(key=key, subkey=subkey,
+            await self.setValue(key=key, subkey=subkey,
                           value=sha1_path, password=password, local_also=local_also)
         return sha1_path
 
     # load object / save object
-    def loadObject(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
-        txt = self.loadText(key=key, path=path,
+    async def loadObject(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        txt = await self.loadText(key=key, path=path,
                             subkey=subkey, password=password, local_first=local_first)
         if txt is None:
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
+    async def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
         if object is None:
-            self.setValue(key=key, subkey=subkey,
+            await self.setValue(key=key, subkey=subkey,
                           value=None, password=password)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+        return await self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
 
     # load text / save text
-    def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
-        fname = self.realizeFile(
+    async def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+        fname = await self.realizeFile(
             key=key, path=path, subkey=subkey, password=password, local_first=local_first)
         if fname is None:
             return None
@@ -162,14 +240,14 @@ class CairioClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
+    async def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
         if text is None:
-            self.setValue(key=key, subkey=subkey,
+            await self.setValue(key=key, subkey=subkey,
                           value=None, password=password, local_also=local_also)
             return None
         tmp_fname = _create_temporary_file_for_text(text=text)
         try:
-            ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
+            ret = await self.saveFile(tmp_fname, key=key, subkey=subkey,
                                 basename=basename, password=password, confirm=confirm, local_also=local_also)
         except:
             os.unlink(tmp_fname)
@@ -177,29 +255,29 @@ class CairioClient():
         os.unlink(tmp_fname)
         return ret
 
-    def readDir(self, path, recursive=False, include_sha1=True):
+    async def readDir(self, path, recursive=False, include_sha1=True):
         if path.startswith('kbucket://'):
             list0 = path.split('/')
             share_id = list0[2]
             path0 = '/'.join(list0[3:])
-            ret = self._read_kbucket_dir(
+            ret = await self._read_kbucket_dir(
                 share_id=share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
         else:
             ret = self._read_file_system_dir(
                 path=path, recursive=recursive, include_sha1=include_sha1)
         return ret
 
-    def computeDirHash(self, path):
-        dd = self.readDir(path=path, recursive=True, include_sha1=True)
+    async def computeDirHash(self, path):
+        dd = await self.readDir(path=path, recursive=True, include_sha1=True)
         return _sha1_of_object(dd)
 
-    def computeFileSha1(self, path):
+    async def computeFileSha1(self, path):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
             return sha1
         elif path.startswith('kbucket://'):
-            sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
+            sha1, size, url = await self._local_db.getKBucketFileInfo(path=path)
             return sha1
         else:
             return self._local_db.computeFileSha1(path)
@@ -207,16 +285,16 @@ class CairioClient():
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
-    def findFileBySha1(self, *, sha1, share_id=None):
-        return self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id)
+    async def findFileBySha1(self, *, sha1, share_id=None):
+        return await self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id)
 
-    def findFile(self, path, local_only=False, share_id=None):
-        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
+    async def findFile(self, path, local_only=False, share_id=None):
+        return await self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
 
-    def moveToLocalCache(self, path, basename=None):
-        return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
+    async def moveToLocalCache(self, path, basename=None):
+        return await self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
-    def _get_value(self, *, key, subkey, password=None, collection=None, local_first=False):
+    async def _get_value(self, *, key, subkey, password=None, collection=None, local_first=False):
         if password is not None:
             key = dict(key=key, password=password)
         if collection is None:
@@ -226,13 +304,13 @@ class CairioClient():
             if ret is not None:
                 return ret
         if collection:
-            ret = self._remote_client.getValue(
+            ret = await self._remote_client.getValue(
                 key=key, subkey=subkey, collection=collection, url=self._remote_config.get('url') or self._default_url)
             if ret is not None:
                 return ret
         return None
 
-    def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
+    async def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
@@ -240,20 +318,20 @@ class CairioClient():
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
                 return False
         if collection:
-            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
+            if not await self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
                 return False
         return True
 
-    def _get_sub_keys(self, *, key, password=None):
+    async def _get_sub_keys(self, *, key, password=None):
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
         if collection:
-            return self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
+            return await self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
         return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None, dest_path=None):
-        ret = self._local_db.realizeFile(
+    async def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None, dest_path=None):
+        ret = await self._local_db.realizeFile(
             path=path, local_only=local_only, resolve_locally=resolve_locally, dest_path=dest_path)
         if ret:
             return ret
@@ -273,67 +351,70 @@ class CairioClient():
             if path.startswith('sha1://'):
                 list0 = path.split('/')
                 sha1 = list0[2]
-                url, size = self._find_on_kbucket(
+                url, size = await self._find_on_kbucket(
                     share_id=share_id0, sha1=sha1)
                 if url:
                     if resolve_locally:
-                        return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size, dest_path=dest_path)
+                        return await self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size, dest_path=dest_path)
                     else:
                         return url
         return None
 
-    def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
-        path = self.realizeFile(path)
+    async def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
+        path = await self.realizeFile(path)
         if not path:
-            return False
-        ret = self._local_db.saveFile(
+            return None
+        ret = await self._local_db.saveFile(
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:
-            return False
+            return None
         share_id = self._remote_config['share_id']
         upload_token = self._remote_config['upload_token']
         if (share_id) and (upload_token) and (not prevent_upload):
-            sha1 = self.computeFileSha1(path=path)
+            sha1 = await self.computeFileSha1(path=path)
             if sha1:
-                url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
+                url, _ = await self._find_on_kbucket(share_id=share_id, sha1=sha1)
                 if not url:
-                    cas_upload_server_url = self._get_cas_upload_server_url_for_share(
+                    cas_upload_server_url = await self._get_cas_upload_server_url_for_share(
                         share_id=share_id)
                     if cas_upload_server_url:
-                        if self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
-                            if confirm:
-                                self._wait_until_found_on_kbucket(
-                                    share_id=share_id, sha1=sha1)
+                        if not await self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
+                            raise Exception('Failed to upload file.')
+                        #if await self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
+                            # No longer support confirm
+                            #if confirm:
+                            #    self._wait_until_found_on_kbucket(
+                            #        share_id=share_id, sha1=sha1)
         return ret
 
-    def _wait_until_found_on_kbucket(self, *, share_id, sha1):
-        timer = time.time()
-        wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
-            share_id, sha1)
-        print(wait_str)
-        retry_delays = [0.25, 0.5, 1, 2, 4, 8]
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
-            print('File is on kbucket: {}'.format(sha1))
-            return True
-        raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
-                                                                                                 time.time()-timer))
+    # def _wait_until_found_on_kbucket(self, *, share_id, sha1):
+    #     timer = time.time()
+    #     wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
+    #         share_id, sha1)
+    #     print(wait_str)
+    #     retry_delays = [0.25, 0.5, 1, 2, 4, 8]
+    #     if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
+    #         print('File is on kbucket: {}'.format(sha1))
+    #         return True
+    #     raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
+    #                                                                                              time.time()-timer))
 
-    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
-        ii = 0  # index for retry delays
-        while True:
-            url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-            if url:
-                return True
-            if ii < len(retry_delays):
-                print('Retrying in {} seconds...'.format(retry_delays[ii]))
-                time.sleep(retry_delays[ii])
-                ii = ii+1
-            else:
-                return False
+    # def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
+    #     ii = 0  # index for retry delays
+    #     while True:
+    #         url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
+    #         if url:
+    #             return True
+    #         if ii < len(retry_delays):
+    #             print('Retrying in {} seconds...'.format(retry_delays[ii]))
+    #             time.sleep(retry_delays[ii])
+    #             ii = ii+1
+    #         else:
+    #             return False
 
-    def _find_on_kbucket(self, *, share_id, sha1):
+    async def _find_on_kbucket(self, *, share_id, sha1):
         # first check in the upload location
-        (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(
+        (sha1_0, size_0, url_0) = await self._local_db.getKBucketFileInfo(
             path='kbucket://'+share_id+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
         if sha1_0 is not None:
             if sha1_0 == sha1:
@@ -346,7 +427,7 @@ class CairioClient():
         if not kbucket_url:
             return (None, None)
         url = kbucket_url+'/'+share_id+'/api/find/'+sha1
-        obj = _http_get_json(url)
+        obj = await self._remote_client._async_http_get_json(url)
         if not obj:
             return (None, None)
         if not obj['success']:
@@ -358,7 +439,7 @@ class CairioClient():
         except:
             size = 0
         urls = obj['urls']
-        node_info = self._local_db.getNodeInfo(share_id=share_id)
+        node_info = await self._local_db.getNodeInfo(share_id=share_id)
         if node_info and node_info['accessible']:
             for url0 in urls:
                 if url0.startswith(node_info['listen_url']):
@@ -368,8 +449,8 @@ class CairioClient():
                 return (url0, size)
         return (None, None)
 
-    def _get_cas_upload_server_url_for_share(self, share_id):
-        node_info = self._local_db.getNodeInfo(share_id=share_id)
+    async def _get_cas_upload_server_url_for_share(self, share_id):
+        node_info = await self._local_db.getNodeInfo(share_id=share_id)
         if not node_info:
             print('Warning: Unable to get node info for share: '+share_id)
             return None
@@ -378,9 +459,9 @@ class CairioClient():
                 'Warning: node_info does not have info.cas_upload_url field for share: '+share_id)
         return node_info.get('cas_upload_url', None)
 
-    def _read_kbucket_dir(self, *, share_id, path, recursive, include_sha1):
+    async def _read_kbucket_dir(self, *, share_id, path, recursive, include_sha1):
         url = self._local_db.kbucketUrl()+'/'+share_id+'/api/readdir/'+path
-        obj = _http_get_json(url)
+        obj = await self._remote_client._async_http_get_json(url)
         if (not obj) or (not obj['success']):
             return None
 
@@ -426,7 +507,7 @@ class CairioClient():
 
 
 class CairioLocal():
-    def __init__(self):
+    def __init__(self, remote_client):
         self._local_database_path = _get_default_local_db_path()
         self._sha1_cache = Sha1Cache()
         local_cache_dir = os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
@@ -434,6 +515,7 @@ class CairioLocal():
         self._kbucket_url = os.getenv(
             'KBUCKET_URL', 'https://kbucket.flatironinstitute.org')
         self._nodeinfo_cache = dict()
+        self._remote_client = remote_client
 
     def getValue(self, *, key, subkey=None):
         if subkey is not None:
@@ -497,13 +579,13 @@ class CairioLocal():
         except:
             return []
 
-    def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None):
+    async def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
             return self._realize_file_from_sha1(sha1=sha1, dest_path=dest_path)
         elif path.startswith('kbucket://'):
-            sha1, size, url = self._get_kbucket_file_info(path=path)
+            sha1, size, url = await self._get_kbucket_file_info(path=path)
             if sha1 is None:
                 return None
             try_local_path = self._sha1_cache.findFile(sha1)
@@ -513,7 +595,7 @@ class CairioLocal():
                 return None
             if not resolve_locally:
                 return path  # hmmm, should we return url here?
-            return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, dest_path=dest_path)
+            return await self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, dest_path=dest_path)
 
         # If the file exists on the local computer, just use that
         if os.path.exists(path):
@@ -524,15 +606,15 @@ class CairioLocal():
 
         return None
 
-    def realizeFileFromUrl(self, *, url, sha1, size, dest_path=None):
-        return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, target_path=dest_path)
+    async def realizeFileFromUrl(self, *, url, sha1, size, dest_path=None):
+        return await self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, target_path=dest_path)
 
-    def saveFile(self, *, path, basename, return_sha1_url=True):
+    async def saveFile(self, *, path, basename, return_sha1_url=True):
         if basename is None:
             basename = os.path.basename(path)
 
         path0 = path
-        path = self.realizeFile(path=path0)
+        path = await self.realizeFile(path=path0)
         if not path:
             raise Exception('Unable to realize file in saveFile: '+path0)
 
@@ -550,11 +632,11 @@ class CairioLocal():
     def computeFileSha1(self, path):
         return self._sha1_cache.computeFileSha1(path=path)
 
-    def getNodeInfo(self, *, share_id):
-        return self._get_node_info(share_id=share_id)
+    async def getNodeInfo(self, *, share_id):
+        return await self._get_node_info(share_id=share_id)
 
-    def getKBucketUrlForShare(self, *, share_id):
-        return self._get_kbucket_url_for_share(share_id=share_id)
+    async def getKBucketUrlForShare(self, *, share_id):
+        return await self._get_kbucket_url_for_share(share_id=share_id)
 
     def kbucketUrl(self):
         return self._kbucket_url
@@ -574,12 +656,12 @@ class CairioLocal():
             return os.path.abspath(fname)
         return None
 
-    def _get_node_info(self, *, share_id):
+    async def _get_node_info(self, *, share_id):
         if share_id in self._nodeinfo_cache:
             node_info = self._nodeinfo_cache[share_id]
         else:
             url = self._kbucket_url+'/'+share_id+'/api/nodeinfo'
-            obj = _http_get_json(url)
+            obj = await self._remote_client._async_http_get_json(url)
             if not obj:
                 print('Warning: unable to find node info for share {}'.format(share_id))
                 return None
@@ -603,29 +685,29 @@ class CairioLocal():
                     print('Share {} is not directly accessible.'.format(share_id))
         return node_info
 
-    def _get_kbucket_url_for_share(self, *, share_id):
-        node_info = self._get_node_info(share_id=share_id)
+    async def _get_kbucket_url_for_share(self, *, share_id):
+        node_info = await self._get_node_info(share_id=share_id)
         if (node_info) and (node_info['accessible']):
             return node_info.get('listen_url', None)
         else:
             # TODO: check the parent hub, etc before jumping right to the top
             return self._kbucket_url
 
-    def getKBucketFileInfo(self, *, path):
-        return self._get_kbucket_file_info(path=path)
+    async def getKBucketFileInfo(self, *, path):
+        return await self._get_kbucket_file_info(path=path)
 
-    def _get_kbucket_file_info(self, *, path):
+    async def _get_kbucket_file_info(self, *, path):
         list0 = path.split('/')
         kbshare_id = list0[2]
         path0 = '/'.join(list0[3:])
 
-        kbucket_url = self._get_kbucket_url_for_share(share_id=kbshare_id)
+        kbucket_url = await self._get_kbucket_url_for_share(share_id=kbshare_id)
         if not kbucket_url:
             return (None, None, None)
 
         url_prv = kbucket_url+'/'+kbshare_id+'/prv/'+path0
         try:
-            prv = _http_get_json(url_prv)
+            prv = await self._remote_client._async_http_get_json(url_prv)
         except:
             return (None, None, None)
 
@@ -727,11 +809,17 @@ def _safe_list_dir(path):
         return []
 
 
+def _sync(x):
+    if inspect.isawaitable(x):
+        return asyncio.get_event_loop().run_until_complete(x)
+    else:
+        return x
+
 # The global module client
 client = CairioClient()
 
 if os.environ.get('CAIRIO_CONFIG'):
-    print('configuring cairio...')
+    print('Configuring cairio from CAIRIO_CONFIG environment variable...')
     a = os.environ.get('CAIRIO_CONFIG').split('.')
     password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
     client.autoConfig(collection=a[0], key=a[1], password=password)

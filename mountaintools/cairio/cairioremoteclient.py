@@ -5,13 +5,19 @@ import base64
 import os
 import requests
 import time
-
+import aiohttp
 
 class CairioRemoteClient():
     def __init__(self):
+        self._http_connector = aiohttp.TCPConnector(limit=15)
+        self._http_session = aiohttp.ClientSession(connector=self._http_connector)
         pass
 
-    def addCollection(self, *, collection, token, url, admin_token):
+    def __del__(self):
+        self._http_connector.close()
+        self._http_session.close()
+
+    async def addCollection(self, *, collection, token, url, admin_token):
         if not url:
             print('Missing url for remote cairio server.')
             return False
@@ -22,13 +28,13 @@ class CairioRemoteClient():
         signature = _sha1_of_object({'path': path, 'token': admin_token})
         url0 = url+path
         url0 = url0+'?signature={}'.format(signature)
-        obj = _http_get_json(url0)
+        obj = await self._async_http_get_json(url0)
         if not obj.get('success'):
             print('Problem adding collection: '+obj.get('error', ''))
             return False
         return True
 
-    def getValue(self, *, collection, key, subkey, url):
+    async def getValue(self, *, collection, key, subkey, url):
         if not url:
             print('Missing url for remote cairio server.')
             return False
@@ -38,12 +44,12 @@ class CairioRemoteClient():
         else:
             path = '/get/{}/{}/{}'.format(collection, keyhash, subkey)
         url0 = url+path
-        obj = _http_get_json(url0)
+        obj = await self._async_http_get_json(url0)
         if not obj.get('success'):
             return None
         return obj['value']
 
-    def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token):
+    async def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token):
         if value:
             value_b64 = base64.b64encode(value.encode()).decode('utf-8')
         if not url:
@@ -69,7 +75,7 @@ class CairioRemoteClient():
         url0 = url0+'?signature={}'.format(signature)
         if not overwrite:
             url0 = url0+'&overwrite=false'
-        obj = _http_get_json(url0)
+        obj = await self._async_http_get_json(url0)
         if not obj.get('success'):
             if overwrite:
                 raise Exception('Problem setting value in collection {}: {}'.format(
@@ -77,7 +83,7 @@ class CairioRemoteClient():
             return False
         return True
 
-    def uploadFile(self, *, path, sha1, cas_upload_server_url, upload_token):
+    async def uploadFile(self, *, path, sha1, cas_upload_server_url, upload_token):
         url_check_path0 = '/check/'+sha1
         signature = _sha1_of_object(
             {'path': url_check_path0, 'token': upload_token})
@@ -100,7 +106,7 @@ class CairioRemoteClient():
             if size0 > 10000:
                 print(
                     'Uploading file --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
-            resp_obj = _http_post_file_data(url, path)
+            resp_obj = await self._async_http_post_file_data(url, path)
             if not resp_obj.get('success', False):
                 print('Problem posting file data: '+resp_obj.get('error', ''))
                 return False
@@ -109,9 +115,9 @@ class CairioRemoteClient():
             print('Already on server (**)')
             return True
 
-    def getSubKeys(self, *, collection, key, url):
+    async def getSubKeys(self, *, collection, key, url):
         # TODO - fix this - do not require downloading the entire object - will prob require modifying api of server
-        val = self.getValue(collection=collection,
+        val = await self.getValue(collection=collection,
                             key=key, url=url, subkey='-')
         if val is None:
             return []
@@ -120,6 +126,28 @@ class CairioRemoteClient():
             return val.keys()
         except:
             return []
+
+    async def _async_http_get_json(self, url):
+        timer=time.time()
+        async with self._http_session.get(url) as response:
+            assert response.status == 200
+            obj = await response.json()
+            elapsed_sec=time.time()-timer
+            if elapsed_sec>0:
+                print('Elapsed for http get: {}'.format(elapsed_sec))
+            return obj
+
+    
+    async def _async_http_post_file_data(self, url, fname):
+        timer=time.time()
+        with open(fname, 'rb') as f:
+            async with self._http_session.post(url, data=f) as response:
+                assert response.status == 200
+                elapsed_sec=time.time()-timer
+                if elapsed_sec>0.1:
+                    print('Elapsed for http post: {}'.format(elapsed_sec))
+                return await response.json()
+
 
 
 def _hash_of_key(key):
@@ -139,6 +167,7 @@ def _sha1_of_object(obj):
     return _sha1_of_string(txt)
 
 
+## old
 def _http_get_json(url, verbose=None, retry_delays=None):
     if retry_delays is None:
         retry_delays = [0.2, 0.5, 1, 2, 4]
@@ -165,7 +194,7 @@ def _http_get_json(url, verbose=None, retry_delays=None):
         print('Elapsed time for _http_get_json: {}'.format(time.time()-timer))
     return ret
 
-
+# old
 def _http_post_file_data(url, fname, verbose=None):
     if verbose is None:
         timer = time.time()
