@@ -1,7 +1,7 @@
-import spikeextractors as se
-import spiketoolkit as st
+import spikeforest.spikeextractors as se
+import spikeforest.spiketoolkit as st
 import vdomr as vd
-import spikewidgets as sw
+import spikeforest.spikewidgets as sw
 import spikeforestwidgets as SFW
 import mlprocessors as mlpr
 from matplotlib import pyplot as plt

@@ -64,7 +64,7 @@ class UnitWaveformWidget(vd.Component):
     )
 
 import time
-import spikewidgets as sw
+import spikeforest.spikewidgets as sw
 class _UnitWaveformPlot(vd.components.Pyplot):
   def __init__(self,*,recording,sorting,unit_id,average_waveform,show_average,max_num_spikes_per_unit,snippet_len):
     vd.components.Pyplot.__init__(self)

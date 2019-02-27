@@ -1,12 +1,12 @@
 import sys
 
-import spikeextractors as si
+import spikeforest.spikeextractors as si
 
 import os
 from shutil import copyfile
 import subprocess, shlex
 import h5py
-from spikeextractors import mdaio
+from spikeforest.spikeextractors import mdaio
 import numpy as np
 
 def kilosort(*,

@@ -1,5 +1,5 @@
-import spikeextractors as si
-# import spikewidgets as sw
+import spikeforest.spikeextractors as si
+# import spikeforest.spikewidgets as sw
 import json
 from PIL import Image
 import os

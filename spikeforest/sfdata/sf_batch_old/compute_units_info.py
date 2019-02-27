@@ -1,8 +1,8 @@
 import numpy as np
 import json
 import mlprocessors as mlpr
-import spikeextractors as si
-import spikewidgets as sw
+import spikeforest.spikeextractors as si
+import spikeforest.spikewidgets as sw
 from cairio import client as ca
 
 def write_json_file(fname,obj):

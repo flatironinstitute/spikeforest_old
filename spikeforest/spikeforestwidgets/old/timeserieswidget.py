@@ -1,5 +1,5 @@
 import uuid
-from spikeextractors import mdaio
+from spikeforest.spikeextractors import mdaio
 import io
 import base64
 import vdomr as vd

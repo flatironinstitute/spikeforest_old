@@ -1,5 +1,5 @@
 import mlprocessors as mlpr
-import spikeextractors as se
+import spikeforest.spikeextractors as se
 
 import os
 import time

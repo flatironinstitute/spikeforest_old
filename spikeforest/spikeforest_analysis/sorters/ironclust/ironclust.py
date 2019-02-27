@@ -1,6 +1,6 @@
-import spikeextractors as si
+import spikeforest.spikeextractors as si
 import os
-from spikeextractors import mdaio
+from spikeforest.spikeextractors import mdaio
 import subprocess, shlex
 
 def ironclust(*,
