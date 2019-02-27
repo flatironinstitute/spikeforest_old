@@ -12,4 +12,4 @@ install:
   - pip install codepod
 
 script:
-  - codepod --command='devel/codepod_test.sh'^C-no-pull --docker_opts="-e EXTRA_CMD='./devel/codepod_test.sh'" .
+  - codepod --command='devel/codepod_test.sh' --no-pull --docker_opts="-e EXTRA_CMD='./devel/codepod_test.sh'" .
