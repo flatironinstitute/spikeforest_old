@@ -435,6 +435,12 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         if name0 not in kwargs:
             raise Exception('Missing output: {}'.format(name0))
         val0 = kwargs[name0]
+        if type(val0) == str:
+            filename, file_extension = os.path.splitext(val0)
+            outputs[name0] = dict(
+                ext = file_extension,
+                dest_path = os.path.abspath(val0)
+            )
         if type(val0) != dict:
             raise Exception('Type of output {} cannot be {}'.format(
                 name0, str(type(val0))))
@@ -578,7 +584,12 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
         if results0 is None:
             raise Exception('Unable to get batch results.')
         for i, job in enumerate(jobs):
-            job['result'] = results0['results'][i]['result']
+            result0 = results0['results'][i]['result']
+            outputs0=result0['outputs']
+            for output0 in outputs0:
+                ## Finish this!
+                pass
+            job['result'] = result0
         return
 
     timer = time.time()

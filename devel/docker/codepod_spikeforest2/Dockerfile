@@ -13,5 +13,7 @@ RUN . /venv/bin/activate \
        requests pillow pandas h5py scipy \
        ipython ipywidgets six
 
+RUN apt-get update && apt-get install -y tmux vim
+
 RUN . /venv/bin/activate \
     && pip install pytest pytest-cov idna autopep8

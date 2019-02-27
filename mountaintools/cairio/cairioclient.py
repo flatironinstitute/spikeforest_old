@@ -12,6 +12,7 @@ from .cairioremoteclient import CairioRemoteClient
 from .cairioremoteclient import _http_get_json
 import time
 from getpass import getpass
+import shutil
 
 
 class CairioClient():
@@ -109,15 +110,15 @@ class CairioClient():
         return list(self._get_sub_keys(key=key, password=password))
 
     # realize file / save file
-    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, share_id=None, local_first=False):
+    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
         if path is not None:
-            return self._realize_file(path=path, share_id=share_id)
+            return self._realize_file(path=path, share_id=share_id, dest_path=dest_path)
         elif key is not None:
             val = self.getValue(key=key, subkey=subkey,
                                 password=password, local_first=local_first)
             if not val:
                 return None
-            return self.realizeFile(path=val, share_id=share_id)
+            return self.realizeFile(path=val, share_id=share_id, dest_path=dest_path)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
@@ -251,9 +252,9 @@ class CairioClient():
             return self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
         return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None):
+    def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None, dest_path=None):
         ret = self._local_db.realizeFile(
-            path=path, local_only=local_only, resolve_locally=resolve_locally)
+            path=path, local_only=local_only, resolve_locally=resolve_locally, dest_path=dest_path)
         if ret:
             return ret
         if local_only:
@@ -276,7 +277,7 @@ class CairioClient():
                     share_id=share_id0, sha1=sha1)
                 if url:
                     if resolve_locally:
-                        return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size)
+                        return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size, dest_path=dest_path)
                     else:
                         return url
         return None
@@ -399,7 +400,7 @@ class CairioClient():
             name0 = dir0['name']
             ret['dirs'][name0] = {}
             if recursive:
-                ret['dirs'][name0] = _read_kbucket_dir(path+'/'+name0)
+                ret['dirs'][name0] = self._read_kbucket_dir(path+'/'+name0)
         return ret
 
     def _read_file_system_dir(self, *, path, recursive, include_sha1):
@@ -496,11 +497,11 @@ class CairioLocal():
         except:
             return []
 
-    def realizeFile(self, *, path, local_only=False, resolve_locally=True):
+    def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
-            return self._realize_file_from_sha1(sha1=sha1)
+            return self._realize_file_from_sha1(sha1=sha1, dest_path=dest_path)
         elif path.startswith('kbucket://'):
             sha1, size, url = self._get_kbucket_file_info(path=path)
             if sha1 is None:
@@ -512,16 +513,19 @@ class CairioLocal():
                 return None
             if not resolve_locally:
                 return path  # hmmm, should we return url here?
-            return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size)
+            return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, dest_path=dest_path)
 
         # If the file exists on the local computer, just use that
         if os.path.exists(path):
+            if (dest_path is not None) and (os.path.abspath(path)!=os.path.abspath(dest_path)):
+                shutil.copyfile(path, dest_path)
+                return os.path.abspath(dest_path)
             return os.path.abspath(path)
 
         return None
 
-    def realizeFileFromUrl(self, *, url, sha1, size):
-        return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size)
+    def realizeFileFromUrl(self, *, url, sha1, size, dest_path=None):
+        return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, target_path=dest_path)
 
     def saveFile(self, *, path, basename, return_sha1_url=True):
         if basename is None:
@@ -561,9 +565,12 @@ class CairioLocal():
     def _get_db_path_for_keyhash(self, keyhash):
         return self._local_database_path+'/{}/{}.db'.format(keyhash[0], keyhash[1:3])
 
-    def _realize_file_from_sha1(self, *, sha1):
+    def _realize_file_from_sha1(self, *, sha1, dest_path=None):
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
+            if (dest_path is not None) and (os.path.abspath(fname) != os.path.abspath(dest_path)):
+                shutil.copyfile(fname, dest_path)
+                return os.path.abspath(dest_path)
             return os.path.abspath(fname)
         return None
 
