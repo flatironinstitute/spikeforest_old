@@ -1,5 +1,4 @@
 import mlprocessors as mlpr
-import spikeforest.spikeextractors as se
 
 import os
 import time
@@ -39,6 +38,13 @@ class YASS(mlpr.Processor):
     filter = mlpr.BoolParameter(optional=True, default=True)
 
     def run(self):
+        try:
+            # if we are running this outside the container
+            import spikeforest.spikeextractors as se
+        except:
+            # if we are in the container
+            import spikeextractors as se
+
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/yass-tmp-'+code
@@ -81,6 +87,13 @@ def yass_helper(
         template_width_ms=1,  # yass parameter
         filter=True,
         adjacency_radius=100):
+
+    try:
+        # if we are running this outside the container
+        import spikeforest.spikeextractors as se
+    except:
+        # if we are in the container
+        import spikeextractors as se
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 

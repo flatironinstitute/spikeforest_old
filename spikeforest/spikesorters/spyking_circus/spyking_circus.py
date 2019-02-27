@@ -1,6 +1,4 @@
 import mlprocessors as mlpr
-import spikeforest.spikeextractors as se
-
 import os
 import time
 import numpy as np
@@ -40,6 +38,13 @@ class SpykingCircus(mlpr.Processor):
         optional=True, default=10000, description='I believe it relates to subsampling and affects compute time')
 
     def run(self):
+        try:
+            # if we are running this outside the container
+            import spikeforest.spikeextractors as se
+        except:
+            # if we are in the container
+            import spikeextractors as se
+
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/spyking-circus-tmp-'+code
@@ -98,6 +103,13 @@ def spyking_circus(
     clustering_max_elts=10000,
     singularity_container=None
 ):
+    try:
+        # if we are running this outside the container
+        import spikeforest.spikeextractors as se
+    except:
+        # if we are in the container
+        import spikeextractors as se
+
     if not singularity_container:
         try:
             import circus

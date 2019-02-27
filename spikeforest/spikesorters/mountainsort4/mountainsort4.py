@@ -33,8 +33,16 @@ class MountainSort4(mlpr.Processor):
         optional=True, default=0.15, description='Use None for no automated curation')
 
     def run(self):
-        import spikeforest.spikeextractors as se
-        import spikeforest.spiketoolkit as st
+        try:
+            # if we are running this outside the container
+            import spikeforest.spikeextractors as se
+            import spikeforest.spiketoolkit as st
+        except:
+            # if we are in the container
+            import spikeextractors as se
+            import spiketoolkit as st
+
+        
         import ml_ms4alg
 
         print('MountainSort4......')

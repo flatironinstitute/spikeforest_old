@@ -1,4 +1,10 @@
-import spikeforest.spikeextractors as si
+try:
+    # if we are running this outside the container
+    import spikeforest.spikeextractors as si
+except:
+    # if we are in the container
+    import spikeextractors as si
+
 # import spikeforest.spikewidgets as sw
 import json
 from PIL import Image
