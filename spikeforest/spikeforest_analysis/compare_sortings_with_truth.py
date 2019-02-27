@@ -1,11 +1,18 @@
-import spikeforest.spikeextractors as si
 #import spikeforest.spikewidgets as sw
-import spikeforest.spiketoolkit as st
 import mlprocessors as mlpr
 import json
 from cairio import client as ca
 import numpy as np
 from copy import deepcopy
+
+try:
+    # if we are running this outside the container
+    import spikeforest.spikeextractors as si
+    import spikeforest.spiketoolkit as st
+except:
+    # if we are in the container
+    import spikeextractors as si
+    import spiketoolkit as st
 
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')

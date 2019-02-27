@@ -1,4 +1,10 @@
-from spikeforest.spikeextractors import SortingExtractor
+try:
+    # if we are running this outside the container
+    import spikeforest.spikeextractors as se
+except:
+    # if we are in the container
+    import spikeextractors as se
+
 import numpy as np
 from pathlib import Path
 
@@ -7,9 +13,9 @@ from pathlib import Path
 # modified from spykingcircussortingextractor.py
 
 
-class yassSortingExtractor(SortingExtractor):
+class yassSortingExtractor(se.SortingExtractor):
     def __init__(self, yass_folder):
-        SortingExtractor.__init__(self)
+        se.SortingExtractor.__init__(self)
         yass_folder = Path(yass_folder)
         files = yass_folder.iterdir()
         results = None

@@ -4,11 +4,20 @@
 
 * Step 0: Install the software
 
+It is recommended that you start from a fresh conda environment with python (>= 3.6) installed.
+
 ```
-describe this
+pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=spikeforest
+pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=mountaintools
 ```
 
-In the future we will provide conda packages
+If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions] Otherwise you will need to install the sorters individually. You can install MountainSort4 via
+
+```
+pip install ml_ms4alg
+```
+
+In the future we will provide conda packages for these.
 
 * Step 1: prepare your recording in mda format
 
@@ -44,6 +53,6 @@ SpykingCircus.execute(
 )
 ```
 
-By using `_container='default'` you do not need to install spyking circus, although if you do have spiking circus on your machine, you could simply use `_container=None`.
+By using `_container='default'` you do not need to install spyking circus, although if you do have spyking circus on your machine, you could simply use `_container=None`.
 
 Other spike sorters are in progress (YASS, KiloSort, IronClust).

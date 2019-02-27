@@ -1,8 +1,16 @@
 import numpy as np
 import json
 import mlprocessors as mlpr
-import spikeforest.spikeextractors as si
 from cairio import client as ca
+
+try:
+  # if we are running this outside the container
+  import spikeforest.spikeextractors as si
+  import spikeforest.spikewidgets as sw
+except:
+  # if we are in the container
+  import spikeextractors as si
+  import spikewidgets as sw
 
 _CONTAINER='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
 
@@ -64,8 +72,6 @@ class ComputeUnitsInfo(mlpr.Processor):
   json_out=mlpr.Output('The info as a .json file')
   
   def run(self):
-    import spikeforest.spikewidgets as sw
-    
     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if (self.channel_ids) and (len(self.channel_ids)>0):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
