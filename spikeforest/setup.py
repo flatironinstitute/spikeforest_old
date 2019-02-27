@@ -10,7 +10,7 @@ setuptools.setup(
     version="0.1.0",
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
-    description="Tools for reproducible scientific research",
+    description="Spike sorting",
     packages=setuptools.find_packages(),
     install_requires=[
         'numpy','matplotlib','requests','pillow','pandas','ipython','h5py'
