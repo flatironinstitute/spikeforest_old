@@ -1,6 +1,6 @@
 from spikeforest import spikeextractors as si
 #from spikeforest import spikewidgets as sw
-from spikeforest import spiketookit as st
+from spikeforest import spiketoolkit as st
 import mlprocessors as mlpr
 import json
 from kbucket import client as kb

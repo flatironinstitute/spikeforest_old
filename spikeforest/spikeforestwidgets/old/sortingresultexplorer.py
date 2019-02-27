@@ -1,5 +1,5 @@
 import vdomr as vd
-from spikeforest import spiketookit as st
+from spikeforest import spiketoolkit as st
 from spikeforest import spikeextractors as se
 from .unitwaveformswidget import UnitWaveformsWidget
 from .correlogramswidget import CorrelogramsWidget

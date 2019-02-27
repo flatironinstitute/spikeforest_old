@@ -105,7 +105,7 @@ class MountainSort4(mlpr.Processor):
 
     def run(self):
         from spikeforest import spikeextractors as se
-        from spikeforest import spiketookit as st
+        from spikeforest import spiketoolkit as st
         import ml_ms4alg
 
         print('MountainSort4......')

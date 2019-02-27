@@ -48,7 +48,7 @@ SpikeToolkit is designed to make the spike sorting procedure _painless_ and easy
 
 ```python
 import spikeextractor as se
-from spikeforest import spiketookit as st
+from spikeforest import spiketoolkit as st
 
 # load recording using spikeextractors (e.g. Open Ephys recording)
 recording = se.OpenEphysRecordingExtractor('path-to-open-ephys-folder')

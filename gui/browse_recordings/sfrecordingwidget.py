@@ -1,5 +1,5 @@
 from spikeforest import spikeextractors as se
-from spikeforest import spiketookit as st
+from spikeforest import spiketoolkit as st
 import vdomr as vd
 from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr

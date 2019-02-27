@@ -2,7 +2,7 @@ import os, sys
 import unittest
 
 from spikeforest import spikeextractors as se
-from spikeforest import spiketookit as st
+from spikeforest import spiketoolkit as st
 
 
 # from spikeforest import spikewidgets as sw
