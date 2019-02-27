@@ -1,4 +1,4 @@
-import spikeforest as sf
+import sfdata as sf
 
 def aggregate_sorting_results(studies, recordings, sorting_results):
     SF = sf.SFData()

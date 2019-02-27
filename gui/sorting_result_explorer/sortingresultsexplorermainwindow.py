@@ -1,6 +1,6 @@
 import os
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from cairio import client as ca
 import spikeforestwidgets as SFW
 from sortingresultexplorer import SortingResultExplorer

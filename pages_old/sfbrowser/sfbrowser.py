@@ -1,5 +1,5 @@
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from kbucket import client as kb
 import pandas as pd
 import numpy as np

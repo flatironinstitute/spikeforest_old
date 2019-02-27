@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import spikeforest as sf
+import sfdata as sf
 from cairio import client as ca
 import os
 import json

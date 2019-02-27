@@ -1,6 +1,6 @@
 import os
 import vdomr as vd
-import spikeforest as sf
+import sfdata as sf
 from kbucket import client as kb
 import spikeforestwidgets as SFW
 

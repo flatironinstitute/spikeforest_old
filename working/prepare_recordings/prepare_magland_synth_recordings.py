@@ -1,4 +1,4 @@
-import spikeforest as sf
+import sfdata as sf
 from cairio import client as ca
 
 ca.autoConfig(collection='spikeforest',

@@ -1,6 +1,6 @@
 import setuptools
 
-pkg_name = "mountaintools"
+pkg_name = "spikeforest"
 
 # NOTE: you should install this project in development mode
 # > python setup.py develop
@@ -12,9 +12,7 @@ setuptools.setup(
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",
     packages=setuptools.find_packages(),
-    install_requires=[
-        'numpy','matplotlib','requests','pillow','pandas','ipython','h5py'
-    ],
+    install_requires=[],
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
