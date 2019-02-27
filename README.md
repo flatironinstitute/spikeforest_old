@@ -19,10 +19,10 @@ git clone https://github.com/flatironinstitute/spikeforest2
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-If you want to use a conda virtual environment (e.g. `spikeforest2`), run 
+If you want to use a conda virtual environment (e.g. `sf2`), run 
 ```
-conda create -n spikeforest2 python=3.6
-conda activate spikeforest2
+conda create -n sf2 python=3.6 jupyterlab
+conda activate sf2
 ```
 
 Install codepod
@@ -117,7 +117,7 @@ This is a meta repository that is meant to be used in development/editable mode.
 To install using conda, first create a conda environment with python 3.6:
 
 ```
-conda create -n spikeforest2 python=3.6
+conda create -n spikeforest2 python=3.6 jupyterlab
 conda activate spikeforest2
 ```
 
