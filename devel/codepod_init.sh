@@ -4,12 +4,8 @@ set -ex
 # This script is called when the gitpod container starts.
 # It is called from the root directory of the project
 
-pip install -r requirements.txt
-python setup.py develop
-
-cd mountaintools
-pip install -r requirements.txt
-python setup.py develop
+pip install -e ./mountaintools
+pip install -e ./spikeforest
 
 # vscode extensions
 code --install-extension ms-python.python
