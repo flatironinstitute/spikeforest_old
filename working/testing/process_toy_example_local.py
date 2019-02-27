@@ -103,7 +103,8 @@ def main():
         ),
         subkey=output_id,
         object=dict(
-            studies=studies,
+            
+            =studies,
             recordings=recordings,
             sorting_results=sorting_results
         )
