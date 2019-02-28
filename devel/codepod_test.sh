@@ -1,4 +1,4 @@
 #!/bin/bash
 set -ex
 
-pytest --cache-clear
+PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider
