@@ -8,7 +8,6 @@ import time
 import subprocess
 import traceback
 import multiprocessing
-import numpy as np
 
 _registered_commands = dict()
 

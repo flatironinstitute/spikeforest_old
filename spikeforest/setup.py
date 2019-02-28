@@ -12,7 +12,9 @@ setuptools.setup(
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",
     packages=setuptools.find_packages(),
-    install_requires=[],
+    install_requires=[
+        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py'
+    ],
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",

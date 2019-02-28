@@ -13,7 +13,7 @@ setuptools.setup(
     description="Tools for reproducible scientific research",
     packages=setuptools.find_packages(),
     install_requires=[
-        'numpy','matplotlib','requests','pillow','pandas','ipython','h5py'
+        'matplotlib','requests','ipython'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
