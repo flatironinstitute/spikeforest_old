@@ -3,7 +3,8 @@ python:
   - "3.6"
 # command to install dependencies
 install:
-  - ./setup_python.sh
+  - pip install ./mountaintools
+  - pip install ./spikeforest
 # command to run tests
 script:
   - pytest
