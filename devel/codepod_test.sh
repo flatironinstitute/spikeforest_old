@@ -1,4 +1,4 @@
 #!/bin/bash
 set -ex
 
-pytest && exit 1
+pytest --cache-clear
