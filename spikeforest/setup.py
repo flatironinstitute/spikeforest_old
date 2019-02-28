@@ -15,7 +15,7 @@ setuptools.setup(
     package_data={'spikesorters': ['spyking_circus/*.params', 'yass/config*']},
     include_package_data=True,
     install_requires=[
-        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py'
+        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
