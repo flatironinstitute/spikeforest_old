@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-image: "spikeforest/codepod_spikeforest2:latest"
-=======
 image: "spikeforest/codepod_spikeforest2"
->>>>>>> 87fa2f0c3e9a83879c395aad47788058727beaca
 tasks:
 - command: ./devel/codepod_init.sh
