@@ -14,15 +14,15 @@ Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.c
 First clone this repo:
 
 ```
-git clone https://github.com/flatironinstitute/spikeforest2
+git clone https://github.com/flatironinstitute/spikeforest
 ```
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-If you want to use a conda virtual environment (e.g. `sf2`), run 
+If you want to use a conda virtual environment (e.g. `sf`), run 
 ```
-conda create -n sf2 python=3.6 jupyterlab
-conda activate sf2
+conda create -n sf python=3.6 jupyterlab
+conda activate sf
 ```
 
 Install codepod
@@ -33,7 +33,7 @@ pip install codepod
 Then run the ./codepod_run.sh convenience script in the repo
 
 ```
-cd spikeforest2
+cd spikeforest
 ./codepod_run.sh
 ```
 
