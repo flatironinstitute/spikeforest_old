@@ -1,4 +1,4 @@
-FROM magland/codepod:latest
+FROM spikeforest/codepod:latest
 
 # jp_proxy_widget for vdomr in jupyterlab
 RUN . /venv/bin/activate \
