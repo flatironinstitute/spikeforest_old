@@ -1,13 +1,106 @@
 ## SpikeForest
 [![Build Status](https://travis-ci.org/flatironinstitute/spikeforest.svg?branch=master)](https://travis-ci.org/flatironinstitute/spikeforest)
 
-**Note**: *This software is in alpha stage of development*
+**Note**: *This project is in alpha stage of development*
 
-## Opening in codepod (containerized VS Code IDE)
+## Overview
 
-(See also "Alternative installation" below)
+This software supports the SpikeForest web site (in progress) for public validation and comparison of spike sorting algorithms applied to an expanding collection of hosted  electrophysiology recordings with ground-truth spiking information. But you can also use this project for your own spike sorting, using MountainSort, IronClust, and other algorithms. 
 
-You can use and/or develop SpikeForest2 with codepod. Tested in Linux, should also work on a Mac.
+The framework that supports the requirements of the website, including wrapping of spike sorters in singularity containers and python classes, job batching, comparison with ground truth, and processing using remote compute resources, is all open source and may be of benefit to neuroscience labs.
+
+We make use of the [SpikeInterface](https://github.com/SpikeInterface/) project, also in alpha development stage, that provides tools for extracting, converting between, and curating raw or spike sorted extracellular data from any file format.
+
+This repository is split into two pieces: MountainTools and SpikeForest. The former is not spike-sorting specific and can be used for other applications or downstream analyses. It provides modules for batch processing, automatic caching of results, sharing data between labs (from a python interface), and processing on remote compute resources. The latter contains wrappers to the spike sorters, analysis routines, GUI components, and the actual scripts used to prepare the data hosted on the website.
+
+The code for the front-end website is also open source, but is hosted in a separate repository.
+
+## Installation
+
+It is recommended that you start from a fresh conda environment with python (>= 3.6) installed.
+
+```
+pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=spikeforest
+pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=mountaintools
+```
+
+If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions] Otherwise you will need to install the sorters individually. You can install MountainSort4 via
+
+```
+pip install ml_ms4alg
+```
+
+In the future we will provide conda packages for these.
+
+## Basic usage
+
+![Basic flow chart - SpikeForest](docs/basic_flow_chart_spikeforest.jpg?raw=true "Basic flow chart - SpikeForest")
+
+There are various ways to use MountainTools and SpikeForest as illustrated in the above diagram. Here we describe a few of the use cases.
+
+## Sorting a single recording
+
+We start with the simplest case of a single recording.
+
+* Step 1: prepare your recording in mda format
+
+[pull text for elsewhere here]
+
+* Step 2: run spike sorting
+
+```
+from spikesorters import MountainSort4
+
+MountainSort4.execute(
+    recording_dir=<recording directory>,
+    firings_out=<output directory>/firings.mda,
+    detect_sign=-1,
+    adjacency_radius=50,
+    _container=None
+)
+```
+
+By specifying `_container=None` the system will attempt to run the spike sorting using software installed on your system, so you would need to have the `ml_ms4alg` python package installed. If you instead specified `_container='default'`, the appropriate singularity container would be automatically downloaded. In that case you would need to have singularity installed.
+
+## Sorting with any spike sorter
+
+You can use spikeforest to run other spike sorters as well. For example, to run spyking circus, first follow the preliminary steps above, and then:
+
+```
+from spikesorters import SpykingCircus
+
+SpykingCircus.execute(
+    recording_dir=<recording directory>,
+    firings_out=<output directory>/firings.mda,
+    detect_sign=-1,
+    adjacency_radius=50,
+    _container='default' # To fetch the default container for spyking circus
+)
+```
+
+As described above, by using `_container='default'` you do not need to install spyking circus, although if you do have spyking circus on your machine, you could simply use `_container=None`.
+
+Other spike sorters in progress include YASS, KiloSort, and IronClust.
+
+## Sorting batches of multiple recordings
+
+[TODO: write this]
+
+## Sorting using a remote compute resource
+
+[TODO: write this]
+
+## Visualization of recordings and sorting results
+
+[TODO: write this]
+
+## Data sharing
+
+[TODO: write this]
+
+## For developers and testers: Opening in codepod (containerized VS Code IDE)
+
+You can use and/or develop SpikeForest2 with codepod. Tested in Linux, should also work on a Mac but probably requires some tweaks.
 
 Prerequisites: [docker](https://docs.docker.com/) and [codepod](https://github.com/magland/codepod)
 
@@ -19,15 +112,9 @@ git clone https://github.com/flatironinstitute/spikeforest
 
 Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
 
-If you want to use a conda virtual environment (e.g. `sf`), run 
-```
-conda create -n sf python=3.6 jupyterlab
-conda activate sf
-```
-
 Install codepod
 ```
-pip install codepod
+pip install --upgrade codepod
 ```
 
 Then run the ./codepod_run.sh convenience script in the repo
@@ -37,7 +124,7 @@ cd spikeforest
 ./codepod_run.sh
 ```
 
-This will download a docker image (may take some time depending on your internet connection) and put you in a container with a fully-functional development environment.
+This will download a docker image (may take some time depending on the speed of your internet connection) and put you in a container with a fully-functional development environment.
 
 Once inside the container you can run the following to open vscode
 ```
@@ -68,25 +155,13 @@ pytest -m slow -s
 
 `mountaintools`: Contains the MountainTools such as batcho, cairio, kbucket, mlprocessors, and vdomr. These tools are not specific to spike sorting.
 
-`repos`: Related repositories. See note below.
-
-`simplot`: A work-in-progress JavaScript library for interactive plotting.
-
-`spikextractors`: A snapshot of the SpikeExtractors project.
-
-`spikeforest`: A python module used for both spike sorting and visualization.
-
-`spikeforest_analysis`: A python module using by spike sorting scripts and analysis scripts. Contains the core processing routines.
-
-`spikeforestwidgets`: Some vdomr widgets used by the GUIs.
-
-`spikesorters`: Wrappers of the spike sorting algorithms.
-
-`spiketoolkit`: An old snapshot of the SpikeToolkit project.
-
-`spikewidgets`: An old snapshot of the SpikeWidgets project.
+`spikeforest/spikesorters`: Wrappers of the spike sorting algorithms.
 
 `working`: The SpikeForest analysis scripts. Contains scripts for preparing recordings, running spike sorting, comparing with ground truth, and assembling results for the websites.
+
+`spikeforest/spikeforest_analysis`: A python module using by spike sorting scripts and analysis scripts. Contains the core processing routines.
+
+`spikeforest/spikeforestwidgets`: Some vdomr widgets used by the GUIs.
 
 `.codepod.yml`: Configuration file for codepod
 
@@ -100,61 +175,5 @@ pytest -m slow -s
 
 `LICENSE`: The license file for this project. See also license files for individual components within subdirectories.
 
-`requirements.txt`: The python package dependencies
 
-`setup_colab.sh`: Convenience script to set up a google colaboratory runtime
-
-`setup_jp_proxy_widget.sh`: Convenience script for using vdomr in jupyter notebooks
-
-`setup_python.sh`: Convenience script for installing python dependencies (not necessary when using codepod, see below)
-
-`setup.py`: The setup file for this python package (see below)
-
-## Alternative installation (not using codepod)
-
-This is a meta repository that is meant to be used in development/editable mode.
-
-To install using conda, first create a conda environment with python 3.6:
-
-```
-conda create -n spikeforest2 python=3.6 jupyterlab
-conda activate spikeforest2
-```
-
-Then run the following
-
-```
-# See: setup_python.sh
-pip install -r requirements.txt
-python setup.py develop
-
-cd mountaintools
-pip install -r requirements.txt
-python setup.py develop
-```
-
-To run GUI tools, run
-```
-conda install -c anaconda pyqt
-```
-and test using
-```
-gui/sfbrowser/start_sfbrowser.py
-```
-
-To run colab jupyter notebooks in a local runtime, we recommend chrome browser or chromium-browser. Firefox browser may not properly connect to the local runtime environment. You must run the following prior to using colab with a local runtime:
-
-```
-# colab (see setup_colab.sh)
-pip install jupyter_http_over_ws
-jupyter serverextension enable --py jupyter_http_over_ws
-```
-
-In addition, if you want to use some of the interactive graphics within jupyterlab, do the following:
-
-```
-./setup_jp_proxy_widget.sh
-```
-
-The repo/ directory contains a snapshot of a number of different dependent projects. These may or may not be up-to-date with the associated stand-alone packages. In this way, spikeforest2 is a snapshot project that contains all the necessary code, and is less susceptible to breaking changes in other packages.
 
