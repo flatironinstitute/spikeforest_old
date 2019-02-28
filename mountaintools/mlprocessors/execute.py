@@ -441,10 +441,11 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
                 ext = file_extension,
                 dest_path = os.path.abspath(val0)
             )
-        if type(val0) != dict:
+        elif type(val0) == dict:
+            outputs[name0] = val0
+        else:
             raise Exception('Type of output {} cannot be {}'.format(
                 name0, str(type(val0))))
-        outputs[name0] = val0
     parameters = dict()
     for param0 in proc.PARAMETERS:
         name0 = param0.name
@@ -526,8 +527,6 @@ def _random_string(num_chars):
 
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
-
-    print('executeBatch')
     # make sure the files to realize are absolute paths
     for job in jobs:
         if 'files_to_realize' in job:
@@ -537,6 +536,12 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 else:
                     fname = os.path.abspath(fname)
                 job['files_to_realize'][i] = fname
+        for nam0, output0 in job['outputs'].items():
+            if type(output0)==dict:
+                if 'dest_path' in output0:
+                    if compute_resource is not None:
+                        # In this case we are going to need to realize the file
+                        output0['upload'] = True
 
     if num_workers is not None:
         if compute_resource is not None:
@@ -547,54 +552,60 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
         pool.join()
         for i, job in enumerate(jobs):
             job['result'] = results[i]
-        return
+    else:
+        if compute_resource is not None:
+            import batcho
+            if batch_name is None:
+                batch_name = 'batch_'+_random_string(10)
+            batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
+                            compute_resource=compute_resource)
+            last_update_string = ''
+            while True:
+                batch_status = batcho.get_batch_status(batch_name=batch_name)
+                if batch_status is None:
+                    update_string = 'Waiting...'
+                else:
+                    batch_status0 = batch_status.get('status', '')
+                    if batch_status0 == 'finished':
+                        print('Batch finished.')
+                        break
+                    if batch_status0 == 'error':
+                        err0 = batch_status.get('error', '')
+                        raise Exception('Error executing batch: {}'.format(err0))
+                    statuses_list = list(batcho.get_batch_job_statuses(
+                        batch_name=batch_name).values())
+                    num_ready = statuses_list.count('ready')
+                    num_running = statuses_list.count('running')
+                    num_finished = statuses_list.count('finished')
+                    update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
+                        batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
+                if update_string != last_update_string:
+                    print(update_string)
+                last_update_string = update_string
+                time.sleep(1)
 
-    if compute_resource is not None:
-        import batcho
-        if batch_name is None:
-            batch_name = 'batch_'+_random_string(10)
-        batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
-                         compute_resource=compute_resource)
-        last_update_string = ''
-        while True:
-            batch_status = batcho.get_batch_status(batch_name=batch_name)
-            if batch_status is None:
-                update_string = 'Waiting...'
-            else:
-                batch_status0 = batch_status.get('status', '')
-                if batch_status0 == 'finished':
-                    print('Finished.')
-                    break
-                if batch_status0 == 'error':
-                    err0 = batch_status.get('error', '')
-                    raise Exception('Error executing batch: {}'.format(err0))
-                statuses_list = list(batcho.get_batch_job_statuses(
-                    batch_name=batch_name).values())
-                num_ready = statuses_list.count('ready')
-                num_running = statuses_list.count('running')
-                num_finished = statuses_list.count('finished')
-                update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
-                    batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
-            if update_string != last_update_string:
-                print(update_string)
-            last_update_string = update_string
-            time.sleep(1)
+            results0 = batcho.get_batch_results(batch_name=batch_name)
+            if results0 is None:
+                raise Exception('Unable to get batch results.')
+            for i, job in enumerate(jobs):
+                result0 = results0['results'][i]['result']
+                job['result'] = result0
+        else:
+            for job in jobs:
+                job['result'] = executeJob(job)
 
-        results0 = batcho.get_batch_results(batch_name=batch_name)
-        if results0 is None:
-            raise Exception('Unable to get batch results.')
-        for i, job in enumerate(jobs):
-            result0 = results0['results'][i]['result']
-            outputs0=result0['outputs']
-            for output0 in outputs0:
-                ## Finish this!
-                pass
-            job['result'] = result0
-        return
-
-    timer = time.time()
     for job in jobs:
-        job['result'] = executeJob(job)
+        results0=job['result']
+        result_outputs0=results0['outputs']
+        for name0, output0 in job['outputs'].items():
+            if type(output0)==dict:
+                if 'dest_path' in output0:
+                    dest_path0=output0['dest_path']
+                    if name0 not in result_outputs0:
+                        raise Exception('Unexpected: result not found {}'.format(name0))
+                    result_output0=result_outputs0[name0]
+                    print('Setting output {} --> {}'.format(name0,dest_path0))
+                    ca.realizeFile(path=result_output0, dest_path=dest_path0)
 
 
 def executeJob(job):

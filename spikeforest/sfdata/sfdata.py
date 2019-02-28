@@ -2,7 +2,7 @@ from cairio import client as ca
 from PIL import Image
 import json
 import pandas as pd
-import spikeextractors as si
+from spikeforest import spikeextractors as si
 
 def kb_read_text_file(fname):
     return ca.loadText(path=fname)

@@ -1,5 +1,5 @@
 from kbucket import client as kb
-import spikeextractors as si
+from spikeforest import spikeextractors as si
 import mlprocessors as mlpr
 import os
 import shutil

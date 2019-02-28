@@ -2,10 +2,10 @@
 
 import spikeforest_analysis as sa
 from cairio import client as ca
-import spikeextractors as se
+from spikeforest import spikeextractors as se
 import os
 import shutil
-import spikeforest as sf
+import sfdata as sf
 import numpy as np
 import pytest
 

@@ -5,7 +5,7 @@ import os
 import vdomr as vd
 from cairio import client as ca
 import spikeforestwidgets as SFW
-import spikeextractors as se
+from spikeforest import spikeextractors as se
 
 
 class TheApp():

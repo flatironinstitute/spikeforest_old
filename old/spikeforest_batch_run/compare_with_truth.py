@@ -1,6 +1,6 @@
-import spikeextractors as si
-#import spikewidgets as sw
-import spiketoolkit as st
+from spikeforest import spikeextractors as si
+#from spikeforest import spikewidgets as sw
+from spikeforest import spiketoolkit as st
 import mlprocessors as mlpr
 import json
 from kbucket import client as kb

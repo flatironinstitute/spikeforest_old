@@ -513,7 +513,12 @@ class CairioLocal():
                 return None
             if not resolve_locally:
                 return path  # hmmm, should we return url here?
-            return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, dest_path=dest_path)
+            ret = self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size)
+            if (ret is not None) and (dest_path is not None):
+                if os.path.abspath(ret) != os.path.abspath(dest_path):
+                    shutil.copyfile(ret, dest_path)
+                    return dest_path
+            return ret
 
         # If the file exists on the local computer, just use that
         if os.path.exists(path):

@@ -11,13 +11,9 @@ setuptools.setup(
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
     description="Tools for reproducible scientific research",
-    packages=[
-        'vdomr',
-        'mlprocessors',
-        'cairio',
-        'batcho'
-    ],
+    packages=setuptools.find_packages(),
     install_requires=[
+        'matplotlib','requests','ipython'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",

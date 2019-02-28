@@ -1,5 +1,5 @@
-## SpikeForest2
-[![Build Status](https://travis-ci.org/flatironinstitute/spikeforest2.svg?branch=master)](https://travis-ci.org/flatironinstitute/spikeforest2)
+## SpikeForest
+[![Build Status](https://travis-ci.org/flatironinstitute/spikeforest.svg?branch=master)](https://travis-ci.org/flatironinstitute/spikeforest)
 
 **Note**: *This software is in alpha stage of development*
 
@@ -27,7 +27,7 @@ conda activate sf2
 
 Install codepod
 ```
-pip install spikeforest2
+pip install codepod
 ```
 
 Then run the ./codepod_run.sh convenience script in the repo
