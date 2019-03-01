@@ -24,7 +24,7 @@ pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=sp
 pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=mountaintools
 ```
 
-If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions] Otherwise you will need to install the sorters individually. You can install MountainSort4 via
+If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) Otherwise you will need to install the sorters individually. You can install MountainSort4 via
 
 ```
 pip install ml_ms4alg
