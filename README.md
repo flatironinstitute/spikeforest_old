@@ -35,6 +35,8 @@ In the future we will provide conda packages for these.
 ### For developers
 Run [`devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
 
+* `setup_python.sh` will use conda in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
+
 
 ## Basic usage
 
