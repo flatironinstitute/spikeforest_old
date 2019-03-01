@@ -3,6 +3,7 @@ set -e
 # ./setup_python.sh env_name
 
 source ~/conda/etc/profile.d/conda.sh
+#source ~/miniconda3/etc/profile.d/conda.sh
 
 CONDA_ENV=${1:-spikeforest}
 conda deactivate
@@ -24,8 +25,10 @@ conda install -c anaconda pyqt -y
 # for issues relating to gui/sf_main/start_sf_main.py 
 # follow instruction here https://github.com/Ultimaker/Cura/pull/131#issuecomment-176088664
 
+# install jupyter extension
+conda install -c conda-forge ipywidgets -y
+jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+
 # run test
 pytest
-
-# install jupyter extension
-jupyter labextension install @jupyter-widgets/jupyterlab-manager

@@ -24,7 +24,7 @@ pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=sp
 pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=mountaintools
 ```
 
-If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions] Otherwise you will need to install the sorters individually. You can install MountainSort4 via
+If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) Otherwise you will need to install the sorters individually. You can install MountainSort4 via
 
 ```
 pip install ml_ms4alg
@@ -32,9 +32,23 @@ pip install ml_ms4alg
 
 In the future we will provide conda packages for these.
 
-### For developers
+### Installation for developers
 Run [`devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
 
+[Pre-requisits]
+1. CONDA: `setup_python.sh` uses conda installed in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
+1. `ml_ms4alg` requires `g++` installation which may not be part of your OS. If this is the case, run `sudo apt install build-essential`.
+1. jupyter notebooks use ipywidgets which requires `nodejs` installation. Run `sudo apt install nodejs npm -y` if you don't already have the nodejs installed.
+1. Install [`docker`](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) and [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps)
+
+### Installation in Windows 10 using Ubuntu WSL
+1. Install Windows Subsystem for Linux (WSL). Run `Turn Windows features on or off` and check `Windows Subsystem for Linux`
+1. Install Ubuntu 18.04 though the Microsoft store app
+1. Start Ubuntu and install [Miniconda for Linux](https://docs.conda.io/en/latest/miniconda.html)
+1. Run `sudo apt install build-essential nodejs npm -y`
+1. Modify `devel/setup_python.sh` to point to the correct conda.sh (e.g. ` ~/miniconda3/etc/profile.d/conda.sh`)
+1. Run `devel/setup_python.sh`
+1. Test if installed correctly by running one of the example notebook. Run `conda activate spikeforest` and run `jupyter lab --no-browser` and copy the link. Paste in Chrome browser in Windows
 
 ## Basic usage
 
