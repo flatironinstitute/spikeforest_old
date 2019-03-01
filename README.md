@@ -39,6 +39,7 @@ Run [`devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/b
 1. CONDA: `setup_python.sh` uses conda installed in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
 1. `ml_ms4alg` requires `g++` installation which may not be part of your OS. If this is the case, run `sudo apt install build-essential`.
 1. jupyter notebooks use ipywidgets which requires `nodejs` installation. Run `sudo apt install nodejs npm -y` if you don't already have the nodejs installed.
+1. Install [`docker`](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) and [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps)
 
 ### Installation in Windows 10 using Ubuntu WSL
 1. Install Windows Subsystem for Linux (WSL). Run `Turn Windows features on or off` and check `Windows Subsystem for Linux`
