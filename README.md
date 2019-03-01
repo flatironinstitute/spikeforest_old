@@ -32,6 +32,10 @@ pip install ml_ms4alg
 
 In the future we will provide conda packages for these.
 
+### For developers
+Run [`devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
+
+
 ## Basic usage
 
 ![Basic flow chart - SpikeForest](docs/basic_flow_chart_spikeforest.jpg?raw=true "Basic flow chart - SpikeForest")
@@ -62,6 +66,8 @@ MountainSort4.execute(
 
 By specifying `_container=None` the system will attempt to run the spike sorting using software installed on your system, so you would need to have the `ml_ms4alg` python package installed. If you instead specified `_container='default'`, the appropriate singularity container would be automatically downloaded. In that case you would need to have singularity installed.
 
+[Example notebook: `example_single_recording.ipynb`](https://github.com/flatironinstitute/spikeforest/blob/master/docs/example_notebooks/example_single_recording.ipynb)
+
 ## Sorting with any spike sorter
 
 You can use spikeforest to run other spike sorters as well. For example, to run spyking circus, first follow the preliminary steps above, and then:
@@ -85,6 +91,8 @@ Other spike sorters in progress include YASS, KiloSort, and IronClust.
 ## Sorting batches of multiple recordings
 
 [TODO: write this]
+
+[Example notebook: `example_multi_recording.ipynb`](https://github.com/flatironinstitute/spikeforest/blob/master/docs/example_notebooks/example_multi_recording.ipynb)
 
 ## Sorting using a remote compute resource
 
