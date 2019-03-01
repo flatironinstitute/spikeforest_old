@@ -3,6 +3,7 @@ set -e
 # ./setup_python.sh env_name
 
 source ~/conda/etc/profile.d/conda.sh
+#source ~/miniconda3/etc/profile.d/conda.sh
 
 CONDA_ENV=${1:-spikeforest}
 conda deactivate
@@ -28,4 +29,5 @@ conda install -c anaconda pyqt -y
 pytest
 
 # install jupyter extension
+
 jupyter labextension install @jupyter-widgets/jupyterlab-manager
