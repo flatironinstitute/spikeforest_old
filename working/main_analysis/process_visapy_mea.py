@@ -1,31 +1,28 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
 import sfdata as sf
 import numpy as np
-import pytest
 
 
 def main():
-    ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite',
-                  ask_password=True,
-                  password=os.environ.get('SPIKEFOREST_PASSWORD', None)
-                  )
+    mt.login(ask_password=True)
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    # (in the future we will not need this)
+    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)
-    compute_resource = 'default'
-    #compute_resource = 'local-computer'
-    #compute_resource = 'ccmlin008-default'
-    #compute_resource_ks = 'ccmlin008-kilosort'
+    # compute_resource = 'local-computer'
+    # compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -36,14 +33,15 @@ def main():
     # Grab the recordings for testing
     group_name = 'visapy_mea'
 
-    a = ca.loadObject(
+    a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
 
     recordings = a['recordings']
     studies = a['studies']
 
+    # recordings=recordings[0:2]
+
     # recordings = [recordings[0]]
-    # recordings = recordings[0:3]
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
@@ -82,12 +80,12 @@ def main():
     )
 
     # Aggregate the results
-    aggregated_sorting_results = sa.aggregate_sorting_results(
-        studies, recordings, sorting_results)
+    # aggregated_sorting_results = sa.aggregate_sorting_results(
+    #     studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results'
         ),
@@ -96,22 +94,22 @@ def main():
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            aggregated_sorting_results=ca.saveObject(
-                object=aggregated_sorting_results)
+            # aggregated_sorting_results=mt.saveObject(
+            #     object=aggregated_sorting_results)
         )
     )
 
-    for sr in aggregated_sorting_results['study_sorting_results']:
-        study_name = sr['study']
-        sorter_name = sr['sorter']
-        n1 = np.array(sr['num_matches'])
-        n2 = np.array(sr['num_false_positives'])
-        n3 = np.array(sr['num_false_negatives'])
-        accuracies = n1/(n1+n2+n3)
-        avg_accuracy = np.mean(accuracies)
-        txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
-            study_name, sorter_name, avg_accuracy)
-        print(txt)
+    # for sr in aggregated_sorting_results['study_sorting_results']:
+    #     study_name = sr['study']
+    #     sorter_name = sr['sorter']
+    #     n1 = np.array(sr['num_matches'])
+    #     n2 = np.array(sr['num_false_positives'])
+    #     n3 = np.array(sr['num_false_negatives'])
+    #     accuracies = n1/(n1+n2+n3)
+    #     avg_accuracy = np.mean(accuracies)
+    #     txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
+    #         study_name, sorter_name, avg_accuracy)
+    #     print(txt)
 
 
 def _define_sorters():
@@ -128,39 +126,6 @@ def _define_sorters():
     #sorter_irc_tetrode = sorter_irc_template('tetrode')
     #sorter_irc_drift = sorter_irc_template('drift')
     sorter_irc_static = sorter_irc_template('static')
-
-    """
-    sorter_irc_tetrode = dict(
-        name='IronClust-tetrode',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=5,
-            prm_template_name="tetrode_template.prm"
-        )
-    )
-
-    sorter_irc_drift = dict(
-        name='IronClust-drift',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            prm_template_name="drift_template.prm"
-        )
-    )
-
-    sorter_irc_static = dict(
-        name='IronClust-static',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            prm_template_name="static_template.prm"
-        )
-    )
-    """
 
     def sorter_irc_template(prm_template_name, detect_threshold=5):
         sorter_irc = dict(
