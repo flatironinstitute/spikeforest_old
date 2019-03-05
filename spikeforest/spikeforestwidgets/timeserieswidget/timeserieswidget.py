@@ -13,7 +13,7 @@ def _mda32_to_base64(X):
     return base64.b64encode(f.getvalue()).decode('utf-8')
 
 class TimeseriesWidget(vd.Component):
-    def __init__(self,sorting=None,unit_ids=None,*,recording):
+    def __init__(self,sorting=None,unit_ids=None,start_frame=0,end_frame=None,*,recording):
         vd.Component.__init__(self)
 
         vd.devel.loadBootstrap()
@@ -24,22 +24,25 @@ class TimeseriesWidget(vd.Component):
         vd.devel.loadJavascript(path=source_path+'/timeserieswidget.js')
         vd.devel.loadJavascript(path=source_path+'/../dist/jquery-3.3.1.min.js')
 
+        self._array=recording.getTraces()
+        self._array_b64=_mda32_to_base64(self._array)
+        self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
         self._recording=recording
+
         if sorting:
             self._sorting=sorting
             if not unit_ids:
                 unit_ids = sorting.getUnitIds()
+            # This is not ideal as it seems possible to get this information directly from the recording
+            # Alas we cannot be sure this recording (as opposed to it's parent) was the one used for sorting
+            if not end_frame:
+                end_frame = len(self._array[0])
             spike_trains_str = ['[{}]'.format(','.join(str(x) for x in
-                sorting.getUnitSpikeTrain(u, start_frame=0, end_frame=20000)))
+                sorting.getUnitSpikeTrain(u, start_frame=start_frame, end_frame=end_frame)))
                 for u in unit_ids]
             spike_trains_str = '['+','.join(spike_trains_str)+']'
         else:
             spike_trains_str ='[[]]'
-
-        self._array=recording.getTraces()
-        self._array_b64=_mda32_to_base64(self._array)
-        self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
-
 
         js_lines=[
                 "window.sfdata=window.sfdata||{}",
