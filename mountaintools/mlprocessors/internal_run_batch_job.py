@@ -88,33 +88,38 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
             else:
                 break
 
+def _write_text_file(fname,txt):
+    with open(fname,'w') as f:
+        f.write(txt)
+
+def _read_text_file(fname):
+    with open(fname,'r') as f:
+        return f.read()
+
+def _attempt_lock_file(fname):
+    if os.path.exists(fname):
+        fname2=fname+'.lock.'+_random_string(6)
+        try:
+            os.rename(fname, fname2)
+        except:
+            return False
+        if os.path.exists(fname2):
+            return fname2
+
 def _init_next_batch_job_index_to_run(*, cairio_client, batch_id):
-    key = dict(name='compute_resource_next_batch_job_index_to_run',
-               batch_id=batch_id)
-    cairio_client.setValue(key=key, value=str(0))
+    fname='job_index--'+batch_id+'.txt'
+    _write_text_file(fname, '0')
 
 def _take_next_batch_job_index_to_run(*, cairio_client, batch_id):
-    key = dict(name='compute_resource_next_batch_job_index_to_run',
-               batch_id=batch_id)
-    last_attempted_job_index = -1
-    last_attempted_job_index_timestamp = time.time()
+    fname='job_index--'+batch_id+'.txt'
     while True:
-        val = cairio_client.getValue(key=key)
-        if val is None:
-            return None
-        job_index = int(val)
-        if _acquire_job_lock(cairio_client=cairio_client, batch_id=batch_id, job_index=job_index):
-            cairio_client.setValue(key=key, value=str(job_index+1))
-            return job_index
-        else:
-            if job_index == last_attempted_job_index:
-                elapsed0 = time.time()-last_attempted_job_index_timestamp
-                if elapsed0 > 10:
-                    raise Exception('Unexpected problem where we cannot obtain the job lock, and yet the current job index remains at {} for {} seconds.'.format(
-                        job_index, elapsed0))
-            last_attempted_job_index = job_index
-            last_attempted_job_index_timestamp = time.time()
-            time.sleep(random.uniform(0, 2))
+        time.sleep(random.uniform(0, 0.2))
+        fname2=_attempt_lock_file(fname)
+        if fname2:
+            index=int(_read_text_file(fname2))
+            _write_text_file(fname2,'{}'.format(index+1))
+            os.rename(fname2,fname)
+            return index
 
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
