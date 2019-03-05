@@ -8,13 +8,14 @@ import mlprocessors as mlpr
 
 def main():
     ca.login()
-    # compute_resource=dict(
-    #     resource_name='crtest1',
-    #     collection='spikeforest',
-    #     share_id='69432e9201d0'
-    # )
+    compute_resource=dict(
+        #resource_name='crtest1',
+        resource_name='ccmlin008',
+        collection='spikeforest',
+        share_id='69432e9201d0'
+    )
 
-    compute_resource=dict(resource_name='test_resource')
+    # compute_resource=dict(resource_name='test_resource')
 
     jobs=[]
     for n in range(30100,30200,10):
