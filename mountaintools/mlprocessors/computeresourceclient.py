@@ -64,7 +64,7 @@ class ComputeResourceClient():
                 self._set_console_message('Waiting for batch to start.')
             elif status0=='finished':
                 self._set_console_message('Batch is finished.')
-                self._finalize_batch(batch_id=batch_id)
+                # self._finalize_batch(batch_id=batch_id)
                 return
             elif status0.startswith('error'):
                 self._set_console_message('Error running batch: '+status0)
