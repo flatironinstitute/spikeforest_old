@@ -3,7 +3,7 @@
 import argparse
 import os
 import vdomr as vd
-from cairio import client as ca
+from cairio import client as mt
 from sfbrowsermainwindow import SFBrowserMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     # Configure readonly access to kbucket
-    ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
+    mt.configRemoteReadonly(collection='spikeforest',share_id='69432e9201d0')
 
     APP = TheApp()
 
