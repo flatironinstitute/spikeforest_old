@@ -8,11 +8,10 @@ export OMP_NUM_THREADS=$NUM_WORKERS
 
 export DISPLAY=""
 
-# Use the following to connect to spikeforest2
-export CAIRIO_CONFIG=spikeforest.spikeforest2-readwrite
-export CAIRIO_CONFIG_PASSWORD=$SPIKEFOREST_PASSWORD
+COLLECTION=spikeforest
+SHARE_ID=69432e9201d0
 
-# find containers (look in spikeforest2)
-export CAIRIO_ALTERNATE_SHARE_IDS=69432e9201d0
+../../../bin/compute-resource-start ccmlin008-default \
+	--allow_uncontainerized --parallel 10  \
+	--collection $COLLECTION --share_id $SHARE_ID
 
-../../../bin/batcho_listen ccmlin008-default --allow_uncontainerized --parallel=10 2>&1 | tee output.txt
