@@ -201,7 +201,6 @@ class ComputeResourceServer():
                 bjargs=run_batch_job_args[0].copy()
                 bjargs['job_index']=None
                 bjargs['srun_opts_string']=self._srun_opts_string
-                bjargs['num_jobs']=len(jobs)
                 run_batch_job(**bjargs)
         else:
             for ii in range(len(jobs)):
