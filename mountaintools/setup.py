@@ -14,7 +14,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'matplotlib','requests','ipython','simple-crypt','python-dotenv'
-#        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'
+        #        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
