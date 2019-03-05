@@ -222,7 +222,7 @@ class ComputeResourceServer():
 
         keys=[
             dict(
-                name='compute_resource_batch_job_result',job_index=ii
+                name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii
             )
             for ii in range(len(jobs))
         ]
@@ -241,7 +241,7 @@ class ComputeResourceServer():
         #     print('Assembling job {} of {}'.format(ii,len(jobs)))
         #     self._set_batch_status(batch_id=batch_id,status='assembling: job {} of {}'.format(ii,len(jobs)))
         #     self._check_batch_halt(batch_id)
-        #     result0=self._cairio_client.loadObject(key=dict(name='compute_resource_batch_job_result',job_index=ii))
+        #     result0=self._cairio_client.loadObject(key=dict(name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii))
         #     result=dict(
         #         job=job,
         #         result=result0
