@@ -40,6 +40,7 @@ def main():
     studies = a['studies']
 
     recordings=recordings[0:5]
+    studies=studies[0:1]
 
     # recordings = [recordings[0]]
 
@@ -80,8 +81,8 @@ def main():
     )
 
     # Aggregate the results
-    aggregated_sorting_results = sa.aggregate_sorting_results(
-        studies, recordings, sorting_results)
+    # aggregated_sorting_results = sa.aggregate_sorting_results(
+    #     studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
@@ -94,22 +95,22 @@ def main():
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            aggregated_sorting_results=mt.saveObject(
-                object=aggregated_sorting_results)
+            # aggregated_sorting_results=mt.saveObject(
+            #     object=aggregated_sorting_results)
         )
     )
 
-    for sr in aggregated_sorting_results['study_sorting_results']:
-        study_name = sr['study']
-        sorter_name = sr['sorter']
-        n1 = np.array(sr['num_matches'])
-        n2 = np.array(sr['num_false_positives'])
-        n3 = np.array(sr['num_false_negatives'])
-        accuracies = n1/(n1+n2+n3)
-        avg_accuracy = np.mean(accuracies)
-        txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
-            study_name, sorter_name, avg_accuracy)
-        print(txt)
+    # for sr in aggregated_sorting_results['study_sorting_results']:
+    #     study_name = sr['study']
+    #     sorter_name = sr['sorter']
+    #     n1 = np.array(sr['num_matches'])
+    #     n2 = np.array(sr['num_false_positives'])
+    #     n3 = np.array(sr['num_false_negatives'])
+    #     accuracies = n1/(n1+n2+n3)
+    #     avg_accuracy = np.mean(accuracies)
+    #     txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
+    #         study_name, sorter_name, avg_accuracy)
+    #     print(txt)
 
 
 def _define_sorters():
