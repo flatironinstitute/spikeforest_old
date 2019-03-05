@@ -10,7 +10,7 @@ def main():
     ca.login()
     compute_resource=dict(
         #resource_name='crtest1',
-        resource_name='ccmlin008',
+        resource_name='ccmlin008-default',
         collection='spikeforest',
         share_id='69432e9201d0'
     )
@@ -18,7 +18,7 @@ def main():
     # compute_resource=dict(resource_name='test_resource')
 
     jobs=[]
-    for n in range(30100,30200,10):
+    for n in range(40100,40400,10):
         jobs.append(
             ComputeNthPrime.createJob(
                 n=n,
