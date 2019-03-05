@@ -631,11 +631,11 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                     ca.realizeFile(path=result_output0, dest_path=dest_path0)
 
 
-def executeJob(job):
+def executeJob(job, cairio_client=ca):
     timer = time.time()
     tempdir = tempfile.mkdtemp()
     try:
-        processor_code = ca.loadObject(path=job['processor_code'])
+        processor_code = cairio_client.loadObject(path=job['processor_code'])
         if processor_code is None:
             raise Exception('Unable to load processor code for job: '+job['processor_code'])
         _write_python_code_to_directory(
@@ -645,7 +645,7 @@ def executeJob(job):
 
         container = job.get('container', None)
         if container:
-            container = ca.realizeFile(path=container)
+            container = cairio_client.realizeFile(path=container)
 
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
@@ -696,7 +696,7 @@ if __name__ == "__main__":
                     temporary_output_files[key], basename=key+out0['ext'], confirm=True)
             else:
                 ret['outputs'][key] = 'sha1://' + \
-                    ca.computeFileSha1(
+                    cairio_client.computeFileSha1(
                         temporary_output_files[key])+'/'+key+out0['ext']
         return ret
     except:
