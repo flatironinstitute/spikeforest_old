@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 class CrossCorrelogramsWidget:
-    def __init__(self, *, sorting, samplerate, unit_ids=None, _figure=None, _axs=None, auto=True):
+    def __init__(self, max_samples=None, auto=True, *, sorting, samplerate, unit_ids=None, _figure=None, _axs=None, auto=True):
         self._SX = sorting
         self._unit_ids = unit_ids
         self._figure = _figure
@@ -13,6 +13,7 @@ class CrossCorrelogramsWidget:
             self._axs = self._axs
         self._samplerate = samplerate
         self.auto = auto
+        self.max_samples = max_samples
         self.max_dt_msec = 50
         self.bin_size_msec = 2
         self.max_dt_tp = self.max_dt_msec * self._samplerate / 1000
@@ -39,9 +40,9 @@ class CrossCorrelogramsWidget:
             for i2,unit2 in enumerate(units):
                 times2 = self._SX.getUnitSpikeTrain(unit_id=unit2)
                 if i1 == i2:
-                    (bin_counts, bin_edges) = compute_crosscorrelogram(times1, max_dt_tp=self.max_dt_tp, bin_size_tp=self.bin_size_tp)
+                    (bin_counts, bin_edges) = compute_crosscorrelogram(times1, max_dt_tp=self.max_dt_tp, bin_size_tp=self.bin_size_tp, max_samples=self.max_samples)
                 else:
-                    (bin_counts, bin_edges) = compute_crosscorrelogram(times1, times2, max_dt_tp=self.max_dt_tp, bin_size_tp=self.bin_size_tp)
+                    (bin_counts, bin_edges) = compute_crosscorrelogram(times1, times2, max_dt_tp=self.max_dt_tp, bin_size_tp=self.bin_size_tp, max_samples=self.max_samples)
                 item = dict(
                         title="{} -> {}".format(unit1, unit2),
                         bin_counts=bin_counts,
@@ -91,6 +92,12 @@ def compute_crosscorrelogram(x, y=None, *, max_dt_tp, bin_size_tp, max_samples=N
         auto = True
     else: 
         auto = False
+    if max_samples is not None:
+        if max_samples < len(x):
+            x = np.random.choice(x, size=max_samples, replace=False)
+        if max_samples < len(y):
+            y = np.random.choice(y, size=max_samples, replace=False)
+
     bin_start = -max_dt_tp
     bin_stop  = max_dt_tp
     bin_edges = np.arange(start=bin_start, stop=bin_stop+bin_size_tp, step=bin_size_tp)
@@ -100,16 +107,16 @@ def compute_crosscorrelogram(x, y=None, *, max_dt_tp, bin_size_tp, max_samples=N
     lx = len(x)-1
     y = np.sort(y)
     for yspk in y:
-        xlo = np.searchsorted(x, yspk+bin_start)
-        xhi = np.searchsorted(x[xlo:], yspk+bin_stop, side='right')+xlo
-        xlo = max(0, xlo)
+        xlo = np.searchsorted(x, yspk+bin_start) # find first spike of x within window relative to yspk
+        xhi = np.searchsorted(x[xlo:], yspk+bin_stop, side='right')+xlo # find the last one
+        xlo = max(0, xlo) # make sure they're in bounds
         xhi = min(lx, xhi)
         for i in np.arange(xlo,xhi):
-            yspkdiff = x[i] - yspk
-            bin = min(np.searchsorted(bin_edges,yspkdiff), nbins)
-            if ((yspkdiff == 0) & auto) | (bin == 0):
+            yspkdiff = x[i] - yspk # get time difference between events
+            bin = min(np.searchsorted(bin_edges,yspkdiff), nbins) # get bin of time difference
+            if ((yspkdiff == 0) & auto) | (bin == 0): # check bounds and exclude same event for autocorrelation
                 continue
-            counts[bin-1] += 1
+            counts[bin-1] += 1 # add to counts
     return (counts, bin_edges)
 
 
@@ -165,5 +172,6 @@ def test_crosscorrelogram():
     roughly_equals(counts1, counts2)
 
 def roughly_equals():
+    # TODO: implement
     return True
 
