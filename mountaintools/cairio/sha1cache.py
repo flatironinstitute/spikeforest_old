@@ -91,10 +91,6 @@ class Sha1Cache():
                 _safe_remove_file(path_tmp)
         return target_path
 
-    def _random_string(num_chars):
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        return ''.join(random.choice(chars) for _ in range(num_chars))
-
     def moveFileToCache(self, path):
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
@@ -285,3 +281,7 @@ def _sizeof_fmt(num, suffix='B'):
             return "%3.1f %s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f %s%s" % (num, 'Yi', suffix)
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
