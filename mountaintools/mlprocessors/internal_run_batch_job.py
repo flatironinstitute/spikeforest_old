@@ -41,8 +41,8 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
         cmd=scriptpath+' '+' '.join(opts)
         if srun_opts_string:
             cmd='srun {} bash -c "{} --job_index \\$SLURM_PROCID"'.format(srun_opts_string, cmd)
-        # be careful about displaying this command... it may contain the secrets
-        print('##################### {}'.format(cmd))
+        # be careful about printing this command... it may contain the secrets
+        # print('##################### {}'.format(cmd))
         retval = os.system(cmd)
         if retval != 0:
             raise Exception('Error running batch job {} (batch_id={})'.format(job_index, batch_id))

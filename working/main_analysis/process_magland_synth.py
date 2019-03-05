@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
@@ -11,18 +11,18 @@ import pytest
 
 
 def main():
-    ca.login(ask_password=True)
-    ca.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
+    mt.login(ask_password=True)
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
     # (in the future we will not need this)
-    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    compute_resource = 'ccmlin008-default'
-    compute_resource_ks = 'ccmlin008-kilosort'
+    compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -33,11 +33,13 @@ def main():
     # Grab the recordings for testing
     group_name = 'magland_synth'
 
-    a = ca.loadObject(
+    a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
 
     recordings = a['recordings']
     studies = a['studies']
+
+    recordings=recordings[0:8]
 
     # recordings = [recordings[0]]
 
@@ -83,7 +85,7 @@ def main():
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results'
         ),
@@ -92,7 +94,7 @@ def main():
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            aggregated_sorting_results=ca.saveObject(
+            aggregated_sorting_results=mt.saveObject(
                 object=aggregated_sorting_results)
         )
     )
@@ -182,8 +184,8 @@ def _define_sorters():
         )
     )
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
+    return [sorter_ms4_thr3]
 
 
 if __name__ == "__main__":
