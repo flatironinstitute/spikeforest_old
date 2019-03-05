@@ -7,7 +7,6 @@ import os
 import shutil
 import sfdata as sf
 import numpy as np
-import pytest
 
 
 def main():
@@ -39,7 +38,7 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    recordings=recordings[0:8]
+    recordings=recordings[0:2]
 
     # recordings = [recordings[0]]
 
@@ -183,9 +182,19 @@ def _define_sorters():
             adjacency_radius=50
         )
     )
+
+    sorter_yass = dict(
+        name='Yass',
+        processor_name='Yass',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50
+        )
+    )
+
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    return [sorter_ms4_thr3]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    # return [sorter_ms4_thr3]
 
 
 if __name__ == "__main__":
