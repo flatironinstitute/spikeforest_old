@@ -573,6 +573,8 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                     raise Exception('Unable to get batch results.')
                 for i, job in enumerate(jobs):
                     result0 = results0['results'][i]['result']
+                    if result0 is None:
+                        raise Exception('Unable to find result for job.')
                     job['result'] = result0
             else:
                 # old method
