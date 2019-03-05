@@ -11,14 +11,12 @@ import pytest
 
 
 def main():
-    ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite',
-                  ask_password=True,
-                  password=os.environ.get('SPIKEFOREST_PASSWORD', None)
-                  )
+    ca.login(ask_password=True)
+    ca.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
+    # (in the future we will not need this)
     ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)

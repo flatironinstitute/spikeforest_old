@@ -15,7 +15,7 @@ os.environ['DISPLAY'] = ''
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Listen for batches as a compute resource')
+        description='Run a processing batch')
     parser.add_argument('batch_name', help='Name of the batch to run')
 
     args = parser.parse_args()

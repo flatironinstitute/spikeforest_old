@@ -31,6 +31,7 @@ class CairioClient():
         self._verbose = False
         self._local_db = CairioLocal()
         self._remote_client = CairioRemoteClient()
+        self._login_config=None
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         if (ask_password) and (password is None):
@@ -45,6 +46,74 @@ class CairioClient():
         except:
             raise Exception('Error parsing config.')
         self.setRemoteConfig(**config)
+
+    def login(self,*,user=None,password=None,ask_password=False):
+        from simplecrypt import encrypt, decrypt
+
+        if user is None:
+            if 'CAIRIO_USER' not in os.environ:
+                raise Exception('Environment variable not set: CAIRIO_USER')
+            user=os.environ['CAIRIO_USER']
+            if 'CAIRIO_PASSWORD' in os.environ:
+                password=os.environ['CAIRIO_PASSWORD']
+
+        if not password:
+            if ask_password:
+                password=getpass('Cairio password for {}: '.format(user))
+        if not password:
+            raise Exception('Environment variable not set: CAIRIO_PASSWORD')
+
+        key=dict(
+            name='user_config',
+            user=user
+        )
+        print('Logging in as {}...'.format(user))
+        val=self.getValue(
+            collection='admin',
+            key=key
+        )
+        if not val:
+            raise Exception('Unable to find config for user: {}'.format(user))
+        config=json.loads(
+            decrypt(
+                password,
+                base64.b64decode(val.encode('utf-8'))
+            )
+        )
+        self._login_config=config
+        print('Logged in as {}'.format(user))
+
+    def configLocal(self):
+        self.setRemoteConfig(
+            collection='',
+            token='',
+            share_id='',
+            upload_token=''
+        )
+    
+    def configRemoteReadonly(self, *, collection, share_id=''):
+        self.setRemoteConfig(
+            collection=collection,
+            token='',
+            share_id=share_id,
+            upload_token=''
+        )
+
+    def configRemoteReadWrite(self, *, collection, share_id, token=None, upload_token=None):
+        if token is None:
+            token=self._find_collection_token_from_login(collection)
+            if not token:
+                raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
+        if upload_token is None:
+            upload_token=self._find_upload_token_from_login(share_id=share_id)
+            if not upload_token:
+                raise Exception('Cannot configure remote read-write. Missing upload token for {}, and not found in login config.'.format(share_id))
+        self.setRemoteConfig(
+            collection=collection,
+            token=token,
+            share_id=share_id,
+            upload_token=upload_token
+        )
 
     def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
         if url is not None:
@@ -232,6 +301,42 @@ class CairioClient():
                 return ret
         return None
 
+    def _find_collection_token_from_login(self, collection, try_global=True):
+        if try_global:
+            ret = self._find_collection_token_from_login(collection=collection,try_global=False)
+            if ret is not None:
+                return ret
+            else:
+                from cairio import client as global_client
+                return global_client._find_collection_token_from_login(collection=collection, try_global=False)
+        if not self._login_config:
+            return None
+        if not 'cairio_collections' in self._login_config:
+            return None
+        for cc in self._login_config['cairio_collections']:
+            if cc['name']==collection:
+                if 'token' in cc:
+                    return cc['token']
+        return None
+
+    def _find_upload_token_from_login(self, share_id, try_global=True):
+        if try_global:
+            ret = self._find_upload_token_from_login(share_id=share_id,try_global=False)
+            if ret is not None:
+                return ret
+            else:
+                from cairio import client as global_client
+                return global_client._find_upload_token_from_login(share_id=share_id, try_global=False)
+        if not self._login_config:
+            return None
+        if not 'kbucket_shares' in self._login_config:
+            return None
+        for ks in self._login_config['kbucket_shares']:
+            if ks['node_id']==share_id:
+                if 'upload_token' in ks:
+                    return ks['upload_token']
+        return None
+
     def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
         if password is not None:
             key = dict(key=key, password=password)
@@ -300,36 +405,37 @@ class CairioClient():
                     cas_upload_server_url = self._get_cas_upload_server_url_for_share(
                         share_id=share_id)
                     if cas_upload_server_url:
-                        if self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
-                            if confirm:
-                                self._wait_until_found_on_kbucket(
-                                    share_id=share_id, sha1=sha1)
+                        if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
+                            raise Exception('Problem uploading file {}'.format(path))
+                        # if confirm:
+                        #    self._wait_until_found_on_kbucket(
+                        #        share_id=share_id, sha1=sha1)
         return ret
 
-    def _wait_until_found_on_kbucket(self, *, share_id, sha1):
-        timer = time.time()
-        wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
-            share_id, sha1)
-        print(wait_str)
-        retry_delays = [0.25, 0.5, 1, 2, 4, 8]
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
-            print('File is on kbucket: {}'.format(sha1))
-            return True
-        raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
-                                                                                                 time.time()-timer))
+    # def _wait_until_found_on_kbucket(self, *, share_id, sha1):
+    #     timer = time.time()
+    #     wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
+    #         share_id, sha1)
+    #     print(wait_str)
+    #     retry_delays = [0.25, 0.5, 1, 2, 4, 8]
+    #     if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
+    #         print('File is on kbucket: {}'.format(sha1))
+    #         return True
+    #     raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
+    #                                                                                              time.time()-timer))
 
-    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
-        ii = 0  # index for retry delays
-        while True:
-            url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-            if url:
-                return True
-            if ii < len(retry_delays):
-                print('Retrying in {} seconds...'.format(retry_delays[ii]))
-                time.sleep(retry_delays[ii])
-                ii = ii+1
-            else:
-                return False
+    # def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
+    #     ii = 0  # index for retry delays
+    #     while True:
+    #         url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
+    #         if url:
+    #             return True
+    #         if ii < len(retry_delays):
+    #             print('Retrying in {} seconds...'.format(retry_delays[ii]))
+    #             time.sleep(retry_delays[ii])
+    #             ii = ii+1
+    #         else:
+    #             return False
 
     def _find_on_kbucket(self, *, share_id, sha1):
         # first check in the upload location
@@ -598,14 +704,15 @@ class CairioLocal():
             if 'accessible' not in node_info:
                 url00 = node_info.get('listen_url', '') + \
                     '/'+share_id+'/api/nodeinfo'
-                print(
-                    'Testing whether share {} is directly accessible...'.format(share_id))
+                #print(
+                #    'Testing whether share {} is directly accessible...'.format(share_id))
                 node_info['accessible'] = _test_url_accessible(
                     url00, timeout=2)
                 if node_info['accessible']:
-                    print('Share {} is directly accessible.'.format(share_id))
+                    # print('Share {} is directly accessible.'.format(share_id))
+                    pass
                 else:
-                    print('Share {} is not directly accessible.'.format(share_id))
+                    print('Share {} is not directly accessible (using hub).'.format(share_id))
         return node_info
 
     def _get_kbucket_url_for_share(self, *, share_id):
