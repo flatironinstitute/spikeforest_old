@@ -20,7 +20,8 @@ def main():
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    #compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
     compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
@@ -38,7 +39,7 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    recordings=recordings[0:2]
+    # recordings=recordings[0:2]
 
     # recordings = [recordings[0]]
 
