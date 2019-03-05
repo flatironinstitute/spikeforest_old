@@ -194,7 +194,8 @@ def _define_sorters():
     )
 
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_yass]
     # return [sorter_ms4_thr3]
 
 
