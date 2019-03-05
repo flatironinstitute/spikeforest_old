@@ -1,0 +1,24 @@
+<html>
+
+<head>
+    <script src="canvaswidget.js" type="text/javascript"></script>
+    <script src="timeserieswidget.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" type="text/javascript"></script>
+</head>
+
+<body>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            const TimeseriesWidget=window.TimeseriesWidget;
+            const TestTimeseriesModel=window.TestTimeseriesModel;
+            
+            X=new TimeseriesWidget();
+            X.setTimeseriesModel(new TestTimeseriesModel());
+            $('body').append(X.element());
+        });
+    </script>
+    
+</body>
+
+</html>
