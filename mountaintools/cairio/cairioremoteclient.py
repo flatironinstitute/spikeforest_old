@@ -141,7 +141,7 @@ def _sha1_of_object(obj):
 
 def _http_get_json(url, verbose=None, retry_delays=None):
     if retry_delays is None:
-        retry_delays = [0.2, 0.5, 1, 2, 4]
+        retry_delays = [0.2, 0.5]
     if verbose is None:
         timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
