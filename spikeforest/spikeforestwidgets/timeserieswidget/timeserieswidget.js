@@ -17,6 +17,7 @@ function TimeseriesWidget() {
     this.zoomAmplitude=function(factor) {zoom_amplitude(factor);};
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
+    this.setMarkers=function(markers) { m_markers=markers;};
 
     let m_div=$('<div tabindex="0" />'); // tabindex needed to handle keypress
     m_div.css({position:'absolute'});
@@ -31,6 +32,7 @@ function TimeseriesWidget() {
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
+    let m_markers=[[100,1000],[150,1050]];
 
     m_div.append(m_main_canvas.canvasElement());
     m_div.append(m_cursor_canvas.canvasElement());
@@ -86,6 +88,18 @@ function TimeseriesWidget() {
         let pt1=val2pix(M-1,m_current_time,-m_y_offsets[M-1]);
         let pt2=val2pix(0,m_current_time,-m_y_offsets[0]);
         painter.drawLine(pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2);
+        add_markers(painter)
+    }
+
+    function add_markers(painter) {
+        let M=m_model.numChannels();
+        for (m_marker_group of m_markers) {
+          for(m of m_marker_group) {
+            let pt1=val2pix(M-1,m,-m_y_offsets[M-1]);
+            let pt2=val2pix(0,m,-m_y_offsets[0]);
+            painter.drawLine(pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2);
+          }
+        }
     }
 
     function set_time_range(t1,t2) {
