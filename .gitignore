@@ -1,4 +1,6 @@
 sha1-cache
+test_output
+cairio.env
 
 # Files to be ignored by git
 
