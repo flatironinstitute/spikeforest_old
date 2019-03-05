@@ -281,6 +281,8 @@ def _load_objects(cairio_client,keys):
         if object is None:
             print('Loading missed object...')
             objects[ii]=cairio_client.loadObject(key=keys[ii])
+            if objects[ii] is None:
+                raise Exception('Unable to load object for key:',keys[ii])
     return objects
 
     # ret=[]
