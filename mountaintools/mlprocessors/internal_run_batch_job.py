@@ -71,7 +71,6 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
         cairio_client.saveObject(
             key=dict(
                 name='compute_resource_batch_job_result',
-                batch_id=batch_id,
                 job_index=job_index
             ),
             object=result
@@ -89,8 +88,8 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
 
 def _init_next_batch_job_index_to_run(*, cairio_client, batch_id):
     key = dict(name='compute_resource_next_batch_job_index_to_run',
-               batch_name=batch_name)
-    ca.setValue(key=key, value=str(0))
+               batch_id=batch_id)
+    cairio_client.setValue(key=key, value=str(0))
 
 def _take_next_batch_job_index_to_run(*, cairio_client, batch_id):
     key = dict(name='compute_resource_next_batch_job_index_to_run',
