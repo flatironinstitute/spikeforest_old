@@ -1,30 +1,28 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
 import sfdata as sf
 import numpy as np
-import pytest
 
 
 def main():
-    ca.autoConfig(collection='spikeforest',
-                  key='spikeforest2-readwrite',
-                  ask_password=True,
-                  password=os.environ.get('SPIKEFOREST_PASSWORD', None)
-                  )
+    mt.login(ask_password=True)
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    # (in the future we will not need this)
+    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    compute_resource = 'ccmlin008-default'
-    compute_resource_ks = 'ccmlin008-kilosort'
+    #compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -33,15 +31,17 @@ def main():
     output_id = 'magland_synth_test'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth_test'
+    group_name = 'magland_synth'
 
-    a = ca.loadObject(
+    a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
 
     recordings = a['recordings']
     studies = a['studies']
 
-    recordings = recordings[0:6]
+    recordings=recordings[0:5]
+
+    # recordings = [recordings[0]]
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
@@ -85,7 +85,7 @@ def main():
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results'
         ),
@@ -94,7 +94,7 @@ def main():
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            aggregated_sorting_results=ca.saveObject(
+            aggregated_sorting_results=mt.saveObject(
                 object=aggregated_sorting_results)
         )
     )
@@ -183,9 +183,19 @@ def _define_sorters():
             adjacency_radius=50
         )
     )
+
+    sorter_yass = dict(
+        name='Yass',
+        processor_name='Yass',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50
+        )
+    )
+
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    return [sorter_ms4_thr3]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    # return [sorter_ms4_thr3]
 
 
 if __name__ == "__main__":
