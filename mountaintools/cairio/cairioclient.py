@@ -51,11 +51,11 @@ class CairioClient():
         from simplecrypt import encrypt, decrypt
 
         if user is None:
-            if 'CAIRIO_USER' not in os.environ:
-                raise Exception('Environment variable not set: CAIRIO_USER')
-            user=os.environ['CAIRIO_USER']
-            if 'CAIRIO_PASSWORD' in os.environ:
-                password=os.environ['CAIRIO_PASSWORD']
+            if 'MOUNTAIN_USER' not in os.environ:
+                raise Exception('Environment variable not set: MOUNTAIN_USER')
+            user=os.environ['MOUNTAIN_USER']
+            if 'MOUNTAIN_PASSWORD' in os.environ:
+                password=os.environ['MOUNTAIN_PASSWORD']
 
         if not password:
             if ask_password:
