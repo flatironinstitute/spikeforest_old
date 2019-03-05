@@ -20,6 +20,14 @@ class ComputeResourceClient():
             key=key,
             object=dict(jobs=jobs)
         )
+        print('Saving source code for jobs...')
+        codes_saved=set()
+        for job in jobs:
+            code_path=job['processor_code']
+            if not code_path in codes_saved:
+                self._cairio_client.saveFile(path=code_path)
+            codes_saved.add(code_path)
+        print('.')
     def startBatch(self,*,batch_id):
         self._cairio_client.setValue(
             key=dict(
