@@ -61,6 +61,7 @@ def summarize_recordings(recordings, compute_resource=None):
     label='Summarize recordings'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
+    print('Gathering summarized recordings...')
     summarized_recordings=[]
     for i,recording in enumerate(recordings):
         firings_true_path=recording['directory']+'/firings_true.mda'
