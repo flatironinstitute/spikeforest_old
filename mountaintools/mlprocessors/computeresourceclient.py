@@ -25,6 +25,7 @@ class ComputeResourceClient():
         for job in jobs:
             code_path=job['processor_code']
             if not code_path in codes_saved:
+                print('Saving file: '+code_path)
                 self._cairio_client.saveFile(path=code_path)
             codes_saved.add(code_path)
         print('.')

@@ -62,7 +62,7 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
     jobs=batch['jobs']
     job=jobs[job_index]
 
-    result=executeJob(job)
+    result=executeJob(job, cairio_client=cairio_client)
 
     cairio_client.saveObject(
         key=dict(
