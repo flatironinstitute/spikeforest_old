@@ -18,7 +18,7 @@ def main():
     # compute_resource=dict(resource_name='test_resource')
 
     jobs=[]
-    for n in range(40100,40400,10):
+    for n in range(50100,50200,10):
         jobs.append(
             ComputeNthPrime.createJob(
                 n=n,
