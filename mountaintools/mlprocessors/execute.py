@@ -636,6 +636,8 @@ def executeJob(job):
     tempdir = tempfile.mkdtemp()
     try:
         processor_code = ca.loadObject(path=job['processor_code'])
+        if processor_code is None:
+            raise Exception('Unable to load processor code for job: '+job['processor_code'])
         _write_python_code_to_directory(
             tempdir+'/processor_source', processor_code)
 
