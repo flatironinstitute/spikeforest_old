@@ -14,5 +14,5 @@ SHARE_ID=69432e9201d0
 ../../../bin/compute-resource-start ccmlin008-80 \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --share_id $SHARE_ID \
-        --srun_opts "-c 2 -n 80 -p ccm"
+        --srun_opts "-c 2 --nodes 4 -p ccm"
 
