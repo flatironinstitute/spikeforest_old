@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 class CrossCorrelogramsWidget:
-    def __init__(self, max_samples=None, auto=True, *, sorting, samplerate, unit_ids=None, _figure=None, _axs=None, auto=True):
+    def __init__(self, max_samples=None, auto=True, *, sorting, samplerate, unit_ids=None, _figure=None, _axs=None):
         self._SX = sorting
         self._unit_ids = unit_ids
         self._figure = _figure
