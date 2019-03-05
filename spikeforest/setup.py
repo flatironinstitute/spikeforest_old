@@ -12,8 +12,13 @@ setuptools.setup(
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",
     packages=setuptools.find_packages(),
-    package_dir={'spikesorters': 'spikesorters'},
-    package_data={'spikesorters': ['spyking_circus/*.params', 'yass/config*']},
+    package_dir={
+        'spikesorters': 'spikesorters',
+        'spikeforestwidgets': 'spikeforestwidgets'},
+    package_data={
+        'spikesorters': ['spyking_circus/*.params', 'yass/config*'],
+        'spikeforestwidgets': ['*.js','timeserieswidget/*.js', 'dist/*.js']
+        },
     install_requires=[
         'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git'
     ],
