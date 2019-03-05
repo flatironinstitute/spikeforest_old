@@ -197,6 +197,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
 
     sorting_jobs=[]
     for recording in recordings:
+        print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
         dsdir=recording['directory']
         job=SS.createJob(
             _container=SS_container,
@@ -210,6 +211,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
     label='Sort recordings ({})'.format(processor_name)
     mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
     
+    print('Gathering sorting results...')
     sorting_results=[]
     for i,recording in enumerate(recordings):
         firings_true_path=recording['directory']+'/firings_true.mda'
