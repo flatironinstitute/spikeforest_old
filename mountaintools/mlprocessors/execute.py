@@ -557,7 +557,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
         if compute_resource is not None:
             if type(compute_resource)==dict:
                 # new method
-                from computeresourceclient import ComputeResourceClient
+                from .computeresourceclient import ComputeResourceClient
                 CRC=ComputeResourceClient(**compute_resource)
                 batch_id = 'batch_'+_random_string(10)
                 CRC.initializeBatch(batch_id=batch_id,jobs=jobs)
