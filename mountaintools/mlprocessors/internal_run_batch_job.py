@@ -43,7 +43,7 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
             opts.append('-n {}'.format(num_jobs))
         cmd=scriptpath+' '+' '.join(opts)
         if srun_opts_string:
-            cmd='srun {} bash -c "{} --job_index srun"'.format(srun_opts_string, cmd)
+            cmd='srun {} bash -c "{} --job_index \$SLURM_PROCID"'.format(srun_opts_string, cmd)
         # be careful about printing this command... it may contain the secrets
         print('##################### {}'.format(cmd))
         retval = os.system(cmd)
