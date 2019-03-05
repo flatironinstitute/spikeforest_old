@@ -61,7 +61,7 @@ class CairioClient():
             if ask_password:
                 password=getpass('Cairio password for {}: '.format(user))
         if not password:
-            raise Exception('Environment variable not set: CAIRIO_PASSWORD')
+            raise Exception('Environment variable not set: MOUNTAIN_PASSWORD')
 
         key=dict(
             name='user_config',
