@@ -17,6 +17,7 @@ function TimeseriesWidget() {
     this.zoomAmplitude=function(factor) {zoom_amplitude(factor);};
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
+    this.setMarkers=function(markers) { m_markers=markers;};
 
     let m_div=$('<div tabindex="0" />'); // tabindex needed to handle keypress
     m_div.css({position:'absolute'});
@@ -31,6 +32,7 @@ function TimeseriesWidget() {
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
+    let m_markers=[[100,1000],[150,1050]];
 
     m_div.append(m_main_canvas.canvasElement());
     m_div.append(m_cursor_canvas.canvasElement());
@@ -86,6 +88,27 @@ function TimeseriesWidget() {
         let pt1=val2pix(M-1,m_current_time,-m_y_offsets[M-1]);
         let pt2=val2pix(0,m_current_time,-m_y_offsets[0]);
         painter.drawLine(pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2);
+        add_markers(painter)
+    }
+
+    function add_markers(painter) {
+        painter.setFont({"pixel-size":18,family:'Arial'});
+
+        let M=m_model.numChannels();
+        let i = 0
+        for (m_marker_group of m_markers) {
+          i = i + 1;
+          painter.setPen({'color':colorArray[i % colorArray.length]});
+          painter.setBrush({'color':colorArray[i % colorArray.length]});
+          for(m of m_marker_group) {
+            let pt1=val2pix(M-1,m,-m_y_offsets[M-1]);
+            let pt2=val2pix(0,m,-m_y_offsets[0]);
+            let rect = [pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2]
+            painter.drawLine(...rect);
+            rect[0] = rect[0] + 5;
+            painter.drawText(rect, {AlignLeft: true, AlignTop: true}, ""+i);
+          }
+        }
     }
 
     function set_time_range(t1,t2) {
@@ -345,3 +368,16 @@ function randn_bm() {
     while(v === 0) v = Math.random();
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
+
+// from https://gist.github.com/mucar/3898821
+var colorArray = [
+      '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+		  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+		  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+		  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+		  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+		  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+		  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+		  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+		  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+      '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF'];

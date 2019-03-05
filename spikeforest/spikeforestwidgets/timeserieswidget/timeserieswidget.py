@@ -13,12 +13,8 @@ def _mda32_to_base64(X):
     return base64.b64encode(f.getvalue()).decode('utf-8')
 
 class TimeseriesWidget(vd.Component):
-    def __init__(self,*,recording):
+    def __init__(self,sorting=None,unit_ids=None,start_frame=0,end_frame=None,*,recording):
         vd.Component.__init__(self)
-        self._recording=recording
-        self._array=recording.getTraces()
-        self._array_b64=_mda32_to_base64(self._array)
-        self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
 
         vd.devel.loadBootstrap()
         vd.devel.loadCss(url='https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css')
@@ -28,9 +24,34 @@ class TimeseriesWidget(vd.Component):
         vd.devel.loadJavascript(path=source_path+'/timeserieswidget.js')
         vd.devel.loadJavascript(path=source_path+'/../dist/jquery-3.3.1.min.js')
 
-        js="window.sfdata=window.sfdata||{}; window.sfdata.test=1; window.sfdata['array_b64_{div_id}']='{b64}'"
-        js=self._div_id.join(js.split('{div_id}'))
-        js=self._array_b64.join(js.split('{b64}'))
+        self._array=recording.getTraces()
+        self._array_b64=_mda32_to_base64(self._array)
+        self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
+        self._recording=recording
+
+        if sorting:
+            self._sorting=sorting
+            if not unit_ids:
+                unit_ids = sorting.getUnitIds()
+            # This is not ideal as it seems possible to get this information directly from the recording
+            # Alas we cannot be sure this recording (as opposed to it's parent) was the one used for sorting
+            if not end_frame:
+                end_frame = len(self._array[0])
+            spike_trains_str = ['[{}]'.format(','.join(str(x) for x in
+                sorting.getUnitSpikeTrain(u, start_frame=start_frame, end_frame=end_frame)))
+                for u in unit_ids]
+            spike_trains_str = '['+','.join(spike_trains_str)+']'
+        else:
+            spike_trains_str ='[[]]'
+
+        js_lines=[
+                "window.sfdata=window.sfdata||{}",
+                "window.sfdata.test=1",
+                "window.sfdata['array_b64_{div_id}']='{b64}'".format(div_id=self._div_id,
+                    b64=self._array_b64),
+                "window.sfdata['spike_times']={}".format(spike_trains_str)
+                    ]
+        js = ";".join(js_lines)
         print(self._array.shape)
         print('length of b64: {}'.format(len(self._array_b64)))
         vd.devel.loadJavascript(js=js)
@@ -62,6 +83,7 @@ class TimeseriesWidget(vd.Component):
         A.setFromArrayBuffer(X);
         let TS=new window.TimeseriesModel(A);
         W.setTimeseriesModel(TS);
+        W.setMarkers(window.sfdata['spike_times']);
         W.setSize({width},{height})
         $('#{div_id}').empty();
         $('#{div_id}').css({width:'{width}px',height:'{height}px'})
