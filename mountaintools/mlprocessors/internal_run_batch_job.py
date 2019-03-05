@@ -71,9 +71,8 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
         key=dict(
             name='compute_resource_batch_job_result',
             batch_id=batch_id,
-            job_index=job_index
+            job_index=index
         )
-        print('------------------------------- save result to key:',key)
         cairio_client.saveObject(
             key=key,
             object=result
