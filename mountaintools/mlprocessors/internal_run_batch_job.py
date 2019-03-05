@@ -14,7 +14,7 @@ import asyncio
 # This can be important for some of the jobs in certain situations
 os.environ['DISPLAY'] = ''
 
-def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, system_call=False, srun_opts_string=None):
+def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, system_call=False, srun_opts_string=None, num_jobs=None):
     cairio_client=CairioClient()
     if collection:
         cairio_client.configRemoteReadWrite(collection=collection,share_id=share_id,token=token,upload_token=upload_token)
@@ -37,10 +37,13 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
             opts.append('--upload_token '+upload_token)
         opts.append('--batch_id '+batch_id)
         if job_index is not None:
+            if srun_opts_string:
+                raise Exception('Cannot use job_index with srun_opts_string')
             opts.append('--job_index {}'.format(job_index))
+            opts.append('-n {}'.format(num_jobs))
         cmd=scriptpath+' '+' '.join(opts)
         if srun_opts_string:
-            cmd='srun {} bash -c "{} --job_index \\$SLURM_PROCID"'.format(srun_opts_string, cmd)
+            cmd='srun {} bash -c "{} --job_index srun"'.format(srun_opts_string, cmd)
         # be careful about printing this command... it may contain the secrets
         print('##################### {}'.format(cmd))
         retval = os.system(cmd)
