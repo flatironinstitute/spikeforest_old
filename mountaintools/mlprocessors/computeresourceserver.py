@@ -277,6 +277,10 @@ def _load_objects(cairio_client,keys):
     objects=pool.map(_load_objects_helper, [(cairio_client,key) for key in keys])
     pool.close()
     pool.join()
+    for ii,object in enumerate(objects):
+        if object is None:
+            print('Loading missed object...')
+            objects[ii]=cairio_client.loadObject(key=keys[ii])
     return objects
 
     # ret=[]
