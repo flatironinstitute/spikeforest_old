@@ -3,8 +3,6 @@
 import os
 import sys
 import argparse
-import sfdata as sf
-import batcho
 import time
 import mlprocessors as mlpr
 from cairio import client as ca
