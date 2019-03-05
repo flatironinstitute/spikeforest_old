@@ -4,7 +4,7 @@ import shutil
 import hashlib
 from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
-
+import random
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -65,7 +65,8 @@ class Sha1Cache():
             target_path = self._get_path(sha1, create=True)
         else:
             alternate_target_path = True
-        path_tmp = target_path+'.downloading'
+        
+        path_tmp = target_path+'.downloading.' + _random_string(6)
         if (verbose) or (size > 10000):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
@@ -78,12 +79,21 @@ class Sha1Cache():
                 _safe_remove_file(path_tmp)
             raise Exception(
                 'sha1 of downloaded file does not match expected {} {}'.format(url, sha1))
-        if os.path.exists(target_path):
-            _safe_remove_file(target_path)
-        _rename_or_move(path_tmp, target_path)
         if alternate_target_path:
+            if os.path.exists(target_path):
+                _safe_remove_file(target_path)
+            _rename_or_move(path_tmp, target_path)
             self.computeFileSha1(target_path, _known_sha1=sha1)
+        else:
+            if not os.path.exists(target_path):
+                _rename_or_move(path_tmp, target_path)
+            else:
+                _safe_remove_file(path_tmp)
         return target_path
+
+    def _random_string(num_chars):
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        return ''.join(random.choice(chars) for _ in range(num_chars))
 
     def moveFileToCache(self, path):
         sha1 = self.computeFileSha1(path)
