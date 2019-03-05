@@ -33,6 +33,8 @@ class TimeseriesWidget(vd.Component):
                 sorting.getUnitSpikeTrain(u, start_frame=0, end_frame=20000)))
                 for u in unit_ids]
             spike_trains_str = '['+','.join(spike_trains_str)+']'
+        else:
+            spike_trains_str ='[[]]'
 
         self._array=recording.getTraces()
         self._array_b64=_mda32_to_base64(self._array)
