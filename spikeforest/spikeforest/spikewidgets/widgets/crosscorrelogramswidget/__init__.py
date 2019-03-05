@@ -1,1 +1,3 @@
 from .crosscorrelogramswidget import CrossCorrelogramsWidget
+from .crosscorrelogramswidget import compute_crosscorrelogram
+from .crosscorrelogramswidget import compute_autocorrelogram
