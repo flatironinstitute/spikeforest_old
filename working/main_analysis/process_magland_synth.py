@@ -20,8 +20,8 @@ def main():
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
-    # compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
+    # compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
+    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
     compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
@@ -194,7 +194,8 @@ def _define_sorters():
     )
 
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass]
     # return [sorter_ms4_thr3]
 
 
