@@ -116,7 +116,7 @@ class Sha1Cache():
         if not os.path.exists(path0):
             tmp_path=path0+'.copying.'+ _random_string(6)
             copyfile(path, tmp_path)
-            _rename_or_move(tmp_path, path0)
+            _rename_or_move(tmp_path, path0, remove_if_exists=False)
         return path0, sha1
 
     def computeFileSha1(self, path, _known_sha1=None):
@@ -258,12 +258,15 @@ def _safe_list_dir(path):
         return []
 
 
-def _rename_or_move(path1, path2):
+def _rename_or_move(path1, path2, remove_if_exists=True):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     try:
         if os.path.exists(path2):
-            os.unlink(path2)
+            if remove_if_exists:
+                os.unlink(path2)
+            else:
+                return
         try:
             os.rename(path1, path2)
         except:
