@@ -32,6 +32,15 @@ pip install ml_ms4alg
 
 In the future we will provide conda packages for these.
 
+## Authentication Configuration
+- Obtain the ID and password from Jeremy Magland
+- Create a text file in `.mountaintools/.env` and set `MOUNTAIN_USER` and `MOUNTAIN_PASSWORD` fields
+- Example configuration in `./mountaintools/.env`
+```
+MOUNTAIN_USER=SPRUCE
+MOUNTAIN_PASSWORD=TREE
+```
+
 ### Installation for developers
 Run [`devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
 
