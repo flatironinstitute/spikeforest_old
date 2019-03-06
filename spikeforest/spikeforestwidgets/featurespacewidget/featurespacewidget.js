@@ -17,12 +17,16 @@ function FeatureSpaceWidget() {
     this.zoomAmplitude=function(factor) {zoom_amplitude(factor);};
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
+    this.setFeatures=function(features) {m_features=features;};
+    this.clickStart=[0,0];
+    this.clickEnd=[0,0];
 
     let m_div=$('<div tabindex="0" />'); // tabindex needed to handle keypress
     m_div.css({position:'absolute'});
     let m_size=[800,500];
     let m_model=null;
     let m_main_canvas=new CanvasWidget();
+    let m_main_f_canvas=new CanvasWidget();
     let m_cursor_canvas=new CanvasWidget();
     let m_trange=[0,1000];
     let m_current_time=-1;
@@ -31,8 +35,10 @@ function FeatureSpaceWidget() {
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
+    let m_features=[[[],[]],[[],[]]]
 
     m_div.append(m_main_canvas.canvasElement());
+    m_div.append(m_main_f_canvas.canvasElement());
     m_div.append(m_cursor_canvas.canvasElement());
 
     m_mouse_handler.onMousePress(handle_mouse_press);
@@ -59,33 +65,45 @@ function FeatureSpaceWidget() {
     let m_channel_spacing=null;
 
     m_main_canvas.onPaint(paint_main_canvas);
+    m_main_f_canvas.onPaint(paint_main_f_canvas);
     m_cursor_canvas.onPaint(paint_cursor_canvas);
 
     function paint_main_canvas(painter) {
+      painter.clear();
+      let M=m_model.numChannels();
+      let t1=Math.floor(m_trange[0]);
+      let t2=Math.floor(m_trange[1]+1);
+      if (t1<0) t1=0;
+      if (t2>=m_model.numTimepoints()) t2=m_model.numTimepoints();
+      for (let m=0; m<M; m++) {
+        let data0=m_model.getChannelData(m,t1,t2);
+      }
+    }
+
+    function paint_main_f_canvas(painter) {
         painter.clear();
-        let M=m_model.numChannels();
-        let t1=Math.floor(m_trange[0]);
-        let t2=Math.floor(m_trange[1]+1);
-        if (t1<0) t1=0;
-        if (t2>=m_model.numTimepoints()) t2=m_model.numTimepoints();
-        for (let m=0; m<M; m++) {
-            let pp=new PainterPath();
-            let data0=m_model.getChannelData(m,t1,t2);
-            for (let tt=0; tt<t2; tt++) {
-                let val=data0[tt-t1];
-                let pt=val2pix(m,tt,val);
-                pp.lineTo(pt[0],pt[1]);
-            }
-            painter.drawPath(pp);
+        let f = m_features;
+        let U = f.length
+        for (let u=0; u < U; u++) {
+          let fu = f[u];
+          let fux = fu[2];
+          let fuy = fu[3];
+          let n = fux.length;
+          for (let i=0; i<n; i++) {
+            let px = (fux[i]/50)+400
+            let py = (fuy[i]/50)+200
+            let rect = [px,py,5,5]
+            painter.fillEllipse(rect,{'color':colorArray[u+4]})
+          }
         }
     }
 
     function paint_cursor_canvas(painter) {
         painter.clear();
         let M=m_model.numChannels();
-        let pt1=val2pix(M-1,m_current_time,-m_y_offsets[M-1]);
-        let pt2=val2pix(0,m_current_time,-m_y_offsets[0]);
-        painter.drawLine(pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2);
+        let pt1=that.clickStart;
+        let pt2=that.clickEnd;
+        painter.drawLine(pt1[0],pt1[1],pt2[0]+10,pt2[1]+10);
     }
 
     function set_time_range(t1,t2) {
@@ -137,6 +155,7 @@ function FeatureSpaceWidget() {
 
     function update_size() {
         m_main_canvas.setSize(m_size[0],m_size[1]);
+        m_main_f_canvas.setSize(m_size[0],m_size[1]);
         m_cursor_canvas.setSize(m_size[0],m_size[1]);
         m_time_axis_xrange=[m_margins.left,m_size[0]-m_margins.right];
         m_div.css({width:m_size[0]+'px',height:m_size[1]+'px'})
@@ -197,23 +216,37 @@ function FeatureSpaceWidget() {
     }
 
     function handle_mouse_press(X) {
-        m_mouse_press_anchor=clone(X);
+        if (!(m_mouse_press_anchor)) {
+          m_mouse_press_anchor=clone(X);
+        }
         m_mouse_press_anchor.trange=clone(m_trange);
+        
+        if(m_mouse_press_anchor.moving) {
+          console.log('done');
+          m_mouse_press_anchor.moving = false;
+          delete m_mouse_press_anchor
+        } else {
+          console.log(JSON.stringify(m_mouse_press_anchor));
+          that.clickStart=X.pos;
+          m_mouse_press_anchor.moving = true;
+        }
     }
 
     function handle_mouse_release(X) {
-        if ((!m_mouse_press_anchor)||(!m_mouse_press_anchor.moving)) {
-            let t0=pix2time(X.pos);
-            that.setCurrentTime(t0);
-        }
-        m_mouse_press_anchor=null;
+        that.clickEnd=X.pos
     }
 
     function handle_mouse_leave(X) {
-        m_mouse_press_anchor=null;
+        //m_mouse_press_anchor=null;
     }
 
     function handle_mouse_move(X) {
+      if (m_mouse_press_anchor) {
+        that.clickEnd=X.pos;
+        update_cursor();
+        m_mouse_press_anchor.moving=true;
+      }
+      return 0
         if (m_mouse_press_anchor) {
             if (!m_mouse_handler.moving) {
                 let dx=X.pos[0]-m_mouse_press_anchor.pos[0];
@@ -345,3 +378,16 @@ function randn_bm() {
     while(v === 0) v = Math.random();
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
+
+// from https://gist.github.com/mucar/3898821
+var colorArray = [
+      '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+		  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+		  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+		  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+		  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+		  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+		  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+		  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+		  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+      '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF'];
