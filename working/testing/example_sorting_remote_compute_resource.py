@@ -182,7 +182,7 @@ def _define_sorters():
     )
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static]
-    return [sorter_ms4_thr3]
+    return [sorter_ms4_thr3, sorter_irc_static]
 
 
 if __name__ == "__main__":

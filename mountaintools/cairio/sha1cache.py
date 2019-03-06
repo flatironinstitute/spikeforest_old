@@ -114,8 +114,9 @@ class Sha1Cache():
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
         if not os.path.exists(path0):
-            copyfile(path, path0+'.copying')
-            _rename_or_move(path0+'.copying', path0)
+            tmp_path=path0+'.copying.'+ _random_string(6)
+            copyfile(path, tmp_path)
+            _rename_or_move(tmp_path, path0)
         return path0, sha1
 
     def computeFileSha1(self, path, _known_sha1=None):
