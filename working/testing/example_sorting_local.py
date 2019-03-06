@@ -7,7 +7,6 @@ import os
 import shutil
 import sfdata as sf
 import numpy as np
-import pytest
 
 
 def main():
