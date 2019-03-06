@@ -100,7 +100,14 @@ class CairioRemoteClient():
             if size0 > 10000:
                 print(
                     'Uploading file --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
+
+            timer=time.time()
             resp_obj = _http_post_file_data(url, path)
+            elapsed=time.time()-timer
+
+            if size0 > 10000:
+                print('File uploaded ({}) in {} sec'.format(_format_file_size(size0), elapsed))
+            
             if not resp_obj.get('success', False):
                 print('Problem posting file data: '+resp_obj.get('error', ''))
                 return False
