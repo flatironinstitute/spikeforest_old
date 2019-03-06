@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+# IMPORTANT: before running this example, you must start a local compute resource via:
+# > bin/compute-resource-start local-test --parallel 4
+
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
@@ -11,6 +14,14 @@ import pytest
 
 
 def main():
+    # specify the compute resource
+    # You will need to first start this local compute resource as described above
+    compute_resource=dict(
+        resource_name='local-test',
+        collection='',
+        share_id=''
+    )
+
     # generate toy recordings
     if not os.path.exists('recordings'):
         os.mkdir('recordings')
@@ -29,11 +40,7 @@ def main():
             sorting=sx_true, save_path=recpath+'/firings_true.mda')
 
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
-
-    # Specify the compute resource
-    compute_resource = None
-    num_workers = 10
+    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -69,14 +76,11 @@ def main():
 
     for sorter in sorters:
         # Sort the recordings
-        compute_resource0 = compute_resource
-        if sorter['name'] == 'KiloSort':
-            compute_resource0 = compute_resource_ks
+        compute_resource0=compute_resource
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
-            compute_resource=compute_resource0,
-            num_workers=num_workers
+            compute_resource=compute_resource0
         )
 
         # Append to results
@@ -91,20 +95,18 @@ def main():
     # Compare with ground truth
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
-        compute_resource=compute_resource,
-        num_workers=num_workers
+        compute_resource=compute_resource
     )
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results'
         ),
         subkey=output_id,
         object=dict(
-            
-            =studies,
+            studies=studies,
             recordings=recordings,
             sorting_results=sorting_results
         )
@@ -182,8 +184,8 @@ def _define_sorters():
             adjacency_radius=50
         )
     )
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static]
     return [sorter_ms4_thr3]
 
 

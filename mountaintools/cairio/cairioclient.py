@@ -15,6 +15,12 @@ from getpass import getpass
 import shutil
 
 
+env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools/.env')
+if os.path.exists(env_path):
+    print('Loading environment from: '+env_path)
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=env_path,verbose=True)
+
 class CairioClient():
     def __init__(self):
         self._default_url = os.environ.get(
@@ -47,21 +53,30 @@ class CairioClient():
             raise Exception('Error parsing config.')
         self.setRemoteConfig(**config)
 
-    def login(self,*,user=None,password=None,ask_password=False):
+    def login(self,*,user=None,password=None,interactive=False,ask_password=False):
+        if interactive:
+            ask_password=True
+
         from simplecrypt import encrypt, decrypt
 
         if user is None:
-            if 'MOUNTAIN_USER' not in os.environ:
-                raise Exception('Environment variable not set: MOUNTAIN_USER')
-            user=os.environ['MOUNTAIN_USER']
-            if 'MOUNTAIN_PASSWORD' in os.environ:
-                password=os.environ['MOUNTAIN_PASSWORD']
+            user=os.environ.get('MOUNTAIN_USER','')
+            if user and (password is None):
+                password=os.environ.get('MOUNTAIN_PASSWORD','')
+
+        if not user:
+            if interactive:
+                user=input('Mountain user: ')
+
+        if not user:
+            raise Exception('Cannot login, no user found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
 
         if not password:
             if ask_password:
-                password=getpass('Cairio password for {}: '.format(user))
+                password=getpass('Mountain password for {}: '.format(user))
+
         if not password:
-            raise Exception('Environment variable not set: MOUNTAIN_PASSWORD')
+            raise Exception('Cannot login, no password found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
 
         key=dict(
             name='user_config',

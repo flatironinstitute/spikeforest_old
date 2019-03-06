@@ -67,6 +67,7 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
     def do_run_job(index):
         print('Running job {} of {}'.format(index, len(jobs)))
         job=jobs[index]
+        _set_batch_job_status(cairio_client=cairio_client, batch_id=batch_id, job_index=index, status='running')
         result=executeJob(job, cairio_client=cairio_client)
         key=dict(
             name='compute_resource_batch_job_result',
@@ -77,6 +78,7 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
             key=key,
             object=result
         )
+        _set_batch_job_status(cairio_client=cairio_client, batch_id=batch_id, job_index=index, status='finished')
 
     if job_index is not None:
         do_run_job(job_index)
@@ -120,6 +122,13 @@ def _take_next_batch_job_index_to_run(*, cairio_client, batch_id):
             _write_text_file(fname2,'{}'.format(index+1))
             os.rename(fname2,fname)
             return index
+
+def _set_batch_job_status(*, cairio_client, batch_id, job_index, status):
+    key=dict(
+        name='compute_resource_batch_job_statuses',
+        batch_id=batch_id
+    )
+    cairio_client.setValue(key=key,subkey=str(job_index),value=status)
 
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'

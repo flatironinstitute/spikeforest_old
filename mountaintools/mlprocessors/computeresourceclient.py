@@ -66,11 +66,23 @@ class ComputeResourceClient():
                 self._set_console_message('Batch is finished.')
                 # self._finalize_batch(batch_id=batch_id)
                 return
+            elif status0=='running':
+                statuses=self._get_batch_job_statuses(batch_id=batch_id)
+                if statuses is None:
+                    self._set_console_message('{} ---'.format(status0))
+                else:
+                    statuses_list = list(statuses.values())
+                    num_running = statuses_list.count('running')
+                    num_finished = statuses_list.count('finished')
+                    update_string = '{}: {} running, {} finished'.format(status0, num_running, num_finished)
+                    #update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
+                    #    batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
+                    self._set_console_message(update_string)
             elif status0.startswith('error'):
                 self._set_console_message('Error running batch: '+status0)
                 return
             else:
-                self._set_console_message('{}'.format(status0))
+                self._set_console_message(status0)
             time.sleep(self._next_delay)
             self._next_delay=self._next_delay+0.25
             if self._next_delay>3:
@@ -98,6 +110,16 @@ class ComputeResourceClient():
     #                     print('Saving output {} --> {}'.format(name0,dest_path0))
     #                     self._cairio_client.realizeFile(path=result_output0, dest_path=dest_path0)
         
+    def _get_batch_job_statuses(self,*,batch_id):
+        return self._cairio_client.getValue(
+            key=dict(
+                name='compute_resource_batch_job_statuses',
+                batch_id=batch_id
+            ),
+            subkey='-',
+            parse_json=True
+        )
+
     def getBatchStatus(self,*,batch_id):
         return self._cairio_client.getValue(
             key=dict(

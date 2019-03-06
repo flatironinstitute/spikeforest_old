@@ -37,6 +37,7 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     label='Compare sortings with truth'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=num_workers,compute_resource=compute_resource)
     
+    print('Gathering sortings after comparing with truth...')
     sortings_out=[]
     for i,sorting in enumerate(sortings):
         comparison_with_truth=dict()

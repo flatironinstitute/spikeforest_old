@@ -13,4 +13,8 @@ if [ ! -z "$KBUCKET_CACHE_DIR" ]; then
   OPTS="$OPTS -v $KBUCKET_CACHE_DIR:/tmp/sha1-cache -v /dev/shm:/dev/shm"
 fi
 
+if [ -d "$HOME/.mountaintools" ]; then
+  OPTS="$OPTS -v $HOME/.mountaintools:/home/user/.mountaintools"
+fi
+
 eval "codepod -g $PWD $OPTS $@"
