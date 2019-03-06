@@ -59,7 +59,7 @@ def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, sru
     def do_run_job(index):
         print('Running job {} of {}'.format(index, len(jobs)))
         _check_batch_halt(local_client, batch_id)
-        _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=job_index, status='running')
+        _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=index, status='running')
         job=jobs[index]
         result=executeJob(job, cairio_client=local_client)
         key=dict(

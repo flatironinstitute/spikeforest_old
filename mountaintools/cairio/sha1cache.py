@@ -77,7 +77,7 @@ class Sha1Cache():
         elapsed=time.time()-timer
 
         if (verbose) or (size > 10000):
-            print('Downloaded file () in {} sec.'.format(_format_file_size(size), elapsed))
+            print('Downloaded file ({}) in {} sec.'.format(_format_file_size(size), elapsed))
             
         if not sha1b:
             if os.path.exists(path_tmp):

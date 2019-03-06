@@ -150,6 +150,7 @@ def _define_sorters():
         processor_name='IronClust',
         params=dict(
             detect_sign=-1,
+            threshold=4,
             adjacency_radius=50,
             prm_template_name="static_template.prm"
         )
@@ -196,7 +197,7 @@ def _define_sorters():
 
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass]
     # return [sorter_ms4_thr3]
 
 
