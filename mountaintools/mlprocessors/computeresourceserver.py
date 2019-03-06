@@ -12,6 +12,7 @@ class ComputeResourceServer():
     def __init__(self, *, resource_name=None, collection='', share_id='', token=None, upload_token=None):
         self._resource_name=resource_name
         self._cairio_client=CairioClient()
+        self._local_client=CairioClient()
         self._collection=collection
         self._share_id=share_id
         if collection:
@@ -72,13 +73,23 @@ class ComputeResourceServer():
             self._set_batch_status(batch_id=batch_id, status='error: Error preparing batch.')
             return
 
+        monitor_job_statuses_process = multiprocessing.Process(target=_monitor_job_statuses, args=(batch_id, self._local_client, self._cairio_client))
+        monitor_job_statuses_process.start()
+
         try:
             self._run_batch(batch_id)
         except:
             traceback.print_exc()
             print('Error running batch.')
             self._set_batch_status(batch_id=batch_id, status='error: Error running batch.')
+            monitor_job_statuses_process.terminate()
+            monitor_job_statuses_process.join()
             return
+
+        monitor_job_statuses_process.terminate()
+        monitor_job_statuses_process.join()
+
+        
 
         try:
             self._assemble_batch(batch_id)
@@ -99,6 +110,8 @@ class ComputeResourceServer():
         val=self._cairio_client.getValue(key=key)
         if val is not None:
             print('BATCH HALTED (batch_id={})'.format(batch_id))
+            # also save it locally so we can potentially stop the individual jobs
+            self._local_client.setValue(key=key,value=val)
             raise Exception('Stopping batch (batch_id={})'.format(batch_id))
             
     def _set_batch_status(self,*,batch_id,status):
@@ -112,14 +125,21 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='preparing')
         self._set_console_message('Preparing batch: {}'.format(batch_id))
+        # first we download the batch to the local database so we can use the local_client
+        key_batch=dict(
+            name='compute_resource_batch',
+            batch_id=batch_id
+        )
         batch=self._cairio_client.loadObject(
-            key=dict(
-                name='compute_resource_batch',
-                batch_id=batch_id
-            )
+            key=key_batch    
+        )
+        self._local_client.saveObject(
+            key=key_batch,
+            object=batch
         )
         jobs=batch['jobs']
         containers_to_realize=set()
+        code_to_realize=set()
         files_to_realize=set()
         for ii,job in enumerate(jobs):
             container0 = job.get('container', None)
@@ -128,12 +148,18 @@ class ComputeResourceServer():
             files_to_realize0 = job.get('files_to_realize', [])
             for f0 in files_to_realize0:
                 files_to_realize.add(f0)
+            code0 = job.get('processor_code', None)
+            if code0 is not None:
+                code_to_realize.add(code0)
         if len(containers_to_realize)>0:
             print('Realizing {} containers...'.format(len(containers_to_realize)))
             self._realize_files(containers_to_realize)
         if len(files_to_realize)>0:
             print('Realizing {} files...'.format(len(files_to_realize)))
             self._realize_files(files_to_realize)
+        if len(code_to_realize)>0:
+            print('Realizing {} code objects...'.format(len(code_to_realize)))
+            self._realize_files(code_to_realize)
 
     def _realize_files(self,files):
         for file0 in files:
@@ -166,7 +192,8 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='running')
         self._set_console_message('Running batch: {}'.format(batch_id))
-        batch=self._cairio_client.loadObject(
+        # in the prepare step, we have it locally
+        batch=self._local_client.loadObject(
             key=dict(
                 name='compute_resource_batch',
                 batch_id=batch_id
@@ -179,8 +206,6 @@ class ComputeResourceServer():
             dict(
                 collection=self._collection,
                 share_id=self._share_id,
-                token=self._cairio_client.getRemoteConfig()['token'],
-                upload_token=self._cairio_client.getRemoteConfig()['upload_token'],
                 batch_id=batch_id,
                 job_index=ii,
                 system_call=system_call,
@@ -204,7 +229,6 @@ class ComputeResourceServer():
                 run_batch_job(**bjargs)
         else:
             for ii in range(len(jobs)):
-                self._set_batch_status(batch_id=batch_id,status='running: {} of {}'.format(ii, len(jobs)))
                 run_batch_job(**run_batch_job_args[ii])
                 self._check_batch_halt(batch_id)
 
@@ -212,7 +236,8 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='assembling')
         self._set_console_message('Assembling batch: {}'.format(batch_id))
-        batch=self._cairio_client.loadObject(
+        # from the prepare step, we have it locally
+        batch=self._local_client.loadObject(
             key=dict(
                 name='compute_resource_batch',
                 batch_id=batch_id
@@ -226,7 +251,8 @@ class ComputeResourceServer():
             )
             for ii in range(len(jobs))
         ]
-        results0=_load_objects(self._cairio_client,keys=keys)
+        # we can load the results from local database
+        results0=_load_objects(self._local_client,keys=keys)
         results = []
         for ii, job in enumerate(jobs):
             result0=results0[ii]
@@ -236,12 +262,22 @@ class ComputeResourceServer():
             )
             results.append(result)
 
+            result_outputs0=result0['outputs']
+            for name0, output0 in job['outputs'].items():
+                if name0 not in result_outputs0:
+                    raise Exception('Unexpected: output {} not found in result'.format(name0))
+                result_output0=result_outputs0[name0]
+                if type(output0)==dict:    
+                    if output0.get('upload', False):
+                        print('Saving output {}...'.format(name0))
+                        self._cairio_client.saveFile(path=result_output0)
+
         # results = []
         # for ii, job in enumerate(jobs):
         #     print('Assembling job {} of {}'.format(ii,len(jobs)))
         #     self._set_batch_status(batch_id=batch_id,status='assembling: job {} of {}'.format(ii,len(jobs)))
         #     self._check_batch_halt(batch_id)
-        #     result0=self._cairio_client.loadObject(key=dict(name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii))
+        #     result0=self._local_client.loadObject(key=dict(name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii))
         #     result=dict(
         #         job=job,
         #         result=result0
@@ -250,6 +286,7 @@ class ComputeResourceServer():
 
         self._check_batch_halt(batch_id)
         
+        # finally, save the results remotely
         self._cairio_client.saveObject(
             key=dict(
                 name='compute_resource_batch_results',
@@ -268,6 +305,21 @@ class ComputeResourceServer():
         print('{}: {}'.format(self._resource_name,msg))
         self._last_console_message=msg
 
+def _monitor_job_statuses(batch_id, local_client, remote_client):
+    key=dict(
+        name='compute_resource_batch_job_statuses',
+        batch_id=batch_id
+    )
+    last_obj=dict()
+    while True:
+        obj=local_client.getValue(key=key,subkey='-',parse_json=True)
+        if obj is not None:
+            for job_index,status in obj.items():
+                if obj[job_index]!=last_obj.get(job_index,None):
+                    print('---------- Setting job status',job_index,status)
+                    remote_client.setValue(key=key,subkey=job_index,value=status)
+            last_obj=obj
+        time.sleep(2)
 
 def _run_batch_job_helper(kwargs):
     run_batch_job(**kwargs)
