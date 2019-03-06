@@ -71,7 +71,7 @@ def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, sru
             key=key,
             object=result
         )
-        _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=job_index, status='finished')
+        _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=index, status='finished')
 
     if job_index is not None:
         do_run_job(job_index)

@@ -100,6 +100,8 @@ def summarize_recordings(recordings, compute_resource=None):
     summarized_recordings=pool.map(_gather_summarized_recording_helper, [dict(recording=recordings[ii], job_info=jobs_info[ii], job_units_info=jobs_units_info[ii]) for ii in range(len(recordings))])
     pool.close()
     pool.join()
+
+    return summarized_recordings
     
     # summarized_recordings=[]
     # for i,recording in enumerate(recordings):
