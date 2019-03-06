@@ -1,5 +1,4 @@
 from .timeserieswidget import TimeseriesWidget
-from .featurespacewidget import FeatureSpaceWidget
 from .electrodegeometrywidget import ElectrodeGeometryWidget
 from .unitwaveformswidget import UnitWaveformWidget, UnitWaveformsWidget
 from .correlogramswidget import CorrelogramsWidget
