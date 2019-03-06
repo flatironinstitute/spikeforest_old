@@ -245,6 +245,8 @@ class ComputeResourceServer():
         )
         jobs=batch['jobs']
 
+        self._set_batch_status(batch_id=batch_id,status='assembling: {} jobs'.format(len(jobs)))
+
         keys=[
             dict(
                 name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii
@@ -271,6 +273,9 @@ class ComputeResourceServer():
                     if output0.get('upload', False):
                         print('Saving output {}...'.format(name0))
                         self._cairio_client.saveFile(path=result_output0)
+
+            if ('console_out' in result0) and result0['console_out']:
+                self._cairio_client.saveFile(path=result0['console_out'])
 
         # results = []
         # for ii, job in enumerate(jobs):

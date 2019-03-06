@@ -218,7 +218,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
         firings_true=firings_true_path,
         processor_name=SS.NAME,
         processor_version=SS.VERSION,
-        #execution_stats=result0['stats'],
+        execution_stats=result0['stats'],
         console_out=ca.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
         firings=outputs0['firings_out']

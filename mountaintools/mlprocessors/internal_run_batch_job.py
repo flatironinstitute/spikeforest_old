@@ -71,7 +71,10 @@ def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, sru
             key=key,
             object=result
         )
-        _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=index, status='finished')
+        if result.get('retcode', 0) ==0:
+            _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=index, status='finished')
+        else:
+            _set_batch_job_status(cairio_client=local_client, batch_id=batch_id, job_index=index, status='error')
 
     if job_index is not None:
         do_run_job(job_index)

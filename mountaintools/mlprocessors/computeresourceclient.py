@@ -74,7 +74,8 @@ class ComputeResourceClient():
                     statuses_list = list(statuses.values())
                     num_running = statuses_list.count('running')
                     num_finished = statuses_list.count('finished')
-                    update_string = '{}: {} running, {} finished'.format(status0, num_running, num_finished)
+                    num_errors = statuses_list.count('error')
+                    update_string = '{}: {} running, {} finished, {} errors'.format(status0, num_running, num_finished, num_errors)
                     #update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
                     #    batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
                     self._set_console_message(update_string)

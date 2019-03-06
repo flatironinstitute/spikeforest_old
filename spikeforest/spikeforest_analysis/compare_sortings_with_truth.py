@@ -4,6 +4,7 @@ import json
 from cairio import client as ca
 import numpy as np
 from copy import deepcopy
+import multiprocessing
 
 try:
     # if we are running this outside the container
@@ -14,29 +15,53 @@ except:
     import spikeextractors as si
     import spiketoolkit as st
 
+def _create_job_for_sorting_helper(kwargs):
+    return _create_job_for_sorting(**kwargs)
+
+def _create_job_for_sorting(sorting, container):
+    units_true=sorting.get('units_true',[])
+    firings=sorting['firings']
+    firings_true=sorting['firings_true']
+    units_true=units_true
+    job=GenSortingComparisonTable.createJob(
+        firings=firings,
+        firings_true=firings_true,
+        units_true=units_true,
+        json_out={'ext':'.json','upload':True},
+        html_out={'ext':'.html','upload':True},
+        _container=container
+    )
+    return job
+
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')
     container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
-    jobs_gen_table=[]
-    for sorting in sortings:
-        units_true=sorting.get('units_true',[])
-        firings=sorting['firings']
-        firings_true=sorting['firings_true']
-        units_true=units_true
-        job=GenSortingComparisonTable.createJob(
-            firings=firings,
-            firings_true=firings_true,
-            units_true=units_true,
-            json_out={'ext':'.json','upload':True},
-            html_out={'ext':'.html','upload':True},
-            _container=container
-        )
-        jobs_gen_table.append(job)
+
+    pool = multiprocessing.Pool(20)
+    jobs_gen_table=pool.map(_create_job_for_sorting_helper, [dict(sorting=sorting, container=container) for sorting in sortings])
+    pool.close()
+    pool.join()
+
+    # jobs_gen_table=[]
+    # for sorting in sortings:
+    #     units_true=sorting.get('units_true',[])
+    #     firings=sorting['firings']
+    #     firings_true=sorting['firings_true']
+    #     units_true=units_true
+    #     job=GenSortingComparisonTable.createJob(
+    #         firings=firings,
+    #         firings_true=firings_true,
+    #         units_true=units_true,
+    #         json_out={'ext':'.json','upload':True},
+    #         html_out={'ext':'.html','upload':True},
+    #         _container=container
+    #     )
+    #     jobs_gen_table.append(job)
     
     all_jobs=jobs_gen_table
     label='Compare sortings with truth'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=num_workers,compute_resource=compute_resource)
-    
+
     print('Gathering sortings after comparing with truth...')
     sortings_out=[]
     for i,sorting in enumerate(sortings):

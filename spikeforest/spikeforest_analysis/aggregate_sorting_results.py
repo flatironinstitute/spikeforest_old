@@ -31,7 +31,7 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                 )
 
                 for recording_index,rname in enumerate(S.recordingNames()):
-                    print('recording: '+rname)
+                    print('recording: {}/{}'.format(study_name,rname))
                     rec = S.recording(rname)
                     true_units_info = rec.trueUnitsInfo(format='json')
                     true_units_info_by_id = dict()
