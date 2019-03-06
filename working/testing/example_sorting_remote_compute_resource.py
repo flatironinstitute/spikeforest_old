@@ -27,22 +27,8 @@ def main():
         share_id='69432e9201d0'
     )
 
-    # generate toy recordings
-    if not os.path.exists('recordings'):
-        os.mkdir('recordings')
-
-    delete_recordings = False
-
-    recpath = 'recordings/example1'
-    if os.path.exists(recpath) and (delete_recordings):
-        shutil.rmtree(recpath)
-    if not os.path.exists(recpath):
-        rx, sx_true = se.example_datasets.toy_example1(
-            duration=60, num_channels=4, samplerate=30000, K=10)
-        se.MdaRecordingExtractor.writeRecording(
-            recording=rx, save_path=recpath)
-        se.MdaSortingExtractor.writeSorting(
-            sorting=sx_true, save_path=recpath+'/firings_true.mda')
+    # location of recordings on kbucket
+    recordings_dir='kbucket://15734439d8cf/testing/toy_recordings'
 
     # for downloading containers if needed
     mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
@@ -51,14 +37,14 @@ def main():
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'toy_example_local'
+    output_id = 'toy_example_remote_compute_resource'
 
     # Grab the recordings for testing
     recordings = [
         dict(
             recording_name='example1',
-            study_name='toy_examples',
-            directory=os.path.abspath('recordings/example1')
+            study_name='toy_examples_remote_compute_resource',
+            directory=os.path.join(recordings_dir, 'example1')
         )
     ]
 
@@ -66,10 +52,10 @@ def main():
 
     studies = [
         dict(
-            name='toy_examples',
+            name='toy_examples_remote_compute_resource',
             study_set='toy_examples',
-            directory=os.path.abspath('recordings'),
-            description='Toy examples.'
+            directory=recordings_dir,
+            description='Toy examples for remote processing.'
         )
     ]
 

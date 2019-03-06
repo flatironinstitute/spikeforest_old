@@ -70,7 +70,14 @@ class Sha1Cache():
         if (verbose) or (size > 10000):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
+        
+        timer=time.time()
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)
+        elapsed=time.time()-timer
+
+        if (verbose) or (size > 10000):
+            print('Downloaded file () in {} sec.'.format(_format_file_size(size), elapsed))
+            
         if not sha1b:
             if os.path.exists(path_tmp):
                 _safe_remove_file(path_tmp)
