@@ -78,6 +78,17 @@ def run_batch_job(collection,share_id,token,upload_token,batch_id,job_index, sys
             key=key,
             object=result
         )
+        print('Saving outputs...')
+        result_outputs0=result['outputs']
+        for name0, output0 in job['outputs'].items():
+            if name0 not in result_outputs0:
+                raise Exception('Unexpected: output {} not found in result'.format(name0))
+            result_output0=result_outputs0[name0]
+            if type(output0)==dict:    
+                if output0.get('upload', False):
+                    print('Saving output {}...'.format(name0))
+                    cairio_client.saveFile(path=result_output0)
+        
         _set_batch_job_status(cairio_client=cairio_client, batch_id=batch_id, job_index=index, status='finished')
 
     if job_index is not None:

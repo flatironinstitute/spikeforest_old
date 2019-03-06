@@ -42,13 +42,13 @@ def main():
     # Grab the recordings for testing
     recordings = [
         dict(
-            recording_name='example1',
-            study_name='toy_examples_remote_compute_resource',
+            name='example1',
+            study='toy_examples_remote_compute_resource',
             directory=os.path.join(recordings_dir, 'example1')
         )
     ]
 
-    recordings = recordings*10
+    recordings = recordings*3
 
     studies = [
         dict(
@@ -58,6 +58,11 @@ def main():
             description='Toy examples for remote processing.'
         )
     ]
+
+    # Summarize the recordings
+    print('>>>>>>> Summarize recordings...')
+    recordings = sa.summarize_recordings(
+        recordings=recordings, compute_resource=compute_resource)
 
     # Sorters (algs and params) are defined below
     sorters = _define_sorters()

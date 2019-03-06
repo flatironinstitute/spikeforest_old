@@ -5,6 +5,7 @@ import hashlib
 from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
+import time
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant

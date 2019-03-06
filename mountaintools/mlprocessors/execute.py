@@ -631,8 +631,9 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                     dest_path0=output0['dest_path']
                     print('Saving output {} --> {}'.format(name0,dest_path0))
                     ca.realizeFile(path=result_output0, dest_path=dest_path0)
-                if output0.get('upload', False):
-                    ca.saveFile(path=result_output0)
+                if compute_resource is None:
+                    if output0.get('upload', False):
+                        ca.saveFile(path=result_output0)
 
 
 def executeJob(job, cairio_client=ca):

@@ -405,11 +405,11 @@ class CairioClient():
     def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
         if not path:
-            return False
+            return None
         ret = self._local_db.saveFile(
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:
-            return False
+            return None
         share_id = self._remote_config['share_id']
         upload_token = self._remote_config['upload_token']
         if (share_id) and (upload_token) and (not prevent_upload):

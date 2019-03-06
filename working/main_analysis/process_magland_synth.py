@@ -150,6 +150,7 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50,
+            detect_threshold=4,
             prm_template_name="static_template.prm"
         )
     )
