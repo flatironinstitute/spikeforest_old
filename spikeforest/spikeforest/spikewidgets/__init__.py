@@ -1,4 +1,5 @@
 from .widgets.timeserieswidget import TimeseriesWidget
+from .widgets.featurespacewidget import FeatureSpaceWidget
 from .widgets.unitwaveformswidget import UnitWaveformsWidget
 from .widgets.sortingaccuracywidget import SortingAccuracyWidget
 from .widgets.crosscorrelogramswidget import CrossCorrelogramsWidget
