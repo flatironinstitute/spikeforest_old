@@ -49,35 +49,52 @@ class FeatureSpaceWidget:
             else:
                 print(unit, ' spike train is None')
         print(np.shape(list[0]['representative_waveforms']))
+        opts = {'channel':-1,
+                'feature_extraction':'PCA',
+                'features_to_show':(2,1)}
         with plt.rc_context({'axes.edgecolor': 'gray'}):
             # self._plot_spike_shapes_multi(list,channel_locations=channel_locations[np.array(channels),:])
             #self._plot_spike_shapes_multi(list, channel_locations=None)
-            self._plot_spikes_in_feature_space_multi(list)
+            self._plot_spikes_in_feature_space_multi(list,opts)
 
-    def _plot_spikes_in_feature_space(self, spikes_dict):
-        channel = 3
-        features_to_show = 0,1
+    def _plot_spikes_in_feature_space(self, spikes_dict, feature_space, opts):
+        features_to_show = opts['features_to_show']
         waveforms = spikes_dict['representative_waveforms']
-        if channel == -1:
-            s = np.shape(waveforms)
-            waveforms = waveforms.reshape(s[0]*s[1],s[2])
-        else:
-            waveforms = waveforms[channel,:,:]
-        features = self._compute_features(waveforms)
-        plt.scatter(features[features_to_show[0],:], features[features_to_show[1],:],
+        features = feature_space.transform(waveforms.T)
+        # TODO: Optionally exclude outliers
+        plt.scatter(features[:,features_to_show[0]], features[:,features_to_show[1]],
                 label=spikes_dict['title'])
 
-    def _plot_spikes_in_feature_space_multi(self,list):
+    def _plot_spikes_in_feature_space_multi(self,list,opts):
+        channel = opts['channel']
+        all_waveforms = None
+        for spikes_dict in list:
+            waveforms = spikes_dict['representative_waveforms']
+            if channel == -1:
+                s = np.shape(waveforms)
+                spikes_dict['representative_waveforms'] = waveforms = waveforms.reshape(s[0]*s[1],s[2])
+            else:
+                spikes_dict['representative_waveforms'] = waveforms = waveforms[channel,:,:]
+            if all_waveforms is None:
+                all_waveforms = waveforms
+            else:
+                all_waveforms = np.concatenate([all_waveforms, waveforms], axis=1)
+        feature_space = self._compute_features(all_waveforms, opts)
+
         f = plt.figure(figsize=(10,10))
         for d in list:
-            self._plot_spikes_in_feature_space(d)
+            self._plot_spikes_in_feature_space(d, feature_space, opts)
         plt.legend()
+        plt.xlabel('{} - {}'.format(opts['feature_extraction'], opts['features_to_show'][0]))
+        plt.ylabel('{} - {}'.format(opts['feature_extraction'], opts['features_to_show'][1]))
 
-    def _compute_features(self, spike_waveforms):
-        features_obj = PCA()
-        features_obj.fit(spike_waveforms)
-        components = features_obj.components_
-        return components
+    def _compute_features(self, spike_waveforms, opts):
+        if opts['feature_extraction'] == 'PCA':
+            features_obj = PCA()
+            features_obj.fit(spike_waveforms.T)
+        else:
+            raise NotImplementedError('Override _compute_features if feature extraction other than PCA is required')
+        return features_obj
 
     def _get_random_spike_waveforms(self, *, unit, max_num, channels):
         st = self._OX.getUnitSpikeTrain(unit_id=unit)
@@ -94,56 +111,6 @@ class FeatureSpaceWidget:
         else:
             spikes = np.zeros((self._IX.getNumChannels(), self._snippet_len, 0))
         return spikes
-
-    def _plot_spike_shapes(self, *, representative_waveforms=None, average_waveform=None, channel_locations=None,
-                           ylim=None, max_representatives=None, color='blue', title=''):
-        if average_waveform is None:
-            if representative_waveforms is None:
-                raise Exception('You must provide either average_waveform, representative waveforms, or both')
-            average_waveform = np.mean(representative_waveforms, axis=2)
-        M = average_waveform.shape[0]  # number of channels
-        T = average_waveform.shape[1]  # number of timepoints
-        if ylim is None:
-            ylim = [average_waveform.min(), average_waveform.max()]
-        yrange = ylim[1] - ylim[0]
-        if channel_locations is None:
-            channel_locations = np.zeros((M, 2))
-            for m in range(M):
-                channel_locations[m, :] = [0, -m]
-
-        spacing = 1 / 0.8  # TODO: auto-determine this from the channel_locations
-
-        xvals = np.linspace(-yrange / 2, yrange / 2, T)
-        if representative_waveforms is not None:
-            if max_representatives is not None:
-                W0 = representative_waveforms
-                if W0.shape[2] > max_representatives:
-                    indices = np.random.choice(range(W0.shape[2]), size=max_representatives, replace=False)
-                    representative_waveforms = W0[:, :, indices]
-            L = representative_waveforms.shape[2]
-            XX = np.zeros((T, M, L))
-            YY = np.zeros((T, M, L))
-            for m in range(M):
-                loc = channel_locations[m, -2:] * yrange * spacing
-                for j in range(L):
-                    XX[:, m, j] = loc[0] + xvals
-                    YY[:, m, j] = loc[1] + representative_waveforms[m, :, j] - representative_waveforms[m, 0, j]
-            XX = XX.reshape(T, M * L)
-            YY = YY.reshape(T, M * L)
-            plt.plot(XX, YY, color=(0.5, 0.5, 0.5), alpha=0.4)
-
-            XX = np.zeros((T, M))
-            YY = np.zeros((T, M))
-            for m in range(M):
-                loc = channel_locations[m, -2:] * yrange * spacing
-                XX[:, m] = loc[0] + xvals
-                YY[:, m] = loc[1] + average_waveform[m, :] - average_waveform[m, 0]
-            plt.plot(XX, YY, color)
-
-        plt.gca().get_xaxis().set_ticks([])
-        plt.gca().get_yaxis().set_ticks([])
-        if title:
-            plt.title(title, color='gray')
 
     def _get_ylim_for_item(self, average_waveform=None, representative_waveforms=None):
         if average_waveform is None:
@@ -162,14 +129,3 @@ class FeatureSpaceWidget:
             ret[0] = np.minimum(ylim0[0], ret[0])
             ret[1] = np.maximum(ylim0[1], ret[1])
         return ret
-
-    def _plot_spike_shapes_multi(self, list, *, ncols=5, **kwargs):
-        if 'ylim' in kwargs:
-            ylim = kwargs['ylim']
-        else:
-            ylim = self._determine_global_ylim(list)
-        nrows = np.ceil(len(list) / ncols)
-        self._figure = plt.figure(figsize=(3 * ncols + 0.1, 3 * nrows + 0.1))
-        for i, item in enumerate(list):
-            plt.subplot(nrows, ncols, i + 1)
-            self._plot_spike_shapes(**item, **kwargs, ylim=ylim)
