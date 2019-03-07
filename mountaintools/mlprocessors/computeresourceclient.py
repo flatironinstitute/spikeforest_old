@@ -156,6 +156,6 @@ class ComputeResourceClient():
         print('{}'.format(msg))
         self._last_console_message=msg
 
-    def _random_string(num_chars):
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        return ''.join(random.choice(chars) for _ in range(num_chars))
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
