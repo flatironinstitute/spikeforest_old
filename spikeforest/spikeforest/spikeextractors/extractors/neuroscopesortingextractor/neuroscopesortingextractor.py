@@ -8,11 +8,11 @@ class NeuroscopeSortingExtractor(SortingExtractor):
         clu = np.loadtxt(clufile, dtype=np.int64, usecols=0)
         n_clu = clu[0]
         clu = np.delete(clu,0)
-        self._spiketrains = [np.zeros(0, dtype=np.int64) for range(n_clu)]
-        self._unit_ids = list(range(n_clu))
-        for (spike, s_id) in zip(res, clu):
-            self._spiketrains[s_id-1].append(res)
-
+        self._spiketrains = []
+        self._unit_ids = list(x+1 for x in range(n_clu))
+        for s_id in self._unit_ids:
+            self._spiketrains.append(res[(clu == s_id).nonzero()])
+        
     def getUnitIds(self):
         return list(self._unit_ids)
 
@@ -29,10 +29,15 @@ class NeuroscopeSortingExtractor(SortingExtractor):
     def writeSorting(sorting, save_path):
         save_res = "{}.res".format(save_path)
         save_clu = "{}.clu".format(save_path)
+        
+        unit_ids = sorting.getUnitIds()
+        spiketrains = [sorting.getUnitSpikeTrain(u) for u in unit_ids]
+        res = np.concatenate(spiketrains).ravel()
+        clu = np.concatenate([np.repeat(i+1,len(st)) for i,st in enumerate(spiketrains)]).ravel()
+        res_sort = np.argsort(res)
+        res = res[res_sort]
+        clu = clu[res_sort]
+        clu = np.insert(clu, 0, len(unit_ids))
 
-        res = np.concatenate(self._spiketrains).ravel()
-        clu = np.concatenate(np.repeat(i+1,len(st)) for i,st in enumerate(self._spiketrains)).ravel()
-        clu = np.insert(clu, 0, len(self._unit_ids))
-
-        np.savetxt(save_res, res)
-        np.savetxt(save_clu, clu)
+        np.savetxt(save_res, res, fmt='%i')
+        np.savetxt(save_clu, clu, fmt='%i')

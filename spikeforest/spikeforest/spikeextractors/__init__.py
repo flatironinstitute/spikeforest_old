@@ -13,6 +13,7 @@ from .extractors.exdirextractors import ExdirRecordingExtractor, ExdirSortingExt
 from .extractors.hs2sortingextractor import HS2SortingExtractor
 from .extractors.klustasortingextractor import KlustaSortingExtractor
 from .extractors.kilosortsortingextractor import KiloSortSortingExtractor
+from .extractors.neuroscopesortingextractor import NeuroscopeSortingExtractor
 from .extractors.numpyextractors.numpyextractors import NumpyRecordingExtractor, NumpySortingExtractor
 from .extractors.nwbextractors.nwbextractors import NwbRecordingExtractor
 from .extractors.openephysextractors.openephysextractors import OpenEphysRecordingExtractor, OpenEphysSortingExtractor
