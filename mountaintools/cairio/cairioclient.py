@@ -16,7 +16,7 @@ import shutil
 try:
     from filelock import FileLock
 except:
-    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed')
+    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
 
 
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools/.env')

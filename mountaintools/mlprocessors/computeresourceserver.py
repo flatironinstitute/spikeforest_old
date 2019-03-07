@@ -35,8 +35,9 @@ class ComputeResourceServer():
         batch_statuses=self._cairio_client.getValue(key=statuses_key,subkey='-',parse_json=True)
         if batch_statuses is not None:
             for batch_id,status in batch_statuses.items():
-                print('Clearing batch {} with status {}'.format(batch_id,status))
-                self._cairio_client.setValue(key=statuses_key,subkey=batch_id,value=None)
+                if (status!='finished') and (status!='pending') and (not status.startswith('error')):
+                    print('Stopping batch {} with status {}'.format(batch_id,status))
+                    self._cairio_client.setValue(key=statuses_key,subkey=batch_id,value='error: stopped because compute resource was restarted.')
         self._set_console_message('Starting compute resource: {}'.format(self._resource_name))
         self._next_delay=0.25
         while True:
@@ -48,6 +49,7 @@ class ComputeResourceServer():
                 for batch_id,status in batch_statuses.items():
                     if status=='pending':
                         pending_batch_ids.append(batch_id)
+                pending_batch_ids.sort()
                 if len(pending_batch_ids)>0:
                     self._handle_batch(pending_batch_ids[0])
                     self._next_delay=0.25

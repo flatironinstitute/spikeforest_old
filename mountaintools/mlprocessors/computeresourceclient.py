@@ -11,7 +11,8 @@ class ComputeResourceClient():
             self._cairio_client.configLocal()
         self._last_console_message=''
         self._next_delay=0.25
-    def initializeBatch(self,*,batch_id,jobs):
+    def initializeBatch(self,*,jobs):
+        batch_id = 'batch_'(time.time()-0)+'_'+_random_string(6)
         key=dict(
             name='compute_resource_batch',
             batch_id=batch_id
@@ -29,6 +30,7 @@ class ComputeResourceClient():
                 self._cairio_client.saveFile(path=code_path)
             codes_saved.add(code_path)
         print('.')
+        return batch_id
     def startBatch(self,*,batch_id):
         self._cairio_client.setValue(
             key=dict(
@@ -153,3 +155,7 @@ class ComputeResourceClient():
         self._next_delay=0.25
         print('{}'.format(msg))
         self._last_console_message=msg
+
+    def _random_string(num_chars):
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        return ''.join(random.choice(chars) for _ in range(num_chars))
