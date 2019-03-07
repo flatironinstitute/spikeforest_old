@@ -79,19 +79,56 @@ function FeatureSpaceWidget() {
         let data0=m_model.getChannelData(m,t1,t2);
       }
     }
+    
+    function get_abs_max(a) {
+      return Math.max(Math.abs(...a.map(e => Array.isArray(e) ? get_abs_max(e) : e)));
+    }
+
+    function get_max(a) {
+      return Math.max(...a.map(e => Array.isArray(e) ? get_max(e) : e));
+    }
+
+    function get_smallest_ind(a) {
+      return a.reduce((iMax, x, i, arr) => x < arr[iMax] ? i : iMax, 0);
+    }
 
     function paint_main_f_canvas(painter) {
-        painter.clear();
+        let fetx = 0;
+        let fety = 1;
         let f = m_features;
+        let tol = 1 // Number of points we are happy to leave out in order to give extra space.
+        let fx_max = Array(tol).fill(0);
+        let fy_max = Array(tol).fill(0);
         let U = f.length
+
         for (let u=0; u < U; u++) {
           let fu = f[u];
-          let fux = fu[2];
-          let fuy = fu[3];
+          let fux = fu[fetx];
+          let fuy = fu[fety];
           let n = fux.length;
           for (let i=0; i<n; i++) {
-            let px = (fux[i]/50)+400
-            let py = (fuy[i]/50)+200
+            if (fux[i] > Math.min(...fx_max)) {
+              let smallest_ind = get_smallest_ind(fx_max);
+              fx_max[smallest_ind] = fux[i];
+            }
+            if (fuy[i] > Math.min(...fy_max)) {
+              let smallest_ind = get_smallest_ind(fy_max);
+              fy_max[smallest_ind] = fuy[i];
+            }
+          }
+        }
+        let xlim = Math.min(...fx_max)/400;
+        let ylim = Math.min(...fy_max)/250;
+
+        painter.clear();
+        for (let u=0; u < U; u++) {
+          let fu = f[u];
+          let fux = fu[fetx];
+          let fuy = fu[fety];
+          let n = fux.length;
+          for (let i=0; i<n; i++) {
+            let px = (fux[i]/xlim)+400
+            let py = (fuy[i]/ylim)+200
             let rect = [px,py,5,5]
             painter.fillEllipse(rect,{'color':colorArray[u+4]})
           }
