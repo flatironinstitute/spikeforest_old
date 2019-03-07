@@ -559,7 +559,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 # new method
                 from .computeresourceclient import ComputeResourceClient
                 CRC=ComputeResourceClient(**compute_resource)
-                batch_id = CRC.initializeBatch(jobs=jobs)
+                batch_id = CRC.initializeBatch(jobs=jobs, label=label)
                 CRC.startBatch(batch_id=batch_id)
                 try:
                     CRC.monitorBatch(batch_id=batch_id)

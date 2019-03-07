@@ -12,7 +12,7 @@ class ComputeResourceClient():
             self._cairio_client.configLocal()
         self._last_console_message=''
         self._next_delay=0.25
-    def initializeBatch(self,*,jobs):
+    def initializeBatch(self,*,jobs, label='unlabeled'):
         batch_id = 'batch_{}_{}'.format(time.time()-0, _random_string(6))
         key=dict(
             name='compute_resource_batch',
@@ -20,7 +20,10 @@ class ComputeResourceClient():
         )
         self._cairio_client.saveObject(
             key=key,
-            object=dict(jobs=jobs)
+            object=dict(
+                label=label,
+                jobs=jobs
+            )
         )
         print('Saving source code for jobs...')
         codes_saved=set()

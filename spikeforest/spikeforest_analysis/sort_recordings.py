@@ -262,7 +262,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
     #     )
     #     sorting_jobs.append(job)
 
-    label='Sort recordings ({})'.format(processor_name)
+    label='Sort recordings using {}'.format(processor_name)
     mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
     
     print('Gathering sorting results...')
