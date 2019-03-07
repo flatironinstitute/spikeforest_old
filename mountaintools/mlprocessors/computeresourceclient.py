@@ -12,7 +12,7 @@ class ComputeResourceClient():
         self._last_console_message=''
         self._next_delay=0.25
     def initializeBatch(self,*,jobs):
-        batch_id = 'batch_'(time.time()-0)+'_'+_random_string(6)
+        batch_id = 'batch_{}_{}'.format(time.time()-0, _random_string(6))
         key=dict(
             name='compute_resource_batch',
             batch_id=batch_id
