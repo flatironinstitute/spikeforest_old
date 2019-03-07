@@ -1,41 +1,96 @@
 window.FeatureSpaceWidget=FeatureSpaceWidget;
-window.TestFeatureSpaceModel=TestFeatureSpaceModel;
 
 PainterPath=window.PainterPath;
 CanvasWidget=window.CanvasWidget;
 
+// from https://gist.github.com/mucar/3898821
+var colorArray = [
+      '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+		  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+		  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+		  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+		  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+		  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+		  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+		  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+		  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+      '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF'];
+
 function FeatureSpaceWidget() {
     let that=this;
 
-    this.setFeatureSpaceModel=function(M) {m_model=M; auto_compute_y_offsets(); auto_compute_y_scale_factor()};
     this.setSize=function(W,H) {m_size=[W,H]; update_size();};
     this.element=function() {return m_div;};
     this.setTimeRange=function(t1,t2) {set_time_range(t1,t2);};
-    this.setCurrentTime=function(t) {m_current_time=t; update_cursor();};
-    this.zoomTime=function(factor) {zoom_time(factor);};
     this.translateTime=function(dt) {translate_time(dt);};
     this.zoomAmplitude=function(factor) {zoom_amplitude(factor);};
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
     this.setFeatures=function(features) {m_features=features;};
+    this.setFetX=function(fetx) {m_fetx=fetx};
+    this.setFetY=function(fety) {m_fety=fety};
     this.clickStart=[0,0];
     this.clickEnd=[0,0];
 
     let m_div=$('<div tabindex="0" />'); // tabindex needed to handle keypress
     m_div.css({position:'absolute'});
-    let m_size=[800,500];
-    let m_model=null;
+    
+    let menu_div = $('<div />')
+      .append($('<input type="button" value="Zoom In"/>')
+        .click(this.zoomAmplitude.bind(this,1/1.15))
+      )
+      .append($('<input type="button" value="Zoom Out"/>')
+        .click(this.zoomAmplitude.bind(this,1.15))
+      )
+      .append($('<input type="button" value="Center on Circle"/>')
+        .click(function () {
+          console.log('m_',m_left,m_bottom);
+          console.log('cl_',that.clickStart);
+          m_left = m_left+(m_size[0]/2 - that.clickStart[0]);
+          m_bottom = m_bottom+(m_size[1]/2 - that.clickStart[1]);
+          that.clickStart = [m_size[0]/2, m_size[1]/2];
+          console.log(m_left,m_bottom);
+          update_plot();
+        })
+      )
+      .append(
+        $('<select id="fetx"><option value="0">Feature X</option></select>')
+        .one('click', function () {
+          $.each([0,1,2,3,4,5,6], function(x) {
+            let dropdown = $('#fetx').append($('<option></option>').val(x).html(x))
+          })
+        })
+        .on('change', function () {that.setFetX(this.value);update_plot();})
+      )
+      .append(
+        $('<select id="fety"><option value="1">Feature Y</option></select>')
+        .one('click', function () {
+          $.each([0,1,2,3,4,5,6], function(x) {
+            let dropdown = $('#fety').append($('<option></option>').val(x).html(x))
+          })
+        })
+        .on('change', function () {that.setFetY(this.value);update_plot();})
+      );
+    m_div.append(menu_div)
+    let m_size=[800,400];
     let m_main_canvas=new CanvasWidget();
     let m_main_f_canvas=new CanvasWidget();
     let m_cursor_canvas=new CanvasWidget();
     let m_trange=[0,1000];
     let m_current_time=-1;
     let m_y_scale_factor=1;
+    let m_zoom_factor=1;
     let m_y_offsets=null;
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
     let m_features=[[[],[]],[[],[]]]
+    let m_fetx = 0;
+    let m_fety = 1;
+    let m_left = m_size[0]/2
+    let m_bottom = m_size[1]/2
+    let m_mouse_mode = 'cross';
+    this.clickStart = [m_left,m_bottom];
 
     m_div.append(m_main_canvas.canvasElement());
     m_div.append(m_main_f_canvas.canvasElement());
@@ -70,31 +125,24 @@ function FeatureSpaceWidget() {
 
     function paint_main_canvas(painter) {
       painter.clear();
-      let M=m_model.numChannels();
       let t1=Math.floor(m_trange[0]);
       let t2=Math.floor(m_trange[1]+1);
       if (t1<0) t1=0;
-      if (t2>=m_model.numTimepoints()) t2=m_model.numTimepoints();
-      for (let m=0; m<M; m++) {
-        let data0=m_model.getChannelData(m,t1,t2);
-      }
     }
     
-    function get_abs_max(a) {
+    /*function get_abs_max(a) {
       return Math.max(Math.abs(...a.map(e => Array.isArray(e) ? get_abs_max(e) : e)));
     }
 
     function get_max(a) {
       return Math.max(...a.map(e => Array.isArray(e) ? get_max(e) : e));
-    }
+    }*/
 
     function get_smallest_ind(a) {
       return a.reduce((iMax, x, i, arr) => x < arr[iMax] ? i : iMax, 0);
     }
 
     function paint_main_f_canvas(painter) {
-        let fetx = 0;
-        let fety = 1;
         let f = m_features;
         let tol = 1 // Number of points we are happy to leave out in order to give extra space.
         let fx_max = Array(tol).fill(0);
@@ -103,8 +151,8 @@ function FeatureSpaceWidget() {
 
         for (let u=0; u < U; u++) {
           let fu = f[u];
-          let fux = fu[fetx];
-          let fuy = fu[fety];
+          let fux = fu[m_fetx];
+          let fuy = fu[m_fety];
           let n = fux.length;
           for (let i=0; i<n; i++) {
             if (fux[i] > Math.min(...fx_max)) {
@@ -117,18 +165,18 @@ function FeatureSpaceWidget() {
             }
           }
         }
-        let xlim = Math.min(...fx_max)/400;
-        let ylim = Math.min(...fy_max)/250;
+        let xlim = m_zoom_factor*(Math.min(...fx_max)/(m_size[0]/2));
+        let ylim = m_zoom_factor*(Math.min(...fy_max)/(m_size[1]/2));
 
         painter.clear();
         for (let u=0; u < U; u++) {
           let fu = f[u];
-          let fux = fu[fetx];
-          let fuy = fu[fety];
+          let fux = fu[m_fetx];
+          let fuy = fu[m_fety];
           let n = fux.length;
           for (let i=0; i<n; i++) {
-            let px = (fux[i]/xlim)+400
-            let py = (fuy[i]/ylim)+200
+            let px = (fux[i]/xlim)+m_left; //(800-m_left);
+            let py = (fuy[i]/ylim)+m_bottom; //(400-m_bottom);
             let rect = [px,py,5,5]
             painter.fillEllipse(rect,{'color':colorArray[u+4]})
           }
@@ -137,57 +185,21 @@ function FeatureSpaceWidget() {
 
     function paint_cursor_canvas(painter) {
         painter.clear();
-        let M=m_model.numChannels();
         let pt1=that.clickStart;
-        let pt2=that.clickEnd;
-        painter.drawLine(pt1[0],pt1[1],pt2[0]+10,pt2[1]+10);
-    }
-
-    function set_time_range(t1,t2) {
-        let N=m_model.numTimepoints();
-        if (t2>N) {t1-=(t2-N); t2-=(t2-N);};
-        if (t1<=0) {t2-=t1; t1-=t1;};
-        if (t2>N) t2=N;
-        m_trange=[t1,t2];
-        update_plot();
-    }
-
-    function zoom_time(factor) {
-        let anchor_time=m_current_time;
-        if ((anchor_time<m_trange[0])||(anchor_time>m_trange[1]))
-            anchor_time=m_trange[0];
-        let old_t1=m_trange[0];
-        let old_t2=m_trange[1];
-        let t1=anchor_time+(old_t1-anchor_time)/factor;
-        let t2=anchor_time+(old_t2-anchor_time)/factor;
-        that.setTimeRange(t1,t2);
-    }
-
-    function translate_time(dt) {
-        let old_t1=m_trange[0];
-        let old_t2=m_trange[1];
-        let t1=old_t1+dt;
-        let t2=old_t2+dt;
-        that.setTimeRange(t1,t2);
+        console.log(pt1);
+        if (m_mouse_mode == 'poly') {
+          let pt2=that.clickEnd;
+          painter.drawLine(pt1[0],pt1[1],pt2[0],pt2[1]);
+        } else if (m_mouse_mode == 'cross') {
+          let rect = [pt1[0], pt1[1], 10, 10];
+          painter.drawEllipse(rect,{'color':'grey'})
+        }
     }
 
     function zoom_amplitude(factor) {
         m_y_scale_factor*=factor;
+        m_zoom_factor*=factor;
         update_plot();
-    }
-
-    function val2pix(ch,t,val) {
-        let y0=m_channel_y_positions[ch];
-        y0-=(val+m_y_offsets[ch])*m_y_scale_factor*m_channel_spacing/2;
-        let xpct=(t-m_trange[0])/(m_trange[1]-m_trange[0]);
-        let x0=m_time_axis_xrange[0]+(m_time_axis_xrange[1]-m_time_axis_xrange[0])*xpct;
-        return [x0,y0];
-    }
-
-    function pix2time(pix) {
-        let xpct=(pix[0]-m_time_axis_xrange[0])/(m_time_axis_xrange[1]-m_time_axis_xrange[0]);
-        let t=xpct*(m_trange[1]-m_trange[0])+m_trange[0];
-        return t;
     }
 
     function update_size() {
@@ -199,19 +211,9 @@ function FeatureSpaceWidget() {
         update_plot();
     }
     function update_plot() {
-        let M=m_model.numChannels();
-
-        let H0=m_size[1]-m_margins.top-m_margins.bottom;;
-        m_channel_spacing=H0/M;
-        m_channel_y_positions=[];
-        let y0=m_size[1]-m_margins.bottom-m_channel_spacing/2;
-        for (let m=0; m<M; m++) {
-            m_channel_y_positions.push(y0);
-            y0-=m_channel_spacing;
-        }
-
         update_cursor();
         m_main_canvas.update();
+        m_main_f_canvas.update();
     }
 
     function update_cursor() {
@@ -225,81 +227,55 @@ function FeatureSpaceWidget() {
         return sum/vals.length;
     }
 
-    function auto_compute_y_offsets() {
-        let offsets=[];
-        let M=m_model.numChannels();
-        for (let m=0; m<M; m++) {
-            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),1000));
-            let mean0=compute_mean(data);
-            offsets.push(-mean0);
-        }
-        that.setYOffsets(offsets);
-    }
-
-    function auto_compute_y_scale_factor() {
-        let vals=[];
-        let M=m_model.numChannels();
-        for (let m=0; m<M; m++) {
-            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),1000));
-            for (let j in data)
-                vals.push(Math.abs(data[j]+m_y_offsets[m]));
-        }
-        vals.sort(function(a, b){return a - b});
-        let vv=vals[Math.floor(vals.length*0.9)];
-        if (vv>0)
-            that.setYScaleFactor(1/(2*vv));
-        else
-            that.setYScaleFactor(1);
-    }
-
     function handle_mouse_press(X) {
+        if (m_mouse_mode == 'poly') {
+        //console.log('press')
         if (!(m_mouse_press_anchor)) {
           m_mouse_press_anchor=clone(X);
         }
         m_mouse_press_anchor.trange=clone(m_trange);
         
         if(m_mouse_press_anchor.moving) {
-          console.log('done');
+          //console.log('done');
           m_mouse_press_anchor.moving = false;
           delete m_mouse_press_anchor
         } else {
-          console.log(JSON.stringify(m_mouse_press_anchor));
+          //console.log('start')
           that.clickStart=X.pos;
           m_mouse_press_anchor.moving = true;
+        } } else if (m_mouse_mode == 'cross') {
+          // Issue: currently mouse clicks are being handled even on button press which is undesirable.
+          // For now we take advantage of the fact the buttons are at the top, but need to think about it.
+          if (X.pos[1] > 35) { // TODO: Find a less hacky way to fix this.
+            that.clickStart=X.pos;
+            update_cursor();
+          }
         }
     }
 
     function handle_mouse_release(X) {
+      //console.log('release');
         that.clickEnd=X.pos
     }
 
     function handle_mouse_leave(X) {
+        //console.log('leave')
         //m_mouse_press_anchor=null;
     }
 
     function handle_mouse_move(X) {
-      if (m_mouse_press_anchor) {
-        that.clickEnd=X.pos;
-        update_cursor();
-        m_mouse_press_anchor.moving=true;
+      //console.log('moving')
+      if (m_mouse_mode == 'poly') {
+        if (m_mouse_press_anchor) {
+          if (m_mouse_press_anchor.moving) {
+            that.clickEnd=X.pos;
+            update_cursor();
+            m_mouse_press_anchor.moving=true;
+            //console.log('moving with anchor')
+          }
+        }
       }
       return 0
-        if (m_mouse_press_anchor) {
-            if (!m_mouse_handler.moving) {
-                let dx=X.pos[0]-m_mouse_press_anchor.pos[0];
-                let dy=X.pos[1]-m_mouse_press_anchor.pos[1];
-                if (Math.abs(dx)>4) {
-                    m_mouse_press_anchor.moving=true;
-                }
-            }
-            
-            if (m_mouse_press_anchor.moving) {
-                let t1=pix2time(m_mouse_press_anchor.pos);
-                let t2=pix2time(X.pos);
-                that.setTimeRange(m_mouse_press_anchor.trange[0]+(t1-t2),m_mouse_press_anchor.trange[1]+(t1-t2));
-                m_mouse_press_anchor.moving=true;
-            }
-        }
     }
 
     function handle_key_up(X) {
@@ -318,47 +294,12 @@ function FeatureSpaceWidget() {
     }
 
     function handle_mouse_wheel(X) {
-        if (X.delta>0) that.zoomTime(1.15);
-        else if (X.delta<0) that.zoomTime(1/1.15);
+      // wheel
     }
 
-    that.setFeatureSpaceModel(new DummyModel());
     update_size();
 }
 
-function DummyModel() {
-    this.numChannels=function() {return 0;};
-    this.numTimepoints=function() {return 0;};
-    this.getChannelData=function() {return [];};
-}
-
-function TestFeatureSpaceModel() {
-    this.numChannels=function() {return m_channels.length;};
-    this.numTimepoints=function() {return m_num_timepoints;};
-    this.getChannelData=function(ch,t1,t2) {return get_channel_data(ch,t1,t2);};
-
-    let m_channels=[];
-    let m_num_timepoints=10000;
-
-    m_channels=[];
-    let num_channels=64;
-    for (let ch=0; ch<num_channels; ch++) {
-        let C={data:_rand_array(m_num_timepoints)};
-        m_channels.push(C);
-    }
-
-    function get_channel_data(ch,t1,t2) {
-        return m_channels[ch].data.slice(t1,t2);
-    }
-
-    function _rand_array(N) {
-        let ret=[];
-        for (let i=0; i<N; i++) {
-            ret.push(0+150*randn_bm());
-        }
-        return ret;
-    }
-}
 
 function MouseHandler(elmt) {
     this.onMousePress=function(handler) {m_handlers['press'].push(handler);};
@@ -416,15 +357,3 @@ function randn_bm() {
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
 
-// from https://gist.github.com/mucar/3898821
-var colorArray = [
-      '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
-		  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
-		  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
-		  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
-		  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
-		  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
-		  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
-		  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
-		  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
-      '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF'];

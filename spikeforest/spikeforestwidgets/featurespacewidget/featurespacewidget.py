@@ -49,19 +49,16 @@ class FeatureSpaceWidget(vd.Component):
 
         js_lines=[
                 "window.sfdata=window.sfdata||{}",
-                "window.sfdata.test=1",
+                "window.sfdata.test=0",
                 "window.sfdata['array_b64_{div_id}']='{b64}'".format(div_id=self._div_id,
                     b64=self._array_b64),
                 "window.sfdata['features']={}".format(features)
                     ]
         js = ";".join(js_lines)
-        print(self._array.shape)
-        print('length of b64: {}'.format(len(self._array_b64)))
         vd.devel.loadJavascript(js=js)
         self._size=(800,400)
 
     def setSize(self,size):
-        print('setSize')
         if self._size==size:
             return
         self._size=size
@@ -73,7 +70,6 @@ class FeatureSpaceWidget(vd.Component):
         print('rendering featurespacewidget...')
         div=vd.div(id=self._div_id)
         js="""
-        console.log('testing 111');
         function _base64ToArrayBuffer(base64) {
             var binary_string =  window.atob(base64);
             var len = binary_string.length;
@@ -84,12 +80,9 @@ class FeatureSpaceWidget(vd.Component):
             return bytes.buffer;
         }
         let W=new window.FeatureSpaceWidget();
-        //W.setFeatureSpaceModel(new window.TestFeatureSpaceModel());
         let X=_base64ToArrayBuffer(window.sfdata['array_b64_{div_id}']);
         let A=new window.Mda();
         A.setFromArrayBuffer(X);
-        let TS=new window.FeatureSpaceModel(A);
-        W.setFeatureSpaceModel(TS);
         W.setFeatures(window.sfdata['features']);
         W.setSize({width},{height})
         $('#{div_id}').empty();
