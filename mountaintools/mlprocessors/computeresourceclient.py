@@ -1,5 +1,6 @@
 from cairio import CairioClient
 import time
+import client
 
 class ComputeResourceClient():
     def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None):
