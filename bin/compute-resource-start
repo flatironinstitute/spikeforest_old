@@ -28,7 +28,9 @@ def main():
   print('num parallel = {}'.format(args.parallel))
   print('allow uncontainerized = {}'.format(args.allow_uncontainerized))
 
-  ca.login()
+  if args.collection:
+    ca.login()
+    ca.configRemoteReadWrite(collection=args.collection, share_id=args.share_id)
   server=mlpr.ComputeResourceServer(
       resource_name=args.compute_resource_name,
       collection=args.collection,
