@@ -723,7 +723,6 @@ if __name__ == "__main__":
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
         output_signatures=cairio_client.loadObject(path=temporary_output_files['_output_signatures_out'])
 
-        print('--------------------------------------------- loaded output signatures')
         print(output_signatures)
 
         ret = dict(
@@ -1059,9 +1058,6 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             _write_text_file(_stats_out, json.dumps({}))
 
     if _output_signatures_out:
-        print('----------------------------------------------- writing output signatures')
-        print(ret.output_signatures)
-        print('--------------------------------------------------------------------------')
         if ret.output_signatures:
             _write_text_file(_output_signatures_out, json.dumps(ret.output_signatures))
         else:
