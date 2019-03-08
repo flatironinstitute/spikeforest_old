@@ -5,7 +5,7 @@ from functools import lru_cache
 import argparse
 import sys
 import traceback
-from .execute import execute, createJob
+from .execute import execute, createJob, createJobFromKwargs
 
 
 class ParserError(ValueError):
@@ -507,3 +507,7 @@ class Processor(metaclass=ProcMeta):
     @classmethod
     def createJob(proc, **kwargs):
         return createJob(proc, **kwargs)
+
+    @classmethod
+    def createJobFromKwargs(proc, kwargs):
+        return createJobFromKwargs(proc, kwargs)

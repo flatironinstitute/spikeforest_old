@@ -389,6 +389,9 @@ def _run_command_and_print_output_old(command):
         return rc
 
 
+def createJobFromKwargs(proc, kwargs):
+    return createJob(proc, **kwargs)
+
 def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, _check_cache_first=True, **kwargs):
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE':
@@ -561,80 +564,81 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                         # In this case we are going to need to realize the file
                         output0['upload'] = True
 
-    if num_workers is not None:
-        if compute_resource is not None:
-            raise Exception('Cannot specify both num_workers and compute_resource.')
-        pool = multiprocessing.Pool(num_workers)
-        results = pool.map(executeJob, jobs2)
-        pool.close()
-        pool.join()
-        for i, job in enumerate(jobs2):
-            job['result'] = results[i]
-    else:
-        if compute_resource is not None:
-            if type(compute_resource)==dict:
-                # new method
-                from .computeresourceclient import ComputeResourceClient
-                CRC=ComputeResourceClient(**compute_resource)
-                batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
-                CRC.startBatch(batch_id=batch_id)
-                try:
-                    CRC.monitorBatch(batch_id=batch_id)
-                except:
-                    CRC.stopBatch(batch_id=batch_id)
-                    raise
+    if len(jobs2)>0:
+        if num_workers is not None:
+            if compute_resource is not None:
+                raise Exception('Cannot specify both num_workers and compute_resource.')
+            pool = multiprocessing.Pool(num_workers)
+            results = pool.map(executeJob, jobs2)
+            pool.close()
+            pool.join()
+            for i, job in enumerate(jobs2):
+                job['result'] = results[i]
+        else:
+            if compute_resource is not None:
+                if type(compute_resource)==dict:
+                    # new method
+                    from .computeresourceclient import ComputeResourceClient
+                    CRC=ComputeResourceClient(**compute_resource)
+                    batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
+                    CRC.startBatch(batch_id=batch_id)
+                    try:
+                        CRC.monitorBatch(batch_id=batch_id)
+                    except:
+                        CRC.stopBatch(batch_id=batch_id)
+                        raise
 
-                results0 = CRC.getBatchJobResults(batch_id=batch_id)
-                if results0 is None:
-                    raise Exception('Unable to get batch results.')
-                for i, job in enumerate(jobs2):
-                    result0 = results0['results'][i]['result']
-                    if result0 is None:
-                        raise Exception('Unable to find result for job.')
-                    job['result'] = result0
+                    results0 = CRC.getBatchJobResults(batch_id=batch_id)
+                    if results0 is None:
+                        raise Exception('Unable to get batch results.')
+                    for i, job in enumerate(jobs2):
+                        result0 = results0['results'][i]['result']
+                        if result0 is None:
+                            raise Exception('Unable to find result for job.')
+                        job['result'] = result0
+                    
+                else:
+                    # old method
+                    import batcho
+                    if batch_name is None:
+                        batch_name = 'batch_'+_random_string(10)
+                    batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs2,
+                                    compute_resource=compute_resource)
+                    last_update_string = ''
+                    while True:
+                        batch_status = batcho.get_batch_status(batch_name=batch_name)
+                        if batch_status is None:
+                            update_string = 'Waiting...'
+                        else:
+                            batch_status0 = batch_status.get('status', '')
+                            if batch_status0 == 'finished':
+                                print('Batch finished.')
+                                break
+                            if batch_status0 == 'error':
+                                err0 = batch_status.get('error', '')
+                                raise Exception('Error executing batch: {}'.format(err0))
+                            statuses_list = list(batcho.get_batch_job_statuses(
+                                batch_name=batch_name).values())
+                            num_ready = statuses_list.count('ready')
+                            num_running = statuses_list.count('running')
+                            num_finished = statuses_list.count('finished')
+                            update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
+                                batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs2))
+                        if update_string != last_update_string:
+                            print(update_string)
+                        last_update_string = update_string
+                        time.sleep(1)
+
+                    results0 = batcho.get_batch_results(batch_name=batch_name)
+                    if results0 is None:
+                        raise Exception('Unable to get batch results.')
+                    for i, job in enumerate(jobs2):
+                        result0 = results0['results'][i]['result']
+                        job['result'] = result0
                 
             else:
-                # old method
-                import batcho
-                if batch_name is None:
-                    batch_name = 'batch_'+_random_string(10)
-                batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs2,
-                                compute_resource=compute_resource)
-                last_update_string = ''
-                while True:
-                    batch_status = batcho.get_batch_status(batch_name=batch_name)
-                    if batch_status is None:
-                        update_string = 'Waiting...'
-                    else:
-                        batch_status0 = batch_status.get('status', '')
-                        if batch_status0 == 'finished':
-                            print('Batch finished.')
-                            break
-                        if batch_status0 == 'error':
-                            err0 = batch_status.get('error', '')
-                            raise Exception('Error executing batch: {}'.format(err0))
-                        statuses_list = list(batcho.get_batch_job_statuses(
-                            batch_name=batch_name).values())
-                        num_ready = statuses_list.count('ready')
-                        num_running = statuses_list.count('running')
-                        num_finished = statuses_list.count('finished')
-                        update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
-                            batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs2))
-                    if update_string != last_update_string:
-                        print(update_string)
-                    last_update_string = update_string
-                    time.sleep(1)
-
-                results0 = batcho.get_batch_results(batch_name=batch_name)
-                if results0 is None:
-                    raise Exception('Unable to get batch results.')
-                for i, job in enumerate(jobs2):
-                    result0 = results0['results'][i]['result']
-                    job['result'] = result0
-            
-        else:
-            for job in jobs2:
-                job['result'] = executeJob(job)
+                for job in jobs2:
+                    job['result'] = executeJob(job)
 
     ret=[]
     for job in jobs:
