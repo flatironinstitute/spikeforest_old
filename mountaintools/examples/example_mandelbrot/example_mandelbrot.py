@@ -59,12 +59,15 @@ for offset in range(subsampling_factor):
         _keep_temp_files=True
     )
     jobs.append(job0)
+
 results=mlpr.executeBatch(jobs=jobs, num_workers=4)
+
 X_list=[]
 for result0 in results:
     X0=np.load(mt.realizeFile(result0.outputs['output_npy']))
     X_list.append(X0)
 X = combine_subsampled_mandelbrot(X_list)
+
 show_mandelbrot(X)
 
 #%%
@@ -75,7 +78,7 @@ compute_resource=dict(
     share_id='spikeforest.spikeforest2'
 )
 X=compute_mandelbrot_parallel(
-    num_iter=100000,
+    num_iter=50000,
     num_x=3000,
     num_parallel=80,
     compute_resource=compute_resource
@@ -98,3 +101,5 @@ X=compute_mandelbrot_parallel(
     compute_resource=compute_resource
 )
 show_mandelbrot(X)
+
+#%%

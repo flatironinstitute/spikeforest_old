@@ -1,6 +1,7 @@
 #%%
 # import sfdata as sf
 from mountaintools import client as mt
+import os
 
 mt.login()
 mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
@@ -16,12 +17,12 @@ def prepare_mearec_neuronexus_studies(*, basedir):
     studies = []
     recordings = []
     names = []
-    names=names+['datasets_noise10_K10_C32','datasets_noise10_K20_C32','datasets_noise10_K40_C32']
-    names=names+['datasets_noise20_K10_C32','datasets_noise20_K20_C32','datasets_noise20_K40_C32']
+    names=names+['noise10_K10_C32','noise10_K20_C32','noise10_K40_C32']
+    names=names+['noise20_K10_C32','noise20_K20_C32','noise20_K40_C32']
     for name in names:
         print('PREPARING: '+name)
-        study_name = 'mearec_neuronexus'
-        study_dir = basedir+'/mearec_synth/neuronexus'
+        study_name = 'mearec_neuronexus_'+name
+        study_dir = basedir+'/mearec_synth/neuronexus/datasets_'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,

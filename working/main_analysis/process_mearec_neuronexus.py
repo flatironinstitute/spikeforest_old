@@ -19,11 +19,11 @@ def main():
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Specify the compute resource (see the note above)
-    compute_resource = None
-    compute_resource_ks = None
+    #compute_resource = None
+    #compute_resource_ks = None
     #compute_resource = 'local-computer'
     #compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    #compute_resource = dict(resource_name='ccmlin000-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    compute_resource = dict(resource_name='ccmlin000-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
     #compute_resource_ks = dict(resource_name='ccmlin000-gpu',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
