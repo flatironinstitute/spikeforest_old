@@ -834,8 +834,9 @@ class CairioLocal():
         return (sha1, size, url_download)
 
 
-# TODO: make this thread-safe
-def _db_load(path):
+def _db_load(path, *, count=0):
+    if count>10:
+        raise Exception('Unexpected problem loading database file: '+path)
     if os.path.exists(path):
         try:
             db_txt = _read_text_file(path)
@@ -849,11 +850,25 @@ def _db_load(path):
         except:
             if os.path.exists(path+'.save'):
                 print('Warning: Problem parsing json in database file (restoring saved file): '+path)
-                os.rename(path+'.save',path)
+                try:
+                    os.rename(path+'.save',path)
+                except:
+                    print('Warning: problem renaming .save file. Deleting')
+                    try:
+                        os.unlink(path+'.save')
+                    except:
+                        pass
+                    try:
+                        os.unlink(path)
+                    except:
+                        pass
             else:
                 print('Warning: Problem parsing json in database file (deleting): '+path)
-                os.unlink(path)
-            return _db_load(path)
+                try:
+                    os.unlink(path)
+                except:
+                    pass
+            return _db_load(path, count=count+1)
         return db
     else:
         return dict()

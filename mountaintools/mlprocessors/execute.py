@@ -467,7 +467,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
                 raise Exception('Unable to save (or upload) container file.')
             if not _container.startswith('sha1://'):
                 _container = newpath
-    processor_source_fname = inspect.getsourcefile(proc)
+    processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     processor_source_dirname = os.path.dirname(processor_source_fname)
     processor_source_basename = os.path.basename(processor_source_fname)
     processor_source_basename_noext = os.path.splitext(
@@ -618,6 +618,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
             for job in jobs:
                 job['result'] = executeJob(job)
 
+    ret=[]
     for job in jobs:
         results0=job['result']
         result_outputs0=results0['outputs']
@@ -633,11 +634,17 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 if compute_resource is None:
                     if output0.get('upload', False):
                         ca.saveFile(path=result_output0)
-
+        RR=ProcessorExecuteOutput()
+        RR.outputs=result_outputs0
+        RR.stats=results0['stats']
+        RR.console_out=ca.loadText(path=results0['console_out'])
+        ret.append(RR)
+    return ret
 
 def executeJob(job, cairio_client=ca):
     timer = time.time()
     tempdir = tempfile.mkdtemp()
+    keep_temp_files = job.get('_keep_temp_files', None)
     try:
         processor_code = cairio_client.loadObject(path=job['processor_code'])
         if processor_code is None:
@@ -654,7 +661,7 @@ def executeJob(job, cairio_client=ca):
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
             _force_run=job.get('_force_run', None),
-            _keep_temp_files=job.get('_keep_temp_files', None),
+            _keep_temp_files=keep_temp_files,
             _container=container,
         )
         for key in job['inputs']:
@@ -714,9 +721,11 @@ if __name__ == "__main__":
                             temporary_output_files[key])+'/'+key+out0['ext']
         return ret
     except:
-        shutil.rmtree(tempdir)
+        if not keep_temp_files:
+            shutil.rmtree(tempdir)
         raise
-    shutil.rmtree(tempdir)
+    if not keep_temp_files:
+        shutil.rmtree(tempdir)
     return ret
 
 
