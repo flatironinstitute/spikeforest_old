@@ -592,6 +592,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                     if result0 is None:
                         raise Exception('Unable to find result for job.')
                     job['result'] = result0
+                
             else:
                 # old method
                 import batcho
@@ -934,7 +935,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
     if found_in_cache:
         print('MLPR USING CACHE::::::::::::::::::::::::::::: '+proc.NAME)
     else:
-        if not _return_none_if_not_in_cache:
+        if _return_none_if_not_in_cache:
             return None
         for input0 in proc.INPUTS:
             name0 = input0.name
