@@ -32,32 +32,7 @@ pip install ml_ms4alg
 
 In the future we will provide conda packages for these.
 
-## Authentication Configuration
-- Obtain the ID and password from Jeremy Magland
-- Create a text file in `.mountaintools/.env` and set `MOUNTAIN_USER` and `MOUNTAIN_PASSWORD` fields
-- Example configuration in `./mountaintools/.env`
-```
-MOUNTAIN_USER=SPRUCE
-MOUNTAIN_PASSWORD=TREE
-```
-
-### Installation for developers
-Run [`. devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `. devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
-
-[Pre-requisits]
-1. CONDA: `setup_python.sh` uses conda installed in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
-1. `ml_ms4alg` requires `g++` installation which may not be part of your OS. If this is the case, run `sudo apt install build-essential`.
-1. jupyter notebooks use ipywidgets which requires `nodejs` installation. Run `sudo apt install nodejs npm -y` if you don't already have the nodejs installed.
-1. Install [`docker`](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) and [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps)
-
-### Installation in Windows 10 using Ubuntu WSL
-1. Install Windows Subsystem for Linux (WSL). Run `Turn Windows features on or off` and check `Windows Subsystem for Linux`
-1. Install Ubuntu 18.04 though the Microsoft store app
-1. Start Ubuntu and install [Miniconda for Linux](https://docs.conda.io/en/latest/miniconda.html)
-1. Run `sudo apt install build-essential nodejs npm -y`
-1. Modify `devel/setup_python.sh` to point to the correct conda.sh (e.g. ` ~/miniconda3/etc/profile.d/conda.sh`)
-1. Run `devel/setup_python.sh`
-1. Test if installed correctly by running one of the example notebook. Run `conda activate spikeforest` and run `jupyter lab --no-browser` and copy the link. Paste in Chrome browser in Windows
+More advanced installation instructions for Windows 10 users and developers can be found below.
 
 ## Basic usage
 
@@ -178,6 +153,33 @@ pytest -m slow -s
 # depending on your internet connection
 ```
 
+## Installation for developers (without using codepod)
+Run [`. devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `. devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
+
+[Pre-requisits]
+1. CONDA: `setup_python.sh` uses conda installed in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
+1. `ml_ms4alg` requires `g++` installation which may not be part of your OS. If this is the case, run `sudo apt install build-essential`.
+1. jupyter notebooks use ipywidgets which requires `nodejs` installation. Run `sudo apt install nodejs npm -y` if you don't already have the nodejs installed.
+1. Install [`docker`](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) and [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps)
+
+## Installation in Windows 10 using Ubuntu WSL
+1. Install Windows Subsystem for Linux (WSL). Run `Turn Windows features on or off` and check `Windows Subsystem for Linux`
+1. Install Ubuntu 18.04 though the Microsoft store app
+1. Start Ubuntu and install [Miniconda for Linux](https://docs.conda.io/en/latest/miniconda.html)
+1. Run `sudo apt install build-essential nodejs npm -y`
+1. Modify `devel/setup_python.sh` to point to the correct conda.sh (e.g. ` ~/miniconda3/etc/profile.d/conda.sh`)
+1. Run `devel/setup_python.sh`
+1. Test if installed correctly by running one of the example notebook. Run `conda activate spikeforest` and run `jupyter lab --no-browser` and copy the link. Paste in Chrome browser in Windows
+
+## Authentication Configuration
+
+Some advanced operations (for example processing on a remote compute resource) requires authentication. You can obtain the ID and password from Jeremy Magland and then create a text file in `.mountaintools/.env` where you can set the `MOUNTAIN_USER` and `MOUNTAIN_PASSWORD` fields:
+
+```
+MOUNTAIN_USER=SPRUCE
+MOUNTAIN_PASSWORD=TREE
+```
+
 ## Directory structure
 
 (Please notify if the following gets out-of-sync with the project directory structure)
@@ -186,7 +188,7 @@ pytest -m slow -s
 
 `mountaintools`: Contains the MountainTools such as batcho, cairio, kbucket, mlprocessors, and vdomr. These tools are not specific to spike sorting.
 
-`spikeforest/spikesorters`: Wrappers of the spike sorting algorithms.
+`spikeforest/spikesorters`: Wrappers of the spike sorting algorithms, including Dockerfile recipes for the containers.
 
 `working`: The SpikeForest analysis scripts. Contains scripts for preparing recordings, running spike sorting, comparing with ground truth, and assembling results for the websites.
 
