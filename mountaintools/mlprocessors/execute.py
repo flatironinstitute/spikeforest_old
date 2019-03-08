@@ -903,7 +903,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             else:
                 print('Found outputs in cache, but forcing run...')
 
-    if not found_in_cache:
+    if found_in_cache:
+        print('MLPR USING CACHE::::::::::::::::::::::::::::: '+proc.NAME)
+    else:
         for input0 in proc.INPUTS:
             name0 = input0.name
             if hasattr(X, name0):
@@ -1012,6 +1014,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             _write_text_file(_stats_out, json.dumps(ret.stats))
         else:
             _write_text_file(_stats_out, json.dumps({}))
+
+    if ret.stats:
+        txt0='elapsed time (sec)'
+        if found_in_cache:
+            txt0='original elapsed time (sec)'
+        print('MLPR {}: {}'.format(txt0, ret.stats['elapsed_sec']))
 
     return ret
 

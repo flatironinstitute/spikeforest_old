@@ -361,10 +361,11 @@ class CairioClient():
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
-        if local_also or (not collection):
+        token = self._remote_config['token']
+        if local_also or (not (collection and token)):
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
                 return False
-        if collection:
+        if (collection and token):
             if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
                 return False
         return True
