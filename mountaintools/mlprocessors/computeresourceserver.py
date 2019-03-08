@@ -266,6 +266,16 @@ class ComputeResourceServer():
             )
             results.append(result)
 
+            output_signatures=result0.get('output_signatures',dict())
+            print('------------------ got output signatures:',output_signatures)
+            for name0, signature0 in output_signatures.items():
+                sha1=self._local_client.getValue(key=signature0)
+                # propagate to remote database
+                print('setting value ------------------------------',signature0,sha1)
+                print(self._cairio_client.getRemoteConfig())
+                print('----------------------------------------------')
+                self._cairio_client.setValue(key=signature0, value=sha1)
+
             result_outputs0=result0['outputs']
             for name0, output0 in job['outputs'].items():
                 if name0 not in result_outputs0:

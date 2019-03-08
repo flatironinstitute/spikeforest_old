@@ -723,16 +723,15 @@ if __name__ == "__main__":
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
         output_signatures=cairio_client.loadObject(path=temporary_output_files['_output_signatures_out'])
 
-        for name0, signature0 in output_signatures.items():
-            sha1=ca.getValue(key=signature0,local_first=True)
-            # propagate to remote database
-            ca.setValue(key=signature0, value=sha1)
+        print('--------------------------------------------- loaded output signatures')
+        print(output_signatures)
 
         ret = dict(
             retcode=retcode,
             outputs=dict(),
             stats=stats_out,
-            console_out=cairio_client.saveText(console_out)
+            console_out=cairio_client.saveText(console_out),
+            output_signatures=output_signatures
         )
         
         if retcode==0:
@@ -1060,6 +1059,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             _write_text_file(_stats_out, json.dumps({}))
 
     if _output_signatures_out:
+        print('----------------------------------------------- writing output signatures')
+        print(ret.output_signatures)
+        print('--------------------------------------------------------------------------')
         if ret.output_signatures:
             _write_text_file(_output_signatures_out, json.dumps(ret.output_signatures))
         else:
