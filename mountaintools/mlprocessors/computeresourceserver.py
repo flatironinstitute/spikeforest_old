@@ -323,7 +323,6 @@ def _monitor_job_statuses(batch_id, local_client, remote_client):
         if obj is not None:
             for job_index,status in obj.items():
                 if obj[job_index]!=last_obj.get(job_index,None):
-                    print('---------- Setting job status',job_index,status)
                     remote_client.setValue(key=key,subkey=job_index,value=status)
             last_obj=obj
         time.sleep(2)

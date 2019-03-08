@@ -17,7 +17,6 @@ import multiprocessing
 import random
 import fnmatch
 
-
 def sha1(str):
     hash_object = hashlib.sha1(str.encode('utf-8'))
     return hash_object.hexdigest()
@@ -390,7 +389,7 @@ def _run_command_and_print_output_old(command):
         return rc
 
 
-def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
+def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, _check_cache_first=True, **kwargs):
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE':
             _force_run = True
@@ -498,6 +497,16 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         processor_job['_cache'] = True
     if _keep_temp_files:
         processor_job['_keep_temp_files'] = True
+
+    if _check_cache_first:
+        ret=execute(proc, _cache=_cache, _force_run=_force_run, _container=_container, _keep_temp_files=_keep_temp_files, _return_none_if_not_in_cache=True, **kwargs)
+        if ret is not None:
+            processor_job['result']=dict(
+                outputs=ret.outputs,
+                stats=ret.stats,
+                console_out=ca.saveText(text=ret.console_out,basename='console_out.txt')
+            )
+
     return processor_job
 
 
@@ -528,8 +537,16 @@ def _random_string(num_chars):
 
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+    # use only the jobs that not not already have a result
+    jobs2=[]
+    for ii, job in enumerate(jobs):
+        if 'result' in job:
+            print('Job {} already has result.'.format(ii))
+        else:
+            jobs2.append(job)
+
     # make sure the files to realize are absolute paths
-    for job in jobs:
+    for job in jobs2:
         if 'files_to_realize' in job:
             for i, fname in enumerate(job['files_to_realize']):
                 if fname.startswith('kbucket://') or fname.startswith('sha1://'):
@@ -548,10 +565,10 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
         if compute_resource is not None:
             raise Exception('Cannot specify both num_workers and compute_resource.')
         pool = multiprocessing.Pool(num_workers)
-        results = pool.map(executeJob, jobs)
+        results = pool.map(executeJob, jobs2)
         pool.close()
         pool.join()
-        for i, job in enumerate(jobs):
+        for i, job in enumerate(jobs2):
             job['result'] = results[i]
     else:
         if compute_resource is not None:
@@ -559,7 +576,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 # new method
                 from .computeresourceclient import ComputeResourceClient
                 CRC=ComputeResourceClient(**compute_resource)
-                batch_id = CRC.initializeBatch(jobs=jobs, label=label)
+                batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
                 CRC.startBatch(batch_id=batch_id)
                 try:
                     CRC.monitorBatch(batch_id=batch_id)
@@ -570,7 +587,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 results0 = CRC.getBatchJobResults(batch_id=batch_id)
                 if results0 is None:
                     raise Exception('Unable to get batch results.')
-                for i, job in enumerate(jobs):
+                for i, job in enumerate(jobs2):
                     result0 = results0['results'][i]['result']
                     if result0 is None:
                         raise Exception('Unable to find result for job.')
@@ -580,7 +597,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 import batcho
                 if batch_name is None:
                     batch_name = 'batch_'+_random_string(10)
-                batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
+                batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs2,
                                 compute_resource=compute_resource)
                 last_update_string = ''
                 while True:
@@ -601,7 +618,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                         num_running = statuses_list.count('running')
                         num_finished = statuses_list.count('finished')
                         update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
-                            batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
+                            batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs2))
                     if update_string != last_update_string:
                         print(update_string)
                     last_update_string = update_string
@@ -610,12 +627,12 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 results0 = batcho.get_batch_results(batch_name=batch_name)
                 if results0 is None:
                     raise Exception('Unable to get batch results.')
-                for i, job in enumerate(jobs):
+                for i, job in enumerate(jobs2):
                     result0 = results0['results'][i]['result']
                     job['result'] = result0
             
         else:
-            for job in jobs:
+            for job in jobs2:
                 job['result'] = executeJob(job)
 
     ret=[]
@@ -784,7 +801,7 @@ class ConsoleCapture():
         return self._console_out
 
 
-def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, _stats_out=None, _console_out=None, **kwargs):
+def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, _stats_out=None, _console_out=None, _return_none_if_not_in_cache=False, **kwargs):
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
             _container = proc.CONTAINER
@@ -911,11 +928,14 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 
                 found_in_cache=True
             else:
-                print('Found outputs in cache, but forcing run...')
+                if not _return_none_if_not_in_cache:
+                    print('Found outputs in cache, but forcing run...')
 
     if found_in_cache:
         print('MLPR USING CACHE::::::::::::::::::::::::::::: '+proc.NAME)
     else:
+        if not _return_none_if_not_in_cache:
+            return None
         for input0 in proc.INPUTS:
             name0 = input0.name
             if hasattr(X, name0):
