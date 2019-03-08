@@ -879,7 +879,6 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             signature0 = compute_processor_job_output_signature(X, name0)
             output_signatures[name0] = signature0
             output_sha1 = ca.getValue(key=signature0, local_first=True)
-            print('CHECKED CACHE FOR OUTPUT {} {}: {}'.format(name0, signature0, output_sha1))
             if output_sha1 is not None:
                 print('Found output "{}" in cache.'.format(name0))
                 output_sha1s[name0] = output_sha1
