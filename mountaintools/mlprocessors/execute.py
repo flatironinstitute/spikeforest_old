@@ -166,7 +166,7 @@ class ProcessorExecuteOutput():
         self.outputs = dict()
         self.stats = dict()
         self.console_out = ''
-
+        self.output_signatures=dict()
 
 def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
     patterns = ['*.py']+additional_files
@@ -696,6 +696,8 @@ def executeJob(job, cairio_client=ca):
         execute_kwargs['_stats_out']=temporary_output_files['_stats_out']
         temporary_output_files['_console_out']=tempdir+'/_console_out.txt'
         execute_kwargs['_console_out']=temporary_output_files['_console_out']
+        temporary_output_files['_output_signatures_out']=tempdir+'/_output_signatures_out.json'
+        execute_kwargs['_output_signatures_out']=temporary_output_files['_output_signatures_out']
         expanded_execute_kwargs = _get_expanded_args(execute_kwargs)
 
         # Code generation
@@ -719,6 +721,12 @@ if __name__ == "__main__":
 
         console_out=cairio_client.loadText(path=temporary_output_files['_console_out'])
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
+        output_signatures=cairio_client.loadObject(path=temporary_output_files['_output_signatures_out'])
+
+        for name0, signature0 in output_signatures.items():
+            sha1=ca.getValue(key=signature0,local_first=True)
+            # propagate to remote database
+            ca.setValue(key=signature0, value=sha1)
 
         ret = dict(
             retcode=retcode,
@@ -802,7 +810,7 @@ class ConsoleCapture():
         return self._console_out
 
 
-def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, _stats_out=None, _console_out=None, _return_none_if_not_in_cache=False, **kwargs):
+def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, _stats_out=None, _console_out=None, _output_signatures_out=None, _return_none_if_not_in_cache=False, **kwargs):
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
             _container = proc.CONTAINER
@@ -865,6 +873,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         stats_signature0 = compute_processor_job_stats_signature(X)
         console_out_signature0 = compute_processor_job_console_out_signature(X)
 
+        ret.output_signatures['--stats--']=stats_signature0
+        ret.output_signatures['--console-out--']=console_out_signature0
+
         for output0 in proc.OUTPUTS:
             name0 = output0.name
             signature0 = compute_processor_job_output_signature(X, name0)
@@ -879,8 +890,10 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 # we want to make sure it also gets propagated remotely
                 # and vice versa
                 ca.setValue(key=signature0, value=output_sha1, local_also=True)
+                ret.output_signatures[name0]=signature0
             else:
                 outputs_all_in_cairio = False
+        
         output_files_all_found = False
         output_files = dict()
         if outputs_all_in_cairio:
@@ -1045,6 +1058,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             _write_text_file(_stats_out, json.dumps(ret.stats))
         else:
             _write_text_file(_stats_out, json.dumps({}))
+
+    if _output_signatures_out:
+        if ret.output_signatures:
+            _write_text_file(_output_signatures_out, json.dumps(ret.output_signatures))
+        else:
+            _write_text_file(_output_signatures_out, json.dumps({}))
 
     if ret.stats:
         txt0='elapsed time (sec)'
