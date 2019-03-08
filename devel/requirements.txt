@@ -1,5 +1,5 @@
-jupyterlab
 autopep8
 pytest
 codepod
 ml_ms4alg
+jupyterlab
