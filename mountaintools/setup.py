@@ -13,7 +13,8 @@ setuptools.setup(
     description="Tools for reproducible scientific research",
     packages=setuptools.find_packages(),
     install_requires=[
-        'matplotlib','requests','ipython'
+        'matplotlib','requests','ipython','simple-crypt','python-dotenv','filelock'
+        #        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",

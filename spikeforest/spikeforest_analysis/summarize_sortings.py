@@ -27,6 +27,7 @@ def summarize_sortings(sortings,compute_resource):
     label='Summarize sortings'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
+    print('Gathering summarized sortings...')
     summarized_sortings=[]
     for i,sorting in enumerate(sortings):
         summary=dict()

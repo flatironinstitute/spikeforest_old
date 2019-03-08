@@ -100,7 +100,14 @@ class CairioRemoteClient():
             if size0 > 10000:
                 print(
                     'Uploading file --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
+
+            timer=time.time()
             resp_obj = _http_post_file_data(url, path)
+            elapsed=time.time()-timer
+
+            if size0 > 10000:
+                print('File uploaded ({}) in {} sec'.format(_format_file_size(size0), elapsed))
+            
             if not resp_obj.get('success', False):
                 print('Problem posting file data: '+resp_obj.get('error', ''))
                 return False
@@ -141,7 +148,7 @@ def _sha1_of_object(obj):
 
 def _http_get_json(url, verbose=None, retry_delays=None):
     if retry_delays is None:
-        retry_delays = [0.2, 0.5, 1, 2, 4]
+        retry_delays = [0.2, 0.5]
     if verbose is None:
         timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')

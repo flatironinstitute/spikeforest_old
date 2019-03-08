@@ -105,7 +105,6 @@ class SFBrowser(vd.Component):
             accuracy_threshold=accuracy_threshold)
         self._accuracy_table = self._to_table(
             self._accuracy_table_data, ['study']+self._sorters)
-        print(self._accuracy_table_data)
         self.refresh()
 
     def _open_study_sorter_fig(self, *, sorter, study):
@@ -192,9 +191,12 @@ def _get_study_sorting_results(study):
             a = rec.sortingResult(srname)
             res0 = dict(sorter=srname, recording=rname, study=study.name())
             tmp = a.comparisonWithTruth(format='json')
-            for i in tmp:
-                tmp[i]['true_unit_info'] = true_units_info_by_id[tmp[i]['unit_id']]
-            res0['comparison_with_truth'] = tmp
+            if tmp is not None:
+                for i in tmp:
+                    tmp[i]['true_unit_info'] = true_units_info_by_id[tmp[i]['unit_id']]
+                res0['comparison_with_truth'] = tmp
+            else:
+                print('Warning: problem loading comparison with truth for sorting result: '+srname)
             results.append(res0)
 
     sorters = list(set([a['sorter'] for a in results]))
@@ -206,9 +208,12 @@ def _get_study_sorting_results(study):
 
     for obj in results:
         sorter0 = obj['sorter']
-        units = [obj['comparison_with_truth'][i]
-                 for i in obj['comparison_with_truth']]
-        units_by_sorter[sorter0] = units_by_sorter[sorter0]+units
+        if 'comparison_with_truth' in obj:
+            units = [obj['comparison_with_truth'][i]
+                    for i in obj['comparison_with_truth']]
+            units_by_sorter[sorter0] = units_by_sorter[sorter0]+units
+        else:
+            print('Warning: comparison with truth not found for sorter '+sorter0)
 
     ret = dict()
     for sorter in sorters:

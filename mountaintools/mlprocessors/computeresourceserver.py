@@ -1,0 +1,357 @@
+from cairio import CairioClient
+import time
+from mlprocessors import _prepare_processor_job
+from .internal_run_batch_job import run_batch_job
+import multiprocessing
+import traceback
+
+# global
+_realized_files = set()
+
+class ComputeResourceServer():
+    def __init__(self, *, resource_name=None, collection='', share_id='', token=None, upload_token=None):
+        self._resource_name=resource_name
+        self._cairio_client=CairioClient()
+        self._local_client=CairioClient()
+        self._collection=collection
+        self._share_id=share_id
+        if collection:
+            self._cairio_client.configRemoteReadWrite(collection=collection,share_id=share_id,token=token,upload_token=upload_token)
+        else:
+            self._cairio_client.configLocal()
+        self._last_console_message=''
+        self._next_delay=0.25
+        self._num_parallel=1
+        self._srun_opts_string=''
+    def setNumParallel(self,num):
+        self._num_parallel=num
+    def setSrunOptsString(self,optstr):
+        self._srun_opts_string=optstr
+    def start(self):
+        statuses_key=dict(
+            name='compute_resource_batch_statuses',
+            resource_name=self._resource_name
+        )
+        batch_statuses=self._cairio_client.getValue(key=statuses_key,subkey='-',parse_json=True)
+        if batch_statuses is not None:
+            for batch_id,status in batch_statuses.items():
+                if (status!='finished') and (status!='pending') and (not status.startswith('error')):
+                    print('Stopping batch {} with status {}'.format(batch_id,status))
+                    self._cairio_client.setValue(key=statuses_key,subkey=batch_id,value='error: stopped because compute resource was restarted.')
+        self._set_console_message('Starting compute resource: {}'.format(self._resource_name))
+        self._next_delay=0.25
+        while True:
+            batch_statuses=self._cairio_client.getValue(key=statuses_key,subkey='-',parse_json=True)
+            if (batch_statuses is None):
+                self._set_console_message('Unable to read batch statuses.')
+            else:
+                pending_batch_ids=[]
+                for batch_id,status in batch_statuses.items():
+                    if status=='pending':
+                        pending_batch_ids.append(batch_id)
+                pending_batch_ids.sort()
+                if len(pending_batch_ids)>0:
+                    self._handle_batch(pending_batch_ids[0])
+                    self._next_delay=0.25
+                else:
+                    self._set_console_message('No batches pending.')
+            time.sleep(self._next_delay)
+            self._next_delay=self._next_delay+0.25
+            if self._next_delay>3:
+                self._next_delay=3
+
+    def _handle_batch(self,batch_id):
+        self._set_console_message('Starting batch: {}'.format(batch_id))
+        self._set_batch_status(batch_id=batch_id,status='starting')
+        key=dict(
+            name='compute_resource_batch_statuses',
+            resource_name=self._resource_name
+        )
+        try:
+            self._prepare_batch(batch_id)
+        except:
+            traceback.print_exc()
+            print('Error preparing batch.')
+            self._set_batch_status(batch_id=batch_id, status='error: Error preparing batch.')
+            return
+
+        monitor_job_statuses_process = multiprocessing.Process(target=_monitor_job_statuses, args=(batch_id, self._local_client, self._cairio_client))
+        monitor_job_statuses_process.start()
+
+        try:
+            self._run_batch(batch_id)
+        except:
+            traceback.print_exc()
+            print('Error running batch.')
+            self._set_batch_status(batch_id=batch_id, status='error: Error running batch.')
+            monitor_job_statuses_process.terminate()
+            monitor_job_statuses_process.join()
+            return
+
+        monitor_job_statuses_process.terminate()
+        monitor_job_statuses_process.join()
+
+        
+
+        try:
+            self._assemble_batch(batch_id)
+        except:
+            traceback.print_exc()
+            print('Error assembling batch.')
+            self._set_batch_status(batch_id=batch_id, status='error: Error assembling batch')
+            return
+
+        self._check_batch_halt(batch_id)
+        self._set_batch_status(batch_id=batch_id,status='finished')
+
+    def _check_batch_halt(self,batch_id):
+        key=dict(
+            name='compute_resource_batch_halt',
+            batch_id=batch_id
+        )
+        val=self._cairio_client.getValue(key=key)
+        if val is not None:
+            print('BATCH HALTED (batch_id={})'.format(batch_id))
+            # also save it locally so we can potentially stop the individual jobs
+            self._local_client.setValue(key=key,value=val)
+            raise Exception('Stopping batch (batch_id={})'.format(batch_id))
+            
+    def _set_batch_status(self,*,batch_id,status):
+        key=dict(
+            name='compute_resource_batch_statuses',
+            resource_name=self._resource_name
+        )
+        self._cairio_client.setValue(key=key,subkey=batch_id,value=status)
+
+    def _prepare_batch(self,batch_id):
+        self._check_batch_halt(batch_id)
+        self._set_batch_status(batch_id=batch_id,status='preparing')
+        self._set_console_message('Preparing batch: {}'.format(batch_id))
+        # first we download the batch to the local database so we can use the local_client
+        key_batch=dict(
+            name='compute_resource_batch',
+            batch_id=batch_id
+        )
+        batch=self._cairio_client.loadObject(
+            key=key_batch    
+        )
+        self._local_client.saveObject(
+            key=key_batch,
+            object=batch
+        )
+        jobs=batch['jobs']
+        containers_to_realize=set()
+        code_to_realize=set()
+        files_to_realize=set()
+        for ii,job in enumerate(jobs):
+            container0 = job.get('container', None)
+            if container0 is not None:
+                containers_to_realize.add(container0)
+            files_to_realize0 = job.get('files_to_realize', [])
+            for f0 in files_to_realize0:
+                files_to_realize.add(f0)
+            code0 = job.get('processor_code', None)
+            if code0 is not None:
+                code_to_realize.add(code0)
+        if len(containers_to_realize)>0:
+            print('Realizing {} containers...'.format(len(containers_to_realize)))
+            self._realize_files(containers_to_realize)
+        if len(files_to_realize)>0:
+            print('Realizing {} files...'.format(len(files_to_realize)))
+            self._realize_files(files_to_realize)
+        if len(code_to_realize)>0:
+            print('Realizing {} code objects...'.format(len(code_to_realize)))
+            self._realize_files(code_to_realize)
+
+    def _realize_files(self,files):
+        for file0 in files:
+            if file0 not in _realized_files:
+                a=self._cairio_client.realizeFile(file0)
+                if a:
+                    _realized_files.add(a)
+                else:
+                    raise Exception('Unable to realize file: '+file0)
+
+
+    # def _prepare_processor_job(job):
+    #     container = job.get('container', None)
+    #     if container:
+    #         if container not in _realized_containers:
+    #             print('realizing container: '+container)
+    #             a = ca.realizeFile(path=container)
+    #             if a:
+    #                 _realized_containers.add(container)
+    #             else:
+    #                 raise Exception('Unable to realize container file: '+container)
+    #     files_to_realize = job.get('files_to_realize', [])
+    #     for fname in files_to_realize:
+    #         print('realizing file: '+fname)
+    #         a = ca.realizeFile(path=fname)
+    #         if not a:
+    #             raise Exception('Unable to realize file: '+fname)
+    
+    def _run_batch(self,batch_id):
+        self._check_batch_halt(batch_id)
+        self._set_batch_status(batch_id=batch_id,status='running')
+        self._set_console_message('Running batch: {}'.format(batch_id))
+        # in the prepare step, we have it locally
+        batch=self._local_client.loadObject(
+            key=dict(
+                name='compute_resource_batch',
+                batch_id=batch_id
+            )
+        )
+        jobs=batch['jobs']
+
+        system_call=True
+        run_batch_job_args=[
+            dict(
+                collection=self._collection,
+                share_id=self._share_id,
+                batch_id=batch_id,
+                job_index=ii,
+                system_call=system_call,
+                srun_opts_string=None
+            )
+            for ii in range(len(jobs))
+        ]
+        if self._num_parallel>1:
+            if self._srun_opts_string:
+                raise Exception('Cannot use parallel>1 with srun.')
+            print('Running in parallel (num_parallel={}).'.format(self._num_parallel))
+            pool = multiprocessing.Pool(self._num_parallel)
+            pool.map(_run_batch_job_helper, run_batch_job_args)
+            pool.close()
+            pool.join()
+        elif self._srun_opts_string:
+            if len(run_batch_job_args)>0:
+                bjargs=run_batch_job_args[0].copy()
+                bjargs['job_index']=None
+                bjargs['srun_opts_string']=self._srun_opts_string
+                run_batch_job(**bjargs)
+        else:
+            for ii in range(len(jobs)):
+                run_batch_job(**run_batch_job_args[ii])
+                self._check_batch_halt(batch_id)
+
+    def _assemble_batch(self,batch_id):
+        self._check_batch_halt(batch_id)
+        self._set_batch_status(batch_id=batch_id,status='assembling')
+        self._set_console_message('Assembling batch: {}'.format(batch_id))
+        # from the prepare step, we have it locally
+        batch=self._local_client.loadObject(
+            key=dict(
+                name='compute_resource_batch',
+                batch_id=batch_id
+            )
+        )
+        jobs=batch['jobs']
+
+        self._set_batch_status(batch_id=batch_id,status='assembling: {} jobs'.format(len(jobs)))
+
+        keys=[
+            dict(
+                name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii
+            )
+            for ii in range(len(jobs))
+        ]
+        # we can load the results from local database
+        results0=_load_objects(self._local_client,keys=keys)
+        results = []
+        for ii, job in enumerate(jobs):
+            result0=results0[ii]
+            result=dict(
+                job=job,
+                result=result0
+            )
+            results.append(result)
+
+            result_outputs0=result0['outputs']
+            for name0, output0 in job['outputs'].items():
+                if name0 not in result_outputs0:
+                    raise Exception('Unexpected: output {} not found in result'.format(name0))
+                result_output0=result_outputs0[name0]
+                if type(output0)==dict:    
+                    if output0.get('upload', False):
+                        print('Saving output {}...'.format(name0))
+                        self._cairio_client.saveFile(path=result_output0)
+
+            if ('console_out' in result0) and result0['console_out']:
+                self._cairio_client.saveFile(path=result0['console_out'])
+
+        # results = []
+        # for ii, job in enumerate(jobs):
+        #     print('Assembling job {} of {}'.format(ii,len(jobs)))
+        #     self._set_batch_status(batch_id=batch_id,status='assembling: job {} of {}'.format(ii,len(jobs)))
+        #     self._check_batch_halt(batch_id)
+        #     result0=self._local_client.loadObject(key=dict(name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii))
+        #     result=dict(
+        #         job=job,
+        #         result=result0
+        #     )
+        #     results.append(result)
+
+        self._check_batch_halt(batch_id)
+        
+        # finally, save the results remotely
+        self._cairio_client.saveObject(
+            key=dict(
+                name='compute_resource_batch_results',
+                batch_id=batch_id
+            ),
+            object=dict(
+                results=results
+            )
+        )
+
+        self._check_batch_halt(batch_id)
+    
+    def _set_console_message(self,msg):
+        if msg == self._last_console_message:
+            return
+        print('{}: {}'.format(self._resource_name,msg))
+        self._last_console_message=msg
+
+def _monitor_job_statuses(batch_id, local_client, remote_client):
+    key=dict(
+        name='compute_resource_batch_job_statuses',
+        batch_id=batch_id
+    )
+    last_obj=dict()
+    while True:
+        obj=local_client.getValue(key=key,subkey='-',parse_json=True)
+        if obj is not None:
+            for job_index,status in obj.items():
+                if obj[job_index]!=last_obj.get(job_index,None):
+                    print('---------- Setting job status',job_index,status)
+                    remote_client.setValue(key=key,subkey=job_index,value=status)
+            last_obj=obj
+        time.sleep(2)
+
+def _run_batch_job_helper(kwargs):
+    run_batch_job(**kwargs)
+
+def _load_objects(cairio_client,keys):
+    pool = multiprocessing.Pool(20)
+    objects=pool.map(_load_objects_helper, [(cairio_client,key) for key in keys])
+    pool.close()
+    pool.join()
+    for ii,object in enumerate(objects):
+        if object is None:
+            print('Loading missed object...')
+            objects[ii]=cairio_client.loadObject(key=keys[ii])
+            if objects[ii] is None:
+                raise Exception('Unable to load object for key:',keys[ii])
+    return objects
+
+    # ret=[]
+    # for key in keys:
+    #     ret.append(cairio_client.loadObject(key=key))
+    # return ret
+
+def _load_objects_helper(args):
+    cairio_client=args[0]
+    key=args[1]
+    return cairio_client.loadObject(key=key)
+
+    

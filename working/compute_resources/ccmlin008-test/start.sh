@@ -11,7 +11,6 @@ export DISPLAY=""
 COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
 
-../../../bin/compute-resource-start ccmlin008-default \
-	--allow_uncontainerized --parallel 10  \
+../../../bin/compute-resource-start ccmlin008-test \
+	--allow_uncontainerized --parallel 4  \
 	--collection $COLLECTION --share_id $SHARE_ID
-

@@ -152,10 +152,11 @@ function CASUploadServer() {
     });
     X.setSha1(params.sha1);
     X.setFileSize(file_size);
-    if (X.checkExists()) {
-      error_response(req,res,500,'File already exists on server.');
-      return;
-    }
+    // No longer check -- just allow the upload
+    // if (X.checkExists()) {
+    //   error_response(req,res,500,'File already exists on server.');
+    //   return;
+    // }
     let timer=new Date();
 
     let sent=false;
@@ -328,10 +329,13 @@ function Sha1Cache(directory) {
 
   function initialize_upload(sha1,file_size,callback) {
     let path=get_upload_path(sha1);
+    /*
+    // no longer check this
     if (fs.existsSync(path)) {
       callback('File already exists on server.');
       return;
     }
+    */
     let tmp_fname=path+'.uploading.'+make_random_id(6);
     let write_stream=fs.createWriteStream(tmp_fname);
     let upload_id=m_last_upload_id+1;
@@ -420,8 +424,14 @@ function Sha1Cache(directory) {
       fs.renameSync(X.tmp_fname,fname);
     }
     catch(err) {
-      console.error(`Error renaming file ${X.tmp_fname} -> ${fname}`);
-      return false;
+      if (fs.existsSync(fname)) {
+        //it is okay... it's already there
+        fs.unlinkSync(tmp_fname);
+      }
+      else {
+        console.error(`Error renaming file ${X.tmp_fname} -> ${fname}`);
+        return false;
+      }
     }
     for (i in m_file_added_handlers) {
     	m_file_added_handlers[i](rel_fname);

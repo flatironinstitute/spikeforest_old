@@ -5,6 +5,7 @@ import os
 import shutil
 import random
 import string
+import multiprocessing
 from . import sorters as sorters
 
 from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort
@@ -175,6 +176,54 @@ Processors=dict(
     KiloSort=(KiloSort,None),
     Yass=(YASS,'default')
 )
+
+def _create_sorting_job_for_recording_helper(kwargs):
+    return _create_sorting_job_for_recording(**kwargs)
+
+def _create_sorting_job_for_recording(recording, sorter):
+    print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
+
+    sorting_params=sorter['params']
+    processor_name=sorter['processor_name']
+    SS=Processors[processor_name][0]
+    SS_container=Processors[processor_name][1]
+
+    dsdir=recording['directory']
+    job=SS.createJob(
+        _container=SS_container,
+        recording_dir=dsdir,
+        channels=recording.get('channels',[]),
+        firings_out=dict(ext='.mda',upload=True),
+        **sorting_params
+    )
+    return job
+
+def _gather_sorting_result_for_recording_helper(kwargs):
+    return _gather_sorting_result_for_recording(**kwargs)
+
+def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
+    firings_true_path=recording['directory']+'/firings_true.mda'
+
+    result0=sorting_job['result']
+    outputs0=result0['outputs']
+    console_out=result0.get('console_out','')
+
+    processor_name=sorter['processor_name']
+    SS=Processors[processor_name][0]
+    SS_container=Processors[processor_name][1]
+
+    result=dict(
+        recording=recording,
+        sorter=sorter,
+        firings_true=firings_true_path,
+        processor_name=SS.NAME,
+        processor_version=SS.VERSION,
+        execution_stats=result0['stats'],
+        console_out=ca.saveText(text=console_out,basename='console_out.txt'),
+        container=SS_container,
+        firings=outputs0['firings_out']
+    )
+    return result
         
 def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
     print('>>>>>> sort recordings')
@@ -193,43 +242,56 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
         if not ca.findFile(path=SS_container):
             raise Exception('Unable to realize container: '+SS_container)
         
-    print('Sorting recordings using {}'.format(processor_name))
+    print('>>>>>>>>>>> Sorting recordings using {}'.format(processor_name))
 
-    sorting_jobs=[]
-    for recording in recordings:
-        dsdir=recording['directory']
-        job=SS.createJob(
-            _container=SS_container,
-            recording_dir=dsdir,
-            channels=recording.get('channels',[]),
-            firings_out=dict(ext='.mda',upload=True),
-            **sorting_params
-        )
-        sorting_jobs.append(job)
+    pool = multiprocessing.Pool(20)
+    sorting_jobs=pool.map(_create_sorting_job_for_recording_helper, [dict(recording=recording, sorter=sorter) for recording in recordings])
+    pool.close()
+    pool.join()
 
-    label='Sort recordings ({})'.format(processor_name)
+    # sorting_jobs=[]
+    # for recording in recordings:
+    #     print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
+    #     dsdir=recording['directory']
+    #     job=SS.createJob(
+    #         _container=SS_container,
+    #         recording_dir=dsdir,
+    #         channels=recording.get('channels',[]),
+    #         firings_out=dict(ext='.mda',upload=True),
+    #         **sorting_params
+    #     )
+    #     sorting_jobs.append(job)
+
+    label='Sort recordings using {}'.format(processor_name)
     mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
     
-    sorting_results=[]
-    for i,recording in enumerate(recordings):
-        firings_true_path=recording['directory']+'/firings_true.mda'
+    print('Gathering sorting results...')
 
-        result0=sorting_jobs[i]['result']
-        outputs0=result0['outputs']
-        console_out=result0.get('console_out','')
+    pool = multiprocessing.Pool(20)
+    sorting_results=pool.map(_gather_sorting_result_for_recording_helper, [dict(recording=recordings[ii], sorting_job=sorting_jobs[ii], sorter=sorter) for ii in range(len(recordings))])
+    pool.close()
+    pool.join()
 
-        result=dict(
-            recording=recording,
-            sorter=sorter,
-            firings_true=firings_true_path,
-            processor_name=SS.NAME,
-            processor_version=SS.VERSION,
-            #execution_stats=result0['stats'],
-            console_out=ca.saveText(text=console_out,basename='console_out.txt'),
-            container=SS_container,
-            firings=outputs0['firings_out']
-        )
-        sorting_results.append(result)
+    # sorting_results=[]
+    # for i,recording in enumerate(recordings):
+    #     firings_true_path=recording['directory']+'/firings_true.mda'
+
+    #     result0=sorting_jobs[i]['result']
+    #     outputs0=result0['outputs']
+    #     console_out=result0.get('console_out','')
+
+    #     result=dict(
+    #         recording=recording,
+    #         sorter=sorter,
+    #         firings_true=firings_true_path,
+    #         processor_name=SS.NAME,
+    #         processor_version=SS.VERSION,
+    #         #execution_stats=result0['stats'],
+    #         console_out=ca.saveText(text=console_out,basename='console_out.txt'),
+    #         container=SS_container,
+    #         firings=outputs0['firings_out']
+    #     )
+    #     sorting_results.append(result)
 
         # outputs=X.outputs
         # stats=X.stats

@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import subprocess
 from cairio import client as ca
+from cairio import CairioClient
 import inspect
 from subprocess import Popen, PIPE
 import shlex
@@ -536,7 +537,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 else:
                     fname = os.path.abspath(fname)
                 job['files_to_realize'][i] = fname
-        for nam0, output0 in job['outputs'].items():
+        for name0, output0 in job['outputs'].items():
             if type(output0)==dict:
                 if 'dest_path' in output0:
                     if compute_resource is not None:
@@ -545,7 +546,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
 
     if num_workers is not None:
         if compute_resource is not None:
-            raise Exception('Cannot specify num_workers and compute_resource.')
+            raise Exception('Cannot specify both num_workers and compute_resource.')
         pool = multiprocessing.Pool(num_workers)
         results = pool.map(executeJob, jobs)
         pool.close()
@@ -554,42 +555,65 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
             job['result'] = results[i]
     else:
         if compute_resource is not None:
-            import batcho
-            if batch_name is None:
-                batch_name = 'batch_'+_random_string(10)
-            batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
-                            compute_resource=compute_resource)
-            last_update_string = ''
-            while True:
-                batch_status = batcho.get_batch_status(batch_name=batch_name)
-                if batch_status is None:
-                    update_string = 'Waiting...'
-                else:
-                    batch_status0 = batch_status.get('status', '')
-                    if batch_status0 == 'finished':
-                        print('Batch finished.')
-                        break
-                    if batch_status0 == 'error':
-                        err0 = batch_status.get('error', '')
-                        raise Exception('Error executing batch: {}'.format(err0))
-                    statuses_list = list(batcho.get_batch_job_statuses(
-                        batch_name=batch_name).values())
-                    num_ready = statuses_list.count('ready')
-                    num_running = statuses_list.count('running')
-                    num_finished = statuses_list.count('finished')
-                    update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
-                        batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
-                if update_string != last_update_string:
-                    print(update_string)
-                last_update_string = update_string
-                time.sleep(1)
+            if type(compute_resource)==dict:
+                # new method
+                from .computeresourceclient import ComputeResourceClient
+                CRC=ComputeResourceClient(**compute_resource)
+                batch_id = CRC.initializeBatch(jobs=jobs, label=label)
+                CRC.startBatch(batch_id=batch_id)
+                try:
+                    CRC.monitorBatch(batch_id=batch_id)
+                except:
+                    CRC.stopBatch(batch_id=batch_id)
+                    raise
 
-            results0 = batcho.get_batch_results(batch_name=batch_name)
-            if results0 is None:
-                raise Exception('Unable to get batch results.')
-            for i, job in enumerate(jobs):
-                result0 = results0['results'][i]['result']
-                job['result'] = result0
+                results0 = CRC.getBatchJobResults(batch_id=batch_id)
+                if results0 is None:
+                    raise Exception('Unable to get batch results.')
+                for i, job in enumerate(jobs):
+                    result0 = results0['results'][i]['result']
+                    if result0 is None:
+                        raise Exception('Unable to find result for job.')
+                    job['result'] = result0
+            else:
+                # old method
+                import batcho
+                if batch_name is None:
+                    batch_name = 'batch_'+_random_string(10)
+                batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs,
+                                compute_resource=compute_resource)
+                last_update_string = ''
+                while True:
+                    batch_status = batcho.get_batch_status(batch_name=batch_name)
+                    if batch_status is None:
+                        update_string = 'Waiting...'
+                    else:
+                        batch_status0 = batch_status.get('status', '')
+                        if batch_status0 == 'finished':
+                            print('Batch finished.')
+                            break
+                        if batch_status0 == 'error':
+                            err0 = batch_status.get('error', '')
+                            raise Exception('Error executing batch: {}'.format(err0))
+                        statuses_list = list(batcho.get_batch_job_statuses(
+                            batch_name=batch_name).values())
+                        num_ready = statuses_list.count('ready')
+                        num_running = statuses_list.count('running')
+                        num_finished = statuses_list.count('finished')
+                        update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
+                            batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
+                    if update_string != last_update_string:
+                        print(update_string)
+                    last_update_string = update_string
+                    time.sleep(1)
+
+                results0 = batcho.get_batch_results(batch_name=batch_name)
+                if results0 is None:
+                    raise Exception('Unable to get batch results.')
+                for i, job in enumerate(jobs):
+                    result0 = results0['results'][i]['result']
+                    job['result'] = result0
+            
         else:
             for job in jobs:
                 job['result'] = executeJob(job)
@@ -598,21 +622,26 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
         results0=job['result']
         result_outputs0=results0['outputs']
         for name0, output0 in job['outputs'].items():
+            if name0 not in result_outputs0:
+                raise Exception('Unexpected: result not found {}'.format(name0))
+            result_output0=result_outputs0[name0]
             if type(output0)==dict:
                 if 'dest_path' in output0:
                     dest_path0=output0['dest_path']
-                    if name0 not in result_outputs0:
-                        raise Exception('Unexpected: result not found {}'.format(name0))
-                    result_output0=result_outputs0[name0]
-                    print('Setting output {} --> {}'.format(name0,dest_path0))
+                    print('Saving output {} --> {}'.format(name0,dest_path0))
                     ca.realizeFile(path=result_output0, dest_path=dest_path0)
+                if compute_resource is None:
+                    if output0.get('upload', False):
+                        ca.saveFile(path=result_output0)
 
 
-def executeJob(job):
+def executeJob(job, cairio_client=ca):
     timer = time.time()
     tempdir = tempfile.mkdtemp()
     try:
-        processor_code = ca.loadObject(path=job['processor_code'])
+        processor_code = cairio_client.loadObject(path=job['processor_code'])
+        if processor_code is None:
+            raise Exception('Unable to load processor code for job: '+job['processor_code'])
         _write_python_code_to_directory(
             tempdir+'/processor_source', processor_code)
 
@@ -620,7 +649,7 @@ def executeJob(job):
 
         container = job.get('container', None)
         if container:
-            container = ca.realizeFile(path=container)
+            container = cairio_client.realizeFile(path=container)
 
         execute_kwargs = dict(
             _cache=job.get('_cache', None),
@@ -638,6 +667,10 @@ def executeJob(job):
             execute_kwargs[key] = tmp_fname
         for key in job['parameters']:
             execute_kwargs[key] = job['parameters'][key]
+        temporary_output_files['_stats_out']=tempdir+'/_stats.json'
+        execute_kwargs['_stats_out']=temporary_output_files['_stats_out']
+        temporary_output_files['_console_out']=tempdir+'/_console_out.txt'
+        execute_kwargs['_console_out']=temporary_output_files['_console_out']
         expanded_execute_kwargs = _get_expanded_args(execute_kwargs)
 
         # Code generation
@@ -656,23 +689,29 @@ if __name__ == "__main__":
 
         _write_text_file(tempdir+'/execute.py', code)
 
-        retcode, console_out = _run_command_and_print_output(
+        retcode, _unused_console_out = _run_command_and_print_output(
             'python3 {}/execute.py'.format(tempdir))
-        if retcode != 0:
-            raise Exception('Non-zero return code when running processor job')
+
+        console_out=cairio_client.loadText(path=temporary_output_files['_console_out'])
+        stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
+
         ret = dict(
+            retcode=retcode,
             outputs=dict(),
-            console_out=console_out
+            stats=stats_out,
+            console_out=cairio_client.saveText(console_out)
         )
-        for key in job['outputs']:
-            out0 = job['outputs'][key]
-            if out0.get('upload', False):
-                ret['outputs'][key] = ca.saveFile(
-                    temporary_output_files[key], basename=key+out0['ext'], confirm=True)
-            else:
-                ret['outputs'][key] = 'sha1://' + \
-                    ca.computeFileSha1(
-                        temporary_output_files[key])+'/'+key+out0['ext']
+        
+        if retcode==0:
+            for key in job['outputs']:
+                out0 = job['outputs'][key]
+                if out0.get('upload', False):
+                    ret['outputs'][key] = ca.saveFile(
+                        temporary_output_files[key], basename=key+out0['ext'], confirm=True)
+                else:
+                    ret['outputs'][key] = 'sha1://' + \
+                        cairio_client.computeFileSha1(
+                            temporary_output_files[key])+'/'+key+out0['ext']
         return ret
     except:
         shutil.rmtree(tempdir)
@@ -736,8 +775,7 @@ class ConsoleCapture():
         return self._console_out
 
 
-def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, **kwargs):
-
+def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=False, _system_call_prefix=None, _keep_temp_files=None, _stats_out=None, _console_out=None, **kwargs):
     if _container == 'default':
         if hasattr(proc, 'CONTAINER'):
             _container = proc.CONTAINER
@@ -789,6 +827,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         else:
             val0 = kwargs[name0]
         setattr(X, name0, val0)
+
+    found_in_cache=False
+
     if _cache:
         outputs_all_in_cairio = True
         output_signatures = dict()
@@ -857,106 +898,128 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     key=console_out_signature0, local_first=True)
                 if console_out:
                     ret.console_out = console_out
-                return ret
+                
+                found_in_cache=True
             else:
                 print('Found outputs in cache, but forcing run...')
 
-    for input0 in proc.INPUTS:
-        name0 = input0.name
-        if hasattr(X, name0):
-            val0 = getattr(X, name0)
-            if input0.directory:
-                val1 = val0
-            else:
-                val1 = ca.realizeFile(path=val0)
-                if not val1:
-                    raise Exception(
-                        'Unable to realize input file {}: {}'.format(name0, val0))
-            setattr(X, name0, val1)
-
-    temporary_output_files = set()
-    for output0 in proc.OUTPUTS:
-        name0 = output0.name
-        val0 = getattr(X, name0)
-        job_signature0 = compute_processor_job_output_signature(X, None)
-        if type(val0) != str:
-            fname0 = job_signature0+'_'+name0+val0['ext']
-            tmp_fname = create_temporary_file(fname0)
-            temporary_output_files.add(tmp_fname)
-            setattr(X, name0, tmp_fname)
-
-    # Now it is time to execute
-    start_time = time.time()
-    if _container is None:
-        print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
-        console_capture = ConsoleCapture()
-        console_capture.start_capturing()
-        setattr(X, '_keep_temp_files', _keep_temp_files)
-        try:
-            X.run()
-        except:
-            console_capture.stop_capturing()
-            # clean up temporary output files
-            print('Problem executing {}.'.format(proc.NAME))
-            if _keep_temp_files:
-                print('Not cleaning up files because _keep_temp_files was specified')
-            else:
-                print('Cleaning up {} files.'.format(
-                    len(temporary_output_files)))
-                for fname in temporary_output_files:
-                    if os.path.exists(fname):
-                        os.remove(fname)
-            raise
-        console_capture.stop_capturing()
-        console_out = console_capture.consoleOut()
-        print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
+    if found_in_cache:
+        print('MLPR USING CACHE::::::::::::::::::::::::::::: '+proc.NAME)
     else:
-        # in a container
-        container_path = ca.realizeFile(path=_container)
-        if not container_path:
-            raise Exception('Unable to realize container file: '+_container)
-        tempdir = tempfile.mkdtemp()
-        try:
-            # Do not use cache inside container... we handle caching outside container
-            console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
-                                          _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
-        except:
+        for input0 in proc.INPUTS:
+            name0 = input0.name
+            if hasattr(X, name0):
+                val0 = getattr(X, name0)
+                if input0.directory:
+                    val1 = val0
+                else:
+                    val1 = ca.realizeFile(path=val0)
+                    if not val1:
+                        raise Exception(
+                            'Unable to realize input file {}: {}'.format(name0, val0))
+                setattr(X, name0, val1)
+
+        temporary_output_files = set()
+        for output0 in proc.OUTPUTS:
+            name0 = output0.name
+            val0 = getattr(X, name0)
+            job_signature0 = compute_processor_job_output_signature(X, None)
+            if type(val0) != str:
+                fname0 = job_signature0+'_'+name0+val0['ext']
+                tmp_fname = create_temporary_file(fname0)
+                temporary_output_files.add(tmp_fname)
+                setattr(X, name0, tmp_fname)
+
+        # Now it is time to execute
+        start_time = time.time()
+        if _container is None:
+            print('MLPR EXECUTING::::::::::::::::::::::::::::: '+proc.NAME)
+            console_capture = ConsoleCapture()
+            console_capture.start_capturing()
+            setattr(X, '_keep_temp_files', _keep_temp_files)
+            try:
+                X.run()
+            except:
+                console_capture.stop_capturing()
+                # clean up temporary output files
+                print('Problem executing {}.'.format(proc.NAME))
+                if _keep_temp_files:
+                    print('Not cleaning up files because _keep_temp_files was specified')
+                else:
+                    print('Cleaning up {} files.'.format(
+                        len(temporary_output_files)))
+                    for fname in temporary_output_files:
+                        if os.path.exists(fname):
+                            os.remove(fname)
+                raise
+            console_capture.stop_capturing()
+            console_out = console_capture.consoleOut()
+            print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
+        else:
+            # in a container
+            container_path = ca.realizeFile(path=_container)
+            if not container_path:
+                raise Exception('Unable to realize container file: '+_container)
+            tempdir = tempfile.mkdtemp()
+            try:
+                # Do not use cache inside container... we handle caching outside container
+                console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
+                                            _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
+            except:
+                if _keep_temp_files:
+                    print(
+                        'Not removing temporary directory because _keep_temp_files was specified')
+                else:
+                    shutil.rmtree(tempdir)
+                raise
             if _keep_temp_files:
                 print(
                     'Not removing temporary directory because _keep_temp_files was specified')
             else:
                 shutil.rmtree(tempdir)
-            raise
-        if _keep_temp_files:
-            print(
-                'Not removing temporary directory because _keep_temp_files was specified')
-        else:
-            shutil.rmtree(tempdir)
 
-    end_time = time.time()
-    elapsed_time = end_time-start_time
+        end_time = time.time()
+        elapsed_time = end_time-start_time
 
-    for output0 in proc.OUTPUTS:
-        name0 = output0.name
-        output_fname = getattr(X, name0)
-        if output_fname in temporary_output_files:
-            output_fname = ca.moveToLocalCache(output_fname)
-        ret.outputs[name0] = output_fname
+        for output0 in proc.OUTPUTS:
+            name0 = output0.name
+            output_fname = getattr(X, name0)
+            if output_fname in temporary_output_files:
+                output_fname = ca.moveToLocalCache(output_fname)
+            ret.outputs[name0] = output_fname
+            if _cache:
+                output_sha1 = ca.computeFileSha1(output_fname)
+                signature0 = output_signatures[name0]
+                ca.setValue(key=signature0, value=output_sha1, local_also=True)
+
+        ret.stats['start_time'] = start_time
+        ret.stats['end_time'] = end_time
+        ret.stats['elapsed_sec'] = elapsed_time
+
+        ret.console_out = console_out
+
         if _cache:
-            output_sha1 = ca.computeFileSha1(output_fname)
-            signature0 = output_signatures[name0]
-            ca.setValue(key=signature0, value=output_sha1, local_also=True)
+            ca.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
+            ca.saveText(key=console_out_signature0,
+                        text=ret.console_out, local_also=True)
 
-    ret.stats['start_time'] = start_time
-    ret.stats['end_time'] = end_time
-    ret.stats['elapsed_sec'] = elapsed_time
+    if _console_out:
+        if ret.console_out:
+            _write_text_file(_console_out, ret.console_out)
+        else:
+            _write_text_file(_console_out, '')
 
-    ret.console_out = console_out
+    if _stats_out:
+        if ret.stats:
+            _write_text_file(_stats_out, json.dumps(ret.stats))
+        else:
+            _write_text_file(_stats_out, json.dumps({}))
 
-    if _cache:
-        ca.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
-        ca.saveText(key=console_out_signature0,
-                    text=ret.console_out, local_also=True)
+    if ret.stats:
+        txt0='elapsed time (sec)'
+        if found_in_cache:
+            txt0='original elapsed time (sec)'
+        print('MLPR {}: {}'.format(txt0, ret.stats['elapsed_sec']))
 
     return ret
 

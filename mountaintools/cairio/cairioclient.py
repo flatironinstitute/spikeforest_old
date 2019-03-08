@@ -13,7 +13,17 @@ from .cairioremoteclient import _http_get_json
 import time
 from getpass import getpass
 import shutil
+try:
+    from filelock import FileLock
+except:
+    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
 
+
+env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools/.env')
+if os.path.exists(env_path):
+    print('Loading environment from: '+env_path)
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=env_path,verbose=True)
 
 class CairioClient():
     def __init__(self):
@@ -31,6 +41,7 @@ class CairioClient():
         self._verbose = False
         self._local_db = CairioLocal()
         self._remote_client = CairioRemoteClient()
+        self._login_config=None
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         if (ask_password) and (password is None):
@@ -45,6 +56,83 @@ class CairioClient():
         except:
             raise Exception('Error parsing config.')
         self.setRemoteConfig(**config)
+
+    def login(self,*,user=None,password=None,interactive=False,ask_password=False):
+        if interactive:
+            ask_password=True
+
+        from simplecrypt import encrypt, decrypt
+
+        if user is None:
+            user=os.environ.get('MOUNTAIN_USER','')
+            if user and (password is None):
+                password=os.environ.get('MOUNTAIN_PASSWORD','')
+
+        if not user:
+            if interactive:
+                user=input('Mountain user: ')
+
+        if not user:
+            raise Exception('Cannot login, no user found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
+
+        if not password:
+            if ask_password:
+                password=getpass('Mountain password for {}: '.format(user))
+
+        if not password:
+            raise Exception('Cannot login, no password found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
+
+        key=dict(
+            name='user_config',
+            user=user
+        )
+        print('Logging in as {}...'.format(user))
+        val=self.getValue(
+            collection='admin',
+            key=key
+        )
+        if not val:
+            raise Exception('Unable to find config for user: {}'.format(user))
+        config=json.loads(
+            decrypt(
+                password,
+                base64.b64decode(val.encode('utf-8'))
+            )
+        )
+        self._login_config=config
+        print('Logged in as {}'.format(user))
+
+    def configLocal(self):
+        self.setRemoteConfig(
+            collection='',
+            token='',
+            share_id='',
+            upload_token=''
+        )
+    
+    def configRemoteReadonly(self, *, collection, share_id=''):
+        self.setRemoteConfig(
+            collection=collection,
+            token='',
+            share_id=share_id,
+            upload_token=''
+        )
+
+    def configRemoteReadWrite(self, *, collection, share_id, token=None, upload_token=None):
+        if token is None:
+            token=self._find_collection_token_from_login(collection)
+            if not token:
+                raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
+        if upload_token is None:
+            upload_token=self._find_upload_token_from_login(share_id=share_id)
+            if not upload_token:
+                raise Exception('Cannot configure remote read-write. Missing upload token for {}, and not found in login config.'.format(share_id))
+        self.setRemoteConfig(
+            collection=collection,
+            token=token,
+            share_id=share_id,
+            upload_token=upload_token
+        )
 
     def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
         if url is not None:
@@ -100,6 +188,7 @@ class CairioClient():
                 ret = json.loads(ret)
             except:
                 print('Warning: Problem parsing json in cairio.getValue()')
+
                 return None
         return ret
 
@@ -232,14 +321,51 @@ class CairioClient():
                 return ret
         return None
 
+    def _find_collection_token_from_login(self, collection, try_global=True):
+        if try_global:
+            ret = self._find_collection_token_from_login(collection=collection,try_global=False)
+            if ret is not None:
+                return ret
+            else:
+                from cairio import client as global_client
+                return global_client._find_collection_token_from_login(collection=collection, try_global=False)
+        if not self._login_config:
+            return None
+        if not 'cairio_collections' in self._login_config:
+            return None
+        for cc in self._login_config['cairio_collections']:
+            if cc['name']==collection:
+                if 'token' in cc:
+                    return cc['token']
+        return None
+
+    def _find_upload_token_from_login(self, share_id, try_global=True):
+        if try_global:
+            ret = self._find_upload_token_from_login(share_id=share_id,try_global=False)
+            if ret is not None:
+                return ret
+            else:
+                from cairio import client as global_client
+                return global_client._find_upload_token_from_login(share_id=share_id, try_global=False)
+        if not self._login_config:
+            return None
+        if not 'kbucket_shares' in self._login_config:
+            return None
+        for ks in self._login_config['kbucket_shares']:
+            if ks['node_id']==share_id:
+                if 'upload_token' in ks:
+                    return ks['upload_token']
+        return None
+
     def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
         if password is not None:
             key = dict(key=key, password=password)
         collection = self._remote_config['collection']
-        if local_also or (not collection):
+        token = self._remote_config['token']
+        if local_also or (not (collection and token)):
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
                 return False
-        if collection:
+        if (collection and token):
             if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=self._remote_config['token']):
                 return False
         return True
@@ -285,11 +411,11 @@ class CairioClient():
     def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
         if not path:
-            return False
+            return None
         ret = self._local_db.saveFile(
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:
-            return False
+            return None
         share_id = self._remote_config['share_id']
         upload_token = self._remote_config['upload_token']
         if (share_id) and (upload_token) and (not prevent_upload):
@@ -300,36 +426,37 @@ class CairioClient():
                     cas_upload_server_url = self._get_cas_upload_server_url_for_share(
                         share_id=share_id)
                     if cas_upload_server_url:
-                        if self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
-                            if confirm:
-                                self._wait_until_found_on_kbucket(
-                                    share_id=share_id, sha1=sha1)
+                        if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
+                            raise Exception('Problem uploading file {}'.format(path))
+                        # if confirm:
+                        #    self._wait_until_found_on_kbucket(
+                        #        share_id=share_id, sha1=sha1)
         return ret
 
-    def _wait_until_found_on_kbucket(self, *, share_id, sha1):
-        timer = time.time()
-        wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
-            share_id, sha1)
-        print(wait_str)
-        retry_delays = [0.25, 0.5, 1, 2, 4, 8]
-        if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
-            print('File is on kbucket: {}'.format(sha1))
-            return True
-        raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
-                                                                                                 time.time()-timer))
+    # def _wait_until_found_on_kbucket(self, *, share_id, sha1):
+    #     timer = time.time()
+    #     wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
+    #         share_id, sha1)
+    #     print(wait_str)
+    #     retry_delays = [0.25, 0.5, 1, 2, 4, 8]
+    #     if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
+    #         print('File is on kbucket: {}'.format(sha1))
+    #         return True
+    #     raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
+    #                                                                                              time.time()-timer))
 
-    def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
-        ii = 0  # index for retry delays
-        while True:
-            url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-            if url:
-                return True
-            if ii < len(retry_delays):
-                print('Retrying in {} seconds...'.format(retry_delays[ii]))
-                time.sleep(retry_delays[ii])
-                ii = ii+1
-            else:
-                return False
+    # def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
+    #     ii = 0  # index for retry delays
+    #     while True:
+    #         url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
+    #         if url:
+    #             return True
+    #         if ii < len(retry_delays):
+    #             print('Retrying in {} seconds...'.format(retry_delays[ii]))
+    #             time.sleep(retry_delays[ii])
+    #             ii = ii+1
+    #         else:
+    #             return False
 
     def _find_on_kbucket(self, *, share_id, sha1):
         # first check in the upload location
@@ -447,9 +574,16 @@ class CairioLocal():
             if subkey == '-':
                 return json.dumps(val)
             return val.get(subkey, None)
+        
         keyhash = _hash_of_key(key)
         db_path = self._get_db_path_for_keyhash(keyhash)
-        db = _db_load(db_path)
+
+        ####################################
+        lock=FileLock(db_path+'.lock')
+        with lock:
+            db = _db_load(db_path)
+        ####################################
+
         doc = db.get(keyhash, None)
         if doc:
             return doc.get('value')
@@ -458,35 +592,67 @@ class CairioLocal():
 
     def setValue(self, *, key, subkey, value, overwrite):
         if subkey is not None:
-            val = self.getValue(key=dict(subkeys=True, key=key))
-            try:
-                val = json.loads(val)
-            except:
-                val = None
-            if val is None:
-                val = dict()
-            if value is not None:
-                val[subkey] = value
-            else:
-                if subkey == '-':
-                    val = dict()
+            key2=dict(subkeys=True, key=key)
+            keyhash2 = _hash_of_key(key2)
+            db_path2 = self._get_db_path_for_keyhash(keyhash2)    
+
+            ####################################
+            lock=FileLock(db_path2+'.lock')
+            with lock:
+                db2 = _db_load(db_path2)
+                doc2 = db2.get(keyhash2, None)
+                if doc2 is None:
+                    doc2 = dict(value=dict())
+                valstr=doc2.get('value','{}')
+                try:
+                    valobj=json.loads(valstr)
+                except:
+                    print('Warning: problem parsing json for subkeys:',valstr)
+                    valobj=dict()
+                if subkey=='-':
+                    if value is not None:
+                        raise Exception('Cannot set all subkeys with value that is not None')
+                    # clear the keys
+                    if not overwrite:
+                        if len(valobj.keys())!=0:
+                            return False
+                    valobj=dict()
                 else:
-                    if subkey in val:
-                        del val[subkey]
-            return self.setValue(key=dict(subkeys=True, key=key), value=json.dumps(val), subkey=None, overwrite=overwrite)
-        keyhash = _hash_of_key(key)
-        db_path = self._get_db_path_for_keyhash(keyhash)
-        db = _db_load(db_path)
-        doc = db.get(keyhash, None)
-        if doc is None:
-            doc = dict()
-        if value is not None:
-            doc['value'] = value
-            db[keyhash] = doc
+                    if subkey in valobj:
+                        if not overwrite:
+                            return False
+                        if value is None:
+                            del valobj[subkey]
+                        else:
+                            valobj[subkey]=value
+                    else:
+                        if value is not None:
+                            valobj[subkey]=value
+                doc2['value']=json.dumps(valobj)
+                db2[keyhash2]=doc2
+                _db_save(db_path2, db2)
+            ####################################
         else:
-            if keyhash in db:
-                del db[keyhash]
-        _db_save(db_path, db)
+            # No subkey
+            keyhash = _hash_of_key(key)
+            db_path = self._get_db_path_for_keyhash(keyhash)
+
+            ####################################
+            lock=FileLock(db_path+'.lock')
+            with lock:
+                db = _db_load(db_path)
+                doc = db.get(keyhash, None)
+                if doc is None:
+                    doc = dict()
+                if value is not None:
+                    doc['value'] = value
+                    db[keyhash] = doc
+                else:
+                    if keyhash in db:
+                        del db[keyhash]
+                _db_save(db_path, db)
+            ####################################
+        
         return True
 
     def getSubKeys(self, *, key):
@@ -598,14 +764,15 @@ class CairioLocal():
             if 'accessible' not in node_info:
                 url00 = node_info.get('listen_url', '') + \
                     '/'+share_id+'/api/nodeinfo'
-                print(
-                    'Testing whether share {} is directly accessible...'.format(share_id))
+                #print(
+                #    'Testing whether share {} is directly accessible...'.format(share_id))
                 node_info['accessible'] = _test_url_accessible(
                     url00, timeout=2)
                 if node_info['accessible']:
-                    print('Share {} is directly accessible.'.format(share_id))
+                    # print('Share {} is directly accessible.'.format(share_id))
+                    pass
                 else:
-                    print('Share {} is not directly accessible.'.format(share_id))
+                    print('Share {} is not directly accessible (using hub).'.format(share_id))
         return node_info
 
     def _get_kbucket_url_for_share(self, *, share_id):
@@ -650,20 +817,120 @@ class CairioLocal():
 
 # TODO: make this thread-safe
 def _db_load(path):
-    try:
-        db = _read_json_file(path)
-    except:
-        db = dict()
-    return db
-
+    if os.path.exists(path):
+        try:
+            db_txt = _read_text_file(path)
+        except:
+            if os.path.exists(path):
+                raise Exception('Unable to read database file: '+path)
+            else:
+                return dict()
+        try:
+            db = json.loads(db_txt)
+        except:
+            if os.path.exists(path+'.save'):
+                print('Warning: Problem parsing json in database file (restoring saved file): '+path)
+                os.rename(path+'.save',path)
+            else:
+                print('Warning: Problem parsing json in database file (deleting): '+path)
+                os.unlink(path)
+            return _db_load(path)
+        return db
+    else:
+        return dict()
+    
 
 def _db_save(path, db):
+    # create a backup first
+    if os.path.exists(path):
+        try:
+            # make sure it is good before doing the backup
+            _read_json_file(path) # if not good, we get an exception
+            if os.path.exists(path+'.save'):
+                os.unlink(path+'.save')
+            shutil.copyfile(path,path+'.save')
+        except:
+            # worst case, let's just proceed
+            pass
     _write_json_file(db, path)
+
+# def _db_acquire_lock(path, count=0):
+#     if count>5:
+#         # If we have failed to acquire the lock after this many retries,
+#         # let's wait a random amount of time before proceeding
+#         print('Warning: having trouble acquiring lock for database file: '+path)
+#         time.sleep(random.uniform(1,2))
+#     elif count>10:
+#         # If we have failed to acquire the lock after this many retries,
+#         # then it is a failure
+#         raise Exception('Error acquiring lock for database file: '+path)
+
+#     if not os.path.exists(path+'.lock'):
+#         tmp_fname=path+'.lock.'+_random_string(6)
+#         try:
+#             with open(tmp_fname,'w') as f:
+#                 f.write('lock file for database')
+#         except:
+#             raise Exception('Unable to write temporary file for database lock file: '+tmp_fname)
+#         if os.path.exists(path+'.lock'):
+#             # now suddenly it exists... let's retry
+#             os.unlink(tmp_fname)
+#             return _db_acquire_lock(path, count+1)
+#         try:
+#             os.rename(tmp_fname, path+'.lock')
+#         except:
+#             # cannot rename -- maybe it suddenly exists. Retry
+#             os.unlink(tmp_fname)
+#             return _db_acquire_lock(path, count+1)
+#         if not os.path.exists(path+'.lock'):
+#             raise Exception('Unexpected problem acquiring lock. File does not exist: '+path+'.lock')
+#         # we got the lock!
+#         print('Locked!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',path)
+#         return True
+#     else:
+#         # the lock file exists, let's see how old it is
+#         try:
+#             file_mod_time = os.stat(path+'.lock').st_mtime
+#         except:
+#             # maybe the lock file has disappeared... let's retry
+#             return _db_acquire_lock(path, count+1)
+#         file_age = time.time() - file_mod_time
+#         if file_age > 1:
+#             # older than one second is considered stale
+#             print('Warning: removing stale database lock file: '+path+'.lock')
+#             try:
+#                 os.unlink(path+'.lock')
+#             except:
+#                 # maybe the file has disappeared... we are retrying anyway
+#                 pass
+#             return _db_acquire_lock(path, count+1)
+#         if file_age > 0.1:
+#             # The file is not stale yet, but we suspect it is going to become stale
+#             # so let's wait a second before retrying
+#             time.sleep(1)
+#             return _db_acquire_lock(path, count+1)
+#         # Otherwise we are going to wait a short random amount of time and then retry
+#         time.sleep(random.uniform(0,0.1))
+#         return _db_acquire_lock(path, count+1)
+
+# def _db_release_lock(path):
+#     if not os.path.exists(path+'.lock'):
+#         raise Exception('Cannot release lock. Lock file does not exist: '+path+'.lock')
+
+#     try:
+#         os.unlink(path+'.lock')
+#     except:
+#         raise Exception('Problem deleting database lock file: '+path+'.lock')
+#     print('Unlocked!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',path)
 
 
 def _read_json_file(path):
     with open(path) as f:
         return json.load(f)
+
+def _read_text_file(path):
+    with open(path) as f:
+        return f.read()
 
 
 def _write_json_file(obj, path):
@@ -712,6 +979,9 @@ def _create_temporary_file_for_text(*, text):
 def _create_temporary_fname(ext):
     tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())
     return tempdir+'/tmp_cairioclient_'+''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))+ext
+
+def _random_string(num):
+    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
 
 
 def _test_url_accessible(url, timeout):

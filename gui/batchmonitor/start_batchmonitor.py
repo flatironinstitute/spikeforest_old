@@ -4,8 +4,7 @@ import argparse
 import os
 import vdomr as vd
 from cairio import client as mt
-from sfbrowsermainwindow import SFBrowserMainWindow
-os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
+from batchmonitormainwindow import BatchMonitorMainWindow
 
 
 class TheApp():
@@ -14,7 +13,7 @@ class TheApp():
 
     def createSession(self):
         print('creating main window')
-        W = SFBrowserMainWindow()
+        W = BatchMonitorMainWindow()
         print('done creating main window')
         return W
 
@@ -39,7 +38,7 @@ def main():
     else:
         vd.config_pyqt5()
         W = APP.createSession()
-        vd.pyqt5_start(root=W, title='SFBrowser')
+        vd.pyqt5_start(root=W, title='BatchMonitor')
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from mountaintools import client as mt
+from cairio import client as ca
 from spikeforest import spikeextractors as se
 import os
 import shutil
@@ -10,43 +10,55 @@ import numpy as np
 
 
 def main():
-    mt.login(ask_password=True)
-    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
+    # generate toy recordings
+    if not os.path.exists('recordings'):
+        os.mkdir('recordings')
 
-    # Use this to optionally connect to a kbucket share:
+    delete_recordings = False
+
+    recpath = 'recordings/example1'
+    if os.path.exists(recpath) and (delete_recordings):
+        shutil.rmtree(recpath)
+    if not os.path.exists(recpath):
+        rx, sx_true = se.example_datasets.toy_example1(
+            duration=60, num_channels=4, samplerate=30000, K=10)
+        se.MdaRecordingExtractor.writeRecording(
+            recording=rx, save_path=recpath)
+        se.MdaSortingExtractor.writeSorting(
+            sorting=sx_true, save_path=recpath+'/firings_true.mda')
+
     # for downloading containers if needed
-    # (in the future we will not need this)
-    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
 
-    # Specify the compute resource (see the note above)
-    # compute_resource = 'local-computer'
-    #compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
-    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
-    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
+    # Specify the compute resource
+    compute_resource = None
+    num_workers = 10
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test'
+    output_id = 'toy_example_local'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth'
+    recordings = [
+        dict(
+            recording_name='example1',
+            study_name='toy_examples',
+            directory=os.path.abspath('recordings/example1')
+        )
+    ]
 
-    a = mt.loadObject(
-        key=dict(name='spikeforest_recording_group', group_name=group_name))
+    recordings = recordings*10
 
-    recordings = a['recordings']
-    studies = a['studies']
-
-    recordings=recordings[0:3]
-    studies=studies[0:1]
-
-    # recordings = [recordings[0]]
-
-    # Summarize the recordings
-    recordings = sa.summarize_recordings(
-        recordings=recordings, compute_resource=compute_resource)
+    studies = [
+        dict(
+            name='toy_examples',
+            study_set='toy_examples',
+            directory=os.path.abspath('recordings'),
+            description='Toy examples.'
+        )
+    ]
 
     # Sorters (algs and params) are defined below
     sorters = _define_sorters()
@@ -62,7 +74,8 @@ def main():
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
-            compute_resource=compute_resource0
+            compute_resource=compute_resource0,
+            num_workers=num_workers
         )
 
         # Append to results
@@ -77,16 +90,13 @@ def main():
     # Compare with ground truth
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
-        compute_resource=compute_resource
+        compute_resource=compute_resource,
+        num_workers=num_workers
     )
-
-    # Aggregate the results
-    aggregated_sorting_results = sa.aggregate_sorting_results(
-        studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
-    mt.saveObject(
+    ca.saveObject(
         key=dict(
             name='spikeforest_results'
         ),
@@ -94,23 +104,10 @@ def main():
         object=dict(
             studies=studies,
             recordings=recordings,
-            sorting_results=sorting_results,
-            aggregated_sorting_results=mt.saveObject(
-                object=aggregated_sorting_results)
+            sorting_results=sorting_results
         )
     )
 
-    for sr in aggregated_sorting_results['study_sorting_results']:
-        study_name = sr['study']
-        sorter_name = sr['sorter']
-        n1 = np.array(sr['num_matches'])
-        n2 = np.array(sr['num_false_positives'])
-        n3 = np.array(sr['num_false_negatives'])
-        accuracies = n1/(n1+n2+n3)
-        avg_accuracy = np.mean(accuracies)
-        txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
-            study_name, sorter_name, avg_accuracy)
-        print(txt)
 
 def _define_sorters():
     sorter_ms4_thr3 = dict(
@@ -150,7 +147,6 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50,
-            detect_threshold=4,
             prm_template_name="static_template.prm"
         )
     )
@@ -184,20 +180,9 @@ def _define_sorters():
             adjacency_radius=50
         )
     )
-
-    sorter_yass = dict(
-        name='Yass',
-        processor_name='Yass',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )
-
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass]
-    # return [sorter_ms4_thr3]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
+    return [sorter_ms4_thr3]
 
 
 if __name__ == "__main__":

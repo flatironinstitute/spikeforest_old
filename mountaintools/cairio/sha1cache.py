@@ -4,7 +4,8 @@ import shutil
 import hashlib
 from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
-
+import random
+import time
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -65,11 +66,19 @@ class Sha1Cache():
             target_path = self._get_path(sha1, create=True)
         else:
             alternate_target_path = True
-        path_tmp = target_path+'.downloading'
+        
+        path_tmp = target_path+'.downloading.' + _random_string(6)
         if (verbose) or (size > 10000):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
+        
+        timer=time.time()
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)
+        elapsed=time.time()-timer
+
+        if (verbose) or (size > 10000):
+            print('Downloaded file ({}) in {} sec.'.format(_format_file_size(size), elapsed))
+            
         if not sha1b:
             if os.path.exists(path_tmp):
                 _safe_remove_file(path_tmp)
@@ -78,11 +87,16 @@ class Sha1Cache():
                 _safe_remove_file(path_tmp)
             raise Exception(
                 'sha1 of downloaded file does not match expected {} {}'.format(url, sha1))
-        if os.path.exists(target_path):
-            _safe_remove_file(target_path)
-        _rename_or_move(path_tmp, target_path)
         if alternate_target_path:
+            if os.path.exists(target_path):
+                _safe_remove_file(target_path)
+            _rename_or_move(path_tmp, target_path)
             self.computeFileSha1(target_path, _known_sha1=sha1)
+        else:
+            if not os.path.exists(target_path):
+                _rename_or_move(path_tmp, target_path)
+            else:
+                _safe_remove_file(path_tmp)
         return target_path
 
     def moveFileToCache(self, path):
@@ -100,8 +114,9 @@ class Sha1Cache():
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
         if not os.path.exists(path0):
-            copyfile(path, path0+'.copying')
-            _rename_or_move(path0+'.copying', path0)
+            tmp_path=path0+'.copying.'+ _random_string(6)
+            copyfile(path, tmp_path)
+            _rename_or_move(tmp_path, path0, remove_if_exists=False)
         return path0, sha1
 
     def computeFileSha1(self, path, _known_sha1=None):
@@ -243,12 +258,15 @@ def _safe_list_dir(path):
         return []
 
 
-def _rename_or_move(path1, path2):
+def _rename_or_move(path1, path2, remove_if_exists=True):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     try:
         if os.path.exists(path2):
-            os.unlink(path2)
+            if remove_if_exists:
+                os.unlink(path2)
+            else:
+                return
         try:
             os.rename(path1, path2)
         except:
@@ -275,3 +293,7 @@ def _sizeof_fmt(num, suffix='B'):
             return "%3.1f %s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f %s%s" % (num, 'Yi', suffix)
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
