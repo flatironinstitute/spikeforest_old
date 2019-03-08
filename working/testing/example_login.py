@@ -15,7 +15,7 @@ def main():
     # Configure mountaintools to use a particular remote collection and kbucket share
     # If the logged-in user has proper permissions, then the appropriate access tokens
     # are automaticall provided.
-    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Test the remote connection
     # (Note that if we were not connected to a remote collection/share,

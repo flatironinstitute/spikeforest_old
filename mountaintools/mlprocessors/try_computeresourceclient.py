@@ -12,7 +12,7 @@ def main():
         #resource_name='crtest1',
         resource_name='ccmlin008-default',
         collection='spikeforest',
-        share_id='69432e9201d0'
+        share_id='spikeforest.spikeforest2'
     )
 
     # compute_resource=dict(resource_name='test_resource')

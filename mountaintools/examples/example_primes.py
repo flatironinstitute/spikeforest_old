@@ -1,13 +1,13 @@
 #%%
 # Import the MountainTools client and connect to a remote database
 from mountaintools import client as mt
-mt.configRemoteReadonly(collection='spikeforest', share_id='69432e9201d0')
+mt.configRemoteReadonly(collection='spikeforest', share_id='spikeforest.spikeforest2')
 
 # Optionally configure write access to database (authorization required)
 write_to_server=False
 if write_to_server:
     mt.login()
-    mt.configRemoteReadWrite(collection='spikeforest', share_id='69432e9201d0')
+    mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
 
 #%%
 # Other imports

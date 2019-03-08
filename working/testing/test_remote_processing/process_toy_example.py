@@ -29,7 +29,7 @@ def main():
             sorting=sx_true, save_path=recpath+'/firings_true.mda')
 
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    ca.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Specify the compute resource
     compute_resource = 'testing-resource'

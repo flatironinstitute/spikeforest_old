@@ -111,6 +111,8 @@ class CairioClient():
         )
     
     def configRemoteReadonly(self, *, collection, share_id=''):
+        if share_id and ('.' in share_id):
+            share_id=self._get_share_id_from_alias(share_id)
         self.setRemoteConfig(
             collection=collection,
             token='',
@@ -123,6 +125,8 @@ class CairioClient():
             token=self._find_collection_token_from_login(collection)
             if not token:
                 raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
+        if share_id and ('.' in share_id):
+            share_id=self._get_share_id_from_alias(share_id)
         if upload_token is None:
             upload_token=self._find_upload_token_from_login(share_id=share_id)
             if not upload_token:
@@ -135,6 +139,8 @@ class CairioClient():
         )
 
     def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
+        if share_id and ('.' in share_id):
+            share_id=self._get_share_id_from_alias(share_id)
         if url is not None:
             self._remote_config['url'] = url
         if collection is not None:
@@ -144,6 +150,9 @@ class CairioClient():
         if share_id is not None:
             self._remote_config['share_id'] = share_id
         if alternate_share_ids is not None:
+            for ii,asi in enumerate(alternate_share_ids):
+                if '.' in asi:
+                    alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
             self._remote_config['alternate_share_ids'] = alternate_share_ids
         if upload_token is not None:
             self._remote_config['upload_token'] = upload_token
@@ -320,6 +329,16 @@ class CairioClient():
             if ret is not None:
                 return ret
         return None
+
+    def _get_share_id_from_alias(self, share_id_alias):
+        vals=share_id_alias.split('.')
+        if len(vals)!=2:
+            raise Exception('Invalid share_id alias: '+share_id_alias)
+        ret=self.getValue(key=vals[1], collection=vals[0])
+        if ret is None:
+            raise Exception('Unable to resolve share_id from alias: '+share_id_alias)
+        print('Resolved share_id {} from alias {}'.format(ret, share_id_alias))
+        return ret
 
     def _find_collection_token_from_login(self, collection, try_global=True):
         if try_global:

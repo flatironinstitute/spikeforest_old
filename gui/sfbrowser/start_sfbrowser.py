@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     # Configure readonly access to kbucket
-    mt.configRemoteReadonly(collection='spikeforest',share_id='69432e9201d0')
+    mt.configRemoteReadonly(collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     APP = TheApp()
 

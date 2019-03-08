@@ -11,18 +11,18 @@ import numpy as np
 
 def main():
     mt.login(ask_password=True)
-    mt.configRemoteReadWrite(collection='spikeforest',share_id='69432e9201d0')
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to optionally connect to a kbucket share:
     # for downloading containers if needed
     # (in the future we will not need this)
-    mt.setRemoteConfig(alternate_share_ids=['69432e9201d0'])
+    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
-    # compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='69432e9201d0')
-    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='69432e9201d0')
-    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='69432e9201d0')
+    # compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    compute_resource = dict(resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    compute_resource_ks = dict(resource_name='ccmlin008-gpu',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
