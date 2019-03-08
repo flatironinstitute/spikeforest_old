@@ -1,20 +1,20 @@
-#%% python magic
-#get_ipython().run_line_magic('load_ext', 'autoreload')
-#get_ipython().run_line_magic('autoreload', '2')
-
 #%%
+# Import the MountainTools client and connect to a remote database
 from mountaintools import client as mt
 mt.configRemoteReadonly(collection='spikeforest', share_id='69432e9201d0')
 
+# Optionally configure write access to database (authorization required)
 write_to_server=False
 if write_to_server:
     mt.login()
     mt.configRemoteReadWrite(collection='spikeforest', share_id='69432e9201d0')
 
 #%%
+# Other imports
 import numpy as np
 import mlprocessors as mlpr
 
+# Compute the first n primes
 def compute_n_primes(n):
     prime_list = [2]
     num = 3
@@ -28,6 +28,7 @@ def compute_n_primes(n):
     return np.array(prime_list)
 
 
+# MountainTools processor wrapper for compute_n_primes()
 class ComputeNPrimes(mlpr.Processor):
     NAME = 'ComputeNPrimes'
     VERSION = '0.1.3'
@@ -42,16 +43,21 @@ class ComputeNPrimes(mlpr.Processor):
         primes = compute_n_primes(self.n)
         print('Prime {}: {}'.format(self.n, primes[-1]))
         np.save(self.output,primes)
-        
+
 
 #%%
+# Execute the processor (retrieve from cache if already computed)
 ComputeNPrimes.execute(n=int(1e5), output='primes.npy')
+
+# save to database if logged in
 mt.saveFile('primes.npy')
 
+# Load the output into a numpy array and print
 primes=np.load('primes.npy')
 print(primes)
 
 #%%
+# Plot the number of primes vs the predicted based on the prime number theorem
 from matplotlib import pyplot as plt
 
 N=len(primes)
