@@ -27,15 +27,6 @@ def test_cairio(tmpdir):
     assert val1 == 'hello 1'
     assert val2 == 'hello 2'
 
-    # Setting password-protected values
-    secret_value = 'the-secret-*y$#a'
-    cc.setValue(key=dict(name='some_secret_token'),
-                password='my_password', value=secret_value)
-
-    # Retrieving password-protected values
-    assert cc.getValue(key=dict(name='some_secret_token'),
-                       password='my_password') == secret_value
-
     # Local storage of data and files, retrievable by SHA-1 hash
     some_text = 'This is some text'
     path = cc.saveText(some_text, basename='test.txt')
