@@ -8,7 +8,7 @@ import time
 import mlprocessors as mlpr
 import traceback
 from cairio import CairioClient
-from mlprocessors import _prepare_processor_job, executeJob
+from mlprocessors import executeJob
 import asyncio
 import random
 import time
@@ -36,7 +36,6 @@ def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, sru
         if srun_opts_string is not None:
             _init_next_batch_job_index_to_run(batch_id=batch_id)
             cmd = 'srun {} {}'.format(srun_opts_string, cmd)
-        # be careful about printing this command... it may contain the secrets
         print('##################### {}'.format(cmd))
         retval = os.system(cmd)
         if retval != 0:

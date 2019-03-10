@@ -1,3 +1,0 @@
-#!/bin/bash
-
-BATCHO_CONFIG_NAME=spikeforest1-readwrite BATCHO_CONFIG_COLLECTION=spikeforest BATCHO_CONFIG_PASSWORD=$SPIKEFOREST_PASSWORD bin/batcho_listen "$@"

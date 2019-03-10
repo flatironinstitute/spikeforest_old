@@ -22,8 +22,12 @@ except:
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools/.env')
 if os.path.exists(env_path):
     print('Loading environment from: '+env_path)
-    from dotenv import load_dotenv
+    try:
+        from dotenv import load_dotenv
+    except:
+        raise Exception('Unable to import dotenv. Use pip install python-dotenv')
     load_dotenv(dotenv_path=env_path,verbose=True)
+    
 
 class CairioClient():
     def __init__(self):
@@ -61,7 +65,10 @@ class CairioClient():
         if interactive:
             ask_password=True
 
-        from simplecrypt import encrypt, decrypt
+        try:
+            from simplecrypt import encrypt, decrypt
+        except:
+            raise Exception('Cannot import simplecrypt. Use pip install simple-crypt.')
 
         if user is None:
             user=os.environ.get('MOUNTAIN_USER','')
@@ -546,7 +553,7 @@ class CairioClient():
             name0 = dir0['name']
             ret['dirs'][name0] = {}
             if recursive:
-                ret['dirs'][name0] = self._read_kbucket_dir(path+'/'+name0)
+                ret['dirs'][name0] = self._read_kbucket_dir(share_id=share_id, path = path+'/'+name0, recursive=True, include_sha1=include_sha1)
         return ret
 
     def _read_file_system_dir(self, *, path, recursive, include_sha1):

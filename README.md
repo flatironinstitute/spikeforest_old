@@ -186,7 +186,7 @@ MOUNTAIN_PASSWORD=TREE
 
 `devel`: Utilities specific to development of SpikeForest, including instructions on preparing the docker image for codepod, a script to run when codepod is started, and a script for auto-formatting the python code for pep8 compliance.
 
-`mountaintools`: Contains the MountainTools such as batcho, cairio, kbucket, mlprocessors, and vdomr. These tools are not specific to spike sorting.
+`mountaintools`: Contains the MountainTools such as cairio, kbucket, mlprocessors, and vdomr. These tools are not specific to spike sorting.
 
 `spikeforest/spikesorters`: Wrappers of the spike sorting algorithms, including Dockerfile recipes for the containers.
 

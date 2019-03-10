@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage[margin=1.4in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+ 
+\newtheorem{theorem}{Theorem}
+\newtheorem*{theorem*}{Theorem}
+
+\title{MountainTools}
+\author{Jeremy Magland}
+ 
+\begin{document}
+
+\maketitle
+
+\begin{section}{Referencing files}
+
+MountainTools uses four kinds of mechanisms to refer to files.
+
+\begin{itemize}
+    \item \textbf{File paths on the local machine.} For example, \textit{/path/to/local/file.dat}. This is the traditional way of referring to files when operating on the local machine. But we try to avoid explicitly referring to files in this manner in scripts because this tends to make things non-portable. Different environment will typically not have files located in the same places.
+    \item \textbf{KBucket URIs}. For example, \textit{kbucket://59317022c908/path/to/file.dat}. KBucket is a distributed file storage system where repositories of files are referenced by ID (usually a 12-character string) rather than IP address. This allows the actual files to be moved to different locations and servers without disrupting existing scripts.
+    \item \textbf{SHA-1 URIs}. For example, \textit{sha1://7bf5432e9266831ab7d64d193fe3f8c69c9e04cc/somefile.txt}. In this case the file is identified by its SHA-1 hash (or checksum), which is assumed to uniquely identify the file amongst all files in existence (see the "theorem" below). The actual file may be found on the local machine (in the SHA-1 cache), on a KBucket share, or elsewhere. Note that the URI path following the checksum is for information only (human identification) and does not necessarily coincide with the name of the retrieved file.
+    \item \textbf{Key}. The fourth way to refer to files in MountainTools is by key. For example, key=\{"some":"json"\}. The key can be any string or JSON document. This is a way to save and load files and objects by their attributes in a way that is independent of a particular file system. It is a substitute for storing things by traditional path. Implementation-wise, files are stored on a local or remote database (key/value store) where the database key is equal to the SHA-1 hash of the JSON document (or string).
+\end{itemize}
+
+\newpage
+ 
+\begin{theorem*}
+Let $F$ and $G$ be files and let $h(F)$ and $h(G)$ be their corresponding $40$-character hexadecimal SHA-1 hash strings. Then
+$F$ and $G$ have the same byte-content if and only if $h(F)=h(G)$.
+\end{theorem*}
+
+\begin{proof}
+Actually it is false. Indeed, there are only $16^{40}$ possible hash strings of this length, and there are $8^{1000}$ possible files, even of size $1000$ bytes, let alone considering files of all possible sizes. Therefore, by the pigeonhole principle, there must be at least two distinct files $F$ and $G$ such that $h(F)=h(G)$
+
+Nevertheless, for all practical purposes, we can safely operate under the assumption that the "theorem" is true. This is because the SHA-1 hash algorithm was designed to produce hashes that are randomly and uniformly distributed over the $16^{40}\approx 10^{48}$ possible hash strings. Even if there were a trillion computers in the world, and each computer had a trillion files, and all those files were different, then these would only cover $10^{24}$ distinct SHA-1 hashes. This is considerably less than $10^{48}$, making it extremely unlikely that there would be a hash collision among existing files.
+
+On the other hand, remember the birthday problem? If there are $24$ students in a class, the probability that at least two of the students have a birthday in common is surprisingly high ($>50\%$). Roughly speaking, that is because $25>\sqrt{365}$. Note that above, $10^{24} = \sqrt{10^{48}}$, and so in that scenario, there's actually a reasonable chance of at least one collision.
+
+Nevertheless, no single system will ever encounter anywhere near that many files.
+
+Actually, some people succeeded in creating a collision in 2017... after a lot of effort. See \newline https://security.googleblog.com/2017/02/announcing-first-sha1-collision.html.
+
+Nevertheless, we are going to operate on the reasonable assumption that SHA-1 hashes uniquely identify existing files. After all, github relies on it for all of the files and commits in its $>50$ million repositories.
+
+Hmmm... maybe we should use SHA-256 (64 hexadecimal characters).
+
+Let's not worry about it for now. We're using SHA-1 for the time being. By prefixing all hash references by \textit{sha1://} we allow the possibility of extending to a more reliable system in the future!
+
+\end{proof}
+
+\end{section}
+
+\end{document}

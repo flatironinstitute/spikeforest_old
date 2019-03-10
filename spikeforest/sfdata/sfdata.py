@@ -215,7 +215,7 @@ class SFData():
     def loadSortingResult(self,X):
         study_name=X['recording'].get('study_name',X['recording'].get('study'))
         recording_name=X['recording'].get('recording_name',X['recording'].get('name'))
-        sorter_name=X['sorter']['name']
+        # sorter_name=X['sorter']['name']
         S=self.study(study_name)
         if S:
             D=S.recording(recording_name)
@@ -225,49 +225,6 @@ class SFData():
                 print ('Warning: recording not found: '+recording_name)
         else:
             print ('Warning: study not found: '+study_name)
-    def loadProcessingBatch(self,*,batch_name=None,key=None,verbose=False):
-        if batch_name:
-            key=dict(name='batcho_batch_results',batch_name=batch_name)
-        if not pa.get(key=key):
-            raise Exception('Batch result not found.')
-        obj=ca.loadObject(key=key)
-        job_results=obj.get('job_results',obj.get('results')) # transitioning to 'results'
-        num_sorting_results=0
-        num_recording_summary_results=0
-        for X in job_results:
-            if X['job']['command']=='sort_recording':
-                study_name=X['job']['recording']['study']
-                recording_name=X['job']['recording']['name']
-                sorter_name=X['job']['sorter']['name']
-                result=X['result']
-                S=self.study(study_name)
-                if S:
-                    D=S.recording(recording_name)
-                    if D:
-                        num_sorting_results=num_sorting_results+1
-                        D.addSortingResult(result)
-                    else:
-                        print ('Warning: recording not found: '+recording_name)
-                else:
-                    print ('Warning: study not found: '+study_name)
-            elif X['job']['command']=='summarize_recording':
-                study_name=X['job']['recording']['study']
-                recording_name=X['job']['recording']['name']
-                result=X['result']
-                S=self.study(study_name)
-                if S:
-                    D=S.recording(recording_name)
-                    if D:
-                        num_recording_summary_results=num_recording_summary_results+1
-                        D.setSummaryResult(result)
-                    else:
-                        print ('Warning: recording not found: '+recording_name)
-                else:
-                    print ('Warning: study not found: '+study_name)
-            else:
-                pass
-        if verbose:
-            print ('Loaded {} sorting results and {} recording summary results'.format(num_sorting_results,num_recording_summary_results))
 
     def studyNames(self):
         return self._study_names

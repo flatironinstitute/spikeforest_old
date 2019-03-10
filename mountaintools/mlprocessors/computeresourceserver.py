@@ -1,12 +1,9 @@
 from cairio import CairioClient
 import time
-from mlprocessors import _prepare_processor_job
 from .internal_run_batch_job import run_batch_job
 import multiprocessing
 import traceback
-
-# global
-_realized_files = set()
+from .execute import _realize_required_files_for_jobs
 
 class ComputeResourceServer():
     def __init__(self, *, resource_name=None, collection='', share_id='', token=None, upload_token=None):
@@ -140,55 +137,7 @@ class ComputeResourceServer():
             object=batch
         )
         jobs=batch['jobs']
-        containers_to_realize=set()
-        code_to_realize=set()
-        files_to_realize=set()
-        for ii,job in enumerate(jobs):
-            container0 = job.get('container', None)
-            if container0 is not None:
-                containers_to_realize.add(container0)
-            files_to_realize0 = job.get('files_to_realize', [])
-            for f0 in files_to_realize0:
-                files_to_realize.add(f0)
-            code0 = job.get('processor_code', None)
-            if code0 is not None:
-                code_to_realize.add(code0)
-        if len(containers_to_realize)>0:
-            print('Realizing {} containers...'.format(len(containers_to_realize)))
-            self._realize_files(containers_to_realize)
-        if len(files_to_realize)>0:
-            print('Realizing {} files...'.format(len(files_to_realize)))
-            self._realize_files(files_to_realize)
-        if len(code_to_realize)>0:
-            print('Realizing {} code objects...'.format(len(code_to_realize)))
-            self._realize_files(code_to_realize)
-
-    def _realize_files(self,files):
-        for file0 in files:
-            if file0 not in _realized_files:
-                a=self._cairio_client.realizeFile(file0)
-                if a:
-                    _realized_files.add(a)
-                else:
-                    raise Exception('Unable to realize file: '+file0)
-
-
-    # def _prepare_processor_job(job):
-    #     container = job.get('container', None)
-    #     if container:
-    #         if container not in _realized_containers:
-    #             print('realizing container: '+container)
-    #             a = ca.realizeFile(path=container)
-    #             if a:
-    #                 _realized_containers.add(container)
-    #             else:
-    #                 raise Exception('Unable to realize container file: '+container)
-    #     files_to_realize = job.get('files_to_realize', [])
-    #     for fname in files_to_realize:
-    #         print('realizing file: '+fname)
-    #         a = ca.realizeFile(path=fname)
-    #         if not a:
-    #             raise Exception('Unable to realize file: '+fname)
+        _realize_required_files_for_jobs(cairio_client=self._cairio_client, jobs=jobs, realize_code=True)
     
     def _run_batch(self,batch_id):
         self._check_batch_halt(batch_id)

@@ -6,6 +6,7 @@ from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
 import time
+from filelock import FileLock
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -34,7 +35,7 @@ class Sha1Cache():
                 return altpath
         hints_fname = path+'.hints.json'
         if os.path.exists(hints_fname):
-            hints = _read_json_file(hints_fname)
+            hints = _read_json_file(hints_fname, delete_on_error=True)
             if hints and ('files' in hints):
                 files = hints['files']
                 matching_files = []
@@ -125,7 +126,7 @@ class Sha1Cache():
 
         path0 = self._get_path(aa_hash, create=True)+'.record.json'
         if os.path.exists(path0):
-            obj = _read_json_file(path0)
+            obj = _read_json_file(path0, delete_on_error=True)
             if obj:
                 bb = obj['stat']
                 if _stat_objects_match(aa, bb):
@@ -151,7 +152,7 @@ class Sha1Cache():
         path1 = self._get_path(
             sha1, create=True, directory=self._directory)+'.hints.json'
         if os.path.exists(path1):
-            hints = _read_json_file(path1)
+            hints = _read_json_file(path1, delete_on_error=True)
         else:
             hints = None
         if not hints:
@@ -236,18 +237,30 @@ def _safe_remove_file(fname):
         print('Warning: unable to remove file that we thought existed: '+fname)
 
 
-def _read_json_file(path):
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except:
-        print('Warning: Unable to read or parse json file: '+path)
-        return None
+def _read_json_file(path, *, delete_on_error=False):
+    lock=FileLock(path+'.lock')
+    with lock:
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except:
+            if delete_on_error:
+                print('Warning: Unable to read or parse json file. Deleting: '+path)
+                try:
+                    os.unlink(path)
+                except:
+                    print('Warning: unable to delete file: '+path)
+                    pass
+            else:
+                print('Warning: Unable to read or parse json file: '+path)
+            return None
 
 
 def _write_json_file(obj, path):
-    with open(path, 'w') as f:
-        return json.dump(obj, f)
+    lock=FileLock(path+'.lock')
+    with lock:
+        with open(path, 'w') as f:
+            return json.dump(obj, f)
 
 
 def _safe_list_dir(path):

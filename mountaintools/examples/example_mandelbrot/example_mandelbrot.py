@@ -11,26 +11,32 @@ except:
 get_ipython().run_line_magic('load_ext', 'autoreload')
 get_ipython().run_line_magic('autoreload', '2')
 
+
 #%%
-# Import the MountainTools client and connect to a remote database
+# Import the MountainTools client
 from mountaintools import client as mt
-mt.configRemoteReadonly(collection='spikeforest', share_id='spikeforest.spikeforest2')
+import mlprocessors as mlpr
+
+# Use one of the following three modes
+mode='local'
+# mode='remote_readonly'
+# mode='remote_readwrite'
 
 # Log in if you are authorized
-login=True
-if login:
+if mode=='local':
+    mt.configLocal()
+elif mode=='remote_readonly':
+    mt.configRemoteReadonly(collection='spikeforest', share_id='spikeforest.spikeforest2')
+elif mode=='remote_readwrite':
     mt.login()
     mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
 else:
-    compute_resource=None
-
-import mlprocessors as mlpr
+    raise Exception('Invalid mode: '+mode)
 
 #%%
 # Import the mandelbrot helpers from the mandelbrot/ directory
-import numpy as np
-from matplotlib import pyplot as plt
 from mandelbrot import compute_mandelbrot, show_mandelbrot, combine_subsampled_mandelbrot, ComputeMandelbrot, compute_mandelbrot_parallel
+import numpy as np
 
 #%%
 # Do a simple direct mandelbrot calculation
@@ -71,14 +77,32 @@ X = combine_subsampled_mandelbrot(X_list)
 show_mandelbrot(X)
 
 #%%
-# Do a large computation on a REMOTE compute resource
-compute_resource=dict(
-    resource_name='ccmlin008-80',
-    collection='spikeforest',
-    share_id='spikeforest.spikeforest2'
-)
+# Select the compute resource,
+# local or remote, depending on whether we are logged
+# in to a remote system
+# Note: if using local computer, start the compute resource via:
+# bin/compute-resource-start local-computer --parallel 4
+
+if (mode == 'local') or (mode == 'remote_readonly'):
+    compute_resource=dict(
+        resource_name='local-computer',
+        collection='',
+        share_id=''
+    )
+else:
+    compute_resource=dict(
+        resource_name='ccmlin008-80',
+        collection='spikeforest',
+        share_id='spikeforest.spikeforest2'
+    )
+
+#%%
+
+# Run a batch with 80 jobs on the compute resource
+# (high resolution, small number of iterations)
+
 X=compute_mandelbrot_parallel(
-    num_iter=50000,
+    num_iter=300,  #50000,
     num_x=3000,
     num_parallel=80,
     compute_resource=compute_resource
@@ -88,14 +112,12 @@ show_mandelbrot(X)
 
 
 #%%
-# Do 10x more iterations on a REMOTE compute resource
-compute_resource=dict(
-    resource_name='ccmlin008-80',
-    collection='spikeforest',
-    share_id='spikeforest.spikeforest2'
-)
+
+# Run a batch with 80 jobs on the compute resource
+# (high resolution, larger number of iterations)
+
 X=compute_mandelbrot_parallel(
-    num_iter=100000*10,
+    num_iter=3000,  #50000,
     num_x=3000,
     num_parallel=80,
     compute_resource=compute_resource

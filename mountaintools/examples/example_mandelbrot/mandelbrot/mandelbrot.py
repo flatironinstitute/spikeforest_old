@@ -81,7 +81,7 @@ class ComputeMandelbrot(mlpr.Processor):
         )
         np.save(self.output_npy,X)
 
-def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None):
+def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False):
     subsampling_factor=num_parallel
     jobs=[]
 
@@ -91,15 +91,13 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
             num_iter=num_iter,
             subsampling_factor=subsampling_factor,
             subsampling_offset=offset,
-            output_npy=dict(ext='.npy', upload=True)
+            output_npy=dict(ext='.npy', upload=True),
+            _force_run=_force_run
         )
         for offset in range(subsampling_factor)
     ]
 
-    pool = multiprocessing.Pool(20)
-    jobs=pool.map(ComputeMandelbrot.createJobFromKwargs, job_args)
-    pool.close()
-    pool.join()
+    jobs = ComputeMandelbrot.createJobs(job_args)
 
     results=mlpr.executeBatch(jobs=jobs, compute_resource=compute_resource)
 

@@ -1,7 +1,7 @@
 from .core import *
 from .registry import *
 from .validators import *
-from .execute import executeJob, executeBatch, _prepare_processor_job
+from .execute import executeJob, executeBatch, _realize_required_files_for_jobs
 from .computeresourceserver import ComputeResourceServer
 
 __all__ = [

@@ -388,11 +388,17 @@ def _run_command_and_print_output_old(command):
         rc = process.poll()
         return rc
 
+def _create_job_from_kwargs(aa):
+    return createJob(aa['proc'], **aa['kwargs'])
 
-def createJobFromKwargs(proc, kwargs):
-    return createJob(proc, **kwargs)
+def createJobs(proc, argslist, *, pool_size=15):
+    pool = multiprocessing.Pool(pool_size)
+    jobs=pool.map(_create_job_from_kwargs, [dict(proc=proc, kwargs=kwargs) for kwargs in argslist])
+    pool.close()
+    pool.join()
+    return jobs
 
-def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, _check_cache_first=True, **kwargs):
+def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_files=None, **kwargs):
     if _force_run is None:
         if os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE':
             _force_run = True
@@ -501,37 +507,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
     if _keep_temp_files:
         processor_job['_keep_temp_files'] = True
 
-    if _check_cache_first:
-        ret=execute(proc, _cache=_cache, _force_run=_force_run, _container=_container, _keep_temp_files=_keep_temp_files, _return_none_if_not_in_cache=True, **kwargs)
-        if ret is not None:
-            processor_job['result']=dict(
-                outputs=ret.outputs,
-                stats=ret.stats,
-                console_out=ca.saveText(text=ret.console_out,basename='console_out.txt')
-            )
-
     return processor_job
-
-
-_realized_containers = set()
-
-
-def _prepare_processor_job(job):
-    container = job.get('container', None)
-    if container:
-        if container not in _realized_containers:
-            print('realizing container: '+container)
-            a = ca.realizeFile(path=container)
-            if a:
-                _realized_containers.add(container)
-            else:
-                raise Exception('Unable to realize container file: '+container)
-    files_to_realize = job.get('files_to_realize', [])
-    for fname in files_to_realize:
-        print('realizing file: '+fname)
-        a = ca.realizeFile(path=fname)
-        if not a:
-            raise Exception('Unable to realize file: '+fname)
 
 
 def _random_string(num_chars):
@@ -539,17 +515,46 @@ def _random_string(num_chars):
     return ''.join(random.choice(chars) for _ in range(num_chars))
 
 
-def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
-    # use only the jobs that not not already have a result
-    jobs2=[]
-    for ii, job in enumerate(jobs):
-        if 'result' in job:
-            print('Job {} already has result.'.format(ii))
-        else:
-            jobs2.append(job)
+def _realize_required_files_for_jobs(*, cairio_client, jobs, realize_code=False):
+    containers_to_realize=set()
+    code_to_realize=set()
+    files_to_realize=set()
+    for ii,job in enumerate(jobs):
+        container0 = job.get('container', None)
+        if container0 is not None:
+            containers_to_realize.add(container0)
+        files_to_realize0 = job.get('files_to_realize', [])
+        for f0 in files_to_realize0:
+            files_to_realize.add(f0)
+        code0 = job.get('processor_code', None)
+        if code0 is not None:
+            code_to_realize.add(code0)
+    if len(containers_to_realize)>0:
+        print('Realizing {} containers...'.format(len(containers_to_realize)))
+        _realize_files(containers_to_realize, cairio_client=cairio_client)
+    if len(files_to_realize)>0:
+        print('Realizing {} files...'.format(len(files_to_realize)))
+        _realize_files(files_to_realize, cairio_client=cairio_client)
+    if realize_code:
+        if len(code_to_realize)>0:
+            print('Realizing {} code objects...'.format(len(code_to_realize)))
+            _realize_files(code_to_realize, cairio_client=cairio_client)
 
+# global
+_realized_files = set()
+
+def _realize_files(files, *, cairio_client):
+    for file0 in files:
+        if file0 not in _realized_files:
+            a=cairio_client.realizeFile(file0)
+            if a:
+                _realized_files.add(a)
+            else:
+                raise Exception('Unable to realize file: '+file0)
+
+def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
     # make sure the files to realize are absolute paths
-    for job in jobs2:
+    for job in jobs:
         if 'files_to_realize' in job:
             for i, fname in enumerate(job['files_to_realize']):
                 if fname.startswith('kbucket://') or fname.startswith('sha1://'):
@@ -564,23 +569,25 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                         # In this case we are going to need to realize the file
                         output0['upload'] = True
 
-    if len(jobs2)>0:
+    if compute_resource is None:
+        _realize_required_files_for_jobs(jobs=jobs, cairio_client=ca, realize_code=False)
+
+    if len(jobs)>0:
         if num_workers is not None:
             if compute_resource is not None:
                 raise Exception('Cannot specify both num_workers and compute_resource.')
             pool = multiprocessing.Pool(num_workers)
-            results = pool.map(executeJob, jobs2)
+            results = pool.map(executeJob, jobs)
             pool.close()
             pool.join()
-            for i, job in enumerate(jobs2):
+            for i, job in enumerate(jobs):
                 job['result'] = results[i]
         else:
             if compute_resource is not None:
                 if type(compute_resource)==dict:
-                    # new method
                     from .computeresourceclient import ComputeResourceClient
                     CRC=ComputeResourceClient(**compute_resource)
-                    batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
+                    batch_id = CRC.initializeBatch(jobs=jobs, label=label)
                     CRC.startBatch(batch_id=batch_id)
                     try:
                         CRC.monitorBatch(batch_id=batch_id)
@@ -591,53 +598,16 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                     results0 = CRC.getBatchJobResults(batch_id=batch_id)
                     if results0 is None:
                         raise Exception('Unable to get batch results.')
-                    for i, job in enumerate(jobs2):
+                    for i, job in enumerate(jobs):
                         result0 = results0['results'][i]['result']
                         if result0 is None:
                             raise Exception('Unable to find result for job.')
                         job['result'] = result0
                     
                 else:
-                    # old method
-                    import batcho
-                    if batch_name is None:
-                        batch_name = 'batch_'+_random_string(10)
-                    batcho.set_batch(batch_name=batch_name, label=label, jobs=jobs2,
-                                    compute_resource=compute_resource)
-                    last_update_string = ''
-                    while True:
-                        batch_status = batcho.get_batch_status(batch_name=batch_name)
-                        if batch_status is None:
-                            update_string = 'Waiting...'
-                        else:
-                            batch_status0 = batch_status.get('status', '')
-                            if batch_status0 == 'finished':
-                                print('Batch finished.')
-                                break
-                            if batch_status0 == 'error':
-                                err0 = batch_status.get('error', '')
-                                raise Exception('Error executing batch: {}'.format(err0))
-                            statuses_list = list(batcho.get_batch_job_statuses(
-                                batch_name=batch_name).values())
-                            num_ready = statuses_list.count('ready')
-                            num_running = statuses_list.count('running')
-                            num_finished = statuses_list.count('finished')
-                            update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
-                                batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs2))
-                        if update_string != last_update_string:
-                            print(update_string)
-                        last_update_string = update_string
-                        time.sleep(1)
-
-                    results0 = batcho.get_batch_results(batch_name=batch_name)
-                    if results0 is None:
-                        raise Exception('Unable to get batch results.')
-                    for i, job in enumerate(jobs2):
-                        result0 = results0['results'][i]['result']
-                        job['result'] = result0
-                
+                    raise Exception('Compute resource must be a dict.')
             else:
-                for job in jobs2:
+                for job in jobs:
                     job['result'] = executeJob(job)
 
     ret=[]
@@ -727,8 +697,6 @@ if __name__ == "__main__":
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
         output_signatures=cairio_client.loadObject(path=temporary_output_files['_output_signatures_out'])
 
-        print(output_signatures)
-
         ret = dict(
             retcode=retcode,
             outputs=dict(),
@@ -755,23 +723,6 @@ if __name__ == "__main__":
     if not keep_temp_files:
         shutil.rmtree(tempdir)
     return ret
-
-
-try:
-    import batcho
-    batcho_ok = True
-except:
-    print('Warning: unable to import batcho.')
-    batcho_ok = False
-if batcho_ok:
-    def _batcho_execute_mlprocessor_prepare(job):
-        _prepare_processor_job(job)
-
-    def _batcho_execute_mlprocessor_run(job):
-        return executeJob(job)
-    batcho.register_job_command(command='execute_mlprocessor',
-                                prepare=_batcho_execute_mlprocessor_prepare, run=_batcho_execute_mlprocessor_run)
-
 
 class Logger2(object):
     def __init__(self, file1, file2):
