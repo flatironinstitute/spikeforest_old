@@ -154,12 +154,14 @@ pytest -m slow -s
 ```
 
 ## Installation for developers (without using codepod)
-Run [`. devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) to setup a conda environment (default is `spikeforest`) unless you specify an environment (e.g. `. devel/setup_python my_env`). It will install all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) to develop and use SpikeForest.
+Once installing dependencies below, run [`. devel/setup_python.sh`](https://github.com/flatironinstitute/spikeforest/blob/master/devel/setup_python.sh) from the main `spikeforest` directory to setup the conda environment.
+- Default conda environment is named to `spikeforest` unless you specify an argument (e.g. `. devel/setup_python.sh my_env`)
+- The script installs all [necessary dependencies](https://github.com/flatironinstitute/spikeforest/blob/master/devel/requirements.txt) for developing and using SpikeForest.
 
-[Pre-requisits]
+### Dependencies
 1. CONDA: `setup_python.sh` uses conda installed in `~/conda/etc/profile.d/conda.sh`. Change this line to point to the correct conda location (see your `~/.bashrc`).
 1. `ml_ms4alg` requires `g++` installation which may not be part of your OS. If this is the case, run `sudo apt install build-essential`.
-1. jupyter notebooks use ipywidgets which requires `nodejs` installation. Run `sudo apt install nodejs npm -y` if you don't already have the nodejs installed.
+1. `nodejs` to use `ipywidgets` in jupyter notebooks. To install `nodejs`, run `sudo apt install nodejs npm -y`.
 1. Install [`docker`](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) and [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps)
 
 ## Installation in Windows 10 using Ubuntu WSL
