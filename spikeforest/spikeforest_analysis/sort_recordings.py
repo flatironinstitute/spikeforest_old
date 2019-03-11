@@ -196,7 +196,7 @@ def _create_sorting_job_for_recording(recording, sorter):
         firings_out=dict(ext='.mda',upload=True),
         **sorting_params
     )
-    job['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/geom.csv',dsdir+'/params.json']
+    job['files_to_realize']=[dsdir+'/raw.mda']
     return job
 
 def _gather_sorting_result_for_recording_helper(kwargs):

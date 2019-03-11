@@ -20,37 +20,38 @@ _CONTAINER='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaint
 
 def _create_jobs_for_recording(recording):
     print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
-    raw_path=recording['directory']+'/raw.mda'
-    firings_true_path=recording['directory']+'/firings_true.mda'
-    geom_path=recording['directory']+'/geom.csv'
+    dsdir=recording['directory']
+    raw_path=dsdir+'/raw.mda'
+    firings_true_path=dsdir+'/firings_true.mda'
+    geom_path=dsdir+'/geom.csv'
     channels=recording.get('channels',None)
     units=recording.get('units_true',None)
 
     if not ca.findFile(path=firings_true_path):
         raise Exception('firings_true file not found: '+firings_true_path)
     job_info=ComputeRecordingInfo.createJob(
-        recording_dir=recording['directory'],
+        recording_dir=dsdir,
         channels=recording.get('channels',[]),
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
-    job_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/geom.csv',dsdir+'/params.json',dsdir+'/firings_true.mda']
+    job_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/firings_true.mda']
     # job=CreateTimeseriesPlot.createJob(
-    #     recording_dir=recording['directory'],
+    #     recording_dir=dsdir,
     #     channels=recording.get('channels',[]),
     #     jpg_out={'ext':'.jpg','upload':True},
     #     _container='default'
     # )
     # jobs_timeseries_plot.append(job)
     job_units_info=ComputeUnitsInfo.createJob(
-        recording_dir=recording['directory'],
-        firings=recording['directory']+'/firings_true.mda',
+        recording_dir=dsdir,
+        firings=dsdir+'/firings_true.mda',
         unit_ids=units,
         channel_ids=channels,
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
-    job_units_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/geom.csv',dsdir+'/params.json',dsdir+'/firings_true.mda']
+    job_units_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/firings_true.mda']
     return (job_info, job_units_info)
 
 def _gather_summarized_recording_helper(kwargs):
