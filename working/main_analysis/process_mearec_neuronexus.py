@@ -7,6 +7,7 @@ import os
 import shutil
 import sfdata as sf
 import numpy as np
+import mlprocessors as mlpr
 
 
 def main():
@@ -17,16 +18,10 @@ def main():
     # for downloading containers if needed
     # (in the future we will not need this)
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mlpr.configComputeResource('default', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('ks', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
-    # Specify the compute resource (see the note above)
-    #compute_resource = None
-    #compute_resource_ks = None
-    #compute_resource = 'local-computer'
-    #compute_resource = dict(resource_name='ccmlin008-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    compute_resource = dict(resource_name='ccmlin000-default',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    #compute_resource_ks = dict(resource_name='ccmlin000-gpu',collection='spikeforest',share_id='spikeforest.spikeforest2')
-
-    # Use this to control whether we force the processing to re-run (by default it uses cached results)
+    # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
@@ -47,7 +42,7 @@ def main():
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
-        recordings=recordings, compute_resource=compute_resource)
+        recordings=recordings, compute_resource='default')
 
     # Sorters (algs and params) are defined below
     sorters = _define_sorters()
@@ -57,9 +52,9 @@ def main():
 
     for sorter in sorters:
         # Sort the recordings
-        compute_resource0 = compute_resource
+        compute_resource0 = 'default'
         if sorter['name'] == 'KiloSort':
-            compute_resource0 = compute_resource_ks
+            compute_resource0 = 'ks'
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
@@ -72,13 +67,13 @@ def main():
     # Summarize the sortings
     sorting_results = sa.summarize_sortings(
         sortings=sorting_results,
-        compute_resource=compute_resource
+        compute_resource='default'
     )
 
     # Compare with ground truth
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
-        compute_resource=compute_resource
+        compute_resource='default'
     )
 
     # Aggregate the results

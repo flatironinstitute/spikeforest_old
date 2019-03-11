@@ -17,6 +17,10 @@ import multiprocessing
 import random
 import fnmatch
 
+# global
+_realized_files = set()
+_compute_resources_config = dict()
+
 def sha1(str):
     hash_object = hashlib.sha1(str.encode('utf-8'))
     return hash_object.hexdigest()
@@ -540,9 +544,6 @@ def _realize_required_files_for_jobs(*, cairio_client, jobs, realize_code=False)
             print('Realizing {} code objects...'.format(len(code_to_realize)))
             _realize_files(code_to_realize, cairio_client=cairio_client)
 
-# global
-_realized_files = set()
-
 def _realize_files(files, *, cairio_client):
     for file0 in files:
         if file0 not in _realized_files:
@@ -551,6 +552,13 @@ def _realize_files(files, *, cairio_client):
                 _realized_files.add(a)
             else:
                 raise Exception('Unable to realize file: '+file0)
+
+def configComputeResource(name, *, resource_name, collection, share_id):
+    _compute_resources_config[name]=dict(
+        resource_name=resource_name,
+        collection=collection,
+        share_id=share_id
+    )
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
     # make sure the files to realize are absolute paths
@@ -584,6 +592,11 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 job['result'] = results[i]
         else:
             if compute_resource is not None:
+                if type(compute_resource)==str:
+                    if compute_resource in _compute_resources_config:
+                        compute_resource=_compute_resources_config[compute_resource]
+                    else:
+                        raise Exception('No compute resource named {}. Use mlprocessors.configComputeResource("{}",...).'.format(compute_resource, compute_resource))
                 if type(compute_resource)==dict:
                     from .computeresourceclient import ComputeResourceClient
                     CRC=ComputeResourceClient(**compute_resource)
