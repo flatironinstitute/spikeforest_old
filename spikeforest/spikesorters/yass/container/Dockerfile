@@ -36,4 +36,4 @@ RUN python setup.py install
 
 ### spikeforest
 WORKDIR /src/spikeforest
-RUN pip install -e ./spikeforest
+RUN pip3 install -e ./spikeforest
