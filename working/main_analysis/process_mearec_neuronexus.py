@@ -36,7 +36,8 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    # recordings=recordings[0:2]
+    #recordings=recordings[0:2]
+    #studies=studies[0:1]
 
     # recordings = [recordings[0]]
 
