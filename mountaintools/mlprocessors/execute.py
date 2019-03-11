@@ -549,6 +549,7 @@ def _realize_files(files, *, cairio_client):
         if file0 not in _realized_files:
             print('Realizing file: '+file0)
             a=cairio_client.realizeFile(file0)
+            print(a)
             if a:
                 _realized_files.add(file0)
             else:
