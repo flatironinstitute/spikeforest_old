@@ -93,8 +93,24 @@ Other spike sorters in progress include YASS, KiloSort, and IronClust.
 [Example notebook: `example_multi_recording.ipynb`](https://github.com/flatironinstitute/spikeforest/blob/master/docs/example_notebooks/example_multi_recording.ipynb)
 
 ## Sorting using a remote compute resource
+### Setting Up a remote compute resource
+*Request a username and password for cairio*
+For now, email Jeremy or create an issue on github.
 
-[TODO: write this]
+*Install KBucket*
+```
+cd spikeforest/mountaintools/kbucketserver
+npm install
+echo "export PATH=\$PATH:$PWD/bin" >> ~/.bashrc
+```
+
+*Start KBucket Share & Upload Server*
+```
+mkdir sha1-cache
+kbucket-host . # then follow the on screen instructions
+CAS_UPLOAD_TOKEN=your_token CAS_UPLOAD_DIR=sha1-chache casuploadserver .
+```
+
 
 ## Visualization of recordings and sorting results
 
