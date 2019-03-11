@@ -306,9 +306,6 @@ def _execute_helper(proc, X, *, container, tempdir, _system_call_prefix, **kwarg
     if container:
         singularity_opts.append(
             '-B {}:/execute_in_container/processor_source'.format(processor_source_dirname))
-        # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
-        singularity_opts.append(
-            '-B {}:/execute_in_container/mountaintools'.format(mountaintools_source_dirname))
     else:
         os.symlink(processor_source_dirname, tempdir+'/processor_source')
         # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
@@ -343,7 +340,7 @@ if __name__ == "__main__":
         singularity_opts.append('--contain')
         singularity_opts.append('-e')
         # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
-        singularity_cmd = 'singularity exec {} {} bash -c "PYTHONPATH=/execute_in_container/mountaintools KBUCKET_CACHE_DIR=/sha1-cache {} python3 /execute_in_container/execute_in_container.py"'.format(
+        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python3 /execute_in_container/execute_in_container.py"'.format(
             ' '.join(singularity_opts), container, ' '.join(env_vars))
     else:
         singularity_cmd = 'python3 {}/execute_in_container.py'.format(tempdir)
