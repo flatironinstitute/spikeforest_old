@@ -35,7 +35,7 @@ def _create_job_for_sorting(sorting, container):
 
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')
-    container='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
+    container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
 
     pool = multiprocessing.Pool(20)
     jobs_gen_table=pool.map(_create_job_for_sorting_helper, [dict(sorting=sorting, container=container) for sorting in sortings])

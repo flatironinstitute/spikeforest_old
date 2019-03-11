@@ -11,11 +11,11 @@ RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
 #########################################
-### spikeforest2
+### mountaintools
 RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2 && cd /src/spikeforest2 && git checkout dev
-WORKDIR /src/spikeforest2
-RUN ./setup_python.sh
+RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
+WORKDIR /src/spikeforest
+RUN pip install -e ./mountaintools
 
 #########################################
 # python2 and pip2 (but keep python 3 as the default)
@@ -33,3 +33,7 @@ RUN pip install -r requirements.txt
 RUN python setup.py install
 
 ## call yass via python2 /path/to/binary/yass
+
+### spikeforest
+WORKDIR /src/spikeforest
+RUN pip install -e ./spikeforest

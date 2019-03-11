@@ -16,7 +16,7 @@ class SpykingCircus(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
-    CONTAINER = 'sha1://914becce45aec56a84dd1dd4bca4037b09c50373/02-12-2019/spyking_circus.simg'
+    CONTAINER = 'sha1://030aae3a7c5638ae2795da05d2c79ca53fd940e9/03-11-2019/spyking_circus.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)

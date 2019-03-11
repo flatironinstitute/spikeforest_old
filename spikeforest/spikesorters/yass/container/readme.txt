@@ -1,8 +1,8 @@
 # first build (if needed)
-docker build -t jamesjun/yass .
+docker build -t magland/yass .
 
 # then push to docker hub (if needed)
-docker push jamesjun/yass
+docker push magland/yass
 
 # then create singularity image
 ./build_simg.sh

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from cairio import client as ca
+from mountaintools import client as mt
 
-ca.autoConfig(collection='spikeforest',
-              key='spikeforest2-readwrite', ask_password=True)
-sha1_path = ca.saveFile('mountaintools_basic.simg')
+mt.login()
+mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
+sha1_path = mt.saveFile('mountaintools_basic.simg')
 print(sha1_path)

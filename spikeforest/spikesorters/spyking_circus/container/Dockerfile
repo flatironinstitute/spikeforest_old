@@ -11,11 +11,11 @@ RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
 #########################################
-### spikeforest2
+### mountaintools
 RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest2 /src/spikeforest2 && cd /src/spikeforest2 && git checkout dev
-WORKDIR /src/spikeforest2
-RUN ./setup_python.sh
+RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
+WORKDIR /src/spikeforest
+RUN pip install -e ./mountaintools
 
 #########################################
 ### Spyking Circus
@@ -29,3 +29,6 @@ RUN apt-get update && apt-get install -y packagekit-gtk3-module
 RUN apt-get update && apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module
 #RUN DEBIAN_FRONTEND=noninteractive apt-get install -y xserver-xorg xorg jwm
 
+### spikeforest
+WORKDIR /src/spikeforest
+RUN pip install -e ./spikeforest

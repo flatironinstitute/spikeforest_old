@@ -12,7 +12,7 @@ except:
   import spikeextractors as si
   import spikewidgets as sw
 
-_CONTAINER='sha1://3b26155930cc4a4745c67b702ce297c9c968ac94/02-12-2019/mountaintools_basic.simg'
+_CONTAINER='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:

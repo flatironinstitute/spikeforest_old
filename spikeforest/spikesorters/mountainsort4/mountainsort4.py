@@ -7,7 +7,7 @@ class MountainSort4(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://009406add7a55687cec176be912bc7685c2a4b1d/02-12-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://a9dfbca8175dd18ea9aa34f3594b9f35cdd5af66/03-11-2019/mountainsort4.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
