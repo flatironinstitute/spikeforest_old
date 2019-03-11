@@ -182,6 +182,7 @@ class ComputeResourceServer():
             for ii in range(len(jobs)):
                 run_batch_job(**run_batch_job_args[ii])
                 self._check_batch_halt(batch_id)
+        
 
     def _assemble_batch(self,batch_id):
         self._check_batch_halt(batch_id)
@@ -198,41 +199,55 @@ class ComputeResourceServer():
 
         self._set_batch_status(batch_id=batch_id,status='assembling: {} jobs'.format(len(jobs)))
 
-        keys=[
+        pool=multiprocessing.Pool(20)
+        results=pool.map(_assemble_job_result,[
             dict(
-                name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii
+                local_client=self._local_client,
+                cairio_client=self._cairio_client,
+                batch_id=batch_id,
+                job=jobs[job_index],
+                job_index=job_index
             )
-            for ii in range(len(jobs))
-        ]
-        # we can load the results from local database
-        results0=_load_objects(self._local_client,keys=keys)
-        results = []
-        for ii, job in enumerate(jobs):
-            result0=results0[ii]
-            result=dict(
-                job=job,
-                result=result0
-            )
-            results.append(result)
+            for job_index in range(len(jobs))
+        ])
+        pool.close()
+        pool.join()
 
-            output_signatures=result0.get('output_signatures',dict())
-            for name0, signature0 in output_signatures.items():
-                sha1=self._local_client.getValue(key=signature0)
-                # propagate to remote database
-                self._cairio_client.setValue(key=signature0, value=sha1)
+        # keys=[
+        #     dict(
+        #         name='compute_resource_batch_job_result',batch_id=batch_id,job_index=ii
+        #     )
+        #     for ii in range(len(jobs))
+        # ]
+        # # we can load the results from local database
+        # results0=_load_objects(self._local_client,keys=keys)
+        # results = []
+        # for ii, job in enumerate(jobs):
+        #     result0=results0[ii]
+        #     result=dict(
+        #         job=job,
+        #         result=result0
+        #     )
+        #     results.append(result)
 
-            result_outputs0=result0['outputs']
-            for name0, output0 in job['outputs'].items():
-                if name0 not in result_outputs0:
-                    raise Exception('Unexpected: output {} not found in result'.format(name0))
-                result_output0=result_outputs0[name0]
-                if type(output0)==dict:    
-                    if output0.get('upload', False):
-                        print('Saving output {}...'.format(name0))
-                        self._cairio_client.saveFile(path=result_output0)
+        #     output_signatures=result0.get('output_signatures',dict())
+        #     for name0, signature0 in output_signatures.items():
+        #         sha1=self._local_client.getValue(key=signature0)
+        #         # propagate to remote database
+        #         self._cairio_client.setValue(key=signature0, value=sha1)
 
-            if ('console_out' in result0) and result0['console_out']:
-                self._cairio_client.saveFile(path=result0['console_out'])
+        #     result_outputs0=result0['outputs']
+        #     for name0, output0 in job['outputs'].items():
+        #         if name0 not in result_outputs0:
+        #             raise Exception('Unexpected: output {} not found in result'.format(name0))
+        #         result_output0=result_outputs0[name0]
+        #         if type(output0)==dict:    
+        #             if output0.get('upload', False):
+        #                 print('Saving output {}...'.format(name0))
+        #                 self._cairio_client.saveFile(path=result_output0)
+
+        #     if ('console_out' in result0) and result0['console_out']:
+        #         self._cairio_client.saveFile(path=result0['console_out'])
 
         # results = []
         # for ii, job in enumerate(jobs):
@@ -248,6 +263,8 @@ class ComputeResourceServer():
 
         self._check_batch_halt(batch_id)
         
+        print('Saving results...')
+
         # finally, save the results remotely
         self._cairio_client.saveObject(
             key=dict(
@@ -258,6 +275,8 @@ class ComputeResourceServer():
                 results=results
             )
         )
+
+        print('Done.')
 
         self._check_batch_halt(batch_id)
     
@@ -308,4 +327,39 @@ def _load_objects_helper(args):
     key=args[1]
     return cairio_client.loadObject(key=key)
 
+def _assemble_job_result(kwargs):
+    local_client=kwargs['local_client']
+    cairio_client=kwargs['cairio_client']
+    batch_id=kwargs['batch_id']
+    job=kwargs['job']
+    job_index=kwargs['job_index']
+    key=dict(
+            name='compute_resource_batch_job_result',batch_id=batch_id,job_index=job_index
+        )
+    # we can load the results from local database
+    result0=local_client.loadObject(key=key)
+    result=dict(
+        job=job,
+        result=result0
+    )
+
+    output_signatures=result0.get('output_signatures',dict())
+    for name0, signature0 in output_signatures.items():
+        sha1=local_client.getValue(key=signature0)
+        # propagate to remote database
+        cairio_client.setValue(key=signature0, value=sha1)
+
+    result_outputs0=result0['outputs']
+    for name0, output0 in job['outputs'].items():
+        if name0 not in result_outputs0:
+            raise Exception('Unexpected: output {} not found in result'.format(name0))
+        result_output0=result_outputs0[name0]
+        if type(output0)==dict:    
+            if output0.get('upload', False):
+                print('Saving output {}...'.format(name0))
+                cairio_client.saveFile(path=result_output0)
+
+    if ('console_out' in result0) and result0['console_out']:
+        cairio_client.saveFile(path=result0['console_out'])
     
+    return result
