@@ -6,7 +6,10 @@ from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
 import time
-from filelock import FileLock
+try:
+    from filelock import FileLock
+except:
+    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
