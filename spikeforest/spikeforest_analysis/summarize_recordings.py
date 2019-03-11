@@ -22,6 +22,7 @@ def _create_jobs_for_recording(recording):
     print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
     raw_path=recording['directory']+'/raw.mda'
     firings_true_path=recording['directory']+'/firings_true.mda'
+    geom_path=recording['directory']+'/geom.csv'
     channels=recording.get('channels',None)
     units=recording.get('units_true',None)
 
@@ -33,7 +34,7 @@ def _create_jobs_for_recording(recording):
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
-    job_info['files_to_realize']=[raw_path,firings_true_path]
+    job_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/geom.csv',dsdir+'/params.json',dsdir+'/firings_true.mda']
     # job=CreateTimeseriesPlot.createJob(
     #     recording_dir=recording['directory'],
     #     channels=recording.get('channels',[]),
@@ -49,6 +50,7 @@ def _create_jobs_for_recording(recording):
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
+    job_units_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/geom.csv',dsdir+'/params.json',dsdir+'/firings_true.mda']
     return (job_info, job_units_info)
 
 def _gather_summarized_recording_helper(kwargs):
