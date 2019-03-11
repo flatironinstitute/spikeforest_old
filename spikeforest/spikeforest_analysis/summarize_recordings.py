@@ -188,7 +188,7 @@ class ComputeRecordingInfo(mlpr.Processor):
     
   def run(self):
     ret={}
-    recording=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=False)
+    recording=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if len(self.channels)>0:
       recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
     ret['samplerate']=recording.getSamplingFrequency()
@@ -213,7 +213,7 @@ class ComputeRecordingInfo(mlpr.Processor):
 #   jpg_out=mlpr.Output('The plot as a .jpg file')
   
 #   def run(self):
-#     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=False)
+#     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
 #     if len(self.channels)>0:
 #       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channels)
 #     R=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
