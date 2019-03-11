@@ -134,10 +134,11 @@ class CairioClient():
                 raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
-        if upload_token is None:
-            upload_token=self._find_upload_token_from_login(share_id=share_id)
-            if not upload_token:
-                raise Exception('Cannot configure remote read-write. Missing upload token for {}, and not found in login config.'.format(share_id))
+        if share_id is not None:
+            if upload_token is None:
+                upload_token=self._find_upload_token_from_login(share_id=share_id)
+                if not upload_token:
+                    raise Exception('Cannot configure remote read-write. Missing upload token for {}, and not found in login config.'.format(share_id))
         self.setRemoteConfig(
             collection=collection,
             token=token,
