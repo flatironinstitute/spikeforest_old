@@ -21,7 +21,11 @@ class YASS(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.yaml']
-    CONTAINER = 'sha1://2876878ca4993106eec9e8590d9d900adff6fdab/03-11-2019/yass.simg'
+
+    #CONTAINER = 'sha1://2876878ca4993106eec9e8590d9d900adff6fdab/03-11-2019/yass.simg'
+    # revert to old container for now
+    CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
+    
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)

@@ -10,6 +10,14 @@ try:
     from filelock import FileLock
 except:
     print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
+    # fake filelock
+    class FileLock():
+        def __init__(self, path):
+            pass
+        def __enter__(self):
+            return dict()
+        def __exit__(self, type, value, traceback):
+            pass
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
