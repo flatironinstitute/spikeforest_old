@@ -16,22 +16,7 @@ get_ipython().run_line_magic('autoreload', '2')
 # Import the MountainTools client
 from mountaintools import client as mt
 import mlprocessors as mlpr
-
-# Use one of the following three modes
-mode='local'
-# mode='remote_readonly'
-# mode='remote_readwrite'
-
-# Log in if you are authorized
-if mode=='local':
-    mt.configLocal()
-elif mode=='remote_readonly':
-    mt.configRemoteReadonly(collection='spikeforest', share_id='spikeforest.spikeforest2')
-elif mode=='remote_readwrite':
-    mt.login()
-    mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
-else:
-    raise Exception('Invalid mode: '+mode)
+mt.configLocal()
 
 #%%
 # Import the mandelbrot helpers from the mandelbrot/ directory
@@ -40,39 +25,89 @@ import numpy as np
 
 #%%
 # Do a simple direct mandelbrot calculation
-X = compute_mandelbrot(xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=100)
+X = compute_mandelbrot(
+    xmin=-2, xmax=0.5,
+    ymin=-1.25, ymax=1.25,
+    num_x=1000, num_iter=100
+)
+
 show_mandelbrot(X)
 
 #%%
+
 # Execute as a MountainTools processor (automatically caches results)
-result=ComputeMandelbrot.execute(
-    num_iter=1000,
+result = ComputeMandelbrot.execute(
+    xmin=-2, xmax=0.5,
+    ymin=-1.25, ymax=1.25,
+    num_x=1000, num_iter=1000,
     output_npy=dict(ext='.npy', upload=True)
 )
-X=np.load(mt.realizeFile(result.outputs['output_npy']))
+
+X = np.load(mt.realizeFile(result.outputs['output_npy']))
+
 show_mandelbrot(X)
 
 #%%
+
 # Run in parallel by creating jobs that do subsampling
-subsampling_factor=4
-jobs=[]
-for offset in range(subsampling_factor):
-    job0=ComputeMandelbrot.createJob(
-        num_iter=10000,
-        subsampling_factor=subsampling_factor,
-        subsampling_offset=offset,
+subsampling_factor=10
+
+jobs = ComputeMandelbrot.createJobs([
+    dict(
+        xmin=-2, xmax=0.5,
+        ymin=-1.25, ymax=1.25,
+        num_x=1000, num_iter=10000,
         output_npy=dict(ext='.npy', upload=True),
-        _keep_temp_files=True
+        subsampling_factor=subsampling_factor,
+        subsampling_offset=offset
     )
-    jobs.append(job0)
+    for offset in range(0, subsampling_factor)
+])
 
-results=mlpr.executeBatch(jobs=jobs, num_workers=4)
+results = mlpr.executeBatch(jobs=jobs, num_workers=4)
 
-X_list=[]
-for result0 in results:
-    X0=np.load(mt.realizeFile(result0.outputs['output_npy']))
-    X_list.append(X0)
-X = combine_subsampled_mandelbrot(X_list)
+X = combine_subsampled_mandelbrot([
+    np.load(mt.realizeFile(result0.outputs['output_npy']))
+    for result0 in results
+])
+
+show_mandelbrot(X)
+
+#%%
+
+# Run in parallel on remote compute resource
+
+mt.login()
+mt.configRemoteReadWrite(
+    collection='fractal', share_id='fractal.share1'
+)
+
+subsampling_factor=80
+jobs = ComputeMandelbrot.createJobs([
+    dict(
+        xmin=-2, xmax=0.5,
+        ymin=-1.25, ymax=1.25,
+        num_x=1000, num_iter=100000,
+        output_npy=dict(ext='.npy', upload=True),
+        subsampling_factor=subsampling_factor,
+        subsampling_offset=offset
+    )
+    for offset in range(0, subsampling_factor)
+])
+
+results = mlpr.executeBatch(
+    jobs=jobs,
+    compute_resource = dict(
+        resource_name='fractal-computer',
+        collection='fractal',
+        share_id='fractal.share1'
+    )
+)
+
+X = combine_subsampled_mandelbrot([
+    np.load(mt.realizeFile(result0.outputs['output_npy']))
+    for result0 in results
+])
 
 show_mandelbrot(X)
 
