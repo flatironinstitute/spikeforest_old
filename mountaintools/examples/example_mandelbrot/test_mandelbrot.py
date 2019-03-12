@@ -3,10 +3,10 @@ import random
 import multiprocessing
 import os
 
-def init_temp_dirs(tmp_path):
-    sha1_cache_dir = tmp_path / 'sha1-cache'
+def init_temp_dirs(temporary_path):
+    sha1_cache_dir = temporary_path / 'sha1-cache'
     sha1_cache_dir.mkdir()
-    cairio_dir = tmp_path / 'cairio'
+    cairio_dir = temporary_path / 'cairio'
     cairio_dir.mkdir()
     os.environ['KBUCKET_CACHE_DIR']=str(sha1_cache_dir)
     os.environ['CAIRIO_DIR']=str(cairio_dir)

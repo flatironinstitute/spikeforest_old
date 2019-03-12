@@ -9,6 +9,7 @@ before_install:
   - docker pull spikeforest/codepod_spikeforest2
 
 install:
+  - pip install pytest
   - pip install codepod
   - pip install ./mountaintools
   - pip install ./spikeforest
