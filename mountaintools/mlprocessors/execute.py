@@ -293,12 +293,12 @@ def _execute_helper(proc, X, *, container, tempdir, _system_call_prefix, **kwarg
 
     expanded_kwargs = _get_expanded_args(kwargs)
 
-    processor_source_fname = inspect.getsourcefile(proc)
+    processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     processor_source_dirname = os.path.dirname(processor_source_fname)
 
     # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
-    mountaintools_source_dirname = os.path.abspath(
-        os.path.dirname(os.path.realpath(__file__))+'/..')
+    # mountaintools_source_dirname = os.path.abspath(
+    #    os.path.dirname(os.path.realpath(__file__))+'/..')
 
     if not processor_source_fname:
         raise Exception(
@@ -309,7 +309,7 @@ def _execute_helper(proc, X, *, container, tempdir, _system_call_prefix, **kwarg
     else:
         os.symlink(processor_source_dirname, tempdir+'/processor_source')
         # Note: in future, we do not want to mount mountaintools! This was a temp hack because I did not have wi-fi access
-        os.symlink(mountaintools_source_dirname, tempdir+'/mountaintools')
+        #os.symlink(mountaintools_source_dirname, tempdir+'/mountaintools')
 
     # Code generation
     code = """
