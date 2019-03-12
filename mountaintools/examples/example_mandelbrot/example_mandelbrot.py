@@ -104,7 +104,7 @@ else:
 X=compute_mandelbrot_parallel(
     num_iter=300,  #50000,
     num_x=3000,
-    num_parallel=80,
+    num_parallel=8,
     compute_resource=compute_resource
 )
 show_mandelbrot(X)

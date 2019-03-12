@@ -263,14 +263,15 @@ class ComputeResourceServer():
 
         self._check_batch_halt(batch_id)
         
-        print('Saving results...')
+        results_key=dict(
+            name='compute_resource_batch_results',
+            batch_id=batch_id
+        )
+        print('Saving results...', results_key)
 
         # finally, save the results remotely
         self._cairio_client.saveObject(
-            key=dict(
-                name='compute_resource_batch_results',
-                batch_id=batch_id
-            ),
+            key=results_key,
             object=dict(
                 results=results
             )

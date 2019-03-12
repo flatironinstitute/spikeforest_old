@@ -25,16 +25,16 @@ except:
 
 class Sha1Cache():
     def __init__(self):
-        self._directory = ''
+        self._directory = None
 
     def directory(self):
-        return self._directory
+        if self._directory:
+            return self._directory
+        else:
+            return os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
 
     def setDirectory(self, directory):
-        if not os.path.exists(directory):
-            os.mkdir(directory)
         self._directory = directory
-        self._alternate_directories = self._determine_alternate_directories()
 
     def findFile(self, sha1):
         path, alternate_paths = self._get_path(
@@ -160,8 +160,7 @@ class Sha1Cache():
         except:
             print('Warning: problem writing .record.json file: '+path0)
 
-        path1 = self._get_path(
-            sha1, create=True, directory=self._directory)+'.hints.json'
+        path1 = self._get_path(sha1, create=True, directory=self.directory())+'.hints.json'
         if os.path.exists(path1):
             hints = _read_json_file(path1, delete_on_error=True)
         else:
@@ -178,25 +177,31 @@ class Sha1Cache():
 
     def _get_path(self, sha1, *, create=True, directory=None, return_alternates=False):
         if directory is None:
-            directory = self._directory
-        path1 = '/{}/{}{}'.format(sha1[0], sha1[1], sha1[2])
-        path0 = directory+path1
+            directory = self.directory()
+        path1 = os.path.join(sha1[0], sha1[1:3])
+        path0 = os.path.join(directory, path1)
         if create:
             if not os.path.exists(path0):
-                os.makedirs(path0)
+                try:
+                    os.makedirs(path0)
+                except:
+                    if not os.path.exists(path0):
+                        raise Exception('Unable to make directory: '+path0)
         if not return_alternates:
-            return path0+'/'+sha1
+            return os.path.join(path0, sha1)
         else:
             altpaths = []
-            for altdir in self._alternate_directories:
-                altpaths.append(altdir+path1+'/'+sha1)
-            return path0+'/'+sha1, altpaths
+            list0 = _safe_list_dir(os.path.join(directory,'alternate'))
+            for name0 in list0:
+                altdir = os.path.join(directory,'alternate',name0)
+                altpaths.append(os.path.join(altdir,path1,sha1))
+            return os.path.join(path0,sha1), altpaths
 
     def _determine_alternate_directories(self):
         ret = []
-        list0 = _safe_list_dir(self._directory+'/alternate')
+        list0 = _safe_list_dir(self.directory()+'/alternate')
         for name0 in list0:
-            path1 = self._directory+'/alternate/'+name0
+            path1 = self.directory()+'/alternate/'+name0
             if os.path.isdir(path1) or os.path.islink(path1):
                 ret.append(path1)
         return ret

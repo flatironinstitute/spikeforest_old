@@ -702,8 +702,10 @@ if __name__ == "__main__":
 
         _write_text_file(tempdir+'/execute.py', code)
 
-        retcode, _unused_console_out = _run_command_and_print_output(
-            'python3 {}/execute.py'.format(tempdir))
+        #retcode, _unused_console_out = _run_command_and_print_output(
+        #    'python3 {}/execute.py'.format(tempdir))
+        env=os.environ
+        retcode=subprocess.call('python3 {}/execute.py'.format(tempdir),shell=True,env=env)
 
         console_out=cairio_client.loadText(path=temporary_output_files['_console_out'])
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])

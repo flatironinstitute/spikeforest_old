@@ -36,7 +36,6 @@ def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, sru
         if srun_opts_string is not None:
             _init_next_batch_job_index_to_run(batch_id=batch_id)
             cmd = 'srun {} {}'.format(srun_opts_string, cmd)
-        print('##################### {}'.format(cmd))
         retval = os.system(cmd)
         if retval != 0:
             raise Exception('Error running batch job {} (batch_id={})'.format(job_index, batch_id))

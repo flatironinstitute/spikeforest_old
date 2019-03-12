@@ -163,7 +163,7 @@ class CairioClient():
             self._remote_config['collection'] = collection
         if token is not None:
             self._remote_config['token'] = token
-        if share_id is not None:
+        if share_id:
             self._remote_config['share_id'] = share_id
         if alternate_share_ids is not None:
             for ii,asi in enumerate(alternate_share_ids):
@@ -421,9 +421,10 @@ class CairioClient():
         if local_only:
             return None
         if share_id is not None:
+            assert share_id
             share_ids = [share_id]
         else:
-            if self._remote_config['share_id'] is not None:
+            if self._remote_config['share_id']:
                 share_ids = [self._remote_config['share_id']]
             else:
                 share_ids = []
@@ -494,6 +495,7 @@ class CairioClient():
     #             return False
 
     def _find_on_kbucket(self, *, share_id, sha1):
+        assert share_id, 'Cannot find_on_kbucket for share_id: '+share_id
         # first check in the upload location
         (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(
             path='kbucket://'+share_id+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
@@ -589,10 +591,8 @@ class CairioClient():
 
 class CairioLocal():
     def __init__(self):
-        self._local_database_path = _get_default_local_db_path()
+        self._local_database_path = None
         self._sha1_cache = Sha1Cache()
-        local_cache_dir = os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
-        self._sha1_cache.setDirectory(local_cache_dir)
         self._kbucket_url = os.getenv(
             'KBUCKET_URL', 'https://kbucket.flatironinstitute.org')
         self._nodeinfo_cache = dict()
@@ -768,8 +768,17 @@ class CairioLocal():
     def localCacheDir(self):
         return self._sha1_cache.directory()
 
+    def localDatabasePath(self):
+        if self._local_database_path:
+            return self._local_database_path
+        else:
+            return _get_default_local_db_path()
+
     def _get_db_path_for_keyhash(self, keyhash):
-        return self._local_database_path+'/{}/{}.db'.format(keyhash[0], keyhash[1:3])
+        path=os.path.join(self.localDatabasePath(), keyhash[0], keyhash[1:3])
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return os.path.join(path, keyhash+'.db')
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None):
         fname = self._sha1_cache.findFile(sha1)
@@ -781,6 +790,8 @@ class CairioLocal():
         return None
 
     def _get_node_info(self, *, share_id):
+        if not share_id:
+            raise Exception('Cannot get node info for share_id: '+share_id)
         if share_id in self._nodeinfo_cache:
             node_info = self._nodeinfo_cache[share_id]
         else:
@@ -811,6 +822,8 @@ class CairioLocal():
         return node_info
 
     def _get_kbucket_url_for_share(self, *, share_id):
+        if not share_id:
+            raise Exception('Cannot get kbucket url for share: '+share_id)
         node_info = self._get_node_info(share_id=share_id)
         if (node_info) and (node_info['accessible']):
             return node_info.get('listen_url', None)
@@ -989,16 +1002,11 @@ def _write_json_file(obj, path):
 
 
 def _get_default_local_db_path():
-    dirname = str(pathlib.Path.home())+'/.cairio'
+    default_dirname = str(pathlib.Path.home())+'/.cairio'
+    dirname=os.environ.get('CAIRIO_DIR',default_dirname)
     if not os.path.exists(dirname):
         os.mkdir(dirname)
     ret = dirname+'/database'
-    if not os.path.exists(ret):
-        os.mkdir(ret)
-    for n in range(16):
-        subdir = ret+'/'+hex(n)[2:]
-        if not os.path.exists(subdir):
-            os.mkdir(subdir)
     return ret
 
 
@@ -1028,6 +1036,8 @@ def _create_temporary_file_for_text(*, text):
 
 def _create_temporary_fname(ext):
     tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())
+    if not os.path.exists(tempdir):
+        os.makedirs(tempdir)
     return tempdir+'/tmp_cairioclient_'+''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))+ext
 
 def _random_string(num):
