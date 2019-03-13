@@ -16,4 +16,4 @@ install:
 
 script:
   - codepod --command='devel/codepod_test.sh' --no-pull --docker_opts="-e EXTRA_CMD='./devel/codepod_test.sh'" .
-  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider
+#  - PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider
