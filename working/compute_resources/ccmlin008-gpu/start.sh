@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# default name otherwise specified
+RESOURCE_NAME=${1:-ccmlin008-gpu} 
+
 module load matlab
 module load cuda
 
@@ -14,7 +17,11 @@ export DISPLAY=""
 COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
 
-../../../bin/compute-resource-start ccmlin008-gpu \
-	--allow_uncontainerized --parallel 1  \
-	--collection $COLLECTION --share_id $SHARE_ID
+#../../../bin/compute-resource-start ccmlin008-gpu \
+#	--allow_uncontainerized --parallel 1  \
+#	--collection $COLLECTION --share_id $SHARE_ID
 
+../../../bin/compute-resource-start $RESOURCE_NAME \
+	--allow_uncontainerized  \
+	--collection $COLLECTION --share_id $SHARE_ID \
+        --srun_opts "-c 2 -n 20 -p gpu --gres=gpu:1"
