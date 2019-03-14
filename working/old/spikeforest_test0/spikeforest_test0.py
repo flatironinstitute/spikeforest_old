@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as ca
 from spikeforest import spikeextractors as se
 import os
 import shutil

@@ -3,7 +3,7 @@ import json
 import mlprocessors as mlpr
 from spikeforest import spikeextractors as si
 from spikeforest import spikewidgets as sw
-from cairio import client as ca
+from mountaintools import client as ca
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:

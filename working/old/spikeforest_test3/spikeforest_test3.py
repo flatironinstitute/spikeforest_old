@@ -2,7 +2,7 @@
 # adding sqmea simulated data
 
 import spikeforest_analysis as sa
-from cairio import client as ca
+from mountaintools import client as ca
 import os
 
 # This file runs a spikeforest processing pipeline with the following steps:

@@ -24,7 +24,7 @@ python setup.py develop
 Then, from python run the following test:
 
 ```
-from cairio import client as ca
+from mountaintools import client as ca
 
 # Create a collection on server with a test token
 ca.setRemoteConfig(url='http://localhost:20001')

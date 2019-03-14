@@ -7,16 +7,16 @@ import requests
 import time
 
 
-class CairioRemoteClient():
+class MountainRemoteClient():
     def __init__(self):
         pass
 
     def addCollection(self, *, collection, token, url, admin_token):
         if not url:
-            print('Missing url for remote cairio server.')
+            print('Missing url for remote mountain server.')
             return False
         if not admin_token:
-            print('Missing admin token for remote cairio server.')
+            print('Missing admin token for remote mountain server.')
             return False
         path = '/admin/create/{}/{}'.format(collection, token)
         signature = _sha1_of_object({'path': path, 'token': admin_token})
@@ -30,7 +30,7 @@ class CairioRemoteClient():
 
     def getValue(self, *, collection, key, subkey, url):
         if not url:
-            print('Missing url for remote cairio server.')
+            print('Missing url for remote mountain server.')
             return False
         keyhash = _hash_of_key(key)
         if subkey is None:
@@ -47,10 +47,10 @@ class CairioRemoteClient():
         if value:
             value_b64 = base64.b64encode(value.encode()).decode('utf-8')
         if not url:
-            print('Missing url for remote cairio server.')
+            print('Missing url for remote mountain server.')
             return False
         if not token:
-            print('Missing token for remote cairio server.')
+            print('Missing token for remote mountain server.')
             return False
         keyhash = _hash_of_key(key)
         if value:

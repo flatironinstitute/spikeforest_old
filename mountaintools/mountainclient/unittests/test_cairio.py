@@ -1,4 +1,4 @@
-from cairio import client as ca
+from mountaintools import client as ca
 import json
 import subprocess
 import sys
@@ -13,7 +13,7 @@ def test_cairio(tmpdir):
     tmpdir = str(tmpdir)
     os.environ['KBUCKET_CACHE_DIR'] = tmpdir+'/sha1-cache'
 
-    from cairio import CairioClient
+    from mountaintools import CairioClient
     cc = CairioClient()
 
     # Setting values (these should be short strings, <=80 characters)
@@ -82,7 +82,7 @@ def test_cairio(tmpdir):
 
 
 def test_cairio_subkeys():
-    from cairio import CairioClient
+    from mountaintools import CairioClient
     cc = CairioClient()
 
     # data for the first pass
@@ -125,7 +125,7 @@ def test_cairioserver(cairioserver):
     print('test_cairioserver')
     time.sleep(2)
 
-    from cairio import CairioClient
+    from mountaintools import CairioClient
     cc = CairioClient()
     cc.setRemoteConfig(url=cairioserver['url'])
     cc.addRemoteCollection(collection='test_collection1',

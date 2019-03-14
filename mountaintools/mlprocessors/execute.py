@@ -6,8 +6,7 @@ import os
 import shutil
 import tempfile
 import subprocess
-from cairio import client as ca
-from cairio import CairioClient
+from mountainclient import client as ca
 import inspect
 from subprocess import Popen, PIPE
 import shlex

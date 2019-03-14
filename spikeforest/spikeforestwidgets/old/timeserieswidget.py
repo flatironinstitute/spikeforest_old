@@ -32,14 +32,10 @@ class TimeseriesWidget(vd.Component):
         vd.devel.loadJavascript(js=js)
         self._size=(800,400)
     def setSize(self,size):
-        print('setSize')
         if self._size==size:
             return
-        print('test 1')
         self._size=size
-        print('test 2')
         self.refresh()
-        print('test 3')
     def render(self):
         div=vd.div(id=self._div_id)
         js="""
