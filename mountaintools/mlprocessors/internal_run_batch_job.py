@@ -13,9 +13,6 @@ import asyncio
 import random
 import time
 
-# This can be important for some of the jobs in certain situations
-os.environ['DISPLAY'] = ''
-
 def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, srun_opts_string=None):
     local_client=CairioClient()
 
