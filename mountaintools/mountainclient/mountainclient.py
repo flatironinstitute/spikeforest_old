@@ -27,7 +27,7 @@ except:
             pass
 
 
-env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools/.env')
+env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools', '.env')
 if os.path.exists(env_path):
     print('Loading environment from: '+env_path)
     try:
@@ -660,6 +660,8 @@ class MountainClientLocal():
         self._kbucket_url = os.getenv(
             'KBUCKET_URL', 'https://kbucket.flatironinstitute.org')
         self._nodeinfo_cache = dict()
+        self._local_kbucket_shares = dict()
+        self._initialize_local_kbucket_shares()
 
     def getValue(self, *, key, subkey=None):
         if subkey is not None:
@@ -768,6 +770,9 @@ class MountainClientLocal():
             sha1 = list0[2]
             return self._realize_file_from_sha1(sha1=sha1, dest_path=dest_path)
         elif path.startswith('kbucket://'):
+            path_local = self._find_file_in_local_kbucket_share(path)
+            if path_local is not None:
+                return path_local
             sha1, size, url = self._get_kbucket_file_info(path=path)
             if sha1 is None:
                 return None
@@ -834,6 +839,35 @@ class MountainClientLocal():
 
     def localDatabasePath(self):
         return _get_default_local_db_path()
+
+    def _initialize_local_kbucket_shares(self):
+        local_kbucket_shares_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'local_kbucket_shares')
+        if os.path.exists(local_kbucket_shares_fname):
+            txt=_read_text_file(local_kbucket_shares_fname)
+            lines=txt.splitlines()
+            for path0 in lines:
+                if os.path.isdir(path0):
+                    kbucket_config_path=os.path.join(path0, '.kbucket')
+                    if os.path.isdir(kbucket_config_path):
+                        kbnode_fname=os.path.join(kbucket_config_path, 'kbnode.json')
+                        obj = _read_json_file(kbnode_fname)
+                        share_id=obj['node_id']
+                        print('Found local kbucket share {} at {}'.format(share_id, path0))
+                        self._local_kbucket_shares[share_id]=dict(path=path0)
+                    else:
+                        print('WARNING: Parsing {}: No such config directory: {}'.format(local_kbucket_shares_fname, kbucket_config_path))    
+                else:
+                    print('WARNING: Parsing {}: No such directory: {}'.format(local_kbucket_shares_fname, path0))
+
+    def _find_file_in_local_kbucket_share(self, path):
+        list0 = path.split('/')
+        share_id = list0[2]
+        path0 = '/'.join(list0[3:])
+        if share_id in self._local_kbucket_shares:
+            fname = os.path.join(self._local_kbucket_shares[share_id]['path'], path0)
+            if os.path.exists(fname):
+                return fname
+        return None
 
     def _get_db_path_for_keyhash(self, keyhash):
         path=os.path.join(self.localDatabasePath(), keyhash[0], keyhash[1:3])
