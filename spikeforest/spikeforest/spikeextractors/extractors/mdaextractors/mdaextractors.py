@@ -8,7 +8,7 @@ import os
 
 def _load_required_modules():
     try:
-        from cairio import client as ca
+        from mountaintools import client as ca
     except ModuleNotFoundError:
         raise ModuleNotFoundError("To use the MdaExtractors, install mountainlab_pytools and kbucket: \n\n"
                                   "pip install mountainlab_pytools kbucket\n\n")

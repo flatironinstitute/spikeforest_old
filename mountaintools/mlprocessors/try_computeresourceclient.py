@@ -3,7 +3,7 @@
 import asyncio
 from computeresourceclient import ComputeResourceClient
 from nthprime import ComputeNthPrime
-from cairio import client as ca
+from mountaintools import client as ca
 import mlprocessors as mlpr
 
 def main():

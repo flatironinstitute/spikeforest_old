@@ -2,7 +2,7 @@
 
 import os
 import vdomr as vd
-from cairio import client as ca
+from mountaintools import client as ca
 from sortingresultsexplorermainwindow import SortingResultsExplorerMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 

@@ -8,8 +8,8 @@ import base64
 import tempfile
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
-from .cairioremoteclient import CairioRemoteClient
-from .cairioremoteclient import _http_get_json
+from .mountainremoteclient import MountainRemoteClient
+from .mountainremoteclient import _http_get_json
 import time
 from getpass import getpass
 import shutil
@@ -37,10 +37,10 @@ if os.path.exists(env_path):
     load_dotenv(dotenv_path=env_path,verbose=True)
     
 
-class CairioClient():
+class MountainClient():
     def __init__(self):
         self._default_url = os.environ.get(
-            'CAIRIO_URL', 'https://pairio.org:20443')
+            'MOUNTAIN_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443'))
         self._remote_config = dict(
             # url='http://localhost:3010',
             url=None,
@@ -51,11 +51,11 @@ class CairioClient():
             upload_token=None
         )
         self._verbose = False
-        self._local_db = CairioLocal()
-        self._remote_client = CairioRemoteClient()
-        self._login_config=None
+        self._local_db = MountainClientLocal()
+        self._remote_client = MountainRemoteClient()
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
+        print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadOnly(), configRemoteReadWrite()')
         if (ask_password) and (password is None):
             password = getpass('Enter password: ')
         config = self.getValue(collection=collection,
@@ -69,7 +69,36 @@ class CairioClient():
             raise Exception('Error parsing config.')
         self.setRemoteConfig(**config)
 
-    def login(self,*,user=None,password=None,interactive=False,ask_password=False):
+    def login(self, *, user=None, password=None, interactive=False, ask_password=False):
+        '''Log in to the mountain system. This acquires a collection of tokens that
+        are used by the configRemoteReadWrite() function in order to gain read/write
+        access to collections and kbucket shares. The default user name and/or
+        password may be set by setting the following variables in
+        ~/.mountaintools/.env: MOUNTAIN_USER and MOUNTAIN_PASSWORD.
+        
+        The system will prompt for the user name in following situation:
+            1) No user is specified and MOUNTAIN_USER is not set and interactive=True
+            2) User is set to '' (empty string) and interactive=True
+
+        The system will prompt for the password in the following situation:
+            1) No password is not provided and MOUNTAIN_PASSWORD is not set and
+            (interactive = True or ask_password=True)
+
+        Parameters
+        ----------
+        user: str
+            Name of the user
+        password: str
+            Password of the user
+        interactive: bool
+            Whether to interactively ask for user/password (see above)
+        ask_password: bool
+            Whether to ask for the password (see above)
+
+        Returns
+        ----------
+        None
+        '''
         if interactive:
             ask_password=True
 
@@ -118,6 +147,9 @@ class CairioClient():
         print('Logged in as {}'.format(user))
 
     def configLocal(self):
+        """Configure the client to operate locally (not connected to any collections or kbucket shares)
+        """
+
         self.setRemoteConfig(
             collection='',
             token='',
@@ -126,6 +158,14 @@ class CairioClient():
         )
     
     def configRemoteReadonly(self, *, collection, share_id=''):
+        """Configure to connect to a remote collection and optionally also to a remote kbucket share
+        with readonly access.
+        
+        Arguments:
+            collection {str} -- name of the remote mountain collection
+            share_id {str} -- id of the share, or an alias to the id (TODO: describe aliases to shares) (default: {''})
+        """
+
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
         self.setRemoteConfig(
@@ -136,6 +176,20 @@ class CairioClient():
         )
 
     def configRemoteReadWrite(self, *, collection, share_id, token=None, upload_token=None):
+        """Configure to connect to a remote collection and optionally to a remote kbucket share
+        with read/write access. If you are logged in (see login()), and have 
+        
+        Arguments:
+            collection {str} -- name of the remote mountain collection
+            share_id {[type]} -- id of the share, or an alias to the id (TODO: describe aliases to shares) (default: {''})
+            token {[type]} -- token (default: {None})
+            upload_token {[type]} -- [description] (default: {None})
+        
+        Raises:
+            Exception -- [description]
+            Exception -- [description]
+        """
+
         if token is None:
             token=self._find_collection_token_from_login(collection)
             if not token:
@@ -154,23 +208,23 @@ class CairioClient():
             upload_token=upload_token
         )
 
-    def setRemoteConfig(self, *, url=None, collection=None, token=None, share_id=None, upload_token=None, alternate_share_ids=None):
+    def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
-        if url is not None:
+        if url is not 0:
             self._remote_config['url'] = url
-        if collection is not None:
+        if collection is not 0:
             self._remote_config['collection'] = collection
-        if token is not None:
+        if token is not 0:
             self._remote_config['token'] = token
-        if share_id:
+        if share_id is not 0:
             self._remote_config['share_id'] = share_id
-        if alternate_share_ids is not None:
+        if alternate_share_ids is not 0:
             for ii,asi in enumerate(alternate_share_ids):
                 if '.' in asi:
                     alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
             self._remote_config['alternate_share_ids'] = alternate_share_ids
-        if upload_token is not None:
+        if upload_token is not 0:
             self._remote_config['upload_token'] = upload_token
 
         c = self._remote_config
@@ -188,7 +242,7 @@ class CairioClient():
         else:
             config2 = 'local sha-1 cache'
 
-        print('CAIRIO CONFIG: {}; {}'.format(config1, config2))
+        print('MOUNTAIN CONFIG: {}; {}'.format(config1, config2))
         if c['alternate_share_ids']:
             print('Alternate share ids:', c['alternate_share_ids'])
 
@@ -212,7 +266,7 @@ class CairioClient():
             try:
                 ret = json.loads(ret)
             except:
-                print('Warning: Problem parsing json in cairio.getValue()')
+                print('Warning: Problem parsing json in MountainClient.getValue()')
 
                 return None
         return ret
@@ -369,13 +423,16 @@ class CairioClient():
             if ret is not None:
                 return ret
             else:
-                from cairio import client as global_client
+                from mountaintools import client as global_client
                 return global_client._find_collection_token_from_login(collection=collection, try_global=False)
         if not self._login_config:
             return None
-        if not 'cairio_collections' in self._login_config:
+        if not 'mountain_collections' in self._login_config:
+            if 'cairio_collections' in self._login_config:
+                self._login_config['mountain_collections'] = self._login_config['cairio_collections']
+        if not 'mountain_collections' in self._login_config:
             return None
-        for cc in self._login_config['cairio_collections']:
+        for cc in self._login_config['mountain_collections']:
             if cc['name']==collection:
                 if 'token' in cc:
                     return cc['token']
@@ -387,7 +444,7 @@ class CairioClient():
             if ret is not None:
                 return ret
             else:
-                from cairio import client as global_client
+                from mountaintools import client as global_client
                 return global_client._find_upload_token_from_login(share_id=share_id, try_global=False)
         if not self._login_config:
             return None
@@ -596,9 +653,8 @@ class CairioClient():
         return ret
 
 
-class CairioLocal():
-    def __init__(self):
-        self._local_database_path = None
+class MountainClientLocal():
+    def __init__(self):        
         self._sha1_cache = Sha1Cache()
         self._kbucket_url = os.getenv(
             'KBUCKET_URL', 'https://kbucket.flatironinstitute.org')
@@ -776,10 +832,7 @@ class CairioLocal():
         return self._sha1_cache.directory()
 
     def localDatabasePath(self):
-        if self._local_database_path:
-            return self._local_database_path
-        else:
-            return _get_default_local_db_path()
+        return _get_default_local_db_path()
 
     def _get_db_path_for_keyhash(self, keyhash):
         path=os.path.join(self.localDatabasePath(), keyhash[0], keyhash[1:3])
@@ -1009,8 +1062,13 @@ def _write_json_file(obj, path):
 
 
 def _get_default_local_db_path():
-    default_dirname = str(pathlib.Path.home())+'/.cairio'
-    dirname=os.environ.get('CAIRIO_DIR',default_dirname)
+    dir_old=str(pathlib.Path.home())+'/.cairio'
+    dir_new=str(pathlib.Path.home())+'/.mountain'
+    if os.path.exists(dir_old) and (not os.path.exists(dir_new)):
+        print('Moving config directory: {} -> {}'.format(dir_old, dir_new))
+        shutil.move(dir_old, dir_new)
+    default_dirname = dir_new
+    dirname=os.environ.get('MOUNTAIN_DIR',os.environ.get('CAIRIO_DIR', default_dirname))
     if not os.path.exists(dirname):
         os.mkdir(dirname)
     ret = dirname+'/database'
@@ -1045,7 +1103,7 @@ def _create_temporary_fname(ext):
     tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
-    return tempdir+'/tmp_cairioclient_'+''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))+ext
+    return tempdir+'/tmp_mountainclient_'+''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))+ext
 
 def _random_string(num):
     return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
@@ -1070,14 +1128,15 @@ def _safe_list_dir(path):
 
 
 # The global module client
-client = CairioClient()
+_global_client = MountainClient()
+client = _global_client
 
-if os.environ.get('CAIRIO_CONFIG'):
-    print('configuring cairio...')
-    a = os.environ.get('CAIRIO_CONFIG').split('.')
-    password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
-    client.autoConfig(collection=a[0], key=a[1], password=password)
-if os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS'):
-    tmp = os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS')
-    list0 = tmp.split(',')
-    client.setRemoteConfig(alternate_share_ids=list0)
+# if os.environ.get('CAIRIO_CONFIG'):
+#     print('configuring cairio...')
+#     a = os.environ.get('CAIRIO_CONFIG').split('.')
+#     password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
+#     client.autoConfig(collection=a[0], key=a[1], password=password)
+# if os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS'):
+#     tmp = os.environ.get('CAIRIO_ALTERNATE_SHARE_IDS')
+#     list0 = tmp.split(',')
+#     client.setRemoteConfig(alternate_share_ids=list0)

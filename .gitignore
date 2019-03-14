@@ -5,6 +5,8 @@ cairio.env
 website_data
 .vscode
 
+tmp_pytest_working
+
 #latex
 *.aux
 *.fdb_latexmk

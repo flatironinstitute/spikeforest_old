@@ -1,5 +1,5 @@
 import sfdata as sf
-from cairio import client as ca
+from mountaintools import client as ca
 
 ca.autoConfig(collection='spikeforest',
               key='spikeforest2-readwrite', ask_password=True)

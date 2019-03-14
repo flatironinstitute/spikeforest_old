@@ -1,4 +1,4 @@
-from cairio import CairioClient
+from mountaintools import CairioClient
 import time
 from .internal_run_batch_job import run_batch_job
 import multiprocessing
@@ -20,6 +20,8 @@ class ComputeResourceServer():
         self._next_delay=0.25
         self._num_parallel=1
         self._srun_opts_string=''
+    def mountainClient(self):
+        return self._cairio_client
     def setNumParallel(self,num):
         self._num_parallel=num
     def setSrunOptsString(self,optstr):

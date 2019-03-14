@@ -9,7 +9,7 @@ from spikesorters import MountainSort4, SpykingCircus, YASS, KiloSort
 from spikeforest import spikeextractors as se
 import tempfile
 import shutil
-from cairio import client as ca
+from mountaintools import client as ca
 import pytest
 
 
