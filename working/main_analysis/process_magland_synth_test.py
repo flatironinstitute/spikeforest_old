@@ -18,17 +18,17 @@ def main():
     # for downloading containers if needed
     # (in the future we will not need this)
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
-    mlpr.configComputeResource('default', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mlpr.configComputeResource('ks', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('default', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('ks', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test'
+    output_id = 'magland_synth_test_local'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth'
+    group_name = 'magland_synth_test_local'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -193,7 +193,7 @@ def _define_sorters():
 
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
     # return [sorter_ms4_thr3]
 
 
