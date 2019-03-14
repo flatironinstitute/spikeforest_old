@@ -19,7 +19,7 @@ def main():
     # (in the future we will not need this)
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
     mlpr.configComputeResource('default', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mlpr.configComputeResource('ks', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('ks', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE

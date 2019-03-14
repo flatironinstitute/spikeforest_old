@@ -6,7 +6,9 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 
 
 # The base directory used below
-basedir = 'kbucket://15734439d8cf/groundtruth'
+#basedir = 'kbucket://15734439d8cf/groundtruth'
+basedir = '/mnt/ceph/users/jjun/groundtruth'
+
 
 def prepare_magland_synth_studies(*, basedir):
     study_set_name = 'magland_synth'
@@ -49,7 +51,7 @@ mt.saveObject(
         studies=studies,
         recordings=recordings
     ),
-    key=dict(name='spikeforest_recording_group', group_name='magland_synth')
+    key=dict(name='spikeforest_recording_group', group_name='magland_synth_local')
 )
 mt.saveObject(
     object=dict(
@@ -57,5 +59,5 @@ mt.saveObject(
         recordings=recordings[0:3]
     ),
     key=dict(name='spikeforest_recording_group',
-             group_name='magland_synth_test')
+             group_name='magland_synth_test_local')
 )
