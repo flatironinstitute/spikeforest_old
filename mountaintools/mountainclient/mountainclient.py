@@ -53,6 +53,7 @@ class MountainClient():
         self._verbose = False
         self._local_db = MountainClientLocal()
         self._remote_client = MountainRemoteClient()
+        self._login_config=None
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadOnly(), configRemoteReadWrite()')
