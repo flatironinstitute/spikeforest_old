@@ -256,12 +256,12 @@ class CairioClient():
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False, dest_path=None):
         if object is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also)
+        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also, dest_path=dest_path)
 
     # load text / save text
     def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
@@ -276,19 +276,26 @@ class CairioClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False):
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False, dest_path=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, password=password, local_also=local_also)
             return None
-        tmp_fname = _create_temporary_file_for_text(text=text)
+        if dest_path is None:
+            tmp_fname = _create_temporary_file_for_text(text=text)
+        else:
+            with open(dest_path, 'w') as f:
+                f.write(text)
+            tmp_fname=dest_path
         try:
             ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
                                 basename=basename, password=password, confirm=confirm, local_also=local_also)
         except:
-            os.unlink(tmp_fname)
+            if dest_path is None:
+                os.unlink(tmp_fname)
             raise
-        os.unlink(tmp_fname)
+        if dest_path is None:
+            os.unlink(tmp_fname)
         return ret
 
     def readDir(self, path, recursive=False, include_sha1=True):

@@ -2,6 +2,16 @@ sha1-cache
 test_output
 cairio.env
 
+website_data
+.vscode
+
+#latex
+*.aux
+*.fdb_latexmk
+*.fls
+example*.pdf
+*.gz
+
 # Files to be ignored by git
 
 Untitled*.ipynb
