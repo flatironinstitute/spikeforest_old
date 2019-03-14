@@ -784,7 +784,11 @@ class CairioLocal():
     def _get_db_path_for_keyhash(self, keyhash):
         path=os.path.join(self.localDatabasePath(), keyhash[0], keyhash[1:3])
         if not os.path.exists(path):
-            os.makedirs(path)
+            try:
+                os.makedirs(path)
+            except:
+                if not os.path.exists(path):
+                    raise Exception('Unexpected problem. Unable to create directory: '+path)
         return os.path.join(path, keyhash+'.db')
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None):
