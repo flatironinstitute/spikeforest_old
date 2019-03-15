@@ -11,8 +11,8 @@ import mlprocessors as mlpr
 
 
 def main():
-    resource_name1 = 'ccmlin008-80'
-    resource_name2 = 'ccmlin008-parallel'
+    resource_name1 = None #'ccmlin000-parallel'
+    resource_name2 = None #'ccmlin000-parallel'
     if len(sys.argv)>1:
         resource_name1 = sys.argv[1]
     if len(sys.argv)>2:
@@ -27,7 +27,7 @@ def main():
     mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = 'magland_synth_test_local'
@@ -59,8 +59,8 @@ def main():
     for sorter in sorters:
         # Sort the recordings
         compute_resource0 = 'default'
-        if sorter['name'] == 'KiloSort':
-            compute_resource0 = 'ks'
+        if 'KiloSort' in sorter['name'] or 'IronClust' in sorter['name']:
+            compute_resource0 = 'gpu'
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
@@ -187,6 +187,15 @@ def _define_sorters():
         )
     )
 
+    sorter_ks2 = dict(
+        name='KiloSort2',
+        processor_name='KiloSort2',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50
+        )
+    )    
+
     sorter_yass = dict(
         name='Yass',
         processor_name='Yass',
@@ -198,8 +207,8 @@ def _define_sorters():
 
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
-    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
-    # return [sorter_ms4_thr3]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
+    return [sorter_yass]
 
 
 if __name__ == "__main__":
