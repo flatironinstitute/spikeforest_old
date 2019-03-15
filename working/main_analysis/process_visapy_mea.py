@@ -5,10 +5,8 @@ from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
-import sfdata as sf
 import numpy as np
 import mlprocessors as mlpr
-
 
 def main():
     mt.login(ask_password=True)
@@ -18,8 +16,8 @@ def main():
     # for downloading containers if needed
     # (in the future we will not need this)
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
-    mlpr.configComputeResource('default', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mlpr.configComputeResource('ks', resource_name='ccmlin008-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('default', resource_name='ccmlin000-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('gpu', resource_name='ccmlin000-gpu',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -53,8 +51,8 @@ def main():
     for sorter in sorters:
         # Sort the recordings
         compute_resource0 = 'default'
-        if sorter['name'] == 'KiloSort':
-            compute_resource0 = 'ks'
+        if sorter['name'] == 'KiloSort' or 'IronClust' in sorter['name']:
+            compute_resource0 = 'gpu'
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
@@ -160,10 +158,11 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50
-        )
+        ),
+        _container=None
     )
 
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
 
 
 if __name__ == "__main__":
