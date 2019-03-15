@@ -735,7 +735,6 @@ if __name__ == "__main__":
                     ret['outputs'][key] = 'sha1://' + \
                         cairio_client.computeFileSha1(
                             temporary_output_files[key])+'/'+key+out0['ext']
-        return ret
     except:
         if not keep_temp_files:
             shutil.rmtree(tempdir)
