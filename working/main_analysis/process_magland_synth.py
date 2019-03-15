@@ -58,7 +58,7 @@ def main():
     for sorter in sorters:
         # Sort the recordings
         compute_resource0 = 'default'
-        if sorter['name'] == 'KiloSort' or 'IronClust' in sorter['name']:
+        if 'KiloSort' in sorter['name'] or 'IronClust' in sorter['name']:
             compute_resource0 = 'gpu'
         sortings = sa.sort_recordings(
             sorter=sorter,
