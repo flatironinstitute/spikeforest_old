@@ -16,7 +16,7 @@ class ResourceSelectWidget(vd.Component):
 
     def initialize(self):
         #self._resource_names = ca.getSubKeys(key=dict(name='spikeforest_results'))
-        self._resource_names = ['ccmlin008-test', 'ccmlin008-default', 'ccmlin008-80']
+        self._resource_names = ['ccmlin008-test', 'ccmlin008-default', 'ccmlin008-80', 'ccmlin000-gpu', 'ccmlin000-parallel', 'ccmlin000-80']
         self._SEL_resource_name.setOptions(['']+self._resource_names)
         self._on_resource_name_changed(value=self._SEL_resource_name.value())
 

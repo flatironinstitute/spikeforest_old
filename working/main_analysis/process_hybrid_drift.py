@@ -5,10 +5,8 @@ from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
-import sfdata as sf
 import numpy as np
 import mlprocessors as mlpr
-
 
 def main():
     mt.login(ask_password=True)
@@ -22,13 +20,13 @@ def main():
     mlpr.configComputeResource('gpu', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'mearec_neuronexus'
+    output_id = 'hybrid_drift'
 
     # Grab the recordings for testing
-    group_name = 'mearec_neuronexus'
+    group_name = 'hybrid_drift'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -36,8 +34,7 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    #recordings=recordings[0:2]
-    #studies=studies[0:1]
+    # recordings=recordings[0:2]
 
     # recordings = [recordings[0]]
 
@@ -161,8 +158,8 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50,
-            _container=None,
-        ),
+            _container=None
+        ),        
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]

@@ -20,7 +20,7 @@ def main():
     mlpr.configComputeResource('gpu', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = 'visapy_mea'
@@ -157,9 +157,9 @@ def _define_sorters():
         processor_name='Yass',
         params=dict(
             detect_sign=-1,
-            adjacency_radius=50
-        ),
-        _container=None
+            adjacency_radius=50,
+            _container=None
+        ),        
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
