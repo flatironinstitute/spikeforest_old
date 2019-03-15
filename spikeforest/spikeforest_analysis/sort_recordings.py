@@ -24,10 +24,10 @@ class IronClust(mlpr.Processor):
     detect_threshold=mlpr.FloatParameter(optional=True,default=3,description='')
     prm_template_name=mlpr.StringParameter(optional=False,description='TODO')
     freq_min=mlpr.FloatParameter(optional=True,default=300,description='Use 0 for no bandpass filtering')
-    freq_max=mlpr.FloatParaks2meter(optional=True,default=6000,description='Use 0 for no bandpass filtering')
-    merge_thresh=mlpr.Floatks2Parameter(optional=True,default=0.98,description='TODO')
-    pc_per_chan=mlpr.Integeks2rParameter(optional=True,default=3,description='TODO')
-    ks2
+    freq_max=mlpr.FloatParameter(optional=True,default=6000,description='Use 0 for no bandpass filtering')
+    merge_thresh=mlpr.FloatParameter(optional=True,default=0.98,description='TODO')
+    pc_per_chan=mlpr.IntegerParameter(optional=True,default=3,description='TODO')
+    
     def run(self):
         ironclust_src=os.environ.get('IRONCLUST_SRC',None)
         if not ironclust_src:
