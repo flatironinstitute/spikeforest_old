@@ -39,45 +39,45 @@ if os.path.exists(env_path):
 
 class MountainClient():
     """
-    Python client for accessing local and remote mountain databases and KBucket
-    shares.
+    MountainClient is a python client for accessing local and remote mountain
+    databases and KBucket shares. All I/O for MountainTools is handled using
+    this client.
 
-    There is a global client that may be imported via:
+    There is a global client that may be imported via
 
     .. code-block:: python
 
         from mountaintools import client as mt
 
-    Or you can create a client object:
+    Or you can instantiate a local client object:
 
     .. code-block:: python
 
         from mountaintools import MountainClient
         mt_client = MountainClient()
 
-    The advantage of using the global client is that any configuration can apply
-    to the entire process. But there are also times when using a local instance
-    is preferred.
+    The global client allows a single login to apply to the entire program, but
+    there are also times when using a local instance is preferred.
 
-    By default the client simply uses cache directories on your local disk, but
-    it can also be configured to read and write from remote servers. For
-    example, the following code saves and retrieves some short text strings to
-    the local file system.
+    By default the client utilizes cache directories on your local disk, but it
+    can also be configured to read and write from remote servers. For example,
+    the following code saves and retrieves some short text strings using the
+    local file system as storage.
 
     .. code-block:: python
 
         from mountaintools import client as mt
 
         # Setting values (these should be short strings, <=80 characters)
-        mt.setValue(key=dict(name='some-key1'), value='hello 1')
+        mt.setValue(key='some-key1', value='hello 1')
         mt.setValue(key=dict(name='some_name', number=2), value='hello 2')
 
         # Getting values
-        val1 = mt.getValue(key=dict(name='some-key1'))
+        val1 = mt.getValue(key='some-key1')
         val2 = mt.getValue(key=dict(name='some_name', number=2))
 
-    By default these are stored inside the ~/.mountain database directory, but
-    this may be configured using the MOUNTAIN_DIR environment variable.
+    By default these are stored inside the ~/.mountain database directory. This
+    may be configured using the MOUNTAIN_DIR environment variable.
 
     While setValue() and getValue() are limited to working with short strings,
     larger objects may be stored using saveText(), saveObject() and saveFile(),
@@ -147,7 +147,19 @@ class MountainClient():
         
         from mountaintools import client as mt
 
-        mt.configRemoteReadonly()
+        mt.configRemoteReadonly(collection='<collection>', share_id='<id>')
+
+    where <collection> and <id> refer to a remote mountain collection and
+    KBucket share ID. For read/write access you will need to either provide
+    the authorization tokens or log in as follows:
+
+    .. code-block:: python
+        
+        from mountaintools import client as mt
+
+        mt.login()
+        mt.configRemoteReadWrite(collection='<collection>', share_id='<id>')
+
     """
 
 
