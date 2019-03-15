@@ -543,10 +543,12 @@ def _realize_required_files_for_jobs(*, cairio_client, jobs, realize_code=False)
 def _realize_files(files, *, cairio_client):
     for file0 in files:
         if file0 not in _realized_files:
-            print('Realizing file: '+file0)
+            print('Realizing file and ensuring in local cache: '+file0)
             a=cairio_client.realizeFile(file0)
             print(a)
-            if a:
+            b=cairio_client.moveToLocalCache(path=a)
+            print(b)
+            if b:
                 _realized_files.add(file0)
             else:
                 raise Exception('Unable to realize file: '+file0)
