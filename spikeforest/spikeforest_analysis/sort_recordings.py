@@ -8,7 +8,7 @@ import string
 import multiprocessing
 #from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort, KiloSort2
+from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort, KiloSort2, MountainSort4TestError
 
 """
 class IronClust(mlpr.Processor):
@@ -175,7 +175,8 @@ Processors=dict(
     SpykingCircus=(SpykingCircus,'default'),
     KiloSort=(KiloSort,None),
     KiloSort2=(KiloSort2,None),
-    Yass=(YASS,'default')
+    Yass=(YASS,'default'),
+    MountainSort4TestError=(MountainSort4TestError, 'default')
 )
 
 def _create_sorting_job_for_recording_helper(kwargs):
@@ -223,7 +224,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
         execution_stats=result0['stats'],
         console_out=ca.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
-        firings=outputs0['firings_out']
+        firings=outputs0.get('firings_out', None)
     )
     return result
         

@@ -347,20 +347,22 @@ def _assemble_job_result(kwargs):
     )
 
     output_signatures=result0.get('output_signatures',dict())
-    for name0, signature0 in output_signatures.items():
-        sha1=local_client.getValue(key=signature0)
-        # propagate to remote database
-        cairio_client.setValue(key=signature0, value=sha1)
+    if output_signatures:
+        for name0, signature0 in output_signatures.items():
+            sha1=local_client.getValue(key=signature0)
+            # propagate to remote database
+            cairio_client.setValue(key=signature0, value=sha1)
 
-    result_outputs0=result0['outputs']
-    for name0, output0 in job['outputs'].items():
-        if name0 not in result_outputs0:
-            raise Exception('Unexpected: output {} not found in result'.format(name0))
-        result_output0=result_outputs0[name0]
-        if type(output0)==dict:    
-            if output0.get('upload', False):
-                print('Saving output {}...'.format(name0))
-                cairio_client.saveFile(path=result_output0)
+    result_outputs0=result0.get('outputs', None)
+    if result_outputs0:
+        for name0, output0 in job['outputs'].items():
+            if name0 not in result_outputs0:
+                raise Exception('Unexpected: output {} not found in result'.format(name0))
+            result_output0=result_outputs0[name0]
+            if type(output0)==dict:    
+                if output0.get('upload', False):
+                    print('Saving output {}...'.format(name0))
+                    cairio_client.saveFile(path=result_output0)
 
     if ('console_out' in result0) and result0['console_out']:
         cairio_client.saveFile(path=result0['console_out'])

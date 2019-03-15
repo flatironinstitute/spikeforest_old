@@ -81,6 +81,43 @@ class ComputeMandelbrot(mlpr.Processor):
         )
         np.save(self.output_npy,X)
 
+class ComputeMandelbrotWithError(mlpr.Processor):
+    NAME = 'ComputeMandelbrot'
+    VERSION = '0.1.3'
+
+    xmin = mlpr.IntegerParameter('The minimum x value', optional=True, default=-2)
+    xmax = mlpr.IntegerParameter('The maximum x value', optional=True, default=0.5)
+    ymin = mlpr.IntegerParameter('The minimum y value', optional=True, default=-1.25)
+    ymax = mlpr.IntegerParameter('The maximum y value', optional=True, default=1.25)
+    num_x = mlpr.IntegerParameter('The number of points (resolution) in the x dimension', optional=True, default=1000)
+    num_iter = mlpr.IntegerParameter('Number of iterations', optional=True, default=1000)
+    subsampling_factor = mlpr.IntegerParameter('Subsampling factor (1 means no subsampling)', optional=True, default=1)
+    subsampling_offset = mlpr.IntegerParameter('Subsampling offset', optional=True, default=0)
+    throw_error = mlpr.BoolParameter('Whether to intentionally throw an error for testing purposes', optional=True, default=False)
+
+    output_npy = mlpr.Output('The output .npy file.')
+
+    def __init__(self):
+        mlpr.Processor.__init__(self)
+
+    def run(self):
+        import time
+        if self.throw_error:
+            print('Intentionally throwing error in 2 seconds...')
+            time.sleep(2)
+            raise Exception('Intentionally throwing error.')
+        if self.subsampling_factor>1:
+            print('Using subsampling factor {}, offset {}'.format(self.subsampling_factor, self.subsampling_offset))
+        X = compute_mandelbrot(
+            xmin=self.xmin, xmax=self.xmax, 
+            ymin=self.ymin, ymax=self.ymax, 
+            num_x=self.num_x, 
+            num_iter=self.num_iter, 
+            subsampling_factor=self.subsampling_factor,
+            subsampling_offset=self.subsampling_offset
+        )
+        np.save(self.output_npy,X)
+
 def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False):
     subsampling_factor=num_parallel
     jobs=[]

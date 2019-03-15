@@ -15,6 +15,7 @@ import sys
 import multiprocessing
 import random
 import fnmatch
+import traceback
 
 # global
 _realized_files = set()
@@ -170,6 +171,7 @@ class ProcessorExecuteOutput():
         self.stats = dict()
         self.console_out = ''
         self.output_signatures=dict()
+        self.retcode=None
 
 def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
     patterns = ['*.py']+additional_files
@@ -349,10 +351,8 @@ if __name__ == "__main__":
         # singularity_cmd='bash -c "{}"'.format(singularity_cmd)
 
     retcode, console_out = _run_command_and_print_output(singularity_cmd)
-    if retcode != 0:
-        raise Exception('Processor returned a non-zero exit code')
 
-    return console_out
+    return retcode, console_out
 
 
 def _shell_execute(cmd):
@@ -576,19 +576,20 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
 
     # make sure the files to realize are absolute paths
     for job in jobs:
-        if 'files_to_realize' in job:
-            for i, fname in enumerate(job['files_to_realize']):
-                if fname.startswith('kbucket://') or fname.startswith('sha1://'):
-                    pass
-                else:
-                    fname = os.path.abspath(fname)
-                job['files_to_realize'][i] = fname
-        for name0, output0 in job['outputs'].items():
-            if type(output0)==dict:
-                if 'dest_path' in output0:
-                    if compute_resource is not None:
-                        # In this case we are going to need to realize the file
-                        output0['upload'] = True
+        if 'processor_name' in job:
+            if 'files_to_realize' in job:
+                for i, fname in enumerate(job['files_to_realize']):
+                    if fname.startswith('kbucket://') or fname.startswith('sha1://'):
+                        pass
+                    else:
+                        fname = os.path.abspath(fname)
+                    job['files_to_realize'][i] = fname
+            for name0, output0 in job['outputs'].items():
+                if type(output0)==dict:
+                    if 'dest_path' in output0:
+                        if compute_resource is not None:
+                            # In this case we are going to need to realize the file
+                            output0['upload'] = True
 
     if compute_resource is None:
         _realize_required_files_for_jobs(jobs=jobs, cairio_client=ca, realize_code=False)
@@ -633,28 +634,41 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
 
     ret=[]
     for job in jobs:
-        results0=job['result']
-        result_outputs0=results0['outputs']
-        for name0, output0 in job['outputs'].items():
-            if name0 not in result_outputs0:
-                raise Exception('Unexpected: result not found {}'.format(name0))
-            result_output0=result_outputs0[name0]
-            if type(output0)==dict:
-                if 'dest_path' in output0:
-                    dest_path0=output0['dest_path']
-                    print('Saving output {} --> {}'.format(name0,dest_path0))
-                    ca.realizeFile(path=result_output0, dest_path=dest_path0)
-                if compute_resource is None:
-                    if output0.get('upload', False):
-                        ca.saveFile(path=result_output0)
-        RR=ProcessorExecuteOutput()
-        RR.outputs=result_outputs0
-        RR.stats=results0['stats']
-        RR.console_out=ca.loadText(path=results0['console_out'])
-        ret.append(RR)
+        if 'processor_name' in job:
+            results0=job['result']
+            result_outputs0=results0.get('outputs', None)
+            print(job)
+            if results0['retcode']==0:
+                for name0, output0 in job['outputs'].items():
+                    if name0 not in result_outputs0:
+                        raise Exception('Unexpected: result not found {}'.format(name0))
+                    result_output0=result_outputs0[name0]
+                    if type(output0)==dict:
+                        if 'dest_path' in output0:
+                            dest_path0=output0['dest_path']
+                            print('Saving output {} --> {}'.format(name0,dest_path0))
+                            ca.realizeFile(path=result_output0, dest_path=dest_path0)
+                        if compute_resource is None:
+                            if output0.get('upload', False):
+                                ca.saveFile(path=result_output0)
+            RR=ProcessorExecuteOutput()
+            RR.outputs=result_outputs0
+            RR.stats=results0['stats']
+            RR.retcode=results0['retcode']
+            if results0['console_out']:
+                RR.console_out=ca.loadText(path=results0['console_out'])
+            else:
+                RR.console_out=None
+            ret.append(RR)
+        else:
+            RR=ProcessorExecuteOutput()
+            ret.append(RR)
     return ret
 
 def executeJob(job, cairio_client=ca):
+    if 'processor_name' not in job:
+        # a null job
+        return dict()
     timer = time.time()
     tempdir = tempfile.mkdtemp()
     keep_temp_files = job.get('_keep_temp_files', None)
@@ -714,12 +728,16 @@ if __name__ == "__main__":
         #retcode, _unused_console_out = _run_command_and_print_output(
         #    'python3 {}/execute.py'.format(tempdir))
         env=os.environ
-        retcode=subprocess.call('python3 {}/execute.py'.format(tempdir),shell=True,env=env)
+        subprocess.call('python3 {}/execute.py'.format(tempdir),shell=True,env=env)
 
         console_out=cairio_client.loadText(path=temporary_output_files['_console_out'])
         stats_out=cairio_client.loadObject(path=temporary_output_files['_stats_out'])
         output_signatures=cairio_client.loadObject(path=temporary_output_files['_output_signatures_out'])
 
+        if stats_out:
+            retcode=stats_out['retcode']
+        else:
+            retcode=-3
         ret = dict(
             retcode=retcode,
             outputs=dict(),
@@ -727,6 +745,10 @@ if __name__ == "__main__":
             console_out=cairio_client.saveText(console_out),
             output_signatures=output_signatures
         )
+        if console_out:
+            ret['console_out']=cairio_client.saveText(console_out)
+        else:
+            ret['console_out']=None
         
         if retcode==0:
             for key in job['outputs']:
@@ -738,6 +760,7 @@ if __name__ == "__main__":
                     ret['outputs'][key] = 'sha1://' + \
                         cairio_client.computeFileSha1(
                             temporary_output_files[key])+'/'+key+out0['ext']
+        return ret
     except:
         if not keep_temp_files:
             shutil.rmtree(tempdir)
@@ -921,6 +944,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
 
     if found_in_cache:
         print('MLPR USING CACHE::::::::::::::::::::::::::::: '+proc.NAME)
+        retcode = 0
     else:
         if _return_none_if_not_in_cache:
             return None
@@ -957,7 +981,9 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             setattr(X, '_keep_temp_files', _keep_temp_files)
             try:
                 X.run()
+                retcode = 0
             except:
+                traceback.print_exc()
                 console_capture.stop_capturing()
                 # clean up temporary output files
                 print('Problem executing {}.'.format(proc.NAME))
@@ -969,10 +995,13 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     for fname in temporary_output_files:
                         if os.path.exists(fname):
                             os.remove(fname)
-                raise
+                retcode = -1
             console_capture.stop_capturing()
             console_out = console_capture.consoleOut()
-            print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
+            if retcode == 0:
+                print('MLPR FINISHED ::::::::::::::::::::::::::::: '+proc.NAME)
+            else:
+                print('MLPR FINISHED WITH ERROR (retcode={}) ::::::::::::::::::::::::::::: '.format(retcode)+proc.NAME)
         else:
             # in a container
             container_path = ca.realizeFile(path=_container)
@@ -981,7 +1010,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             tempdir = tempfile.mkdtemp()
             try:
                 # Do not use cache inside container... we handle caching outside container
-                console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
+                retcode, console_out = _execute_helper(proc, X, container=container_path, tempdir=tempdir, **kwargs, _cache=False,
                                             _force_run=True, _keep_temp_files=_keep_temp_files, _system_call_prefix=_system_call_prefix)
             except:
                 if _keep_temp_files:
@@ -999,27 +1028,32 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         end_time = time.time()
         elapsed_time = end_time-start_time
 
-        for output0 in proc.OUTPUTS:
-            name0 = output0.name
-            output_fname = getattr(X, name0)
-            if output_fname in temporary_output_files:
-                output_fname = ca.copyToLocalCache(output_fname)
-            ret.outputs[name0] = output_fname
-            if _cache:
-                output_sha1 = ca.computeFileSha1(output_fname)
-                signature0 = output_signatures[name0]
-                ca.setValue(key=signature0, value=output_sha1, local_also=True)
+        if retcode == 0:
+            for output0 in proc.OUTPUTS:
+                name0 = output0.name
+                output_fname = getattr(X, name0)
+                if output_fname in temporary_output_files:
+                    output_fname = ca.moveToLocalCache(output_fname)
+                ret.outputs[name0] = output_fname
+                if _cache:
+                    output_sha1 = ca.computeFileSha1(output_fname)
+                    signature0 = output_signatures[name0]
+                    ca.setValue(key=signature0, value=output_sha1, local_also=True)
 
         ret.stats['start_time'] = start_time
         ret.stats['end_time'] = end_time
         ret.stats['elapsed_sec'] = elapsed_time
+        ret.stats['retcode'] = retcode
 
         ret.console_out = console_out
 
-        if _cache:
+        if _cache and (retcode==0):
             ca.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
             ca.saveText(key=console_out_signature0,
                         text=ret.console_out, local_also=True)
+        else:
+            ca.saveObject(object=ret.stats, local_also=True)
+            ca.saveText(text=ret.console_out, local_also=True)
 
     if _console_out:
         if ret.console_out:
@@ -1044,6 +1078,8 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         if found_in_cache:
             txt0='original elapsed time (sec)'
         print('MLPR {}: {}'.format(txt0, ret.stats['elapsed_sec']))
+
+    ret.retcode = retcode
 
     return ret
 

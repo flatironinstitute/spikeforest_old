@@ -31,11 +31,12 @@ class ComputeResourceClient():
         print('Saving source code for jobs...')
         codes_saved=set()
         for job in jobs:
-            code_path=job['processor_code']
-            if not code_path in codes_saved:
-                print('Saving file: '+code_path)
-                self._cairio_client.saveFile(path=code_path)
-            codes_saved.add(code_path)
+            if 'processor_name' in job:
+                code_path=job['processor_code']
+                if not code_path in codes_saved:
+                    print('Saving file: '+code_path)
+                    self._cairio_client.saveFile(path=code_path)
+                codes_saved.add(code_path)
         print('.')
         return batch_id
     def getBatch(self, *, batch_id):

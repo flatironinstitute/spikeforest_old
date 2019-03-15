@@ -19,6 +19,8 @@ def _create_job_for_sorting_helper(kwargs):
     return _create_job_for_sorting(**kwargs)
 
 def _create_job_for_sorting(sorting, container):
+    if sorting['firings'] is None:
+        return dict()
     units_true=sorting.get('units_true',[])
     firings=sorting['firings']
     firings_true=sorting['firings_true']
@@ -66,8 +68,11 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     sortings_out=[]
     for i,sorting in enumerate(sortings):
         comparison_with_truth=dict()
-        comparison_with_truth['json']=jobs_gen_table[i]['result']['outputs']['json_out']
-        comparison_with_truth['html']=jobs_gen_table[i]['result']['outputs']['html_out']
+        if 'processor_name' in jobs_gen_table[i]:
+            comparison_with_truth['json']=jobs_gen_table[i]['result']['outputs']['json_out']
+            comparison_with_truth['html']=jobs_gen_table[i]['result']['outputs']['html_out']
+        else:
+            comparison_with_truth=None
         sorting2=deepcopy(sorting)
         sorting2['comparison_with_truth']=comparison_with_truth
         sortings_out.append(sorting2)

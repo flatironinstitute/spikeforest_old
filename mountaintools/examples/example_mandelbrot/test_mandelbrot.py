@@ -64,6 +64,53 @@ def test_mandelbrot_compute_resource():
 
         assert np.all(np.isclose(X,Y))
 
+@pytest.mark.compute_resource
+@pytest.mark.errors
+def test_mandelbrot_compute_resource_with_job_errors():
+    with LocalComputeResource(num_parallel=4) as compute_resource:
+        from mountaintools import client as mt
+        import mlprocessors as mlpr
+        from .mandelbrot import ComputeMandelbrotWithError, combine_subsampled_mandelbrot
+        import numpy as np
+
+
+        num_iter=10
+        num_x=50
+        num_parallel=1
+        subsampling_factor=num_parallel
+
+        job_args=[
+            dict(
+                num_x=num_x,
+                num_iter=num_iter,
+                subsampling_factor=subsampling_factor,
+                subsampling_offset=offset,
+                output_npy=dict(ext='.npy', upload=True),
+                throw_error=(offset==0),
+                _force_run=False
+                #_container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+            )
+            for offset in range(subsampling_factor)
+        ]
+
+        jobs = ComputeMandelbrotWithError.createJobs(job_args)
+
+        results=mlpr.executeBatch(jobs=jobs, compute_resource=compute_resource)
+
+        X_list=[]
+        for result0 in results:
+            if result0.retcode==0:
+                X0=np.load(mt.realizeFile(result0.outputs['output_npy']))
+                X_list.append(X0)
+            else:
+                print('Warning: retcode is non-zero for job.')
+                print('============================================= BEGIN CONSOLE OUT ==========================================')
+                print(result0.console_out)
+                print('============================================= END CONSOLE OUT ==========================================')
+            
+        if len(X_list)>0:
+            X = combine_subsampled_mandelbrot(X_list)
+
 class LocalComputeResource():
     def __init__(self,num_parallel):
         self._num_parallel=num_parallel
