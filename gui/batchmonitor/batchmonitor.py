@@ -23,8 +23,10 @@ class JobView(vd.Component):
     def render(self):
         if self._job is None:
             return vd.div('No job')
+        back_button=vd.button('Back to job list',onclick=self._on_back)
         return vd.div(
-            vd.pre(json.dumps(self._job, indent=4))
+            vd.div(back_button),
+            vd.div(vd.pre(json.dumps(self._job, indent=4)))
         )
 
 class BatchView(vd.Component):
@@ -90,9 +92,9 @@ class BatchView(vd.Component):
     def _on_back(self):
         for handler in self._back_handlers:
             handler()
-    def _on_back_to_list(self):
-        self._list_mode=True
-        self.refresh()
+    # def _on_back_to_list(self):
+    #     self._list_mode=True
+    #     self.refresh()
     def render(self):
         if self._batch_id is None:
             return vd.div('No batch id')
@@ -106,7 +108,7 @@ class BatchView(vd.Component):
                 self._job_table
             )
         else:
-            back_button=vd.button('Back to job list',onclick=self._on_back_to_list)
+            #back_button=vd.button('Back to job list',onclick=self._on_back_to_list)
             return vd.div(
                 self._job_view,
                 style=dict(padding='15px')
@@ -202,7 +204,7 @@ class BatchMonitor(vd.Component):
                 style=dict(padding='15px')
             )
         else:
-            back_button=vd.button('Back to list',onclick=self._on_back_to_list)
+            #back_button=vd.button('Back to list',onclick=self._on_back_to_list)
             return vd.div(
                 self._batch_view,
                 style=dict(padding='15px')
