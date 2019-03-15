@@ -97,6 +97,11 @@ end %func
 function [nChans, nSamples] = mda2bin_(raw_fname, fbinary, detect_sign)
 
 mr = readmda(raw_fname);
+% adjust scale to fit int16 range with a margin
+if isa(mr,'single') || isa(mr,'double')
+    uV_per_bit = 2^14 / max(abs(mr(:)));
+    mr = int16(mr * uV_per_bit);
+end
 [nChans, nSamples] = size(mr);
 if detect_sign > 0, mr = -mr; end % force negative detection
 fid = fopen(fbinary, 'w');

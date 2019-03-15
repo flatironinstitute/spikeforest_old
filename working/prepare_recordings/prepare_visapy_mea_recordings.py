@@ -1,8 +1,8 @@
 import sfdata as sf
-from mountaintools import client as ca
+from mountaintools import client as mt
 
-ca.autoConfig(collection='spikeforest',
-              key='spikeforest2-readwrite', ask_password=True)
+mt.login()
+mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
@@ -27,7 +27,7 @@ def prepare_visapy_mea_studies(*, basedir):
             description=''
         )
         studies.append(study0)
-        dd = ca.readDir(study_dir)
+        dd = mt.readDir(study_dir)
         for dsname in dd['dirs']:
             dsdir = '{}/{}'.format(study_dir, dsname)
             recordings.append(dict(
@@ -42,7 +42,7 @@ def prepare_visapy_mea_studies(*, basedir):
 
 # Prepare the studies
 studies, recordings = prepare_visapy_mea_studies(basedir=basedir)
-ca.saveObject(
+mt.saveObject(
     object=dict(
         studies=studies,
         recordings=recordings
