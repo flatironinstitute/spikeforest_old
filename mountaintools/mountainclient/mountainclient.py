@@ -38,6 +38,9 @@ if os.path.exists(env_path):
     
 
 class MountainClient():
+    """T
+    """
+
     def __init__(self):
         self._default_url = os.environ.get(
             'MOUNTAIN_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443'))
@@ -56,7 +59,7 @@ class MountainClient():
         self._login_config=None
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
-        print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadOnly(), configRemoteReadWrite()')
+        print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadonly(), configRemoteReadWrite()')
         if (ask_password) and (password is None):
             password = getpass('Enter password: ')
         config = self.getValue(collection=collection,
@@ -71,18 +74,21 @@ class MountainClient():
         self.setRemoteConfig(**config)
 
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
-        '''Log in to the mountain system. This acquires a collection of tokens that
-        are used by the configRemoteReadWrite() function in order to gain read/write
-        access to collections and kbucket shares. The default user name and/or
-        password may be set by setting the following variables in
+        '''
+        Log in to the mountain system. This acquires a collection of tokens that
+        are used by the configRemoteReadWrite() function in order to gain
+        read/write access to collections and kbucket shares. The default user
+        name and/or password may be set by setting the following variables in
         ~/.mountaintools/.env: MOUNTAIN_USER and MOUNTAIN_PASSWORD.
-        
-        The system will prompt for the user name in following situation:
-            1) No user is specified and MOUNTAIN_USER is not set and interactive=True
-            2) User is set to '' (empty string) and interactive=True
+
+        The system will prompt for the user name in either of the following
+        situations:
+        1) No user is specified and MOUNTAIN_USER is not set and
+           interactive=True
+        2) User is set to '' (empty string) and interactive=True
 
         The system will prompt for the password in the following situation:
-            1) No password is not provided and MOUNTAIN_PASSWORD is not set and
+        No password is provided and MOUNTAIN_PASSWORD is not set and
             (interactive = True or ask_password=True)
 
         Parameters
@@ -95,10 +101,6 @@ class MountainClient():
             Whether to interactively ask for user/password (see above)
         ask_password: bool
             Whether to ask for the password (see above)
-
-        Returns
-        ----------
-        None
         '''
         if interactive:
             ask_password=True
@@ -148,7 +150,9 @@ class MountainClient():
         print('Logged in as {}'.format(user))
 
     def configLocal(self):
-        """Configure the client to operate locally (not connected to any collections or kbucket shares)
+        """
+        Configure the client to operate locally (not connected to any remote
+        collections or kbucket shares)
         """
 
         self.setRemoteConfig(
@@ -159,14 +163,20 @@ class MountainClient():
         )
     
     def configRemoteReadonly(self, *, collection, share_id=''):
-        """Configure to connect to a remote collection and optionally also to a remote kbucket share
-        with readonly access.
-        
-        Arguments:
-            collection {str} -- name of the remote mountain collection
-            share_id {str} -- id of the share, or an alias to the id (TODO: describe aliases to shares) (default: {''})
         """
-
+        Configure to connect to a remote collection and optionally also to a
+        remote kbucket share with readonly access.
+        
+        Parameters
+        ----------
+        collection : str
+            Name of the remote mountain collection
+        share_id : str, optional
+            ID of the share, or an alias to the id (TODO: describe aliases to
+            shares) (the default is '', which means that it will just read from
+            the local sha1-cache database)
+        
+        """
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
         self.setRemoteConfig(
@@ -177,20 +187,29 @@ class MountainClient():
         )
 
     def configRemoteReadWrite(self, *, collection, share_id, token=None, upload_token=None):
-        """Configure to connect to a remote collection and optionally to a remote kbucket share
-        with read/write access. If you are logged in (see login()), and have 
-        
-        Arguments:
-            collection {str} -- name of the remote mountain collection
-            share_id {[type]} -- id of the share, or an alias to the id (TODO: describe aliases to shares) (default: {''})
-            token {[type]} -- token (default: {None})
-            upload_token {[type]} -- [description] (default: {None})
-        
-        Raises:
-            Exception -- [description]
-            Exception -- [description]
         """
-
+        Configure to connect to a remote collection and optionally to a remote
+        kbucket share with read/write access. If you are logged in (see
+        login()), and have access to the remote resources, then the collection
+        token and the kbucket upload token will be automatically filled in.
+        
+        Parameters
+        ----------
+        collection : str
+            Name of the remote mountain collection
+        share_id : str
+            ID of the share, or an alias to the ID (the default is '', which
+            means that it will just read from and write to the local sha1-cache
+            database)
+        token : str, optional
+            Token for accessing the remote mountain collection. If you are
+            logged in via login() and have access then you do not need to
+            provide this (the default is None)
+        upload_token : str, optional
+            Token for uploading to the remote kbucket share. If you are logged
+            in via login() and have access then you do not need to provide this
+            (the default is None)
+        """
         if token is None:
             token=self._find_collection_token_from_login(collection)
             if not token:
@@ -209,23 +228,51 @@ class MountainClient():
             upload_token=upload_token
         )
 
-    def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
-        if share_id and ('.' in share_id):
+    def setRemoteConfig(self, *, url={}, collection={}, token={}, share_id={}, upload_token={}, alternate_share_ids={}):
+        """
+        Configure one or more remote configuration parameters. Normally you
+        would not call this directly but would instead use one of the following
+        convenience functions: configLocal(), configRemoteReadonly(),
+        configRemoteReadWrite().
+        
+        Parameters
+        ----------
+        url : str, optional
+            The URL to the remote mountain server (the default is [], which
+            means it is not set)
+        collection : str, optional
+            Name of the remote mountain collection (the default is [], which
+            means it is not set)
+        token : str, optional
+            Token for the remote mountain collection (the default is [], which
+            means it is not set)
+        share_id : str, optional
+            ID of the remote kbucket share (the default is [], which means it is
+            not set)
+        upload_token : str, optional
+            Upload token for the remote kbucket share (the default is [], which
+            means it is not set)
+        alternate_share_ids : list of str, optional
+            IDs of other kbucket shares to check for files (the default is [],
+            which means it is not set)
+        """
+
+        if (share_id is not {}) and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
-        if url is not 0:
+        if url is not {}:
             self._remote_config['url'] = url
-        if collection is not 0:
+        if collection is not {}:
             self._remote_config['collection'] = collection
-        if token is not 0:
+        if token is not {}:
             self._remote_config['token'] = token
-        if share_id is not 0:
+        if share_id is not {}:
             self._remote_config['share_id'] = share_id
-        if alternate_share_ids is not 0:
+        if alternate_share_ids is not {}:
             for ii,asi in enumerate(alternate_share_ids):
                 if '.' in asi:
                     alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
             self._remote_config['alternate_share_ids'] = alternate_share_ids
-        if upload_token is not 0:
+        if upload_token is not {}:
             self._remote_config['upload_token'] = upload_token
 
         c = self._remote_config
@@ -248,10 +295,38 @@ class MountainClient():
             print('Alternate share ids:', c['alternate_share_ids'])
 
     def getRemoteConfig(self):
+        """
+        Retrieves a copy of the remote configuration as a dict. It includes
+        secret tokens, so be careful not to print it.
+        
+        Returns
+        -------
+        dict
+            Copy of the remote configuration.
+        """
+
         ret = self._remote_config.copy()
         return ret
 
     def addRemoteCollection(self, collection, token, admin_token):
+        """
+        Add a remote collection, or set the token for an existing collection
+        (requires admin access).
+        
+        Parameters
+        ----------
+        collection : str
+            Name of the remote collection.
+        token : str
+            The new token.
+        admin_token : str
+            The admin token for the mountain server
+        
+        Returns
+        -------
+        bool
+            True if successful.
+        """
         return self._remote_client.addCollection(
             collection=collection,
             token=token,
@@ -260,9 +335,44 @@ class MountainClient():
         )
 
     # get value / set value
-    def getValue(self, *, key, subkey=None, password=None, parse_json=False, collection=None, local_first=False):
+    def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False):
+        """
+        Retrieve a string value from the local database or, if connected to a
+        remote mountain collection, from a remote database. This is used to
+        retrieve relatively small strings (generally fewer than 80 characters)
+        that were previously associated with keys via setValue(). The keys can
+        either be strings or python dicts. In addition to keys, subkeys may also
+        be provided. To retrieve larger text strings, objects, or files, use
+        loadText(), loadObject(), or realizeFile() instead.
+        
+        Parameters
+        ----------
+        key : str or dict
+            The key used to look up the value
+        subkey : str, optional
+            A subkey string (the default is None, which means that no subkey is
+            used). To retrieve values for all subkeys, use subkey='-'. In that
+            case a JSON string is returned containing all the values -- you may
+            want to set parse_json=True in this case to return a dict.
+        parse_json : bool, optional
+            Whether to parse the string value as JSON and return a dict (the
+            default is False)
+        collection : str, optional
+            The name of the collection to retrieve the value from, which may be
+            different from the collection specified in configRemoteReadonly()
+            configRemoteReadWrite() (the default is None, which means that the
+            configured collection is used)
+        local_first : bool, optional
+            Whether to search the local database prior to searching any remote
+            collections (the default is False)
+        
+        Returns
+        -------
+        str or None
+            The string if found in the database. Otherwise returns None.
+        """
         ret = self._get_value(key=key, subkey=subkey,
-                              password=password, collection=collection, local_first=local_first)
+                              collection=collection, local_first=local_first)
         if parse_json and ret:
             try:
                 ret = json.loads(ret)
@@ -272,56 +382,209 @@ class MountainClient():
                 return None
         return ret
 
-    def setValue(self, *, key, subkey=None, value, overwrite=True, password=None, local_also=False):
-        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, password=password, local_also=local_also)
+    def setValue(self, *, key, subkey=None, value, overwrite=True, local_also=False):
+        """
+        Store a string value to the local database or, if connected to a remote
+        mountain collection, to a remote database. This is used to store
+        relatively small strings (generally fewer than 80 characters) and
+        associate them with keys for subsequent retrieval using getValue(). The
+        keys can either be strings or python dicts. In addition to keys, subkeys
+        may also be provided. To store larger text strings, objects, or files,
+        use saveText(), saveObject(), or saveFile() instead.
+        
+        Parameters
+        ----------
+        key : str or dict
+            The key used for future lookups via getValue()
+        value : str
+            The string value to store (usually fewer than 80 characters). If
+            value=None then the key is removed from the database.
+        subkey : str, optional
+            The optional subkey for storing the value. If sukey='-' and value is
+            None, then all the subkeys are removed from the database. (The
+            default is None, which means that no subkey is used)
+        overwrite : bool, optional
+            Whether to overwrite an existing entry. If False, then the function
+            will be successful only if no value was previously set. (The default
+            is True)
+        local_also : bool, optional
+            Whether to also store the value in the local base. This applies when
+            the client is configured to write to a remote collection. (The
+            default is False)
+        
+        Returns
+        -------
+        bool
+            True if successful
+        """
+        return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, local_also=local_also)
 
-    def getSubKeys(self, key, password=None):
-        return list(self._get_sub_keys(key=key, password=password))
+    def getSubKeys(self, key):
+        """
+        Retrieve the list of subkeys associated with a key
+        
+        Parameters
+        ----------
+        key : str or dict
+            The used by setValue(), saveText(), saveObject(), or saveFile()
+        
+        Returns
+        -------
+        list of str
+            The list of subkeys
+        """
+        return list(self._get_sub_keys(key=key))
 
-    # realize file / save file
-    def realizeFile(self, path=None, *, key=None, subkey=None, password=None, dest_path=None, share_id=None, local_first=False):
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, share_id=None, local_first=False):
+        """
+        Return a local path to the specified file, downloading the file from a
+        remote server to the local SHA-1 cache if needed. In other words,
+        "realize" the file on the local file system. There are four ways to
+        refer to a file:
+
+        1) By local path. For example, path = '/path/to/local/file.dat'
+        2) By SHA-1 URL. For example, path =
+           'sha1://7bf5432e9266831ab7d64d193fe3f8c69c9e04cc/experiment1/raw.dat'
+        3) By kbucket URL. For example, path =
+           'kbucket://59317022c908/experiment1/raw.dat'
+        4) By key (and optionally by subkey). For example, key =
+           dict(study=’some-unique-id’, experiment=’experiment1’, data=’raw’)
+        
+        In the first case, the file is already on the system, and so the same
+        path is returned, unless dest_path is provided, in which case the file
+        is copied to dest_path and dest_path is returned.
+
+        In the second case, the local SHA-1 cache is first searched to see if
+        the file with the requested SHA-1 is present. If so, that file is used.
+        Otherwise, the remote kbucket share (if configured) is searched, as well
+        as any alternate kbucket shares, as well as the kbucket share with ID
+        specified by the share_id parameter. If found on a kbucket share, the
+        file will be downloaded to the SHA-1 cache (or to dest_path if provided)
+        and that local path will be returned.
+
+        In the third case, the kbucket server is probed and the SHA-1 hash of
+        the file is retrieved. If a file with that checksum is found on the
+        local machine, then that is used (or copied to dest_path). Otherwise,
+        the file is downloaded from kbucket as above.
+
+        In the fourth case, the SHA-1 hash of the file is first retrieved via
+        getValue(key=key) or getValue(key=key, subkey=subkey) and then we follow
+        the procedure as the SHA-1 URL as above.
+
+        Parameters
+        ----------
+        path : str, optional
+            The path of the file to realize. This could either be a local path,
+            a SHA-1 URL, or a kbucket URL as described above (the default is
+            None, in which case key must be specified)
+        key : str, optional
+            The key used for locating the file as described above (the default
+            is None, in which case path must be specified)
+        subkey : str, optional
+            The optional subkey as described in the docs for getValue() and
+            setValue() (the default is None)
+        dest_path : str, optional
+            The destination path for the realized file on the local system, as
+            described above. (The default is None, which means that a temporary
+            file will be created as needed)
+        share_id : [type], optional
+            In the case where path is a SHA-1 URL, or key is used, the optional
+            share_id to search for the file, as described above (the default is
+            None, which means that the configured kbucket shares are used)
+        local_first : bool, optional
+            In the case where key is used (rather than path), specifies whether
+            to consult the local database first, prior to requesting the SHA-1
+            hash from the remote collection. (The default is None, meaning that
+            only the configured database is used)
+        
+        Returns
+        -------
+        str or None
+            The local file path to the "realized" file, or None if the file was
+            not found.
+        """
+
         if path is not None:
             return self._realize_file(path=path, share_id=share_id, dest_path=dest_path)
         elif key is not None:
-            val = self.getValue(key=key, subkey=subkey,
-                                password=password, local_first=local_first)
+            val = self.getValue(key=key, subkey=subkey, local_first=local_first)
             if not val:
                 return None
             return self.realizeFile(path=val, share_id=share_id, dest_path=dest_path)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, password=None, confirm=False, local_also=False):
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False):
+        """
+        Save a file to the local SHA-1 cache and/or upload to a remote KBucket
+        share, and return a SHA-1 URL referring to the file.
+
+        If the client is configured via configLocal() or configRemoteReadonly(),
+        then the file is only saved to the local SHA-1 cache.
+
+        If the client is configured via configRemoteReadWrite(), then the file
+        is uploaded (if needed) to the remote KBucket share. If local_also=True
+        then the file is also saved to the local SHA-1 cache.
+
+        The file is specified using either path or key, as described in the
+        documentation for realizeFile().
+        
+        Parameters
+        ----------
+        path : str, optional
+            The path of the file. This could either be a local path, a SHA-1
+            URL, or a kbucket URL as described in the docs for realizeFile()
+            (the default is None, in which case key must be specified)
+        key : str, optional
+            The key used for locating the file as described in the docs for
+            realizeFile() (the default is None, in which case path must be
+            specified)
+        subkey : str, optional
+            The optional subkey as described in the docs for getValue() and
+            setValue() (the default is None)
+        basename : str, optional
+            An optional basename to be used in constructing the SHA-1 URL.
+        local_also : bool, optional
+            Whether to also save locally, if configured to save remotely (the
+            default is False)
+        
+        Returns
+        -------
+        str or None
+            A SHA-1 URL for the saved or uploaded file, or None if the file was
+            unable to be saved.
+        """
+
         if path is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password, local_also=local_also)
+                          value=None, local_also=local_also)
             return None
         sha1_path = self._save_file(
-            path=path, basename=basename, confirm=confirm)
+            path=path, basename=basename)
         if key is not None:
             self.setValue(key=key, subkey=subkey,
-                          value=sha1_path, password=password, local_also=local_also)
+                          value=sha1_path, local_also=local_also)
         return sha1_path
 
     # load object / save object
-    def loadObject(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+    def loadObject(self, *, key=None, path=None, subkey=None, local_first=False):
         txt = self.loadText(key=key, path=path,
-                            subkey=subkey, password=password, local_first=local_first)
+                            subkey=subkey, local_first=local_first)
         if txt is None:
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', password=None, confirm=False, local_also=False, dest_path=None):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None):
         if object is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password)
+                          value=None)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, password=password, confirm=confirm, local_also=local_also, dest_path=dest_path)
+        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path)
 
     # load text / save text
-    def loadText(self, *, key=None, path=None, subkey=None, password=None, local_first=False):
+    def loadText(self, *, key=None, path=None, subkey=None, local_first=False):
         fname = self.realizeFile(
-            key=key, path=path, subkey=subkey, password=password, local_first=local_first)
+            key=key, path=path, subkey=subkey, local_first=local_first)
         if fname is None:
             return None
         try:
@@ -331,10 +594,10 @@ class MountainClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', password=None, confirm=False, local_also=False, dest_path=None):
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, password=password, local_also=local_also)
+                          value=None, local_also=local_also)
             return None
         if dest_path is None:
             tmp_fname = _create_temporary_file_for_text(text=text)
@@ -344,7 +607,7 @@ class MountainClient():
             tmp_fname=dest_path
         try:
             ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
-                                basename=basename, password=password, confirm=confirm, local_also=local_also)
+                                basename=basename, local_also=local_also)
         except:
             if dest_path is None:
                 os.unlink(tmp_fname)
@@ -392,9 +655,7 @@ class MountainClient():
     def moveToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
-    def _get_value(self, *, key, subkey, password=None, collection=None, local_first=False):
-        if password is not None:
-            key = dict(key=key, password=password)
+    def _get_value(self, *, key, subkey, collection=None, local_first=False):
         if collection is None:
             collection = self._remote_config['collection']
         if local_first or not collection:
@@ -457,9 +718,7 @@ class MountainClient():
                     return ks['upload_token']
         return None
 
-    def _set_value(self, *, key, subkey, value, overwrite, password=None, local_also=False):
-        if password is not None:
-            key = dict(key=key, password=password)
+    def _set_value(self, *, key, subkey, value, overwrite, local_also=False):
         collection = self._remote_config['collection']
         token = self._remote_config['token']
         if local_also or (not (collection and token)):
@@ -470,9 +729,7 @@ class MountainClient():
                 return False
         return True
 
-    def _get_sub_keys(self, *, key, password=None):
-        if password is not None:
-            key = dict(key=key, password=password)
+    def _get_sub_keys(self, *, key):
         collection = self._remote_config['collection']
         if collection:
             return self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
@@ -509,7 +766,7 @@ class MountainClient():
                         return url
         return None
 
-    def _save_file(self, *, path, basename, confirm=False, prevent_upload=False, return_sha1_url=True):
+    def _save_file(self, *, path, basename, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
         if not path:
             return None
@@ -529,9 +786,6 @@ class MountainClient():
                     if cas_upload_server_url:
                         if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
                             raise Exception('Problem uploading file {}'.format(path))
-                        # if confirm:
-                        #    self._wait_until_found_on_kbucket(
-                        #        share_id=share_id, sha1=sha1)
         return ret
 
     # def _wait_until_found_on_kbucket(self, *, share_id, sha1):

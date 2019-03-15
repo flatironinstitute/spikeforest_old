@@ -723,7 +723,7 @@ if __name__ == "__main__":
                 out0 = job['outputs'][key]
                 if out0.get('upload', False):
                     ret['outputs'][key] = ca.saveFile(
-                        temporary_output_files[key], basename=key+out0['ext'], confirm=True)
+                        temporary_output_files[key], basename=key+out0['ext'])
                 else:
                     ret['outputs'][key] = 'sha1://' + \
                         cairio_client.computeFileSha1(

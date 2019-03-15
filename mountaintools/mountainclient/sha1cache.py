@@ -102,11 +102,11 @@ class Sha1Cache():
         if alternate_target_path:
             if os.path.exists(target_path):
                 _safe_remove_file(target_path)
-            _rename_or_move(path_tmp, target_path)
+            _rename_file(path_tmp, target_path, remove_if_exists=True)
             self.computeFileSha1(target_path, _known_sha1=sha1)
         else:
             if not os.path.exists(target_path):
-                _rename_or_move(path_tmp, target_path)
+                _rename_file(path_tmp, target_path, remove_if_exists=False)
             else:
                 _safe_remove_file(path_tmp)
         return target_path
@@ -118,7 +118,9 @@ class Sha1Cache():
             if path != path0:
                 _safe_remove_file(path)
         else:
-            _rename_or_move(path, path0)
+            tmp_fname=path0+'.copying.'+_random_string(6)
+            _rename_or_copy(path, tmp_fname)
+            _rename_file(tmp_fname, path0, remove_if_exists=False)
 
         return path0
 
@@ -128,7 +130,7 @@ class Sha1Cache():
         if not os.path.exists(path0):
             tmp_path=path0+'.copying.'+ _random_string(6)
             copyfile(path, tmp_path)
-            _rename_or_move(tmp_path, path0, remove_if_exists=False)
+            _rename_file(tmp_path, path0, remove_if_exists=False)
         return path0, sha1
 
     def computeFileSha1(self, path, _known_sha1=None):
@@ -286,27 +288,43 @@ def _safe_list_dir(path):
     except:
         return []
 
-
-def _rename_or_move(path1, path2, remove_if_exists=True):
+def _rename_or_copy(path1, path2):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     try:
-        if os.path.exists(path2):
-            if remove_if_exists:
-                os.unlink(path2)
-            else:
-                return
-        try:
-            os.rename(path1, path2)
-        except:
-            shutil.copyfile(path1, path2)
-            os.unlink(path1)
+        os.rename(path1, path2)
     except:
-        raise Exception('Problem renaming file: {} -> {}'.format(path1, path2))
+        try:
+            shutil.copyfile(path1, path2)
+        except:
+            raise Exception('Problem renaming or copying file: {} -> {}'.format(path1, path2))
+
+def _rename_file(path1, path2, remove_if_exists):
+    if os.path.abspath(path1) == os.path.abspath(path2):
+        return
+    if os.path.exists(path2):
+        if remove_if_exists:
+            try:
+                os.unlink(path2)
+            except:
+                # maybe it was removed by someone else
+                pass
+        else:
+            # already exists, let's just let it be
+            return
+    try:
+        os.rename(path1, path2)
+    except:
+        if os.path.exists(path2):
+            if not remove_if_exists:
+                # all good
+                return
+            raise Exception('Problem renaming file: {} -> {}'.format(path1, path2))
+        else:
+            raise Exception('Problem renaming file:: {} -> {}'.format(path1, path2))
 
 
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
-
 
 def _format_file_size(size):
     if not size:
