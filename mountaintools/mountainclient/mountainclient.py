@@ -762,7 +762,7 @@ class MountainClient():
     def findFile(self, path, local_only=False, share_id=None):
         return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
 
-    def moveToLocalCache(self, path, basename=None):
+    def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
     def _get_value(self, *, key, subkey, collection=None, local_first=False):
