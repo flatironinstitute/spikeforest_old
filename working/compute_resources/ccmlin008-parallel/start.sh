@@ -10,6 +10,7 @@ export OMP_NUM_THREADS=$NUM_WORKERS
 
 export DISPLAY=""
 RESOURCE_NAME=${1:-ccmlin008-parallel} 
+NUM_THREADS=${2:-10} 
 
 COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
@@ -22,5 +23,5 @@ SHARE_ID=69432e9201d0
 ../../../bin/compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --share_id $SHARE_ID \
-        --parallel 10
+        --parallel $NUM_THREADS
 

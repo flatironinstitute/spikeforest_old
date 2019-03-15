@@ -24,4 +24,4 @@ SHARE_ID=69432e9201d0
 ../../../bin/compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --share_id $SHARE_ID \
-        --srun_opts "-c 4 -n 10 -p gpu --gres=gpu:2"
+        --srun_opts "-c 8 -N 10 -p gpu --gres=gpu:1"
