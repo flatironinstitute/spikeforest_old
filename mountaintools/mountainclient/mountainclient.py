@@ -63,7 +63,7 @@ class MountainClient():
         if (ask_password) and (password is None):
             password = getpass('Enter password: ')
         config = self.getValue(collection=collection,
-                               key=key, password=password)
+                               key=key)
         if not config:
             raise Exception(
                 'Unable to find config ({}.{}). Perhaps a password is incorrect or missing?'.format(collection, key))
@@ -228,7 +228,7 @@ class MountainClient():
             upload_token=upload_token
         )
 
-    def setRemoteConfig(self, *, url={}, collection={}, token={}, share_id={}, upload_token={}, alternate_share_ids={}):
+    def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
         """
         Configure one or more remote configuration parameters. Normally you
         would not call this directly but would instead use one of the following
@@ -257,22 +257,22 @@ class MountainClient():
             which means it is not set)
         """
 
-        if (share_id is not {}) and ('.' in share_id):
+        if (share_id is not 0) and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
-        if url is not {}:
+        if url is not 0:
             self._remote_config['url'] = url
-        if collection is not {}:
+        if collection is not 0:
             self._remote_config['collection'] = collection
-        if token is not {}:
+        if token is not 0:
             self._remote_config['token'] = token
-        if share_id is not {}:
+        if share_id is not 0:
             self._remote_config['share_id'] = share_id
-        if alternate_share_ids is not {}:
+        if alternate_share_ids is not 0:
             for ii,asi in enumerate(alternate_share_ids):
                 if '.' in asi:
                     alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
             self._remote_config['alternate_share_ids'] = alternate_share_ids
-        if upload_token is not {}:
+        if upload_token is not 0:
             self._remote_config['upload_token'] = upload_token
 
         c = self._remote_config

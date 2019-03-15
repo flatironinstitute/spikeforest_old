@@ -81,7 +81,7 @@ class BatchMonitor(vd.Component):
             parse_json=True
         )
         if batch_statuses is None:
-            print('PROBLEM: unable to load batch statuses for resource: '+resource_name)
+            print('PROBLEM: unable to load batch statuses for resource: '+self._resource_name)
             self._batch_statuses=dict()
         else:
             self._batch_statuses=batch_statuses
