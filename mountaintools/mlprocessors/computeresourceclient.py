@@ -3,11 +3,14 @@ import time
 import random
 
 class ComputeResourceClient():
-    def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None):
+    def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None, readonly=False):
         self._resource_name=resource_name
         self._cairio_client=CairioClient()
         if collection:
-            self._cairio_client.configRemoteReadWrite(collection=collection,share_id=share_id,token=token,upload_token=upload_token)
+            if readonly:
+                self._cairio_client.configRemoteReadonly(collection=collection,share_id=share_id)
+            else:
+                self._cairio_client.configRemoteReadWrite(collection=collection,share_id=share_id,token=token,upload_token=upload_token)
         else:
             self._cairio_client.configLocal()
         self._last_console_message=''
@@ -35,6 +38,15 @@ class ComputeResourceClient():
             codes_saved.add(code_path)
         print('.')
         return batch_id
+    def getBatch(self, *, batch_id):
+        key=dict(
+            name='compute_resource_batch',
+            batch_id=batch_id
+        )
+        batch=self._cairio_client.loadObject(
+            key=key
+        )
+        return batch
     def startBatch(self,*,batch_id):
         self._cairio_client.setValue(
             key=dict(
@@ -117,6 +129,20 @@ class ComputeResourceClient():
     #                     print('Saving output {} --> {}'.format(name0,dest_path0))
     #                     self._cairio_client.realizeFile(path=result_output0, dest_path=dest_path0)
         
+    def getBatchStatuses(self):
+        batch_statuses = self._cairio_client.getValue(
+            key=dict(
+                name='compute_resource_batch_statuses',
+                resource_name=self._resource_name,
+            ),
+            subkey='-',
+            parse_json=True
+        )
+        return batch_statuses
+
+    def getBatchJobStatuses(self, *, batch_id):
+        return self._get_batch_job_statuses(batch_id=batch_id)
+
     def _get_batch_job_statuses(self,*,batch_id):
         return self._cairio_client.getValue(
             key=dict(
