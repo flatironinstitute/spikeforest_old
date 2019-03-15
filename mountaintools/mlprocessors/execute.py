@@ -552,13 +552,20 @@ def _realize_files(files, *, cairio_client):
                 raise Exception('Unable to realize file: '+file0)
 
 def configComputeResource(name, *, resource_name, collection, share_id):
-    _compute_resources_config[name]=dict(
-        resource_name=resource_name,
-        collection=collection,
-        share_id=share_id
-    )
+    if resource_name is not None:
+        _compute_resources_config[name]=dict(
+            resource_name=resource_name,
+            collection=collection,
+            share_id=share_id
+        )
+    else:
+        _compute_resources_config[name] = None
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+    if type(compute_resource)==dict:
+        if compute_resource['resource_name'] is None:
+            compute_resource = None
+            
     # make sure the files to realize are absolute paths
     for job in jobs:
         if 'files_to_realize' in job:

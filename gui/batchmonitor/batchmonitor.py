@@ -63,6 +63,12 @@ class BatchView(vd.Component):
         self._jobs=jobs
         for ii,job in enumerate(jobs):
             job['status']=self._job_statuses.get(str(ii),'Unknown')
+
+        job_results=self._compute_resource_client.getBatchJobResults(batch_id=self._batch_id)
+        if job_results:
+            for ii,result in enumerate(job_results['results']):
+                jobs[ii]['result']=result
+
         callbacks=[
             lambda job_index=ii: self._open_job(job_index=job_index)
             for ii in range(len(jobs))
