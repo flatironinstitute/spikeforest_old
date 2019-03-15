@@ -17,6 +17,12 @@ RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest 
 WORKDIR /src/spikeforest
 RUN pip install -e ./mountaintools
 
+### spikeforest
+WORKDIR /src/spikeforest
+RUN pip3 install -e ./spikeforest
+
+RUN pip install tensorflow==1.13.0rc1
+
 #########################################
 ### Install yass, a previous version
 #RUN mkdir /src
@@ -25,8 +31,3 @@ WORKDIR /src/yass
 RUN pip install -r requirements.txt
 RUN python setup.py install
 
-RUN pip install tensorflow==1.13.0rc1
-
-### spikeforest
-WORKDIR /src/spikeforest
-RUN pip3 install -e ./spikeforest
