@@ -3,21 +3,26 @@
 import spikeforest_analysis as sa
 from mountaintools import client as mt
 from spikeforest import spikeextractors as se
-import os
+import os, sys
 import shutil
 import numpy as np
 import mlprocessors as mlpr
 
 def main():
+    resource_name1 = 'ccmlin008-80'
+    resource_name2 = 'ccmlin008-parallel'
+    if len(sys.argv)>1:
+        resource_name1 = sys.argv[1]
+    if len(sys.argv)>2:
+        resource_name2 = sys.argv[2]
+    print('Compute resources used:')
+    print('  resource_name1 (srun CPU): ', resource_name1)
+    print('  resource_name2 (Local GPU): ', resource_name2)    
     mt.login(ask_password=True)
     mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
-
-    # Use this to optionally connect to a kbucket share:
-    # for downloading containers if needed
-    # (in the future we will not need this)
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
-    mlpr.configComputeResource('default', resource_name='ccmlin000-80',collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mlpr.configComputeResource('gpu', resource_name='ccmlin000-parallel',collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
@@ -158,8 +163,7 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50,
-            _container=None
-        ),        
+            ),        
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]

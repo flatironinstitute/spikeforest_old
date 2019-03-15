@@ -174,7 +174,7 @@ Processors=dict(
     IronClust=(IronClust,None),
     SpykingCircus=(SpykingCircus,'default'),
     KiloSort=(KiloSort,None),
-    Yass=(YASS,'default')
+    Yass=(YASS,None)
 )
 
 def _create_sorting_job_for_recording_helper(kwargs):
