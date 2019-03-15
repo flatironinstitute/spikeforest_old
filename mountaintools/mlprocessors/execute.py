@@ -562,6 +562,12 @@ def configComputeResource(name, *, resource_name, collection, share_id):
         _compute_resources_config[name] = None
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+    if type(compute_resource)==str:
+        if compute_resource in _compute_resources_config:
+            compute_resource=_compute_resources_config[compute_resource]
+        else:
+            raise Exception('No compute resource named {}. Use mlprocessors.configComputeResource("{}",...).'.format(compute_resource, compute_resource))
+
     if type(compute_resource)==dict:
         if compute_resource['resource_name'] is None:
             compute_resource = None
@@ -597,12 +603,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 job['result'] = results[i]
         else:
             if compute_resource is not None:
-                if type(compute_resource)==str:
-                    if compute_resource in _compute_resources_config:
-                        compute_resource=_compute_resources_config[compute_resource]
-                    else:
-                        raise Exception('No compute resource named {}. Use mlprocessors.configComputeResource("{}",...).'.format(compute_resource, compute_resource))
-                elif type(compute_resource)==dict:
+                if type(compute_resource)==dict:
                     from .computeresourceclient import ComputeResourceClient
                     CRC=ComputeResourceClient(**compute_resource)
                     batch_id = CRC.initializeBatch(jobs=jobs, label=label)
