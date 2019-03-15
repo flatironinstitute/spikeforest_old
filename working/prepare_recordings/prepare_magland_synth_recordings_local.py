@@ -6,8 +6,8 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 
 
 # The base directory used below
-#basedir = 'kbucket://15734439d8cf/groundtruth'
-basedir = '/mnt/ceph/users/jjun/groundtruth'
+basedir = 'kbucket://15734439d8cf/groundtruth'
+#basedir = '/mnt/ceph/users/jjun/groundtruth'
 
 
 def prepare_magland_synth_studies(*, basedir):
