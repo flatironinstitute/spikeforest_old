@@ -226,13 +226,15 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
     )
     return result
         
-def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None):
+def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False):
     print('>>>>>> sort recordings')
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
     if processor_name in Processors:
         SS=Processors[processor_name][0]
         SS_container=Processors[processor_name][1]
+        if disable_container:
+            SS_container=None
     else:
         raise Exception('No such sorter: '+processor_name)
 
