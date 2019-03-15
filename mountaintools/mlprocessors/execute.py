@@ -546,7 +546,7 @@ def _realize_files(files, *, cairio_client):
             print('Realizing file and ensuring in local cache: '+file0)
             a=cairio_client.realizeFile(file0)
             print(a)
-            b=cairio_client.moveToLocalCache(path=a)
+            b=cairio_client.copyToLocalCache(path=a)
             print(b)
             if b:
                 _realized_files.add(file0)
@@ -1003,7 +1003,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             name0 = output0.name
             output_fname = getattr(X, name0)
             if output_fname in temporary_output_files:
-                output_fname = ca.moveToLocalCache(output_fname)
+                output_fname = ca.copyToLocalCache(output_fname)
             ret.outputs[name0] = output_fname
             if _cache:
                 output_sha1 = ca.computeFileSha1(output_fname)
