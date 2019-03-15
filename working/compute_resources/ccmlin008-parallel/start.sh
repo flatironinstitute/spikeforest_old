@@ -24,4 +24,3 @@ SHARE_ID=69432e9201d0
 	--allow_uncontainerized  \
 	--collection $COLLECTION --share_id $SHARE_ID \
         --parallel $NUM_THREADS
-

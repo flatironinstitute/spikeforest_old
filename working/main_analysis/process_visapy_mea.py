@@ -25,7 +25,7 @@ def main():
     mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = 'visapy_mea'
