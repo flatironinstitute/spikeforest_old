@@ -2,8 +2,9 @@ import os
 import multiprocessing
 import tempfile
 import shutil
-from mountaintools import client as ca
 from .execute import ProcessorExecuteOutput
+import subprocess
+import json
 
 # module global
 _realized_files = set()
@@ -20,6 +21,8 @@ def configComputeResource(name, *, resource_name, collection, share_id):
         _compute_resources_config[name] = None
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+    from mountaintools import client as mt
+
     if type(compute_resource)==str:
         if compute_resource in _compute_resources_config:
             compute_resource=_compute_resources_config[compute_resource]
@@ -48,7 +51,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                             output0['upload'] = True
 
     if compute_resource is None:
-        _realize_required_files_for_jobs(jobs=jobs, cairio_client=ca, realize_code=False)
+        _realize_required_files_for_jobs(jobs=jobs, cairio_client=mt, realize_code=False)
 
     if len(jobs)>0:
         if num_workers is not None:
@@ -103,16 +106,16 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                         if 'dest_path' in output0:
                             dest_path0=output0['dest_path']
                             print('Saving output {} --> {}'.format(name0,dest_path0))
-                            ca.realizeFile(path=result_output0, dest_path=dest_path0)
+                            mt.realizeFile(path=result_output0, dest_path=dest_path0)
                         if compute_resource is None:
                             if output0.get('upload', False):
-                                ca.saveFile(path=result_output0)
+                                mt.saveFile(path=result_output0)
             RR=ProcessorExecuteOutput()
             RR.outputs=result_outputs0
             RR.stats=results0['stats']
             RR.retcode=results0['retcode']
             if results0['console_out']:
-                RR.console_out=ca.loadText(path=results0['console_out'])
+                RR.console_out=mt.loadText(path=results0['console_out'])
             else:
                 RR.console_out=None
             ret.append(RR)
@@ -121,7 +124,10 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
             ret.append(RR)
     return ret
 
-def executeJob(job, cairio_client=ca):
+def executeJob(job, cairio_client=None):
+    from mountaintools import client as mt
+    if cairio_client is None:
+        cairio_client=mt
     if 'processor_name' not in job:
         # a null job
         return dict()
@@ -209,7 +215,7 @@ if __name__ == "__main__":
             for key in job['outputs']:
                 out0 = job['outputs'][key]
                 if out0.get('upload', False):
-                    ret['outputs'][key] = ca.saveFile(
+                    ret['outputs'][key] = cairio_client.saveFile(
                         temporary_output_files[key], basename=key+out0['ext'])
                 else:
                     ret['outputs'][key] = 'sha1://' + \
@@ -261,3 +267,37 @@ def _realize_files(files, *, cairio_client):
                 _realized_files.add(file0)
             else:
                 raise Exception('Unable to realize file: '+file0)
+
+def _write_python_code_to_directory(dirname, code):
+    if os.path.exists(dirname):
+        raise Exception(
+            'Cannot write code to already existing directory: {}'.format(dirname))
+    os.mkdir(dirname)
+    for item in code['files']:
+        fname0 = dirname+'/'+item['name']
+        with open(fname0, 'w') as f:
+            f.write(item['content'])
+    for item in code['dirs']:
+        _write_python_code_to_directory(
+            dirname+'/'+item['name'], item['content'])
+
+def _read_text_file(fname):
+    with open(fname) as f:
+        return f.read()
+
+
+def _write_text_file(fname, str):
+    with open(fname, 'w') as f:
+        f.write(str)
+
+def _get_expanded_args(args):
+    expanded_args_list = []
+    for key in args:
+        val = args[key]
+        if type(val) == str:
+            val = "'{}'".format(val)
+        elif type(val) == dict:
+            val = "{}".format(json.dumps(val))
+        expanded_args_list.append('{}={}'.format(key, val))
+    expanded_args = ', '.join(expanded_args_list)
+    return expanded_args

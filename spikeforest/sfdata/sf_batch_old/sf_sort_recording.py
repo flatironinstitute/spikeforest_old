@@ -1,4 +1,4 @@
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import sfdata as sf
 from spikeforest import spiketoolkit as st
@@ -173,9 +173,9 @@ def sf_sort_recording(sorter,recording):
         firings_out=dict(ext='.mda'),
         **sorting_params
     ).outputs
-    firings_out=ca.saveFile(path=outputs['firings_out'])
+    firings_out=mt.saveFile(path=outputs['firings_out'])
     firings_true_path=recording['directory']+'/firings_true.mda'
-    if not ca.realizeFile(path=firings_true_path):
+    if not mt.realizeFile(path=firings_true_path):
         firings_true_path=None
     result=dict(
         recording_name=recording['name'],

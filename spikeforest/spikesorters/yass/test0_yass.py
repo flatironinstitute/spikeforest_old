@@ -1,5 +1,5 @@
 # %% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
-from mountaintools import client as ca
+from mountaintools import client as mt
 import sfdata as sf
 import spikeforest_analysis as sa
 import os
@@ -20,7 +20,7 @@ get_ipython().run_line_magic('autoreload', '2')
 
 # %%
 password = os.environ.get('SPIKEFOREST_PASSWORD', None)
-ca.autoConfig(collection='spikeforest', key='spikeforest2-readwrite',
+mt.autoConfig(collection='spikeforest', key='spikeforest2-readwrite',
               password=password, ask_password=True)
 
 
@@ -130,9 +130,9 @@ sorting_sc = sa.sort_recordings(
 
 # %%
 display(sorting_ms4)
-print(ca.loadText(path=sorting_ms4['console_out'])[0:1000])
+print(mt.loadText(path=sorting_ms4['console_out'])[0:1000])
 display(sorting_sc)
-print(ca.loadText(path=sorting_sc['console_out'])[0:1000])
+print(mt.loadText(path=sorting_sc['console_out'])[0:1000])
 
 
 # %%
@@ -147,7 +147,7 @@ sorting_ms4
 
 
 # %%
-ca.loadObject(
+mt.loadObject(
     path='sha1://cbc3f0d7beb8f94d3bf4287b38ca4b05782f94ec/table.json')
 
 

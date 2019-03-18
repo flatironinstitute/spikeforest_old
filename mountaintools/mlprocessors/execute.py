@@ -1,12 +1,9 @@
-import types
-import types
 import hashlib
 import json
 import os
 import shutil
 import tempfile
 import subprocess
-from mountainclient import client as ca
 import inspect
 from subprocess import Popen, PIPE
 import shlex
@@ -16,6 +13,7 @@ import multiprocessing
 import random
 import fnmatch
 import traceback
+from mountainclient import client as mt
 
 def sha1(str):
     hash_object = hashlib.sha1(str.encode('utf-8'))
@@ -31,13 +29,13 @@ def compute_job_input_signature(val, input_name, *, directory):
             return list[2]
         elif val.startswith('kbucket://'):
             if directory:
-                hash0 = ca.computeDirHash(val)
+                hash0 = mt.computeDirHash(val)
                 if not hash0:
                     raise Exception(
                         'Unable to compute directory hash for input: {}'.format(input_name))
                 return hash0
             else:
-                sha1 = ca.computeFileSha1(val)
+                sha1 = mt.computeFileSha1(val)
                 if not sha1:
                     raise Exception(
                         'Unable to compute file sha-1 for input: {}'.format(input_name))
@@ -46,7 +44,7 @@ def compute_job_input_signature(val, input_name, *, directory):
             if os.path.exists(val):
                 if directory:
                     if os.path.isdir(val):
-                        hash0 = ca.computeDirHash(val)
+                        hash0 = mt.computeDirHash(val)
                         if not hash0:
                             raise Exception(
                                 'Unable to compute hash for directory input: {} ({})'.format(input_name, val))
@@ -56,7 +54,7 @@ def compute_job_input_signature(val, input_name, *, directory):
                             'Input is not a directory: {}'.format(input_name))
                 else:
                     if os.path.isfile(val):
-                        sha1 = ca.computeFileSha1(val)
+                        sha1 = mt.computeFileSha1(val)
                         if not sha1:
                             raise Exception(
                                 'Unable to compute sha-1 of input: {} ({})'.format(input_name, val))
@@ -76,7 +74,7 @@ def compute_job_input_signature(val, input_name, *, directory):
 
 def get_file_extension(fname):
     if type(fname) == str:
-        name, ext = os.path.splitext(fname)
+        _, ext = os.path.splitext(fname)
         return ext
     else:
         return ''
@@ -194,30 +192,6 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
     )
 
 
-def _write_python_code_to_directory(dirname, code):
-    if os.path.exists(dirname):
-        raise Exception(
-            'Cannot write code to already existing directory: {}'.format(dirname))
-    os.mkdir(dirname)
-    for item in code['files']:
-        fname0 = dirname+'/'+item['name']
-        with open(fname0, 'w') as f:
-            f.write(item['content'])
-    for item in code['dirs']:
-        _write_python_code_to_directory(
-            dirname+'/'+item['name'], item['content'])
-
-
-def _read_text_file(fname):
-    with open(fname) as f:
-        return f.read()
-
-
-def _write_text_file(fname, str):
-    with open(fname, 'w') as f:
-        f.write(str)
-
-
 def _read_text_file(fname):
     with open(fname) as f:
         return f.read()
@@ -245,7 +219,7 @@ def _execute_helper(proc, X, *, container, tempdir, _system_call_prefix, **kwarg
     # Note: if container is '', then we are just executing on the host machine
     singularity_opts = []
     if container:
-        kbucket_cache_dir = ca.localCacheDir()
+        kbucket_cache_dir = mt.localCacheDir()
         singularity_opts.append(
             '-B {}:{}'.format(kbucket_cache_dir, '/sha1-cache'))
         singularity_opts.append('-B /tmp:/tmp')
@@ -416,7 +390,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
                 raise Exception(
                     'Input {} does not exist: {}'.format(name0, fname0))
             if os.path.isfile(fname0):
-                sha1_url = ca.saveFile(fname0)
+                sha1_url = mt.saveFile(fname0)
                 if not sha1_url:
                     raise Exception(
                         'Problem saving input {} to kbucket ({})'.format(name0, fname0))
@@ -432,7 +406,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
             raise Exception('Missing output: {}'.format(name0))
         val0 = kwargs[name0]
         if type(val0) == str:
-            filename, file_extension = os.path.splitext(val0)
+            _, file_extension = os.path.splitext(val0)
             outputs[name0] = dict(
                 ext = file_extension,
                 dest_path = os.path.abspath(val0)
@@ -457,7 +431,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         if _container.startswith('kbucket://') or _container.startswith('sha1://'):
             pass
         else:
-            newpath = ca.saveFile(_container)
+            newpath = mt.saveFile(_container)
             if not newpath:
                 raise Exception('Unable to save (or upload) container file.')
             if not _container.startswith('sha1://'):
@@ -481,7 +455,7 @@ def createJob(proc, _container=None, _cache=True, _force_run=None, _keep_temp_fi
         processor_name=proc.NAME,
         processor_version=proc.VERSION,
         processor_class_name=proc.__name__,
-        processor_code=ca.saveObject(code, basename='code.json'),
+        processor_code=mt.saveObject(code, basename='code.json'),
         container=_container,
         inputs=inputs,
         outputs=outputs,
@@ -553,7 +527,6 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             _container = proc.CONTAINER
             print('Using container: ', _container)
 
-    timer = time.time()
     if _system_call:
         if _container is not None:
             raise Exception('Cannot use container with system call.')
@@ -617,7 +590,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             name0 = output0.name
             signature0 = compute_processor_job_output_signature(X, name0)
             output_signatures[name0] = signature0
-            output_sha1 = ca.getValue(key=signature0, local_first=True)
+            output_sha1 = mt.getValue(key=signature0, local_first=True)
             if output_sha1 is not None:
                 print('Found output "{}" in cache.'.format(name0))
                 output_sha1s[name0] = output_sha1
@@ -625,7 +598,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 # Do the following because if we have it locally,
                 # we want to make sure it also gets propagated remotely
                 # and vice versa
-                ca.setValue(key=signature0, value=output_sha1, local_also=True)
+                mt.setValue(key=signature0, value=output_sha1, local_also=True)
                 ret.output_signatures[name0]=signature0
             else:
                 outputs_all_in_cairio = False
@@ -641,7 +614,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     ext0 = _get_output_ext(out0)
                     sha1 = output_sha1s[name0]
                     output_files[name0] = 'sha1://'+sha1+'/'+name0+ext0
-                    fname = ca.findFileBySha1(sha1=sha1)
+                    fname = mt.findFileBySha1(sha1=sha1)
                     if not fname:
                         output_files_all_found = False
         if outputs_all_in_cairio and (not output_files_all_found):
@@ -657,7 +630,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     fname2 = getattr(X, name0)
                     if type(fname2) == str:
                         fname2 = os.path.abspath(fname2)
-                        fname1 = ca.realizeFile(path=fname1)
+                        fname1 = mt.realizeFile(path=fname1)
                         if fname1 != fname2:
                             if os.path.exists(fname2):
                                 os.remove(fname2)
@@ -667,11 +640,11 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                     else:
                         ret.outputs[name0] = fname1
 
-                stats = ca.loadObject(key=stats_signature0, local_first=True)
+                stats = mt.loadObject(key=stats_signature0, local_first=True)
                 if stats:
                     ret.stats = stats
 
-                console_out = ca.loadText(
+                console_out = mt.loadText(
                     key=console_out_signature0, local_first=True)
                 if console_out:
                     ret.console_out = console_out
@@ -694,7 +667,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 if input0.directory:
                     val1 = val0
                 else:
-                    val1 = ca.realizeFile(path=val0)
+                    val1 = mt.realizeFile(path=val0)
                     if not val1:
                         raise Exception(
                             'Unable to realize input file {}: {}'.format(name0, val0))
@@ -743,7 +716,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 print('MLPR FINISHED WITH ERROR (retcode={}) ::::::::::::::::::::::::::::: '.format(retcode)+proc.NAME)
         else:
             # in a container
-            container_path = ca.realizeFile(path=_container)
+            container_path = mt.realizeFile(path=_container)
             if not container_path:
                 raise Exception('Unable to realize container file: '+_container)
             tempdir = tempfile.mkdtemp()
@@ -772,12 +745,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
                 name0 = output0.name
                 output_fname = getattr(X, name0)
                 if output_fname in temporary_output_files:
-                    output_fname = ca.copyToLocalCache(output_fname)
+                    output_fname = mt.copyToLocalCache(output_fname)
                 ret.outputs[name0] = output_fname
                 if _cache:
-                    output_sha1 = ca.computeFileSha1(output_fname)
+                    output_sha1 = mt.computeFileSha1(output_fname)
                     signature0 = output_signatures[name0]
-                    ca.setValue(key=signature0, value=output_sha1, local_also=True)
+                    mt.setValue(key=signature0, value=output_sha1, local_also=True)
 
         ret.stats['start_time'] = start_time
         ret.stats['end_time'] = end_time
@@ -787,12 +760,12 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
         ret.console_out = console_out
 
         if _cache and (retcode==0):
-            ca.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
-            ca.saveText(key=console_out_signature0,
+            mt.saveObject(key=stats_signature0, object=ret.stats, local_also=True)
+            mt.saveText(key=console_out_signature0,
                         text=ret.console_out, local_also=True)
         else:
-            ca.saveObject(object=ret.stats, local_also=True)
-            ca.saveText(text=ret.console_out, local_also=True)
+            mt.saveObject(object=ret.stats, local_also=True)
+            mt.saveText(text=ret.console_out, local_also=True)
 
     if _console_out:
         if ret.console_out:
@@ -825,7 +798,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
 
 def _get_output_ext(out0):
     if type(out0) == str:
-        filename, ext = os.path.splitext(out0)
+        _, ext = os.path.splitext(out0)
         return ext
     elif type(out0) == dict:
         if 'ext' in out0:

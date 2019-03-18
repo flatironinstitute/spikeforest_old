@@ -1,4 +1,4 @@
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import mlprocessors as mlpr
 import os
@@ -222,7 +222,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
         processor_name=SS.NAME,
         processor_version=SS.VERSION,
         execution_stats=result0['stats'],
-        console_out=ca.saveText(text=console_out,basename='console_out.txt'),
+        console_out=mt.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
         firings=outputs0.get('firings_out', None)
     )
@@ -244,7 +244,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,d
         if SS_container=='default':
             SS_container=SS.CONTAINER
         print('Locating container: '+SS_container)
-        if not ca.findFile(path=SS_container):
+        if not mt.findFile(path=SS_container):
             raise Exception('Unable to realize container: '+SS_container)
         
     print('>>>>>>>>>>> Sorting recordings using {}'.format(processor_name))

@@ -1,7 +1,7 @@
 import os
 import vdomr as vd
 import sfdata as sf
-from mountaintools import client as ca
+from mountaintools import client as mt
 import spikeforestwidgets as SFW
 from sortingresultexplorer import SortingResultExplorer
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
@@ -56,7 +56,7 @@ class SortingResultSelectWidget(vd.Component):
             name='spikeforest_results',
             output_id=output_id
         )
-        a = ca.loadObject(key=key)
+        a = mt.loadObject(key=key)
         if a is None:
             raise Exception(
                 'Unable to load spikeforest result: {}'.format(output_id))

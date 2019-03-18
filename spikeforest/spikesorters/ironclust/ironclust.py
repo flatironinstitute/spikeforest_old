@@ -12,7 +12,7 @@ import string
 import shutil
 from spikeforest.spikeextractors import mdaio
 from spikeforest import spikeextractors as se
-from mountaintools import client as ca
+from mountaintools import client as mt
 import json
 
 
@@ -193,7 +193,7 @@ def _run_command_and_print_output(command):
 def read_dataset_params(dsdir):
     #ca = _load_required_modules()
     fname1 = dsdir+'/params.json'
-    fname2 = ca.realizeFile(path=fname1)
+    fname2 = mt.realizeFile(path=fname1)
     if not fname2:
         raise Exception('Unable to find file: '+fname1)
     if not os.path.exists(fname2):

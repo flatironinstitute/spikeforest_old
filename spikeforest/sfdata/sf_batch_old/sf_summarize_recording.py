@@ -4,7 +4,7 @@ import json
 from PIL import Image
 import os
 from copy import deepcopy
-from mountaintools import client as ca
+from mountaintools import client as mt
 import mlprocessors as mlpr
 from matplotlib import pyplot as plt
 import json
@@ -19,11 +19,11 @@ def sf_summarize_recording(recording):
   )
   channels=recording.get('channels',None)
   units=recording.get('units_true',None)
-  if ca.realizeFile(path=firings_true_path):
+  if mt.realizeFile(path=firings_true_path):
     ret['firings_true']=firings_true_path
     ret['plots']['waveforms_true']=create_waveforms_plot(recording,ret['firings_true'])
     true_units_info_fname=compute_units_info(recording_dir=recording['directory'],firings=firings_true_path,return_format='filename',channel_ids=channels,unit_ids=units)
-    ret['true_units_info']=ca.saveFile(path=true_units_info_fname,basename='true_units_info.json')
+    ret['true_units_info']=mt.saveFile(path=true_units_info_fname,basename='true_units_info.json')
   return ret
 
 def read_json_file(fname):
@@ -65,8 +65,8 @@ def compute_recording_info(recording):
     channels=recording.get('channels',[]),
     json_out={'ext':'.json'}
   ).outputs['json_out']
-  ca.saveFile(path=out)
-  return read_json_file(ca.realizeFile(path=out))
+  mt.saveFile(path=out)
+  return read_json_file(mt.realizeFile(path=out))
 
 # A MountainLab processor for generating a plot of a portion of the timeseries
 class CreateTimeseriesPlot(mlpr.Processor):
@@ -94,7 +94,7 @@ def create_timeseries_plot(recording):
     channels=recording.get('channels',[]),
     jpg_out={'ext':'.jpg'}
   ).outputs['jpg_out']
-  return ca.saveFile(path=out,basename='timeseries.jpg')
+  return mt.saveFile(path=out,basename='timeseries.jpg')
 
 # A MountainLab processor for generating a plot of a portion of the timeseries
 class CreateWaveformsPlot(mlpr.Processor):
@@ -132,5 +132,5 @@ def create_waveforms_plot(recording,firings):
     firings=firings,
     jpg_out={'ext':'.jpg'}
   ).outputs['jpg_out']
-  return ca.saveFile(path=out,basename='waveforms.jpg')
+  return mt.saveFile(path=out,basename='waveforms.jpg')
 

@@ -3,7 +3,7 @@ import time
 from .internal_run_batch_job import run_batch_job
 import multiprocessing
 import traceback
-from .execute import _realize_required_files_for_jobs
+from .executebatch import _realize_required_files_for_jobs
 
 class ComputeResourceServer():
     def __init__(self, *, resource_name=None, collection='', share_id='', token=None, upload_token=None):

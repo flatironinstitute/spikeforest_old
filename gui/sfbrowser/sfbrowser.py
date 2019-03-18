@@ -1,6 +1,6 @@
 import vdomr as vd
 import sfdata as sf
-from mountaintools import client as ca
+from mountaintools import client as mt
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -56,7 +56,7 @@ class SFBrowser(vd.Component):
 
         self._output_id = output_id
 
-        a = ca.loadObject(
+        a = mt.loadObject(
             key=dict(name='spikeforest_results'),
             subkey=output_id
         )

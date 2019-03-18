@@ -1,5 +1,5 @@
 import mlprocessors as mlpr
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import os
 from copy import deepcopy

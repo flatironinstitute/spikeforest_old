@@ -1,14 +1,14 @@
-from mountaintools import client as ca
+from mountaintools import client as mt
 from PIL import Image
 import json
 import pandas as pd
 from spikeforest import spikeextractors as si
 
 def kb_read_text_file(fname):
-    return ca.loadText(path=fname)
+    return mt.loadText(path=fname)
     
 def kb_read_json_file(fname):
-    return ca.loadObject(path=fname)
+    return mt.loadObject(path=fname)
 
 class SFSortingResult():
     def __init__(self,obj,recording):
@@ -31,7 +31,7 @@ class SFSortingResult():
         if format=='url':
             return url
         else:
-            path=ca.realizeFile(url)
+            path=mt.realizeFile(url)
             if format=='image':
                 return Image.open(path)
             elif format=='path':
@@ -76,22 +76,22 @@ class SFRecording():
         return self._obj['directory']
     def recordingFileIsLocal(self):
         fname=self.directory()+'/raw.mda'
-        fname2=ca.findFile(fname, local_only=True)
+        fname2=mt.findFile(fname, local_only=True)
         if fname2 and (not _is_url(fname2)):
             return True
         return False
     def realizeRecordingFile(self):
         fname=self.directory()+'/raw.mda'
-        return ca.realizeFile(fname)
+        return mt.realizeFile(fname)
     def firingsTrueFileIsLocal(self):
         fname=self.directory()+'/firings_true.mda'
-        fname2=ca.findFile(fname, local_only=True)
+        fname2=mt.findFile(fname, local_only=True)
         if fname2 and (not _is_url(fname2)):
             return True
         return False
     def realizeFiringsTrueFile(self):
         fname=self.directory()+'/firings_true.mda'
-        return ca.realizeFile(fname)
+        return mt.realizeFile(fname)
     def recordingExtractor(self,download=False):
         X=si.MdaRecordingExtractor(dataset_directory=self.directory(),download=download)
         if 'channels' in self._obj:
@@ -111,7 +111,7 @@ class SFRecording():
         if format=='url':
             return url
         else:
-            path=ca.realizeFile(url)
+            path=mt.realizeFile(url)
             if format=='image':
                 return Image.open(path)
             elif format=='path':
@@ -193,7 +193,7 @@ class SFData():
         # old
         if key is None:
             key=dict(name='spikeforest_studies_processed')
-        obj=ca.loadObject(key=key)
+        obj=mt.loadObject(key=key)
         studies=obj['studies']
         for study in studies:
             name=study['name']

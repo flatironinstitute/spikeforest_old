@@ -10,7 +10,7 @@ import json
 from PIL import Image
 import os
 from copy import deepcopy
-from mountaintools import client as ca
+from mountaintools import client as mt
 import mlprocessors as mlpr
 import multiprocessing
 # from matplotlib import pyplot as plt
@@ -27,7 +27,7 @@ def _create_jobs_for_recording(recording):
     channels=recording.get('channels',None)
     units=recording.get('units_true',None)
 
-    if not ca.findFile(path=firings_true_path):
+    if not mt.findFile(path=firings_true_path):
         raise Exception('firings_true file not found: '+firings_true_path)
     job_info=ComputeRecordingInfo.createJob(
         recording_dir=dsdir,
@@ -62,7 +62,7 @@ def _gather_summarized_recording(recording, job_info, job_units_info):
     summary=dict()
     
     result0=job_info['result']
-    summary['computed_info']=ca.loadObject(path=result0['outputs']['json_out'])
+    summary['computed_info']=mt.loadObject(path=result0['outputs']['json_out'])
     
     # result0=jobs_timeseries_plot[i]['result']
     # summary['plots']=dict(
@@ -71,7 +71,7 @@ def _gather_summarized_recording(recording, job_info, job_units_info):
     summary['plots']=dict()
 
     result0=job_units_info['result']
-    summary['true_units_info']=ca.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
+    summary['true_units_info']=mt.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
 
     rec2=deepcopy(recording)
     rec2['summary']=summary

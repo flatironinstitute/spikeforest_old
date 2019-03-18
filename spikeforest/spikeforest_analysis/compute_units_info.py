@@ -1,7 +1,7 @@
 import numpy as np
 import json
 import mlprocessors as mlpr
-from mountaintools import client as ca
+from mountaintools import client as mt
 
 try:
   # if we are running this outside the container
@@ -126,7 +126,7 @@ def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return
     if return_format=='filename':
       return fname
     else:
-      fname=ca.realizeFile(path=fname)
+      fname=mt.realizeFile(path=fname)
       with open(fname) as f:
         return json.load(f)
 

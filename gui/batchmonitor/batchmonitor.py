@@ -1,5 +1,5 @@
 import vdomr as vd
-from mountaintools import client as ca
+from mountaintools import client as mt
 import numpy as np
 from mlprocessors import ComputeResourceClient
 import json
@@ -126,7 +126,7 @@ class BatchMonitor(vd.Component):
     def __init__(self, resource_name):
         vd.Component.__init__(self)
 
-        mt_config=ca.getRemoteConfig()
+        mt_config=mt.getRemoteConfig()
         self._compute_resource_client=ComputeResourceClient(resource_name=resource_name, collection=mt_config['collection'], share_id=mt_config['share_id'], readonly=True)
 
         self._resource_name = resource_name

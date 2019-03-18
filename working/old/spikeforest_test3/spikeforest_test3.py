@@ -2,7 +2,7 @@
 # adding sqmea simulated data
 
 import spikeforest_analysis as sa
-from mountaintools import client as ca
+from mountaintools import client as mt
 import os
 
 # This file runs a spikeforest processing pipeline with the following steps:
@@ -36,7 +36,7 @@ import os
 
 def main():
     # Use this to optionally connect to a kbucket share:
-    ca.autoConfig(collection='spikeforest', key='spikeforest2-readwrite',
+    mt.autoConfig(collection='spikeforest', key='spikeforest2-readwrite',
                   ask_password=True, password=os.environ.get('SPIKEFOREST_PASSWORD', None))
 
     # Specify the compute resource (see the note above)
@@ -57,7 +57,7 @@ def main():
     #group_name = 'magland_synth_test'
     group_name = 'mearec_sqmea_test'
 
-    a = ca.loadObject(
+    a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
 
     recordings = a['recordings']
@@ -105,7 +105,7 @@ def main():
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results',
             output_id=output_id
