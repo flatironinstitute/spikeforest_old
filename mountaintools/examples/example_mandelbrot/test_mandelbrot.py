@@ -40,7 +40,7 @@ def test_mandelbrot():
     assert np.all(np.isclose(X,Z))
 
 @pytest.mark.compute_resource
-def test_mandelbrot_compute_resource():
+def test_mandelbrot_compute_resource(container=None):
     with LocalComputeResource(num_parallel=4) as compute_resource:
         from mountaintools import client as mt
         import mlprocessors as mlpr
@@ -59,10 +59,16 @@ def test_mandelbrot_compute_resource():
             num_x=50,
             num_parallel=3,
             compute_resource=compute_resource,
-            _force_run=True
+            _force_run=True,
+            _container=container
         )
 
         assert np.all(np.isclose(X,Y))
+
+@pytest.mark.compute_resource
+@pytest.mark.container
+def test_mandelbrot_compute_resource_container():
+    test_mandelbrot_compute_resource(container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg')
 
 @pytest.mark.compute_resource
 @pytest.mark.errors

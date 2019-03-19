@@ -214,6 +214,7 @@ class MountainJob():
                 self._copy_outputs_from_result_to_dest_paths(result)
                 return result
 
+        keep_temp_files=True
         with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_'+self._job['processor_name']) as tmp_output_path:
             attributes_for_processor = dict()
             tmp_output_file_names = dict()
@@ -295,11 +296,12 @@ class MountainJob():
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
                     if not container:
                         env = os.environ # is this needed?
-                        python_cmd='python3 {}/run.py > {} &>{}'.format(temp_path, tmp_process_console_out_fname)
+                        python_cmd='python3 {}/run.py &>{}'.format(temp_path, tmp_process_console_out_fname)
                         if job_timeout:
                             python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
                         print('Running: '+python_cmd)
-                        retcode = subprocess.call(python_cmd, shell=True, env=env)
+                        #retcode = subprocess.call(python_cmd, shell=True, env=env)
+                        retcode = os.system('bash -c "{}"'.format(python_cmd.replace('"','\\"')))
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -325,7 +327,8 @@ class MountainJob():
                         
                         env = os.environ # is this needed?
                         print('Running: '+singularity_cmd)
-                        retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                        #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                        retcode = os.system('bash -c "{}"'.format(singularity_cmd.replace('"','\\"')))
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
@@ -353,6 +356,8 @@ class MountainJob():
                     print('Saving output: {} -> {}'.format(output_tocopy[0], output_tocopy[1]))
                     shutil.copyfile(output_tocopy[0], output_tocopy[1])
                 for output_name, fname in output_files.items():
+                    if not os.path.exists(fname):
+                        raise Exception('Unexpected: output file {} does not exist: {}'.format(output_name, fname), os.path.exists(fname))
                     R.outputs[output_name] = mt.saveFile(path=fname)
 
             if (retcode == 0) and use_cache:
@@ -553,7 +558,14 @@ class TemporaryDirectory():
         self._remove = remove
         self._prefix = prefix
     def __enter__(self):
-        self._path=tempfile.mkdtemp(prefix = self._prefix)
+        kbucket_cache_dir = os.environ.get('KBUCKET_CACHE_DIR', None)
+        if kbucket_cache_dir:
+            dirpath = os.path.join(kbucket_cache_dir, 'tmp')
+            if not os.path.exists(dirpath):
+                os.mkdir(dirpath)
+        else:
+            dirpath = None
+        self._path = tempfile.mkdtemp(prefix = self._prefix, dir=dirpath)
         return self._path
 
     def __exit__(self, exc_type, exc_val, exc_tb):
