@@ -46,7 +46,7 @@ class MountainJob():
         if self._job['container']:
             ret.append(self._job['container'])
         for input0 in self._job['inputs'].values():
-            if not input0.get('directory', False)
+            if not input0.get('directory', False):
                 ret.append(input0['path'])
         if self._job['processor_code']:
             ret.append(self._job['processor_code'])
