@@ -105,7 +105,7 @@ def test_mandelbrot_compute_resource_with_job_errors():
             else:
                 print('Warning: retcode is non-zero for job.')
                 print('============================================= BEGIN CONSOLE OUT ==========================================')
-                print(result0.console_out)
+                print(mt.realizeFile(result0.console_out))
                 print('============================================= END CONSOLE OUT ==========================================')
             
         if len(X_list)>0:

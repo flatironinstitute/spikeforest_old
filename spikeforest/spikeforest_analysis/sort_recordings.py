@@ -198,7 +198,7 @@ def _create_sorting_job_for_recording(recording, sorter):
         firings_out=dict(ext='.mda',upload=True),
         **sorting_params
     )
-    job['files_to_realize']=[dsdir+'/raw.mda']
+    job.addFilesToRealize(dsdir+'/raw.mda')
     return job
 
 def _gather_sorting_result_for_recording_helper(kwargs):
@@ -207,9 +207,9 @@ def _gather_sorting_result_for_recording_helper(kwargs):
 def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
     firings_true_path=recording['directory']+'/firings_true.mda'
 
-    result0=sorting_job['result']
-    outputs0=result0['outputs']
-    console_out=result0.get('console_out','')
+    result0=sorting_job.result
+    outputs0=result0.outputs
+    console_out=(mt.loadText(path=result0.console_out) or '')
 
     processor_name=sorter['processor_name']
     SS=Processors[processor_name][0]
@@ -221,7 +221,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
         firings_true=firings_true_path,
         processor_name=SS.NAME,
         processor_version=SS.VERSION,
-        execution_stats=result0['stats'],
+        execution_stats=result0.runtime_info,
         console_out=mt.saveText(text=console_out,basename='console_out.txt'),
         container=SS_container,
         firings=outputs0.get('firings_out', None)
@@ -276,55 +276,6 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,d
     sorting_results=pool.map(_gather_sorting_result_for_recording_helper, [dict(recording=recordings[ii], sorting_job=sorting_jobs[ii], sorter=sorter) for ii in range(len(recordings))])
     pool.close()
     pool.join()
-
-    # sorting_results=[]
-    # for i,recording in enumerate(recordings):
-    #     firings_true_path=recording['directory']+'/firings_true.mda'
-
-    #     result0=sorting_jobs[i]['result']
-    #     outputs0=result0['outputs']
-    #     console_out=result0.get('console_out','')
-
-    #     result=dict(
-    #         recording=recording,
-    #         sorter=sorter,
-    #         firings_true=firings_true_path,
-    #         processor_name=SS.NAME,
-    #         processor_version=SS.VERSION,
-    #         #execution_stats=result0['stats'],
-    #         console_out=ca.saveText(text=console_out,basename='console_out.txt'),
-    #         container=SS_container,
-    #         firings=outputs0['firings_out']
-    #     )
-    #     sorting_results.append(result)
-
-        # outputs=X.outputs
-        # stats=X.stats
-        # console_out=X.console_out
-        # print('Saving firings_out...')
-        # firings_out=ca.saveFile(path=outputs['firings_out'])
-        # firings_true_path=recording['directory']+'/firings_true.mda'
-        # if not ca.findFile(firings_true_path):
-        #     firings_true_path=None
-        # print('Assembling result...')
-        # result=dict(
-        #     recording_name=recording.get('name',None),
-        #     study_name=recording.get('study',None),
-        #     sorter_name=sorter.get('name',None),
-        #     recording_dir=dsdir,
-        #     channels=recording.get('channels',[]),
-        #     units_true=recording.get('units_true',[]),
-        #     firings_true=firings_true_path,
-        #     sorting_params=sorting_params,
-        #     processor_name=SS.NAME,
-        #     processor_version=SS.VERSION,
-        #     execution_stats=stats,
-        #     console_out=ca.saveText(text=console_out,basename='console_out.txt'),
-        #     container=SS_container,
-        #     firings=firings_out
-        # )
-        # print('Done sorting.')
-        # return result
 
     return sorting_results
     

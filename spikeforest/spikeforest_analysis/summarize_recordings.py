@@ -21,9 +21,9 @@ _CONTAINER='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaint
 def _create_jobs_for_recording(recording):
     print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
     dsdir=recording['directory']
-    raw_path=dsdir+'/raw.mda'
+    # raw_path=dsdir+'/raw.mda'
     firings_true_path=dsdir+'/firings_true.mda'
-    geom_path=dsdir+'/geom.csv'
+    # geom_path=dsdir+'/geom.csv'
     channels=recording.get('channels',None)
     units=recording.get('units_true',None)
 
@@ -35,7 +35,7 @@ def _create_jobs_for_recording(recording):
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
-    job_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/firings_true.mda']
+    job_info.addFilesToRealize([dsdir+'/raw.mda',dsdir+'/firings_true.mda'])
     # job=CreateTimeseriesPlot.createJob(
     #     recording_dir=dsdir,
     #     channels=recording.get('channels',[]),
@@ -51,27 +51,23 @@ def _create_jobs_for_recording(recording):
         json_out={'ext':'.json','upload':True},
         _container='default'
     )
-    job_units_info['files_to_realize']=[dsdir+'/raw.mda',dsdir+'/firings_true.mda']
+    job_units_info.addFilesToRealize([dsdir+'/raw.mda', dsdir+'/firings_true.mda'])
     return (job_info, job_units_info)
 
 def _gather_summarized_recording_helper(kwargs):
     return _gather_summarized_recording(**kwargs)
 
 def _gather_summarized_recording(recording, job_info, job_units_info):
-    firings_true_path=recording['directory']+'/firings_true.mda'
+    # firings_true_path = recording['directory']+'/firings_true.mda'
     summary=dict()
     
-    result0=job_info['result']
-    summary['computed_info']=mt.loadObject(path=result0['outputs']['json_out'])
+    result0=job_info.result
+    summary['computed_info']=mt.loadObject(path=result0.outputs['json_out'])
     
-    # result0=jobs_timeseries_plot[i]['result']
-    # summary['plots']=dict(
-    #     timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
-    # )
     summary['plots']=dict()
 
-    result0=job_units_info['result']
-    summary['true_units_info']=mt.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
+    result0=job_units_info.result
+    summary['true_units_info']=mt.saveFile(path=result0.outputs['json_out'],basename='true_units_info.json')
 
     rec2=deepcopy(recording)
     rec2['summary']=summary
@@ -105,68 +101,6 @@ def summarize_recordings(recordings, compute_resource=None):
     pool.join()
 
     return summarized_recordings
-    
-    # summarized_recordings=[]
-    # for i,recording in enumerate(recordings):
-    #     firings_true_path=recording['directory']+'/firings_true.mda'
-
-    #     summary=dict()
-        
-    #     result0=jobs_info[i]['result']
-    #     summary['computed_info']=ca.loadObject(path=result0['outputs']['json_out'])
-        
-    #     # result0=jobs_timeseries_plot[i]['result']
-    #     # summary['plots']=dict(
-    #     #     timeseries=ca.saveFile(path=result0['outputs']['jpg_out'],basename='timeseries.jpg')
-    #     # )
-    #     summary['plots']=dict()
-
-    #     result0=jobs_units_info[i]['result']
-    #     summary['true_units_info']=ca.saveFile(path=result0['outputs']['json_out'],basename='true_units_info.json')
-
-    #     rec2=deepcopy(recording)
-    #     rec2['summary']=summary
-    #     summarized_recordings.append(rec2)
-
-    # return summarized_recordings
-
-#   for recording in recordings:
-#     summary=dict()
-
-#     A=ComputeRecordingInfo.execute(
-#         recording_dir=recording['directory'],
-#         channels=recording.get('channels',[]),
-#         json_out={'ext':'.json'}
-#     )
-#     computed_info=ca.loadObject(path=A.outputs['json_out'])
-#     summary['computed_info']=computed_info
-
-#     firings_true_path=recording['directory']+'/firings_true.mda'
-
-#     A=CreateTimeseriesPlot.execute(
-#         recording_dir=recording['directory'],
-#         channels=recording.get('channels',[]),
-#         jpg_out={'ext':'.jpg'}
-#     )
-#     summary['plots']=dict(
-#         timeseries=ca.saveFile(path=A.outputs['jpg_out'],basename='timeseries.jpg')
-#     )
-    
-#     channels=recording.get('channels',None)
-#     units=recording.get('units_true',None)
-#     if ca.realizeFile(firings_true_path):
-#         summary['firings_true']=firings_true_path
-#         #summary['plots']['waveforms_true']=create_waveforms_plot(recording,summary['firings_true'])
-
-#         A=ComputeUnitsInfo.execute(recording_dir=recording['directory'],firings=recording['directory']+'/firings_true.mda',unit_ids=units,channel_ids=channels,json_out={'ext':'.json'})
-#         summary['true_units_info']=ca.saveFile(A.outputs['json_out'],basename='true_units_info.json')
-#     else:
-#         raise Exception('firings_true file not found: '+firings_true_path)
-#     rec2=deepcopy(recording)
-#     rec2['summary']=summary
-#     summarized_recordings.append(rec2)
-#   return summarized_recordings
-
 
 def read_json_file(fname):
   with open(fname) as f:

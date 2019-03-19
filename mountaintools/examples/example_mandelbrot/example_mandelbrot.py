@@ -77,10 +77,12 @@ show_mandelbrot(X)
 
 # Run in parallel on remote compute resource
 
-mt.login()
-mt.configRemoteReadWrite(
-    collection='fractal', share_id='fractal.share1'
-)
+#mt.login()
+#mt.configRemoteReadWrite(
+#    collection='fractal', share_id='fractal.share1'
+#)
+import mlprocessors as mlpr
+mlpr.configComputeResource('default', resource_name='fractal-computer')
 
 subsampling_factor=80
 jobs = ComputeMandelbrot.createJobs([
@@ -97,11 +99,7 @@ jobs = ComputeMandelbrot.createJobs([
 
 results = mlpr.executeBatch(
     jobs=jobs,
-    compute_resource = dict(
-        resource_name='fractal-computer',
-        collection='fractal',
-        share_id='fractal.share1'
-    )
+    compute_resource = 'default'
 )
 
 X = combine_subsampled_mandelbrot([
@@ -109,54 +107,6 @@ X = combine_subsampled_mandelbrot([
     for result0 in results
 ])
 
-show_mandelbrot(X)
-
-#%%
-# Select the compute resource,
-# local or remote, depending on whether we are logged
-# in to a remote system
-# Note: if using local computer, start the compute resource via:
-# bin/compute-resource-start local-computer --parallel 4
-
-if (mode == 'local') or (mode == 'remote_readonly'):
-    compute_resource=dict(
-        resource_name='local-computer',
-        collection='',
-        share_id=''
-    )
-else:
-    compute_resource=dict(
-        resource_name='ccmlin008-80',
-        collection='spikeforest',
-        share_id='spikeforest.spikeforest2'
-    )
-
-#%%
-
-# Run a batch with 80 jobs on the compute resource
-# (high resolution, small number of iterations)
-
-X=compute_mandelbrot_parallel(
-    num_iter=300,  #50000,
-    num_x=3000,
-    num_parallel=8,
-    compute_resource=compute_resource
-)
-show_mandelbrot(X)
-
-
-
-#%%
-
-# Run a batch with 80 jobs on the compute resource
-# (high resolution, larger number of iterations)
-
-X=compute_mandelbrot_parallel(
-    num_iter=3000,  #50000,
-    num_x=3000,
-    num_parallel=80,
-    compute_resource=compute_resource
-)
 show_mandelbrot(X)
 
 #%%

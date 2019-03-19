@@ -68,9 +68,9 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     sortings_out=[]
     for i,sorting in enumerate(sortings):
         comparison_with_truth=dict()
-        if 'processor_name' in jobs_gen_table[i]:
-            comparison_with_truth['json']=jobs_gen_table[i]['result']['outputs']['json_out']
-            comparison_with_truth['html']=jobs_gen_table[i]['result']['outputs']['html_out']
+        if not jobs_gen_table[i].isNull():
+            comparison_with_truth['json']=jobs_gen_table[i].result.outputs['json_out']
+            comparison_with_truth['html']=jobs_gen_table[i].result.outputs['html_out']
         else:
             comparison_with_truth=None
         sorting2=deepcopy(sorting)

@@ -1,7 +1,7 @@
 from .core import *
 from .registry import *
 from .validators import *
-from .executebatch import executeJob, executeBatch, configComputeResource
+from .executebatch import executeBatch, configComputeResource
 from .computeresourceserver import ComputeResourceServer
 from .computeresourceclient import ComputeResourceClient
 

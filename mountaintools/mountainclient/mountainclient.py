@@ -29,7 +29,6 @@ except:
 
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools', '.env')
 if os.path.exists(env_path):
-    print('Loading environment from: '+env_path)
     try:
         from dotenv import load_dotenv
     except:
@@ -765,6 +764,20 @@ class MountainClient():
         else:
             return self._local_db.computeFileSha1(path)
 
+    def computeFileOrDirHash(self, path):
+        if path.startswith('kbucket://'):
+            if self.findFile(path):
+                return self.computeFileSha1(path)
+            else:
+                return self.computeDirHash(path)
+        elif path.startswith('sha1://'):
+            return self.computeFileSha1(path)
+        else:
+            if os.path.isdir(path):
+                return self.computeDirHash(path)
+            else:
+                return self.computeFileSha1(path)
+
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
@@ -1228,7 +1241,6 @@ class MountainClientLocal():
                         kbnode_fname=os.path.join(kbucket_config_path, 'kbnode.json')
                         obj = _read_json_file(kbnode_fname)
                         share_id=obj['node_id']
-                        print('Found local kbucket share {} at {}'.format(share_id, path0))
                         self._local_kbucket_shares[share_id]=dict(path=path0)
                     else:
                         print('WARNING: Parsing {}: No such config directory: {}'.format(local_kbucket_shares_fname, kbucket_config_path))    

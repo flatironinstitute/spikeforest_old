@@ -31,10 +31,6 @@ def summarize_sortings(sortings,compute_resource):
     summarized_sortings=[]
     for i,sorting in enumerate(sortings):
         summary=dict()
-        # result0=jobs_autocor_plot[i]['result']
-        # summary['plots']=dict(
-        #     autocorrelograms=ca.saveFile(path=result0['outputs']['plot_out'],basename='autocorrelograms.jpg')
-        # )
         summary['plots']=dict()
 
         sorting2=deepcopy(sorting)

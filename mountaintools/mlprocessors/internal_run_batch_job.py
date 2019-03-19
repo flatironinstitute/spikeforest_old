@@ -8,12 +8,11 @@ import time
 import mlprocessors as mlpr
 import traceback
 from mountaintools import CairioClient
-from mlprocessors import executeJob
 import asyncio
 import random
 import time
 
-def run_batch_job(collection,share_id,batch_id,job_index, system_call=False, srun_opts_string=None):
+def run_batch_job(collection, share_id, batch_id, job_index, system_call=False, srun_opts_string=None):
     local_client=CairioClient()
 
     # check if batch is halted
