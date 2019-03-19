@@ -41,10 +41,6 @@ class MountainJob():
     def getFilesToRealize(self):
         if self._job is None:
             return []
-        print('-----------------------------------------------------------')
-        print(self._job['inputs'])
-        print(self._job['processor_name'])
-        print('-----------------------------------------------------------')
         # These are the files needed at the compute location to actually run the job
         ret=[]
         if self._job['container']:
@@ -65,7 +61,7 @@ class MountainJob():
             self._job['container'] = _make_remote_url_for_file(self._job['container'])
         for input_name, input0 in self._job['inputs'].items():
             if not input0.get('directory', False):
-                self._job['inputs'][input_name] = _make_remote_url_for_file(input0['path'])
+                self._job['inputs'][input_name]['path'] = _make_remote_url_for_file(input0['path'])
         if 'additional_files_to_realize' in self._job:
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
@@ -233,7 +229,7 @@ class MountainJob():
                 else:
                     ext = _get_file_ext(input_fname) or '.in'
                     
-                    if input0.get('directory', False) and (input0['path'].startswith['kbucket://']):
+                    if input0.get('directory', False) and (input0['path'].startswith('kbucket://')):
                         infile_in_container = input0['path']
                     else:
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)

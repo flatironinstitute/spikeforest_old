@@ -766,7 +766,17 @@ class MountainClient():
             list0 = path.split('/')
             sha1 = list0[2]
             return sha1
-        elif path.startswith('kbucket://'):
+
+        # the following might be a helpful shortcut at some point
+        # elif path.startswith('kbucket://sha1-cache/'):
+        #     list0 = path.split('/')
+        #     if len(list0) >= 7:
+        #         if (len(list0[4])==1) and (len(list0[5])==2) and (len(list0[6])==40):
+        #             raise Exception('test')
+        #             return list0[6]
+        #     print('WARNING: unexpected form of sha1-cache kbucket url: {}'.format(path))
+
+        if path.startswith('kbucket://'):
             sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
             return sha1
         else:
@@ -1391,9 +1401,6 @@ class MountainClientLocal():
             obj = local_client.loadObject(key=cache_key)
             if obj:
                 return (obj['sha1'], obj['size'], obj['url_download'])
-            else:
-                print('----------------------------------------------------------')
-                print('--- Unable to load from kbucket cache', cache_key)
 
         kbucket_url = self._get_kbucket_url_for_share(share_id=kbshare_id)
         if not kbucket_url:

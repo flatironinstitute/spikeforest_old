@@ -5,7 +5,6 @@ from mountaintools import client as mt
 import numpy as np
 from copy import deepcopy
 import multiprocessing
-from mlprocessors import MountainJob
 
 try:
     # if we are running this outside the container
@@ -21,6 +20,7 @@ def _create_job_for_sorting_helper(kwargs):
 
 def _create_job_for_sorting(sorting, container):
     if sorting['firings'] is None:
+        from mlprocessors import MountainJob
         return MountainJob()
     units_true=sorting.get('units_true',[])
     firings=sorting['firings']
