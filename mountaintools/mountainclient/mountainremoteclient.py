@@ -158,7 +158,7 @@ def _http_get_json(url, verbose=None, retry_delays=None):
         req = request.urlopen(url)
     except:
         if len(retry_delays) > 0:
-            print('Retrying http request to in {} sec: {}'.format(
+            print('Retrying http request in {} sec: {}'.format(
                 retry_delays[0], url))
             time.sleep(retry_delays[0])
             return _http_get_json(url, verbose=verbose, retry_delays=retry_delays[1:])
@@ -169,7 +169,7 @@ def _http_get_json(url, verbose=None, retry_delays=None):
     except:
         raise Exception('Unable to load json from url: '+url)
     if verbose:
-        print('Elapsed time for _http_get_json: {}'.format(time.time()-timer))
+        print('Elapsed time for _http_get_json: {} {}'.format(time.time()-timer, url))
     return ret
 
 

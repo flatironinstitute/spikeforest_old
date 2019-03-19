@@ -1045,7 +1045,6 @@ class MountainClient():
             local_client = MountainClient()
             obj = local_client.loadObject(key=cache_key)
             if obj:
-                print('--- found in cache.', cache_key, obj)
                 return obj
 
         url = self._local_db.kbucketUrl()+'/'+share_id+'/api/readdir/'+path
@@ -1073,7 +1072,6 @@ class MountainClient():
 
         if share_id in self._kbucket_cache_codes:
             local_client.saveObject(key=cache_key, object=ret)
-            print('--- saved to cache', cache_key, ret)
         return ret
 
     def _read_file_system_dir(self, *, path, recursive, include_sha1):
@@ -1392,8 +1390,10 @@ class MountainClientLocal():
             local_client = MountainClient()
             obj = local_client.loadObject(key=cache_key)
             if obj:
-                print('---loading from cache',cache_key,obj)
                 return (obj['sha1'], obj['size'], obj['url_download'])
+            else:
+                print('----------------------------------------------------------')
+                print('--- Unable to load from kbucket cache', cache_key)
 
         kbucket_url = self._get_kbucket_url_for_share(share_id=kbshare_id)
         if not kbucket_url:
@@ -1417,7 +1417,6 @@ class MountainClientLocal():
 
         url_download = kbucket_url+'/'+kbshare_id+'/download/'+path0
         if kbshare_id in self._kbucket_cache_codes:
-            print('--- saving to cache', cache_key, sha1, size, url_download)
             local_client.saveObject(key=cache_key, object=dict(sha1=sha1, size=size, url_download=url_download))
         return (sha1, size, url_download)
 

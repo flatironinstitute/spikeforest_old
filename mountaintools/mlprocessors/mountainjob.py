@@ -45,8 +45,9 @@ class MountainJob():
         ret=[]
         if self._job['container']:
             ret.append(self._job['container'])
-        for input_fname in self._job['inputs'].values():
-            ret.append(input_fname)
+        for input0 in self._job['inputs'].values():
+            if not input0.get('directory', False)
+                ret.append(input0['path'])
         if self._job['processor_code']:
             ret.append(self._job['processor_code'])
         if 'additional_files_to_realize' in self._job:
@@ -58,8 +59,9 @@ class MountainJob():
             return
         if self._job['container']:
             self._job['container'] = _make_remote_url_for_file(self._job['container'])
-        for input_name, input_fname in self._job['inputs'].items():
-            self._job['inputs'][input_name] = _make_remote_url_for_file(self._job['inputs'][input_name])
+        for input_name, input0 in self._job['inputs'].items():
+            if not input0.get('directory', False):
+                self._job['inputs'][input_name] = _make_remote_url_for_file(input0['path']))
         if 'additional_files_to_realize' in self._job:
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
@@ -90,10 +92,17 @@ class MountainJob():
                 if input0.directory:
                     if not _directory_exists(fname0):
                         raise Exception('Unable to find input directory {}: {}'.format(name0, fname0))
+                    inputs[name0] = dict(
+                        directory = True,
+                        path = fname0
+                    )
                 else:
                     if not _file_exists_or_is_sha1_url(fname0):
                         raise Exception('Unable to find input file {}: {}'.format(name0, fname0))
-                inputs[name0] = fname0
+                    inputs[name0] = dict(
+                        path = fname0
+                    )
+                
             else:
                 if not input0.optional:
                     raise Exception('Missing required input: {}'.format(name0))
@@ -208,16 +217,23 @@ class MountainJob():
             output_files_to_copy = []
             output_files = dict()
             inputs_to_bind = []
-            for input_name, input_value in self._job['inputs'].items():
-                input_fname = self._realize_input(input_value)
-                if not input_fname:
-                    raise Exception('Unable to realize input {}: {}'.format(input_name, input_value))
+            for input_name, input0 in self._job['inputs'].items():
+                if not input0.get('directory', False):
+                    input_fname = self._realize_input(input0['path'])
+                    if not input_fname:
+                        raise Exception('Unable to realize input {}: {}'.format(input_name, input0['path']))
+                else:
+                    input_fname = input0['path']
                 if not container:
                     attributes_for_processor[input_name] = input_fname
                 else:
                     ext = _get_file_ext(input_fname) or '.in'
-                    infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
-                    inputs_to_bind.append((input_fname, infile_in_container))
+                    
+                    if input0.get('directory', False) and (input0['path'].startswith['kbucket://']):
+                        infile_in_container = input0['path']
+                    else:
+                        infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
+                        inputs_to_bind.append((input_fname, infile_in_container))
                     attributes_for_processor[input_name] = infile_in_container
             for output_name, output_value in self._job['outputs'].items():
                 if type(output_value)==str:
@@ -462,8 +478,11 @@ class ConsoleCapture():
 
 def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
     input_hashes=dict()
-    for input_name, input_value in inputs.items():
-        input_hashes[input_name] = mt.computeFileOrDirHash(input_value)
+    for input_name, input0 in inputs.items():
+        if input0.get('directory', False):
+            input_hashes[input_name] = mt.computeDirHash(input0['path'])
+        else:
+            input_hashes[input_name] = mt.computeFileSha1(input0['path'])
 
     signature_obj = dict(
         processor_name=processor_name,
