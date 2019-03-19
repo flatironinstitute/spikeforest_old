@@ -180,6 +180,7 @@ class MountainClient():
         self._share_ids_by_alias=dict()
         self._kbucket_cache_codes=dict()
         self._local_db = MountainClientLocal(kbucket_cache_codes=self._kbucket_cache_codes)
+        self._initialize_kbucket_cache_codes()
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadonly(), configRemoteReadWrite()')
@@ -801,11 +802,6 @@ class MountainClient():
     def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
-    def setKBucketCacheCode(self, *, share_id, code):
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-        self._kbucket_cache_codes[share_id]=code
-
     def _get_value(self, *, key, subkey, collection=None, local_first=False):
         if collection is None:
             collection = self._remote_config['collection']
@@ -832,6 +828,27 @@ class MountainClient():
         print('Resolved share_id {} from alias {}'.format(ret, share_id_alias))
         self._share_ids_by_alias[share_id_alias]=ret
         return ret
+
+    def _initialize_kbucket_cache_codes(self):
+        kbucket_cache_codes_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'kbucket_cache_codes')
+        if os.path.exists(kbucket_cache_codes_fname):
+            txt=_read_text_file(kbucket_cache_codes_fname)
+            lines=txt.splitlines()
+            for line0 in lines:
+                vals0 = line0.split()
+                if len(vals0)!=2:
+                    raise Exception('Error parsing file: '+kbucket_cache_codes_fname)
+                share_id=vals0[0]
+                if share_id and ('.' in share_id):
+                    try:
+                        share_id=self._get_share_id_from_alias(share_id)
+                    except:
+                        share_id=None
+                if share_id:
+                    print('Setting kbucket cache code {}: {}'.format(share_id, vals0[1]))
+                    self._kbucket_cache_codes[share_id]=vals0[1]
+                else:
+                    print('Warning: unable to establish cache code: '+line0)
 
     def _find_collection_token_from_login(self, collection, try_global=True):
         if try_global:

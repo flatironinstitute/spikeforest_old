@@ -143,7 +143,7 @@ class ComputeResourceServer():
 
         result_objects = []
         for result in results:
-            if result.retcode==0:
+            if (result.retcode==0) and (result.outputs):
                 for output_name, output_fname in result.outputs.items():
                     self._set_console_message('Saving/uploading {}: {}...'.format(output_name, output_fname))
                     a = self._cairio_client.saveFile(path=output_fname)
