@@ -41,6 +41,10 @@ class MountainJob():
     def getFilesToRealize(self):
         if self._job is None:
             return []
+        print('-----------------------------------------------------------')
+        print(self._job['inputs'])
+        print(self._job['processor_name'])
+        print('-----------------------------------------------------------')
         # These are the files needed at the compute location to actually run the job
         ret=[]
         if self._job['container']:
