@@ -298,7 +298,8 @@ class MountainJob():
                         env = os.environ # is this needed?
                         python_cmd='python3 {}/run.py &>{}'.format(temp_path, tmp_process_console_out_fname)
                         if job_timeout:
-                            python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                            # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                            python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
                         print('Running: '+python_cmd)
                         #retcode = subprocess.call(python_cmd, shell=True, env=env)
                         retcode = os.system('bash -c "{}"'.format(python_cmd.replace('"','\\"')))
@@ -321,7 +322,8 @@ class MountainJob():
                                 env_vars.append('{}={}'.format(v, val))
                         python_cmd = 'python3 /run_in_container/run.py  &>{}'.format(tmp_process_console_out_fname_in_container)
                         if job_timeout:
-                            python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                            # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                            python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
                         singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {}"'.format(
                             ' '.join(singularity_opts), container, ' '.join(env_vars), python_cmd)
                         
