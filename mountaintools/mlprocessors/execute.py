@@ -19,6 +19,7 @@ def createJob(
     _force_run=None,
     _keep_temp_files=None,
     _label=None,
+    _timeout=None,
     **kwargs
 ):
     timer=time.time()
@@ -30,6 +31,7 @@ def createJob(
         _keep_temp_files=_keep_temp_files,
         _container=_container,
         _use_cache=_use_cache,
+        _timeout=_timeout,
         **kwargs
     )
     return job

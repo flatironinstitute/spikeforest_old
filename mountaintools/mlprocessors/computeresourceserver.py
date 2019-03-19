@@ -32,6 +32,11 @@ class ComputeResourceServer():
         self._srun_opts_string=optstr
 
     def start(self):
+        self._cairio_client.setValue(
+            key=dict(name='compute_resources'),
+            subkey=self._resource_name,
+            value='exists'
+        )
         statuses_key=dict(
             name='compute_resource_batch_statuses',
             resource_name=self._resource_name

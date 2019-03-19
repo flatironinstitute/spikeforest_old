@@ -10,6 +10,7 @@ import sys
 import shutil
 import fnmatch
 import inspect
+import shlex
 from mountainclient import client as mt
 
 class MountainJob():
@@ -66,7 +67,7 @@ class MountainJob():
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
 
-    def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, **kwargs):
+    def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, _timeout=None, **kwargs):
         timer=time.time()
         if _force_run is None:
             _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')
@@ -194,7 +195,8 @@ class MountainJob():
             use_cache=_use_cache,
             keep_temp_files=_keep_temp_files,
             environment_variables=environment_variables,
-            additional_files_to_realize=[]
+            additional_files_to_realize=[],
+            timeout=_timeout
         )
 
     def execute(self):
@@ -204,6 +206,7 @@ class MountainJob():
         force_run=self._job['force_run']
         use_cache=self._job['use_cache']
         keep_temp_files=self._job['keep_temp_files']
+        job_timeout=self._job.get('timeout', None)
 
         if (use_cache) and (not force_run):
             result = self._find_result_in_cache()
@@ -217,6 +220,8 @@ class MountainJob():
             output_files_to_copy = []
             output_files = dict()
             inputs_to_bind = []
+            tmp_process_console_out_fname = os.path.join(tmp_output_path, 'process_console_out.txt')
+            tmp_process_console_out_fname_in_container = os.path.join('/processor_outputs', 'process_console_out.txt')
             for input_name, input0 in self._job['inputs'].items():
                 if not input0.get('directory', False):
                     input_fname = self._realize_input(input0['path'])
@@ -285,11 +290,14 @@ class MountainJob():
                     return R
             else:
                 # Otherwise we need to do code generation
+                timer = time.time()
                 with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job['processor_name']) as temp_path:
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
                     if not container:
                         env = os.environ # is this needed?
-                        python_cmd='python3 {}/run.py'.format(temp_path)
+                        python_cmd='python3 {}/run.py > {} &>{}'.format(temp_path, tmp_process_console_out_fname)
+                        if job_timeout:
+                            python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
                         print('Running: '+python_cmd)
                         retcode = subprocess.call(python_cmd, shell=True, env=env)
                     else:
@@ -309,13 +317,33 @@ class MountainJob():
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} python3 /run_in_container/run.py"'.format(
-                            ' '.join(singularity_opts), container, ' '.join(env_vars))
+                        python_cmd = 'python3 /run_in_container/run.py  &>{}'.format(tmp_process_console_out_fname_in_container)
+                        if job_timeout:
+                            python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {}"'.format(
+                            ' '.join(singularity_opts), container, ' '.join(env_vars), python_cmd)
+                        
                         env = os.environ # is this needed?
                         print('Running: '+singularity_cmd)
-                        retcode =subprocess.call(singularity_cmd, shell=True, env=env)
+                        retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                if os.path.exists(tmp_process_console_out_fname):
+                    process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
+                    if process_console_out:
+                        lines0=process_console_out.splitlines()
+                        for line0 in lines0:
+                            print('>> {}'.format(line0))
+                    else:
+                        print('>> No console out for process')
+                else:
+                    print('WARNING: no process console out file found: '+tmp_process_console_out_fname)
+                if job_timeout:
+                    if retcode == 124:
+                        print('RETURN CODE IS 124 indicating the process exceeded the timeout threshold of {}s'.format(job_timeout))
+                elapsed = time.time() - timer
+                print('========== {} exited with code {} after {} sec'.format(self._job['processor_name'], retcode, elapsed))
+                print('================================================================================')
+            
             runtime_capture.stop_capturing()
-
             R.retcode=retcode
             R.runtime_info = runtime_capture.runtimeInfo()
             R.console_out = mt.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
@@ -353,6 +381,7 @@ class MountainJob():
         # Code generation
         code = """
 from processor_source import {processor_class_name}
+import sys
 
 def main():
     X = {processor_class_name}()
@@ -360,7 +389,12 @@ def main():
     X.run()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        raise
         """
         
         set_attributes_code = []
@@ -465,6 +499,9 @@ class ConsoleCapture():
         with open(self._tmp_fname, 'r') as f:
             self._console_out = f.read()
         os.unlink(self._tmp_fname)
+
+    def addToConsoleOut(self, txt):
+        self._file_handle.write(txt)
 
     def runtimeInfo(self):
         return dict(
@@ -610,3 +647,24 @@ def _make_remote_url_for_file(fname):
     else:
         sha1 = mt.computeFileSha1(fname)
         return 'sha1://'+sha1+'/'+os.path.basename(fname)
+
+# def _run_command_and_print_output(command, timeout=None):
+#     timer = time.time()
+#     with subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+#         while True:
+#             elapsed = time.time() - timer
+#             if timeout is not None:
+#                 if elapsed > timeout:
+#                     print('ELAPSED TIME EXCEEEDS TIMEOUT -- KILLING PROCESS -- {} > {} sec'.format(elapsed, timeout))
+#                     process.terminate()
+#                     return -1
+#             output_stdout= process.stdout.readline()
+#             output_stderr = process.stderr.readline()
+#             if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
+#                 break
+#             if output_stdout:
+#                 print(output_stdout.decode())
+#             if output_stderr:
+#                 print(output_stderr.decode())
+#         rc = process.poll()
+#         return rc

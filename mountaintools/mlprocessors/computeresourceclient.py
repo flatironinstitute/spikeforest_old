@@ -2,6 +2,7 @@ from mountainclient import MountainClient
 import time
 import random
 from .mountainjob import MountainJobResult
+from .mountainjob import MountainJob
 
 class ComputeResourceClient():
     def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None, readonly=False):
@@ -44,6 +45,7 @@ class ComputeResourceClient():
             key=key
         )
         return batch
+    
     def startBatch(self,*,batch_id):
         self._cairio_client.setValue(
             key=dict(
@@ -144,6 +146,8 @@ class ComputeResourceClient():
         obj = self._cairio_client.loadObject(
             key=key
         )
+        if obj is None:
+            return None
         result_objects = obj['results']
         ret = []
         for result_object in result_objects:

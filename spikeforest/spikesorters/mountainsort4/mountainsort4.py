@@ -1,6 +1,6 @@
 import mlprocessors as mlpr
 import os
-
+import sys
 
 class MountainSort4(mlpr.Processor):
     NAME = 'MountainSort4'
@@ -116,8 +116,9 @@ class MountainSort4TestError(mlpr.Processor):
     def run(self):
         if self.throw_error:
             import time
-            print('Intentionally throwing an error in 2 seconds (MountainSort4TestError)...')
-            time.sleep(2)
+            print('Intentionally throwing an error in 3 seconds (MountainSort4TestError)...')
+            sys.stdout.flush()
+            time.sleep(3)
             raise Exception('Intentional error.')
         try:
             # if we are running this outside the container

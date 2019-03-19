@@ -182,7 +182,7 @@ Processors=dict(
 def _create_sorting_job_for_recording_helper(kwargs):
     return _create_sorting_job_for_recording(**kwargs)
 
-def _create_sorting_job_for_recording(recording, sorter):
+def _create_sorting_job_for_recording(recording, sorter, job_timeout):
     print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
 
     sorting_params=sorter['params']
@@ -196,6 +196,7 @@ def _create_sorting_job_for_recording(recording, sorter):
         recording_dir=dsdir,
         channels=recording.get('channels',[]),
         firings_out=dict(ext='.mda',upload=True),
+        _timeout=job_timeout,
         **sorting_params
     )
     job.addFilesToRealize(dsdir+'/raw.mda')
@@ -228,7 +229,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
     )
     return result
         
-def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False):
+def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False, job_timeout=60*10):
     print('>>>>>> sort recordings')
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
@@ -250,7 +251,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,d
     print('>>>>>>>>>>> Sorting recordings using {}'.format(processor_name))
 
     pool = multiprocessing.Pool(20)
-    sorting_jobs=pool.map(_create_sorting_job_for_recording_helper, [dict(recording=recording, sorter=sorter) for recording in recordings])
+    sorting_jobs=pool.map(_create_sorting_job_for_recording_helper, [dict(recording=recording, sorter=sorter, job_timeout=job_timeout) for recording in recordings])
     pool.close()
     pool.join()
 

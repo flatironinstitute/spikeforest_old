@@ -24,8 +24,12 @@ class JobView(vd.Component):
         if self._job is None:
             return vd.div('No job')
         back_button=vd.button('Back to job list',onclick=self._on_back)
+        console_out = None
+        if 'result' in self._job:
+            console_out = mt.loadText(path = self._job['result'].get('console_out',None))
         return vd.div(
             vd.div(back_button),
+            vd.div(vd.pre(console_out or '')),
             vd.div(vd.pre(json.dumps(self._job, indent=4)))
         )
 
@@ -62,12 +66,17 @@ class BatchView(vd.Component):
         jobs=batch['jobs']
         self._jobs=jobs
         for ii,job in enumerate(jobs):
-            job['status']=self._job_statuses.get(str(ii),'Unknown')
+            job['status'] = self._job_statuses.get(str(ii),'Unknown')
 
-        job_results=self._compute_resource_client.getBatchJobResults(batch_id=self._batch_id)
+        job_results = self._compute_resource_client.getBatchJobResults(batch_id=self._batch_id)
         if job_results:
-            for ii,result in enumerate(job_results['results']):
-                jobs[ii]['result']=result
+            for ii,result in enumerate(job_results):
+                jobs[ii]['result']=dict(
+                    retcode = result.retcode,
+                    runtime_info = result.runtime_info,
+                    console_out = result.console_out,
+                    outputs = result.outputs
+                )
 
         callbacks=[
             lambda job_index=ii: self._open_job(job_index=job_index)

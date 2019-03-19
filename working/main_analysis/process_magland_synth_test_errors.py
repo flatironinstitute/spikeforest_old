@@ -23,16 +23,17 @@ def main():
     mt.login(ask_password=True)
     mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+
     #mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
     #mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
     mlpr.configComputeResource('default', resource_name='fractal-computer')
     mlpr.configComputeResource('gpu', resource_name='fractal-computer')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test'
+    output_id = 'magland_synth_test_errors'
 
     # Grab the recordings for testing
     group_name = 'magland_synth_test'
