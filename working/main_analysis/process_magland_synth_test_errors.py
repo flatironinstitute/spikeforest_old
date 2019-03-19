@@ -3,7 +3,7 @@
 import spikeforest_analysis as sa
 from mountaintools import client as mt
 from spikeforest import spikeextractors as se
-import os
+import os, sys
 import shutil
 import sfdata as sf
 import numpy as np
@@ -11,22 +11,27 @@ import mlprocessors as mlpr
 
 
 def main():
-    #mt.login(ask_password=True)
-    #mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mt.configRemoteReadonly(collection='spikeforest',share_id='spikeforest.spikeforest2')
-
-    # Use this to optionally connect to a kbucket share:
-    # for downloading containers if needed
-    # (in the future we will not need this)
+    resource_name1 = 'ccmlin008-parallel'
+    resource_name2 = 'ccmlin008-parallel'
+    if len(sys.argv)>1:
+        resource_name1 = sys.argv[1]
+    if len(sys.argv)>2:
+        resource_name2 = sys.argv[2]
+    print('Compute resources used:')
+    print('  resource_name1 (srun CPU): ', resource_name1)
+    print('  resource_name2 (Local GPU): ', resource_name2)    
+    mt.login(ask_password=True)
+    mt.setKBucketCacheCode(share_id='spikeforest.spikeforest2', code='1')
+    mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
-    mlpr.configComputeResource('default', resource_name='local-computer',collection=None,share_id=None)
-    mlpr.configComputeResource('ks', resource_name='local-computer',collection=None,share_id=None)
+    mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test_errors'
+    output_id = 'magland_synth_test'
 
     # Grab the recordings for testing
     group_name = 'magland_synth_test'
@@ -37,8 +42,10 @@ def main():
     recordings = a['recordings']
     studies = a['studies']
 
-    #recordings=recordings[0:1]
-    #studies=studies[0:1]
+    recordings=recordings[0:3]
+    studies=studies[0:1]
+
+    # recordings = [recordings[0]]
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
@@ -53,8 +60,8 @@ def main():
     for sorter in sorters:
         # Sort the recordings
         compute_resource0 = 'default'
-        if sorter['name'] == 'KiloSort':
-            compute_resource0 = 'ks'
+        if 'KiloSort' in sorter['name'] or 'IronClust' in sorter['name']:
+            compute_resource0 = 'gpu'
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,
@@ -116,17 +123,6 @@ def _define_sorters():
             detect_sign=-1,
             adjacency_radius=50,
             detect_threshold=3
-        )
-    )
-
-    sorter_ms4_error = dict(
-        name='MountainSort4-error',
-        processor_name='MountainSort4TestError',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=3,
-            throw_error=True
         )
     )
 
@@ -192,6 +188,15 @@ def _define_sorters():
         )
     )
 
+    sorter_ks2 = dict(
+        name='KiloSort2',
+        processor_name='KiloSort2',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50
+        )
+    )    
+
     sorter_yass = dict(
         name='Yass',
         processor_name='Yass',
@@ -201,11 +206,22 @@ def _define_sorters():
         )
     )
 
+    sorter_ms4_error = dict(
+        name='MountainSort4-error',
+        processor_name='MountainSort4TestError',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50,
+            detect_threshold=3,
+            throw_error=True
+        )
+    )
+
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
-    return [sorter_ms4_thr3, sorter_ms4_error]
-    # return [sorter_ms4_thr3]
+    # return [sorter_yass]
+    return [sorter_ms4_error, sorter_sc]
 
 
 if __name__ == "__main__":

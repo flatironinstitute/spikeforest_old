@@ -29,6 +29,8 @@ class MountainJob():
         self._job=deepcopy(job_object)
 
     def addFilesToRealize(self, files_to_realize):
+        if self._job is None:
+            return
         if type(files_to_realize)==str:
             self._job['additional_files_to_realize'].append(files_to_realize)
         elif type(files_to_realize)==list:
@@ -37,6 +39,8 @@ class MountainJob():
             raise Exception('Unexpected type of files_to_realize in addFilesToRealize')
 
     def getFilesToRealize(self):
+        if self._job is None:
+            return []
         # These are the files needed at the compute location to actually run the job
         ret=[]
         if self._job['container']:
@@ -50,6 +54,8 @@ class MountainJob():
         return ret
 
     def useRemoteUrlsForInputFiles(self):
+        if self._job is None:
+            return
         if self._job['container']:
             self._job['container'] = _make_remote_url_for_file(self._job['container'])
         for input_name, input_fname in self._job['inputs'].items():
@@ -59,6 +65,7 @@ class MountainJob():
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
 
     def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, **kwargs):
+        timer=time.time()
         if _force_run is None:
             _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')
 
@@ -80,8 +87,12 @@ class MountainJob():
             name0 = input0.name
             if name0 in kwargs:
                 fname0 = kwargs[name0]
-                if not _file_exists_or_is_sha1_url(fname0):
-                    raise Exception('Unable to find input file {}: {}'.format(name0, fname0))
+                if input0.directory:
+                    if not _directory_exists(fname0):
+                        raise Exception('Unable to find input directory {}: {}'.format(name0, fname0))
+                else:
+                    if not _file_exists_or_is_sha1_url(fname0):
+                        raise Exception('Unable to find input file {}: {}'.format(name0, fname0))
                 inputs[name0] = fname0
             else:
                 if not input0.optional:
@@ -178,6 +189,8 @@ class MountainJob():
         )
 
     def execute(self):
+        if self._job is None:
+            return MountainJobResult()
         container=self._job['container']
         force_run=self._job['force_run']
         use_cache=self._job['use_cache']
@@ -472,6 +485,12 @@ def _file_exists_or_is_sha1_url(fname):
     if mt.findFile(path=fname):
         return True
     return False
+
+def _directory_exists(fname):
+    if fname.startswith('kbucket://'):
+        a = mt.readDir(path=fname,include_sha1=False)
+        return (a is not None)
+    return os.path.isdir(fname)
 
 class TemporaryDirectory():
     def __init__(self, remove=True, prefix='tmp'):

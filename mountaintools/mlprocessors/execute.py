@@ -1,4 +1,5 @@
 import multiprocessing
+import time
 from .mountainjob import MountainJob
 
 def _create_job_from_kwargs(aa):
@@ -20,6 +21,7 @@ def createJob(
     _label=None,
     **kwargs
 ):
+    timer=time.time()
     job = MountainJob()
     job.initFromProcessor(
         proc, 

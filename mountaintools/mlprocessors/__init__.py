@@ -4,6 +4,7 @@ from .validators import *
 from .executebatch import executeBatch, configComputeResource
 from .computeresourceserver import ComputeResourceServer
 from .computeresourceclient import ComputeResourceClient
+from .mountainjob import MountainJob
 
 __all__ = [
     "Input", "Output",
@@ -12,5 +13,5 @@ __all__ = [
     "registry", "register_processor", "ProcessorRegistry",
     "Validator", "ValueValidator", "RegexValidator", "FileExtensionValidator", "FileExistsValidator",
     "invoke",
-    "executeJob", "executeBatch"
+    "executeJob", "executeBatch", "MountainJob"
 ]

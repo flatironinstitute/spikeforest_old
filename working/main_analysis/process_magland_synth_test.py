@@ -11,8 +11,8 @@ import mlprocessors as mlpr
 
 
 def main():
-    resource_name1 = None #'ccmlin000-parallel'
-    resource_name2 = None #'ccmlin000-parallel'
+    resource_name1 = 'ccmlin008-parallel'
+    resource_name2 = 'ccmlin008-parallel'
     if len(sys.argv)>1:
         resource_name1 = sys.argv[1]
     if len(sys.argv)>2:
@@ -27,13 +27,13 @@ def main():
     mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test_local'
+    output_id = 'magland_synth_test'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth_test_local'
+    group_name = 'magland_synth_test'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -208,7 +208,8 @@ def _define_sorters():
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
-    return [sorter_yass]
+    # return [sorter_yass]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass]
 
 
 if __name__ == "__main__":
