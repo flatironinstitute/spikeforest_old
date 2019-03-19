@@ -61,7 +61,7 @@ class MountainJob():
             self._job['container'] = _make_remote_url_for_file(self._job['container'])
         for input_name, input0 in self._job['inputs'].items():
             if not input0.get('directory', False):
-                self._job['inputs'][input_name] = _make_remote_url_for_file(input0['path']))
+                self._job['inputs'][input_name] = _make_remote_url_for_file(input0['path'])
         if 'additional_files_to_realize' in self._job:
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
