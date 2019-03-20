@@ -12,12 +12,16 @@ import fnmatch
 import inspect
 import shlex
 from mountainclient import client as mt
+from .shellscript import ShellScript
+from .temporarydirectory import TemporaryDirectory
 
 class MountainJob():
-    def __init__(self):
+    def __init__(self, *, job_object=None):
         self.result=None
         self._processor=None
         self._job=None
+        if job_object is not None:
+            self.initFromObject(job_object)
 
     def isNull(self):
         return (self._job is None)
@@ -294,18 +298,17 @@ class MountainJob():
                 timer = time.time()
                 with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job['processor_name']) as temp_path:
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
-                    if job_timeout:
-                        # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
-                        timeout_str = 'timeout {}s '.format(job_timeout) 
-                    else:
-                        timeout_str = ''
+
+                    run_sh_script = ShellScript("""
+                        #!/bin/bash
+                        set -e
+                        python3 {temp_path}/run.py > {console_out_fname} 2>&1
+                    """, script_path=os.path.join(temp_path, 'run.sh'))
+
                     if not container:
-                        env = os.environ # is this needed?
-                        python_cmd='python3 {}/run.py'.format(temp_path)
-                        cmd = '{}bash -c "{} > {} 2>&1"'.format(timeout_str, python_cmd.replace('"','\\"'), tmp_process_console_out_fname)
-                        print('Running: '+cmd)
-                        retcode = subprocess.call(cmd, shell=True, env=env)
-                        #retcode = os.system(cmd)
+                        run_sh_script.substitute('{temp_path}', temp_path)
+                        run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname)
+                        shell_script=run_sh_script
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -323,16 +326,71 @@ class MountainJob():
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        python_cmd = 'python3 /run_in_container/run.py'
-                        cmd = '{}bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(timeout_str, ' '.join(env_vars), python_cmd.replace('"','\\"'), tmp_process_console_out_fname_in_container)
-                        singularity_cmd = 'singularity exec {} {} {}'.format(
-                            ' '.join(singularity_opts), container, cmd)
                         
-                        env = os.environ # is this needed?
-                        print('Running: '+singularity_cmd)
-                        #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                        retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                        #retcode = os.system(singularity_cmd)
+                        run_sh_script.substitute('{temp_path}', '/run_in_container')
+                        run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
+                        run_sh_script.write()
+                        singularity_sh_script = ShellScript("""
+                            #!/bin/bash
+                            set -e
+
+                            singularity exec {singularity_opts} {container} {env_vars} {temp_path}/run.sh
+                        """, script_path=os.path.join(temp_path, 'singularity_run.sh'))
+                        singularity_sh_script.substitute('{temp_path}', '/run_in_container')
+                        singularity_sh_script.substitute('{singularity_opts}', ' '.join(singularity_opts))
+                        singularity_sh_script.substitute('{container}', container)
+                        singularity_sh_script.substitute('{env_vars}', ' '.join(env_vars))
+
+                        shell_script = singularity_sh_script
+
+                    shell_script.start()
+                    while shell_script.isRunning():
+                        shell_script.wait(5)
+                        if job_timeout:
+                            if shell_script.elapsedTimeSinceStart() > job_timeout:
+                                print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
+                                shell_script.stop()
+                    retcode = shell_script.returnCode()
+
+                    # if job_timeout:
+                    #     # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                    #     timeout_str = 'timeout {}s '.format(job_timeout) 
+                    # else:
+                    #     timeout_str = ''
+                    # if not container:
+                    #     env = os.environ # is this needed?
+                    #     python_cmd='python3 {}/run.py'.format(temp_path)
+                    #     cmd = '{}bash -c "{} > {} 2>&1"'.format(timeout_str, python_cmd.replace('"','\\"'), tmp_process_console_out_fname)
+                    #     print('Running: '+cmd)
+                    #     retcode = subprocess.call(cmd, shell=True, env=env)
+                    #     #retcode = os.system(cmd)
+                    # else:
+                    #     print('Realizing container file: {}'.format(container))
+                    #     container_orig = container
+                    #     container = mt.realizeFile(container)
+                    #     if not container:
+                    #         raise Exception('Unable to realize container file: {}'.format(container_orig))
+                    #     singularity_opts = _get_singularity_opts()
+                    #     singularity_opts.append('-B {}:{}'.format(temp_path, '/run_in_container'))
+                    #     singularity_opts.append('-B {}:{}'.format(tmp_output_path, '/processor_outputs'))
+                    #     for tobind in inputs_to_bind:
+                    #         singularity_opts.append('-B {}:{}'.format(tobind[0], tobind[1]))
+                    #     env_vars = []
+                    #     environment_variables = self._job.get('environment_variables', [])
+                    #     for v in environment_variables:
+                    #         val = os.environ.get(v, '')
+                    #         if val:
+                    #             env_vars.append('{}={}'.format(v, val))
+                    #     python_cmd = 'python3 /run_in_container/run.py'
+                    #     cmd = '{}bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(timeout_str, ' '.join(env_vars), python_cmd.replace('"','\\"'), tmp_process_console_out_fname_in_container)
+                    #     singularity_cmd = 'singularity exec {} {} {}'.format(
+                    #         ' '.join(singularity_opts), container, cmd)
+                        
+                    #     env = os.environ # is this needed?
+                    #     print('Running: '+singularity_cmd)
+                    #     #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                    #     retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                    #     #retcode = os.system(singularity_cmd)
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
@@ -387,24 +445,26 @@ class MountainJob():
         
         processor_class_name = self._job['processor_class_name']
 
-        # Code generation
-        code = """
-from processor_source import {processor_class_name}
-import sys
+        run_py_script = ShellScript("""
+            #!/usr/bin/env python
 
-def main():
-    X = {processor_class_name}()
-{set_attributes}
-    X.run()
+            from processor_source import {processor_class_name}
+            import sys
 
-if __name__ == "__main__":
-    try:
-        main()
-    except:
-        sys.stdout.flush()
-        sys.stderr.flush()
-        raise
-        """
+            def main():
+                print('Running processor (class={processor_class_name}) ...')
+                X = {processor_class_name}()
+            {set_attributes}
+                X.run()
+
+            if __name__ == "__main__":
+                try:
+                    main()
+                except:
+                    sys.stdout.flush()
+                    sys.stderr.flush()
+                    raise
+        """)
         
         set_attributes_code = []
         for attr_name, attr_val in attributes_for_processor.items():
@@ -412,10 +472,11 @@ if __name__ == "__main__":
                 "    setattr(X, '{}', {})".format(attr_name, _code_generate_value(attr_val))
             )
         set_attributes_code = '\n'.join(set_attributes_code)
-        code = code.replace('{processor_class_name}', processor_class_name)
-        code = code.replace('{set_attributes}', set_attributes_code)
 
-        _write_text_file(os.path.join(temp_path,'run.py'), code)
+        run_py_script.substitute('{processor_class_name}', processor_class_name)
+        run_py_script.substitute('{set_attributes}', set_attributes_code)
+
+        run_py_script.write(os.path.join(temp_path, 'run.py'))
 
     def _find_result_in_cache(self):
         output_signatures = self._job['output_signatures']
@@ -464,11 +525,25 @@ if __name__ == "__main__":
                 result.outputs[output_name] = dest_path
 
 class MountainJobResult():
-    def __init__(self):
+    def __init__(self, result_object=None):
         self.retcode=0
         self.console_out=None
         self.runtime_info=None
         self.outputs=None
+        if result_object is not None:
+            self.fromObject(result_object)
+    def getObject(self):
+        return dict(
+            retcode=self.retcode,
+            console_out=self.console_out,
+            runtime_info=deepcopy(self.runtime_info),
+            outputs=deepcopy(self.outputs)
+        )
+    def fromObject(self, obj):
+        self.retcode = obj['retcode']
+        self.console_out = obj['console_out']
+        self.runtime_info = deepcopy(obj['runtime_info'])
+        self.outputs = deepcopy(obj['outputs'])
 
 class Logger2(object):
     def __init__(self, file1, file2):
@@ -556,28 +631,6 @@ def _directory_exists(fname):
         a = mt.readDir(path=fname,include_sha1=False)
         return (a is not None)
     return os.path.isdir(fname)
-
-class TemporaryDirectory():
-    def __init__(self, remove=True, prefix='tmp'):
-        self._remove = remove
-        self._prefix = prefix
-    def __enter__(self):
-        kbucket_cache_dir = os.environ.get('KBUCKET_CACHE_DIR', None)
-        if kbucket_cache_dir:
-            dirpath = os.path.join(kbucket_cache_dir, 'tmp')
-            if not os.path.exists(dirpath):
-                os.mkdir(dirpath)
-        else:
-            dirpath = None
-        self._path = tempfile.mkdtemp(prefix = self._prefix, dir=dirpath)
-        return self._path
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._remove:
-            shutil.rmtree(self._path)
-
-    def path(self):
-        return self._path
 
 def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
     patterns = ['*.py']+additional_files
