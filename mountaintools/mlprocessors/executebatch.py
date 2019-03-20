@@ -264,6 +264,9 @@ def _set_job_result(job, result_object):
         local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
         testing = local_client.loadObject(key=job_result_key, subkey=subkey)
         if testing is None:
+            print('WARNING: Problem loading object immediately after saving....')
+            print('---- value', local_client.getValue(key=job_result_key, subkey=subkey))
+            print('---- object', local_client.loadObject(key=job_result_key, subkey=subkey))
             raise Exception('Unexpected: Problem loading object immediately after saving')
 
 def _execute_job(job):
