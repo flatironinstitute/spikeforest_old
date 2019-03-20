@@ -326,6 +326,7 @@ class MountainJob():
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
+                        env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
                         
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
