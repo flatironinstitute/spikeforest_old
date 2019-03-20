@@ -260,14 +260,24 @@ def _set_job_result(job, result_object):
     job_index = getattr(job, 'job_index', None)
     if job_result_key:
         subkey = str(job_index)
-        print('Saving result object...', job_result_key, subkey)
-        local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
-        testing = local_client.loadObject(key=job_result_key, subkey=subkey)
-        if testing is None:
-            print('WARNING: Problem loading object immediately after saving....')
-            print('---- value', local_client.getValue(key=job_result_key, subkey=subkey))
-            print('---- object', local_client.loadObject(key=job_result_key, subkey=subkey))
-            raise Exception('Unexpected: Problem loading object immediately after saving')
+        num_tries=0
+        while True:
+            print('Saving result object...', job_result_key, subkey)
+            local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
+            testing = local_client.loadObject(key=job_result_key, subkey=subkey)
+            if result_object and (testing is None):
+                print('WARNING: Problem loading object immediately after saving....')
+                print('---- value', local_client.getValue(key=job_result_key, subkey=subkey))
+                print('---- object', local_client.loadObject(key=job_result_key, subkey=subkey))
+                print(result_object)
+                num_tries = num_tries + 1
+                if num_tries >= 3:
+                    raise Exception('Unexpected: Problem loading object immediately after saving')
+                else:
+                    print('retrying...')
+            else:
+                # we are good
+                break
 
 def _execute_job(job):
     local_client = MountainClient()
