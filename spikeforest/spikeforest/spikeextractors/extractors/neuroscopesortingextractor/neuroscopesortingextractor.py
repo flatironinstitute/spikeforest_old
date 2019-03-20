@@ -20,12 +20,16 @@ class NeuroscopeSortingExtractor(SortingExtractor):
         SortingExtractor.__init__(self)
         res = np.loadtxt(resfile, dtype=np.int64, usecols=0)
         clu = np.loadtxt(clufile, dtype=np.int64, usecols=0)
-        n_clu = clu[0]
-        clu = np.delete(clu,0)
-        self._spiketrains = []
-        self._unit_ids = list(x+1 for x in range(n_clu))
-        for s_id in self._unit_ids:
-            self._spiketrains.append(res[(clu == s_id).nonzero()])
+        if len(res) > 0:
+            n_clu = clu[0]
+            clu = np.delete(clu,0)
+            self._spiketrains = []
+            self._unit_ids = list(x+1 for x in range(n_clu))
+            for s_id in self._unit_ids:
+                self._spiketrains.append(res[(clu == s_id).nonzero()])
+        else:
+            self._spiketrains = []
+            self._unit_ids = []
         
     def getUnitIds(self):
         return list(self._unit_ids)
