@@ -138,7 +138,7 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='running')
         self._set_console_message('Starting batch: {}'.format(batch_id))
-        results = executeBatch(jobs=jobs, label=batch.get('label', batch_id), num_workers=self._num_parallel, compute_resource=None, halt_key=_get_halt_key(batch_id), job_status_key=_get_job_status_key(batch_id), srun_opts=self._srun_opts_string)
+        results = executeBatch(jobs=jobs, label=batch.get('label', batch_id), num_workers=self._num_parallel, compute_resource=None, halt_key=_get_halt_key(batch_id), job_status_key=_get_job_status_key(batch_id), job_result_key=_get_job_result_key(batch_id), srun_opts=self._srun_opts_string)
 
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='saving')
@@ -188,6 +188,12 @@ def _get_job_status_key(batch_id):
         batch_id=batch_id
     )
 
+def _get_job_result_key(batch_id):
+    return dict(
+        name='compute_resource_batch_job_results',
+        batch_id=batch_id
+    )
+
 def _get_halt_key(batch_id):
     return dict(
         name='compute_resource_batch_halt',
@@ -196,16 +202,18 @@ def _get_halt_key(batch_id):
 
 def _monitor_job_statuses(batch_id, local_client, remote_client):
     job_status_key=_get_job_status_key(batch_id) 
+    job_result_key=_get_job_result_key(batch_id) 
     halt_key=_get_halt_key(batch_id)
     
-    last_obj = dict()
+    last_status_obj = dict()
+    last_result_obj = dict()
     while True:
-        obj = local_client.getValue(key=job_status_key,subkey='-',parse_json=True)
-        if obj is not None:
-            for job_index, status in obj.items():
-                if obj[job_index] != last_obj.get(job_index,None):
+        status_obj = local_client.getValue(key=job_status_key,subkey='-',parse_json=True)
+        if status_obj is not None:
+            for job_index, status in status_obj.items():
+                if status_obj[job_index] != last_status_obj.get(job_index,None):
                     remote_client.setValue(key=job_status_key, subkey=str(job_index), value=status)
-            last_obj = obj
+            last_status_obj = status_obj
 
         halt_val = remote_client.getValue(key=halt_key)
         if halt_val is not None:
@@ -213,4 +221,12 @@ def _monitor_job_statuses(batch_id, local_client, remote_client):
             # also save it locally so we can potentially stop the individual jobs
             local_client.setValue(key=halt_key,value=halt_val)
             return # is this the best thing to do?
+
+        result_obj = local_client.getValue(key=job_result_key,subkey='-',parse_json=True)
+        if result_obj is not None:
+            for job_index, resultval in result_obj.items():
+                if result_obj[job_index] != last_result_obj.get(job_index,None):
+                    result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
+                    remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
+            last_result_obj = result_obj
         time.sleep(2)
