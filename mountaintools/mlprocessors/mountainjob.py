@@ -498,7 +498,7 @@ class MountainJob():
         if not runtime_info:
             return None
 
-        console_out_check = mt.loadText(output_paths['--console-out--'], local_first=True)
+        console_out_check = mt.loadText(path=output_paths['--console-out--'], local_first=True)
         if not console_out_check:
             return None
         
