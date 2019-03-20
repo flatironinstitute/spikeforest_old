@@ -149,7 +149,8 @@ def ironclust_helper(*,
     cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
         cmd_path, cmd_call)
     print(cmd)
-    retcode = _run_command_and_print_output(cmd)
+    #retcode = _run_command_and_print_output(cmd)
+    retcode = os.system(cmd)
 
     if retcode != 0:
         raise Exception('IronClust returned a non-zero exit code')

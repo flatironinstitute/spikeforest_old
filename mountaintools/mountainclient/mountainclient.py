@@ -835,7 +835,6 @@ class MountainClient():
         ret=self.getValue(key=vals[1], collection=vals[0])
         if ret is None:
             raise Exception('Unable to resolve share_id from alias: '+share_id_alias)
-        print('Resolved share_id {} from alias {}'.format(ret, share_id_alias))
         self._share_ids_by_alias[share_id_alias]=ret
         return ret
 
@@ -855,7 +854,6 @@ class MountainClient():
                     except:
                         share_id=None
                 if share_id:
-                    print('Setting kbucket cache code {}: {}'.format(share_id, vals0[1]))
                     self._kbucket_cache_codes[share_id]=vals0[1]
                 else:
                     print('Warning: unable to establish cache code: '+line0)

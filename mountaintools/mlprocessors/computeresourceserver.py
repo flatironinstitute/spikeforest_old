@@ -147,6 +147,7 @@ class ComputeResourceServer():
         self._set_console_message('Saving/uploading outputs: {}'.format(batch_id))
 
         result_objects = []
+        # TODO: do the following in a multiprocessing pool
         for result in results:
             if (result.retcode==0) and (result.outputs):
                 for output_name, output_fname in result.outputs.items():

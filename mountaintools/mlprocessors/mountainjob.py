@@ -296,13 +296,13 @@ class MountainJob():
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
                     if not container:
                         env = os.environ # is this needed?
-                        python_cmd='python3 {}/run.py &>{}'.format(temp_path, tmp_process_console_out_fname)
+                        python_cmd='python3 {}/run.py'.format(temp_path)
                         if job_timeout:
                             # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
                             python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
                         print('Running: '+python_cmd)
                         #retcode = subprocess.call(python_cmd, shell=True, env=env)
-                        retcode = os.system('bash -c "{}"'.format(python_cmd.replace('"','\\"')))
+                        retcode = os.system('bash -c "{} > {} 2>&1"'.format(python_cmd.replace('"','\\"'), tmp_process_console_out_fname))
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -320,17 +320,17 @@ class MountainJob():
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        python_cmd = 'python3 /run_in_container/run.py  &>{}'.format(tmp_process_console_out_fname_in_container)
+                        python_cmd = 'python3 /run_in_container/run.py'
                         if job_timeout:
                             # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
                             python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
-                        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {}"'.format(
-                            ' '.join(singularity_opts), container, ' '.join(env_vars), python_cmd)
+                        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(
+                            ' '.join(singularity_opts), container, ' '.join(env_vars), python_cmd, tmp_process_console_out_fname_in_container)
                         
                         env = os.environ # is this needed?
                         print('Running: '+singularity_cmd)
                         #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                        retcode = os.system('bash -c "{}"'.format(singularity_cmd.replace('"','\\"')))
+                        retcode = os.system(singularity_cmd)
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
