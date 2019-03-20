@@ -32,6 +32,7 @@ class ComputeResourceServer():
         self._srun_opts_string=optstr
 
     def start(self):
+        print('registering computer resource: ', self._resource_name)
         self._cairio_client.setValue(
             key=dict(name='compute_resources'),
             subkey=self._resource_name,

@@ -167,6 +167,7 @@ def _define_sorters():
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_ks]
 
 
 if __name__ == "__main__":
