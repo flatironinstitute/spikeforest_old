@@ -98,10 +98,11 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
     # Not using compute resource, do this locally
 
-    print('Making sure files are available on local computer...')
-    for fname in files_to_realize:
-        print('Realizing {}...'.format(fname))
-        mt.realizeFile(path=fname)
+    if job_index_file is None:
+        print('Making sure files are available on local computer...')
+        for fname in files_to_realize:
+            print('Realizing {}...'.format(fname))
+            mt.realizeFile(path=fname)
 
     if srun_opts is None:
         for job_index, job in enumerate(jobs):
