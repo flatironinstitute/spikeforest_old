@@ -304,8 +304,8 @@ class MountainJob():
                         python_cmd='python3 {}/run.py'.format(temp_path)
                         cmd = '{}bash -c "{} > {} 2>&1"'.format(timeout_str, python_cmd.replace('"','\\"'), tmp_process_console_out_fname)
                         print('Running: '+cmd)
-                        #retcode = subprocess.call(python_cmd, shell=True, env=env)
-                        retcode = os.system(cmd)
+                        retcode = subprocess.call(cmd, shell=True, env=env)
+                        #retcode = os.system(cmd)
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -331,7 +331,8 @@ class MountainJob():
                         env = os.environ # is this needed?
                         print('Running: '+singularity_cmd)
                         #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                        retcode = os.system(singularity_cmd)
+                        retcode = subprocess.call(singularity_cmd, shell=True, env=env)
+                        #retcode = os.system(singularity_cmd)
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
