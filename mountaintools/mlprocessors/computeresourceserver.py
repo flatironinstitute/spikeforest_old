@@ -19,7 +19,7 @@ class ComputeResourceServer():
             self._cairio_client.configLocal()
         self._last_console_message=''
         self._next_delay=0.25
-        self._num_parallel=1
+        self._num_parallel=None
         self._srun_opts_string=''
 
     def mountainClient(self):
