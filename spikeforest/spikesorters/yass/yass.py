@@ -22,9 +22,10 @@ class YASS(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.yaml']
 
-    #CONTAINER = 'sha1://2876878ca4993106eec9e8590d9d900adff6fdab/03-11-2019/yass.simg'
-    # revert to old container for now
+    # revert to old container for now (uses python 2)
     CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
+    # after everything works, let's try moving to the following container, which uses python 3 (Rather than python 2)
+    # CONTAINER = 'sha1://61e3132d0f4897eaeeead6477a777828187fa00a/03-15-2019/yass.simg'
     
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 

@@ -7,19 +7,18 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'visapy_mea'
+group_name = 'paired'
 
 
-def prepare_visapy_mea_studies(*, basedir):
-    study_set_name = 'visapy_mea'
+def prepare_paired_studies(*, basedir):
+    study_set_name = 'paired'
     studies = []
     recordings = []
-    names = []
-    names = names+['visapy_mea']
+    names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']
     for name in names:
         print('PREPARING: '+name)
-        study_name = 'visapy_mea'
-        study_dir = basedir+'/visapy_mea'
+        study_name = 'paired_' + name
+        study_dir = basedir+'/paired_recordings/'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -41,7 +40,7 @@ def prepare_visapy_mea_studies(*, basedir):
 
 
 # Prepare the studies
-studies, recordings = prepare_visapy_mea_studies(basedir=basedir)
+studies, recordings = prepare_paired_studies(basedir=basedir)
 mt.saveObject(
     object=dict(
         studies=studies,

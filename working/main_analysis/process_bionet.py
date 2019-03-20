@@ -28,10 +28,10 @@ def main():
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'visapy_mea'
+    output_id = 'bionet'
 
     # Grab the recordings for testing
-    group_name = 'visapy_mea'
+    group_name = 'bionet'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))

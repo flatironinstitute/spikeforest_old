@@ -28,10 +28,10 @@ def main():
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'visapy_mea'
+    output_id = 'hybrid_drift'
 
     # Grab the recordings for testing
-    group_name = 'visapy_mea'
+    group_name = 'hybrid_drift'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -163,7 +163,7 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50,
-        ),        
+            ),        
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]

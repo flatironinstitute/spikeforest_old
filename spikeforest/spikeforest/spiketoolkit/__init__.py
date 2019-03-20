@@ -1,5 +1,5 @@
 from . import postprocessing
-from . import sorters
+#from . import sorters
 from . import preprocessing
 from . import comparison
 from . import validation

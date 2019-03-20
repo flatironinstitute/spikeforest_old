@@ -543,22 +543,37 @@ def _realize_required_files_for_jobs(*, cairio_client, jobs, realize_code=False)
 def _realize_files(files, *, cairio_client):
     for file0 in files:
         if file0 not in _realized_files:
-            print('Realizing file: '+file0)
+            print('Realizing file and ensuring in local cache: '+file0)
             a=cairio_client.realizeFile(file0)
             print(a)
-            if a:
+            b=cairio_client.copyToLocalCache(path=a)
+            print(b)
+            if b:
                 _realized_files.add(file0)
             else:
                 raise Exception('Unable to realize file: '+file0)
 
 def configComputeResource(name, *, resource_name, collection, share_id):
-    _compute_resources_config[name]=dict(
-        resource_name=resource_name,
-        collection=collection,
-        share_id=share_id
-    )
+    if resource_name is not None:
+        _compute_resources_config[name]=dict(
+            resource_name=resource_name,
+            collection=collection,
+            share_id=share_id
+        )
+    else:
+        _compute_resources_config[name] = None
 
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, batch_name=None):
+    if type(compute_resource)==str:
+        if compute_resource in _compute_resources_config:
+            compute_resource=_compute_resources_config[compute_resource]
+        else:
+            raise Exception('No compute resource named {}. Use mlprocessors.configComputeResource("{}",...).'.format(compute_resource, compute_resource))
+
+    if type(compute_resource)==dict:
+        if compute_resource['resource_name'] is None:
+            compute_resource = None
+
     # make sure the files to realize are absolute paths
     for job in jobs:
         if 'files_to_realize' in job:
@@ -590,11 +605,6 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, bat
                 job['result'] = results[i]
         else:
             if compute_resource is not None:
-                if type(compute_resource)==str:
-                    if compute_resource in _compute_resources_config:
-                        compute_resource=_compute_resources_config[compute_resource]
-                    else:
-                        raise Exception('No compute resource named {}. Use mlprocessors.configComputeResource("{}",...).'.format(compute_resource, compute_resource))
                 if type(compute_resource)==dict:
                     from .computeresourceclient import ComputeResourceClient
                     CRC=ComputeResourceClient(**compute_resource)
@@ -728,7 +738,6 @@ if __name__ == "__main__":
                     ret['outputs'][key] = 'sha1://' + \
                         cairio_client.computeFileSha1(
                             temporary_output_files[key])+'/'+key+out0['ext']
-        return ret
     except:
         if not keep_temp_files:
             shutil.rmtree(tempdir)
@@ -994,7 +1003,7 @@ def execute(proc, _cache=True, _force_run=None, _container=None, _system_call=Fa
             name0 = output0.name
             output_fname = getattr(X, name0)
             if output_fname in temporary_output_files:
-                output_fname = ca.moveToLocalCache(output_fname)
+                output_fname = ca.copyToLocalCache(output_fname)
             ret.outputs[name0] = output_fname
             if _cache:
                 output_sha1 = ca.computeFileSha1(output_fname)

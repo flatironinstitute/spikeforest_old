@@ -54,10 +54,13 @@ class VDOM(object):
             out.write('>')
 
             for c in self.children:
-                if isinstance(c, string_types):
-                    out.write(escape(safe_unicode(c)))
+                if c is not None:
+                    if isinstance(c, string_types):
+                        out.write(escape(safe_unicode(c)))
+                    else:
+                        out.write(c._repr_html_())
                 else:
-                    out.write(c._repr_html_())
+                    print('Warning: child of VDOM object is None (tag={}).'.format(self.tag_name), c)
 
             out.write('</{tag}>'.format(tag=escape(self.tag_name)))
 

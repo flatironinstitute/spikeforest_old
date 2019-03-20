@@ -38,8 +38,130 @@ if os.path.exists(env_path):
     
 
 class MountainClient():
-    """T
     """
+    MountainClient is a python client for accessing local and remote mountain
+    databases and KBucket shares. All I/O for MountainTools is handled using
+    this client.
+
+    There is a global client that may be imported via
+
+    .. code-block:: python
+
+        from mountaintools import client as mt
+
+    Or you can instantiate a local client object:
+
+    .. code-block:: python
+
+        from mountaintools import MountainClient
+        mt_client = MountainClient()
+
+    The global client allows a single login to apply to the entire program, but
+    there are also times when using a local instance is preferred.
+
+    By default the client utilizes cache directories on your local disk, but it
+    can also be configured to read and write from remote servers. For example,
+    the following code saves and retrieves some short text strings using the
+    local file system as storage.
+
+    .. code-block:: python
+
+        from mountaintools import client as mt
+
+        # Setting values (these should be short strings, <=80 characters)
+        mt.setValue(key='some-key1', value='hello 1')
+        mt.setValue(key=dict(name='some_name', number=2), value='hello 2')
+
+        # Getting values
+        val1 = mt.getValue(key='some-key1')
+        val2 = mt.getValue(key=dict(name='some_name', number=2))
+
+    By default these are stored inside the ~/.mountain database directory. This
+    may be configured using the MOUNTAIN_DIR environment variable.
+
+    While setValue() and getValue() are limited to working with short strings,
+    larger objects may be stored using saveText(), saveObject() and saveFile(),
+    and retrieved using loadText(), loadObject() and loadFile(), as follows:
+
+    .. code-block:: python
+
+        from mountaintools import client as mt
+
+        # Local storage of data and files, retrievable by SHA-1 hash
+        some_text = 'This is some text'
+        path = mt.saveText(some_text, basename='test.txt')
+        print(path)
+        # Output: sha1://482cb0cfcbed6740a2bcb659c9ccc22a4d27b369/test.txt
+
+        # Later we can use this to retrieve the text
+        retrieved_text = mt.loadText(path=path)
+
+        # ... or retrieve the path to a local file containing the text
+        fname = mt.realizeFile(path)
+        print(fname)
+        # Output: /tmp/sha1-cache/4/82/482cb0cfcbed6740a2bcb659c9ccc22a4d27b369
+
+        # Or we can store some large text by key and retrieve it later
+        large_text = 'some large repeating text'*100
+        mt.saveText(key=dict(name='key-for-repeating-text'), text=large_text)
+        txt = mt.loadText(key=dict(name='key-for-repeating-text'))
+
+        # Similarly we can store python dicts via json content
+        some_object = dict(some='object')
+        path = mt.saveObject(some_object, basename='object.json')
+        print(path)
+        # Output: sha1://b77fdda467b03d7a0c3e06f6f441f689ac46e817/object.json
+
+        retrieved_object = mt.loadObject(path=path)
+        print(retrieved_object)
+        assert json.dumps(retrieved_object) == json.dumps(some_object)
+
+        # Or store objects by key
+        some_other_object = dict(some_other='object')
+        mt.saveObject(object=some_other_object, key=dict(some='key'))
+        obj = mt.loadObject(key=dict(some='key'))
+        assert json.dumps(some_other_object) == json.dumps(obj)
+
+        # You can do the same with files
+        with open(tempfile.gettempdir()+'/test___.txt', 'w') as f:
+            f.write('some file content')
+        path = mt.saveFile(tempfile.gettempdir()+'/test___.txt')
+        print(path)
+        # Output: sha1://ee025361a15e3e8074e9c0b44b4f98aabc829b3d/test___.txt
+
+        # Then load the text of the file at a later time
+        txt = mt.loadText(path=path)
+        assert txt == 'some file content'
+
+        sha1 = mt.computeFileSha1(path=mt.realizeFile(path))
+        txt2 = mt.loadText(path='sha1://'+sha1)
+        assert txt2 == 'some file content'
+
+    The larger content is stored in a disk-backed content-addressable storage
+    database, located by default at /tmp/sha1-cache. This may be configured by
+    setting the KBUCKET_CACHE_DIR environment variable.
+
+    To access content on a remote server, you can use
+
+    .. code-block:: python
+        
+        from mountaintools import client as mt
+
+        mt.configRemoteReadonly(collection='<collection>', share_id='<id>')
+
+    where <collection> and <id> refer to a remote mountain collection and
+    KBucket share ID. For read/write access you will need to either provide
+    the authorization tokens or log in as follows:
+
+    .. code-block:: python
+        
+        from mountaintools import client as mt
+
+        mt.login()
+        mt.configRemoteReadWrite(collection='<collection>', share_id='<id>')
+
+    """
+
 
     def __init__(self):
         self._default_url = os.environ.get(
@@ -63,7 +185,7 @@ class MountainClient():
         if (ask_password) and (password is None):
             password = getpass('Enter password: ')
         config = self.getValue(collection=collection,
-                               key=key, password=password)
+                               key=key)
         if not config:
             raise Exception(
                 'Unable to find config ({}.{}). Perhaps a password is incorrect or missing?'.format(collection, key))
@@ -228,7 +350,7 @@ class MountainClient():
             upload_token=upload_token
         )
 
-    def setRemoteConfig(self, *, url={}, collection={}, token={}, share_id={}, upload_token={}, alternate_share_ids={}):
+    def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
         """
         Configure one or more remote configuration parameters. Normally you
         would not call this directly but would instead use one of the following
@@ -257,22 +379,22 @@ class MountainClient():
             which means it is not set)
         """
 
-        if (share_id is not {}) and ('.' in share_id):
+        if (share_id is not 0) and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
-        if url is not {}:
+        if url is not 0:
             self._remote_config['url'] = url
-        if collection is not {}:
+        if collection is not 0:
             self._remote_config['collection'] = collection
-        if token is not {}:
+        if token is not 0:
             self._remote_config['token'] = token
-        if share_id is not {}:
+        if share_id is not 0:
             self._remote_config['share_id'] = share_id
-        if alternate_share_ids is not {}:
+        if alternate_share_ids is not 0:
             for ii,asi in enumerate(alternate_share_ids):
                 if '.' in asi:
                     alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
             self._remote_config['alternate_share_ids'] = alternate_share_ids
-        if upload_token is not {}:
+        if upload_token is not 0:
             self._remote_config['upload_token'] = upload_token
 
         c = self._remote_config
@@ -652,7 +774,7 @@ class MountainClient():
     def findFile(self, path, local_only=False, share_id=None):
         return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
 
-    def moveToLocalCache(self, path, basename=None):
+    def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
     def _get_value(self, *, key, subkey, collection=None, local_first=False):

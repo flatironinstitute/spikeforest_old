@@ -3,6 +3,7 @@ from .registry import *
 from .validators import *
 from .execute import executeJob, executeBatch, configComputeResource, _realize_required_files_for_jobs
 from .computeresourceserver import ComputeResourceServer
+from .computeresourceclient import ComputeResourceClient
 
 __all__ = [
     "Input", "Output",

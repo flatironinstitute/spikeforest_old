@@ -7,19 +7,18 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'visapy_mea'
+group_name = 'hybrid_drift'
 
 
-def prepare_visapy_mea_studies(*, basedir):
-    study_set_name = 'visapy_mea'
+def prepare_hybrid_drift_studies(*, basedir):
+    study_set_name = 'hybrid_drift'
     studies = []
     recordings = []
-    names = []
-    names = names+['visapy_mea']
+    names = ['4c', '32c', '64c']
     for name in names:
-        print('PREPARING: '+name)
-        study_name = 'visapy_mea'
-        study_dir = basedir+'/visapy_mea'
+        study_name = 'hybrid_drift_' + name
+        print('PREPARING: '+study_name)
+        study_dir = basedir+'/hybrid_drift'
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -29,19 +28,20 @@ def prepare_visapy_mea_studies(*, basedir):
         studies.append(study0)
         dd = mt.readDir(study_dir)
         for dsname in dd['dirs']:
-            dsdir = '{}/{}'.format(study_dir, dsname)
-            recordings.append(dict(
-                name=dsname,
-                study=study_name,
-                directory=dsdir,
-                description='One of the recordings in the {} study'.format(
-                    study_name)
-            ))
+            if name in dsname:
+                dsdir = '{}/{}'.format(study_dir, dsname)
+                recordings.append(dict(
+                    name=dsname,
+                    study=study_name,
+                    directory=dsdir,
+                    description='One of the recordings in the {} study'.format(
+                        study_name)
+                ))
     return studies, recordings
 
 
 # Prepare the studies
-studies, recordings = prepare_visapy_mea_studies(basedir=basedir)
+studies, recordings = prepare_hybrid_drift_studies(basedir=basedir)
 mt.saveObject(
     object=dict(
         studies=studies,
