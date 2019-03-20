@@ -217,6 +217,9 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                     print('Problem loading result....', job_result_key, str(ii))
                     print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
                     print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
+                    time.sleep(3)
+                    print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
+                    print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
                     raise Exception('Unexpected problem in executeBatch (srun mode): result object is none')
                 result_objects.append(result_object)
             results = [MountainJobResult(result_object=obj) for obj in result_objects]

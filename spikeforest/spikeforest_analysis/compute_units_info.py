@@ -3,14 +3,9 @@ import json
 import mlprocessors as mlpr
 from mountaintools import client as mt
 
-try:
-  # if we are running this outside the container
-  from spikeforest import spikeextractors as si
-  from spikeforest import spikewidgets as sw
-except:
-  # if we are in the container
-  import spikeextractors as si
-  import spikewidgets as sw
+# if we are running this outside the container
+from spikeforest import spikeextractors as si
+from spikeforest import spikewidgets as sw
 
 _CONTAINER='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
 
