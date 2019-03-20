@@ -294,15 +294,18 @@ class MountainJob():
                 timer = time.time()
                 with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job['processor_name']) as temp_path:
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
+                    if job_timeout:
+                        # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
+                        timeout_str = 'timeout {}s'.format(job_timeout) 
+                    else:
+                        timeout_str = ''
                     if not container:
                         env = os.environ # is this needed?
                         python_cmd='python3 {}/run.py'.format(temp_path)
-                        if job_timeout:
-                            # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
-                            python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
-                        print('Running: '+python_cmd)
+                        cmd = '{}bash -c "{} > {} 2>&1"'.format(timeout_str, python_cmd.replace('"','\\"'), tmp_process_console_out_fname)
+                        print('Running: '+cmd)
                         #retcode = subprocess.call(python_cmd, shell=True, env=env)
-                        retcode = os.system('bash -c "{} > {} 2>&1"'.format(python_cmd.replace('"','\\"'), tmp_process_console_out_fname))
+                        retcode = os.system(cmd)
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -321,11 +324,9 @@ class MountainJob():
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
                         python_cmd = 'python3 /run_in_container/run.py'
-                        if job_timeout:
-                            # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
-                            python_cmd = 'timeout {}s {}'.format(job_timeout, python_cmd)
-                        singularity_cmd = 'singularity exec {} {} bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(
-                            ' '.join(singularity_opts), container, ' '.join(env_vars), python_cmd, tmp_process_console_out_fname_in_container)
+                        cmd = '{}bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(timeout_str, ' '.join(env_vars), python_cmd.replace('"','\\"'), tmp_process_console_out_fname_in_container)
+                        singularity_cmd = 'singularity exec {} {} {}'.format(
+                            ' '.join(singularity_opts), container, cmd)
                         
                         env = os.environ # is this needed?
                         print('Running: '+singularity_cmd)
