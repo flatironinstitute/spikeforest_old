@@ -1,5 +1,7 @@
 import fcntl
 import errno
+import time
+import random
 
 class FileLock():
     def __init__(self, path):
