@@ -212,14 +212,15 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             result_objects=[]
             for ii, job in enumerate(jobs):
                 print('Loading result object...', job_result_key, ii)
-                result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
-                if result_object is None:
-                    while True:
+                result_object = None
+                while result_object is None:
+                    result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
+                    if result_object is None:
                         print('Problem loading result....', job_result_key, str(ii))
                         print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
                         print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
                         time.sleep(3)
-                    raise Exception('Unexpected problem in executeBatch (srun mode): result object is none')
+                    # raise Exception('Unexpected problem in executeBatch (srun mode): result object is none')
                 result_objects.append(result_object)
             results = [MountainJobResult(result_object=obj) for obj in result_objects]
     
@@ -259,8 +260,13 @@ def _set_job_result(job, result_object):
     job_index = getattr(job, 'job_index', None)
     if job_result_key:
         subkey = str(job_index)
-        print('Saving object object...', job_result_key, subkey)
+        print('Saving result object...', job_result_key, subkey)
         local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
+        testing = local_client.loadObject(key=job_result_key, subkey=subkey)
+        if testing is None:
+            raise Exception('Problem loading object immediately after saving')
+        else:
+            print('Confirmed that the object was saved.', job_result_key, subkey)
 
 def _execute_job(job):
     local_client = MountainClient()
