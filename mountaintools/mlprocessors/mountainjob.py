@@ -217,6 +217,8 @@ class MountainJob():
             result = self._find_result_in_cache()
             if result:
                 self._copy_outputs_from_result_to_dest_paths(result)
+                # do the following so that local can get propagated to remote and vice versa
+                self._store_result_in_cache(result)
                 return result
 
         keep_temp_files=True

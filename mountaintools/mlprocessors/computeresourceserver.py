@@ -228,6 +228,9 @@ def _monitor_job_statuses(batch_id, local_client, remote_client):
             for job_index, resultval in result_obj.items():
                 if result_obj[job_index] != last_result_obj.get(job_index,None):
                     result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
-                    remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
+                    if result0:
+                        remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
+                        if 'console_out' in result0:
+                            remote_client.saveFile(path=result0['console_out'])
             last_result_obj = result_obj
         time.sleep(2)
