@@ -70,7 +70,7 @@ class ComputeResourceClient():
             ),
             value='halt'
         )
-    def monitorBatch(self,*,batch_id):
+    def monitorBatch(self,*,batch_id, jobs, label=''):
         self._next_delay=0.25
         while True:
             status0=self.getBatchStatus(batch_id=batch_id)
@@ -91,7 +91,7 @@ class ComputeResourceClient():
                     num_running = statuses_list.count('running')
                     num_finished = statuses_list.count('finished')
                     num_errors = statuses_list.count('error')
-                    update_string = '{}: {} running, {} finished, {} errors'.format(status0, num_running, num_finished, num_errors)
+                    update_string = 'BATCH {} {}: {} running, {} finished, {} errors -- {} total jobs'.format(label, status0, num_running, num_finished, num_errors, len(jobs))
                     #update_string = '({})\n{} --- {}: {} ready, {} running, {} finished, {} total jobs'.format(
                     #    batch_name, label, batch_status0, num_ready, num_running, num_finished, len(jobs))
                     self._set_console_message(update_string)

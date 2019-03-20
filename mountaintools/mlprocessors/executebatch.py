@@ -86,7 +86,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         batch_id = CRC.initializeBatch(jobs=jobs, label=label)
         CRC.startBatch(batch_id=batch_id)
         try:
-            CRC.monitorBatch(batch_id=batch_id)
+            CRC.monitorBatch(batch_id=batch_id, jobs=jobs, label=label)
         except:
             CRC.stopBatch(batch_id=batch_id)
             raise
@@ -214,12 +214,11 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 print('Loading result object...', job_result_key, ii)
                 result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
                 if result_object is None:
-                    print('Problem loading result....', job_result_key, str(ii))
-                    print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
-                    print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
-                    time.sleep(3)
-                    print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
-                    print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
+                    while True:
+                        print('Problem loading result....', job_result_key, str(ii))
+                        print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
+                        print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
+                        time.sleep(3)
                     raise Exception('Unexpected problem in executeBatch (srun mode): result object is none')
                 result_objects.append(result_object)
             results = [MountainJobResult(result_object=obj) for obj in result_objects]
