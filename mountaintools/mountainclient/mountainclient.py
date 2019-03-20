@@ -14,18 +14,27 @@ from .mountainremoteclient import _http_get_json
 import time
 from getpass import getpass
 import shutil
-try:
-    from filelock import FileLock
-except:
-    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
-    # fake filelock
-    class FileLock():
-        def __init__(self, path):
-            pass
-        def __enter__(self):
-            return dict()
-        def __exit__(self, type, value, traceback):
-            pass
+import fcntl
+import errno
+
+class FileLock():
+    def __init__(self, path):
+        self._path=path
+        self._file=None
+    def __enter__(self):
+        self._file=open(self._path, 'w+')
+        while True:
+            try:
+                fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except IOError as e:
+                if e.errno != errno.EAGAIN:
+                    raise
+                else:
+                    time.sleep(random.uniform(0,0.1))
+    def __exit__(self, type, value, traceback):
+        fcntl.flock(self._file, fcntl.LOCK_UN)
+        self._file.close()
 
 
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools', '.env')
@@ -1131,8 +1140,7 @@ class MountainClientLocal():
         db_path = self._get_db_path_for_keyhash(keyhash)
 
         ####################################
-        lock=FileLock(db_path+'.lock')
-        with lock:
+        with FileLock(db_path+'.lock') as lock:
             db = _db_load(db_path)
         ####################################
 
@@ -1149,8 +1157,7 @@ class MountainClientLocal():
             db_path2 = self._get_db_path_for_keyhash(keyhash2)    
 
             ####################################
-            lock=FileLock(db_path2+'.lock')
-            with lock:
+            with FileLock(db_path2+'.lock') as lock:
                 db2 = _db_load(db_path2)
                 doc2 = db2.get(keyhash2, None)
                 if doc2 is None:
@@ -1190,8 +1197,7 @@ class MountainClientLocal():
             db_path = self._get_db_path_for_keyhash(keyhash)
 
             ####################################
-            lock=FileLock(db_path+'.lock')
-            with lock:
+            with FileLock(db_path+'.lock') as lock:
                 db = _db_load(db_path)
                 doc = db.get(keyhash, None)
                 if doc is None:

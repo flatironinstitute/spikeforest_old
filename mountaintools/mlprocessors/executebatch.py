@@ -29,11 +29,16 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
     if len(jobs) == 0:
         return []
 
+    if num_workers == 1:
+        num_workers = None
+    if not srun_opts:
+        srun_opts = None
+
     if num_workers is not None:
         if compute_resource is not None:
             raise Exception('Cannot specify both num_workers and compute_resource in executeBatch.')
         if srun_opts is not None:
-            raise Exception('Cannot specify both num_workers and srun_opts in executeBatch.')
+            raise Exception('Cannot specify both num_workers and srun_opts in executeBatch.', num_workers, srun_opts)
         if job_index_file is not None:
             raise Exception('Cannot specify both num_workers and job_index_file in executeBatch.')
     if compute_resource is not None:
