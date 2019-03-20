@@ -13,8 +13,8 @@ class FileLock():
         while True:
             try:
                 fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                if num_tries>0:
-                    print('Locked files after {} tries...'.format(num_tries))
+                if num_tries>10:
+                    print('Locked file {} after {} tries...'.format(self._path, num_tries))
                 break
             except IOError as e:
                 if e.errno != errno.EAGAIN:

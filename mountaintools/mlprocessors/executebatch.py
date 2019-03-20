@@ -264,9 +264,7 @@ def _set_job_result(job, result_object):
         local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
         testing = local_client.loadObject(key=job_result_key, subkey=subkey)
         if testing is None:
-            raise Exception('Problem loading object immediately after saving')
-        else:
-            print('Confirmed that the object was saved.', job_result_key, subkey)
+            raise Exception('Unexpected: Problem loading object immediately after saving')
 
 def _execute_job(job):
     local_client = MountainClient()
