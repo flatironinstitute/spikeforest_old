@@ -296,7 +296,7 @@ class MountainJob():
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
                     if job_timeout:
                         # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
-                        timeout_str = 'timeout {}s'.format(job_timeout) 
+                        timeout_str = 'timeout {}s '.format(job_timeout) 
                     else:
                         timeout_str = ''
                     if not container:
