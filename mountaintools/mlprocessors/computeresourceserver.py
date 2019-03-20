@@ -109,8 +109,6 @@ class ComputeResourceServer():
         self._cairio_client.setValue(key=key,subkey=batch_id,value=status)
     
     def _run_batch(self, batch_id):
-        if self._srun_opts_string:
-            raise Exception('TODO: handle srun')
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='loading')
         self._set_console_message('Loading batch: {}'.format(batch_id))
@@ -140,7 +138,7 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='running')
         self._set_console_message('Starting batch: {}'.format(batch_id))
-        results = executeBatch(jobs=jobs, label=batch.get('label', batch_id), num_workers=self._num_parallel, compute_resource=None, halt_key=_get_halt_key(batch_id), job_status_key=_get_job_status_key(batch_id))
+        results = executeBatch(jobs=jobs, label=batch.get('label', batch_id), num_workers=self._num_parallel, compute_resource=None, halt_key=_get_halt_key(batch_id), job_status_key=_get_job_status_key(batch_id), srun_opts=self._srun_opts_string)
 
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='saving')
