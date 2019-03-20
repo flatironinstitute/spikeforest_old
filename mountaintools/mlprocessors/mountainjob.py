@@ -12,6 +12,7 @@ import fnmatch
 import inspect
 import shlex
 from mountainclient import client as mt
+import datetime
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 
@@ -277,6 +278,8 @@ class MountainJob():
 
             runtime_capture = ConsoleCapture()
             runtime_capture.start_capturing()
+            print('Job: {}'.format(self._job.get('label', '')))
+            print('Timestamp: {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
             R = MountainJobResult()
             if (not container) and self._processor:
                 # This means we can just run it directly
@@ -486,13 +489,17 @@ class MountainJob():
         output_signatures = self._job['output_signatures']
         output_paths=dict()
         for output_name, signature in output_signatures.items():
-            output_path = mt.getValue(key=signature)
+            output_path = mt.getValue(key=signature, local_first=True)
             if not output_path:
                 return None
             output_paths[output_name] = output_path
 
-        runtime_info=mt.loadObject(path=output_paths['--runtime-info--'])
+        runtime_info=mt.loadObject(path=output_paths['--runtime-info--'], local_first=True)
         if not runtime_info:
+            return None
+
+        console_out_check = mt.loadText(output_paths['--console-out--'], local_first=True)
+        if not console_out_check:
             return None
         
         R = MountainJobResult()
@@ -508,10 +515,10 @@ class MountainJob():
         output_signatures = self._job['output_signatures']
         for output_name in self._job['outputs'].keys():
             if output_name in result.outputs:
-                mt.setValue(key=output_signatures[output_name], value=result.outputs[output_name])
-        runtime_info_path = mt.saveObject(object=result.runtime_info, basename='runtime_info.json')
-        mt.setValue(key=output_signatures['--runtime-info--'], value=runtime_info_path)
-        mt.setValue(key=output_signatures['--console-out--'], value=result.console_out)
+                mt.setValue(key=output_signatures[output_name], value=result.outputs[output_name], local_also=True)
+        runtime_info_path = mt.saveObject(object=result.runtime_info, basename='runtime_info.json', local_also=True)
+        mt.setValue(key=output_signatures['--runtime-info--'], value=runtime_info_path, local_also=True)
+        mt.setValue(key=output_signatures['--console-out--'], value=result.console_out, local_also=True)
 
     def _copy_outputs_from_result_to_dest_paths(self, result):
         for output_name, output0 in self._job['outputs'].items():

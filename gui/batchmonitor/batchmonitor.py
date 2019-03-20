@@ -52,7 +52,16 @@ class BatchView(vd.Component):
     def onBack(self,handler):
         self._back_handlers.append(handler)
     def _open_job(self, job_index):
-        self._job_view.setJob(self._jobs[job_index])
+        job0 = self._jobs[job_index]
+        if not 'result' in job0:
+            job_result_key = dict(
+                name='compute_resource_batch_job_results',
+                batch_id=self._batch_id
+            )
+            result0 = mt.loadObject(key=job_result_key, subkey=str(job_index))
+            if result0:
+                job0['result'] = result0
+        self._job_view.setJob(job0)
         self._list_mode=False
         self.refresh()
     def _on_refresh(self):
