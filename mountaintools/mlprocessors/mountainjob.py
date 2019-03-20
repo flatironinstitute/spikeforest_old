@@ -332,7 +332,7 @@ class MountainJob():
                         
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
-                        run_sh_script.substitute('{env_vars}', '\n'.join(['export '+env_var for env_var in env_vars])
+                        run_sh_script.substitute('{env_vars}', '\n'.join(['export '+env_var for env_var in env_vars]))
                         run_sh_script.write()
                         singularity_sh_script = ShellScript("""
                             #!/bin/bash
