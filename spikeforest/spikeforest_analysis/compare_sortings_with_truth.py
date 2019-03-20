@@ -6,14 +6,8 @@ import numpy as np
 from copy import deepcopy
 import multiprocessing
 
-try:
-    # if we are running this outside the container
-    from spikeforest import spikeextractors as si
-    from spikeforest import spiketoolkit as st
-except:
-# if we are in the container
-    import spikeextractors as si
-    import spiketoolkit as st
+from spikeforest import spikeextractors as si
+from spikeforest import spiketoolkit as st
 
 def _create_job_for_sorting_helper(kwargs):
     return _create_job_for_sorting(**kwargs)
@@ -38,7 +32,7 @@ def _create_job_for_sorting(sorting, container):
 
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')
-    container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+    container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
     pool = multiprocessing.Pool(20)
     jobs_gen_table=pool.map(_create_job_for_sorting_helper, [dict(sorting=sorting, container=container) for sorting in sortings])

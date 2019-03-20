@@ -96,7 +96,7 @@ def test_mandelbrot_compute_resource(container=None):
 @pytest.mark.compute_resource
 @pytest.mark.container
 def test_mandelbrot_compute_resource_container():
-    test_mandelbrot_compute_resource(container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg')
+    test_mandelbrot_compute_resource(container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg')
 
 @pytest.mark.compute_resource
 @pytest.mark.errors
@@ -122,7 +122,7 @@ def test_mandelbrot_compute_resource_with_job_errors():
                 output_npy=dict(ext='.npy', upload=True),
                 throw_error=(offset==0),
                 _force_run=False
-                #_container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+                #_container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
             )
             for offset in range(subsampling_factor)
         ]

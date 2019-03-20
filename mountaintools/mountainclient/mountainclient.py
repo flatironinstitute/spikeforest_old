@@ -14,32 +14,7 @@ from .mountainremoteclient import _http_get_json
 import time
 from getpass import getpass
 import shutil
-import fcntl
-import errno
-
-class FileLock():
-    def __init__(self, path):
-        self._path=path
-        self._file=None
-    def __enter__(self):
-        self._file=open(self._path, 'w+')
-        num_tries=0
-        while True:
-            try:
-                fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                if num_tries>0:
-                    print('Locked files after {} tries...'.format(num_tries))
-                break
-            except IOError as e:
-                if e.errno != errno.EAGAIN:
-                    raise
-                else:
-                    num_tries=num_tries+1
-                    time.sleep(random.uniform(0,0.1))
-    def __exit__(self, type, value, traceback):
-        fcntl.flock(self._file, fcntl.LOCK_UN)
-        self._file.close()
-
+from .filelock import FileLock
 
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools', '.env')
 if os.path.exists(env_path):

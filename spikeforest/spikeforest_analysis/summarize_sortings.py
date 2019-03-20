@@ -6,7 +6,7 @@ from copy import deepcopy
 
 def summarize_sortings(sortings,compute_resource):
     print('>>>>>> summarize sortings')
-    # container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+    # container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
     # jobs_autocor_plot=[]
     for sorting in sortings:
         recording_dir=sorting['recording']['directory']

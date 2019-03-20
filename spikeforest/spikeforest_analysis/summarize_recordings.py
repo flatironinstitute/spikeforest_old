@@ -17,7 +17,7 @@ import multiprocessing
 # from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
 
-_CONTAINER='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+_CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
 def _create_jobs_for_recording(recording):
     print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))

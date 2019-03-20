@@ -7,7 +7,7 @@ class MountainSort4(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://a9dfbca8175dd18ea9aa34f3594b9f35cdd5af66/03-11-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://1aa15c357c9092b9bf25d3aa073f448d20fd7d39/03-20-2019/mountainsort4.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -87,7 +87,7 @@ class MountainSort4TestError(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://a9dfbca8175dd18ea9aa34f3594b9f35cdd5af66/03-11-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://1aa15c357c9092b9bf25d3aa073f448d20fd7d39/03-20-2019/mountainsort4.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
