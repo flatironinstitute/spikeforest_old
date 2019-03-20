@@ -1169,6 +1169,22 @@ class MountainClientLocal():
                 doc2['value']=json.dumps(valobj)
                 db2[keyhash2]=doc2
                 _db_save(db_path2, db2)
+
+                # to verify
+                db3 = _db_load(db_path2)
+                doc3=db3.get(keyhash2,None)
+                if not doc3:
+                    raise Exception('Problem verifying setValue for subkey == doc3 is None')
+                testval = doc3.get('value', None)
+                if not testval:
+                    raise Exception('Problem verifying setValue for subkey == testval is None')
+                try:
+                    testobj=json.loads(testval)
+                except:
+                    raise Exception('Problem verifying setValue for subkey == error parsing testval', testval)
+                testval2=testobj.get(subkey)
+                if testval2 != value:
+                    raise Exception('Problem verifying setValue for subkey == testval2 != value', testval2, value)
             ####################################
         else:
             # No subkey
@@ -1188,6 +1204,17 @@ class MountainClientLocal():
                     if keyhash in db:
                         del db[keyhash]
                 _db_save(db_path, db)
+
+                # to verify
+                if value is not None:
+                    db0 = _db_load(db_path)
+                    doc0=db0.get(keyhash,None)
+
+                    if not doc0:
+                        raise Exception('Problem verifying setValue == doc0 is None')
+                    testval0 = doc0.get('value', None)
+                    if testval0 != value:
+                        raise Exception('Problem verifying setValue == testval0 != value', testval0, value)
             ####################################
         
         return True
