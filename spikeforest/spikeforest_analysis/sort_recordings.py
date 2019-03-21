@@ -197,7 +197,7 @@ def _create_sorting_job_for_recording(recording, sorter, job_timeout):
         channels=recording.get('channels',[]),
         firings_out=dict(ext='.mda',upload=True),
         _timeout=job_timeout,
-        _label='Sort recording {} using {}'.format(recording['name'], sorter['name'])
+        _label='Sort recording {} using {}'.format(recording.get('name', ''), sorter.get('name', '')),
         **sorting_params
     )
     job.addFilesToRealize(dsdir+'/raw.mda')

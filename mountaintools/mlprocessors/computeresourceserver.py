@@ -153,7 +153,7 @@ class ComputeResourceServer():
 
         # TODO: do the following in a multiprocessing pool
         pool = multiprocessing.Pool(20)
-        result_objects = pool.map(_save_results_helper, [dict(result=result, cairio_client=self._cairio_client) for result in results])
+        result_objects = pool.map(_save_results_helper, [dict(result=result, cairio_client=self._cairio_client, label='result {} of {}'.format(ii, len(results))) for ii, result in enumerate(results)])
         pool.close()
         pool.join()
         
@@ -179,10 +179,10 @@ class ComputeResourceServer():
 def _save_results_helper(kwargs):
     return _save_results(**kwargs)
 
-def _save_results(result, cairio_client):
+def _save_results(result, cairio_client, label):
     if (result.retcode==0) and (result.outputs):
         for output_name, output_fname in result.outputs.items():
-            print('Saving/uploading {}: {}...'.format(output_name, output_fname))
+            print('Saving/uploading {} for {}: {}...'.format(output_name, label, output_fname))
             a = cairio_client.saveFile(path=output_fname)
             if not a:
                 print('Warning: Unable to save/upload file: {}'.format(output_fname))

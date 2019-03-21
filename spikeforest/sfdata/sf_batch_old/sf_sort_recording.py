@@ -178,7 +178,7 @@ def sf_sort_recording(sorter,recording):
     if not mt.realizeFile(path=firings_true_path):
         firings_true_path=None
     result=dict(
-        recording_name=recording['name'],
+        recording_name=recording.get('name',''),
         study_name=recording['study'],
         sorter_name=sorter['name'],
         recording_dir=dsdir,

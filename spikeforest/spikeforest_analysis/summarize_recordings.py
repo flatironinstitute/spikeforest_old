@@ -16,7 +16,7 @@ import mlprocessors as mlpr
 import multiprocessing
 # from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
-import mtlogging
+#import mtlogging
 
 _CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
@@ -40,7 +40,7 @@ def _gather_summarized_recording(recording, job_info, job_units_info):
     
     return rec2
 
-@mtlogging.log()
+#@mtlogging.log()
 def summarize_recordings(recordings, compute_resource=None):
     print('>>>>>> summarize recordings')
 
@@ -50,7 +50,7 @@ def summarize_recordings(recordings, compute_resource=None):
           channels=recording.get('channels',[]),
           json_out={'ext':'.json','upload':True},
           _container='default',
-          _label='Summarize recording: '+recording['name']
+          _label='Summarize recording: '+recording.get('name', '')
         )
         for recording in recordings
     ])
@@ -63,7 +63,7 @@ def summarize_recordings(recordings, compute_resource=None):
           channel_ids=recording.get('channels',None),
           json_out={'ext':'.json','upload':True},
           _container='default',
-          _label='Compute units info for recording: '+recording['name']
+          _label='Compute units info for recording: '+recording.get('name', '')
         )
         for recording in recordings
     ])
