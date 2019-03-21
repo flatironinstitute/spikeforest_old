@@ -18,7 +18,7 @@ import json
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.2.0'
+    VERSION = '0.2.1'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.m']
