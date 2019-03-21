@@ -18,7 +18,7 @@ COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
 
 ../../../bin/compute-resource-start ccmlin008-gpu \
-	--allow_uncontainerized --parallel 1  \
+	--allow_uncontainerized --parallel 2  \
 	--collection $COLLECTION --share_id $SHARE_ID
 
 #../../../bin/compute-resource-start $RESOURCE_NAME \
