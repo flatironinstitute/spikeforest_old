@@ -5,6 +5,7 @@ import traceback
 from .mountainjob import MountainJob
 from .executebatch import executeBatch
 from .internal_run_batch_job import run_batch_job
+import mtlogging
 
 class ComputeResourceServer():
     def __init__(self, *, resource_name=None, collection='', share_id='', token=None, upload_token=None):
@@ -31,6 +32,7 @@ class ComputeResourceServer():
     def setSrunOptsString(self,optstr):
         self._srun_opts_string=optstr
 
+    @mtlogging.log(name='ComputeResourceServer:start')
     def start(self):
         print('registering computer resource: ', self._resource_name)
         self._cairio_client.setValue(
@@ -70,6 +72,7 @@ class ComputeResourceServer():
             if self._next_delay>3:
                 self._next_delay=3
 
+    @mtlogging.log()
     def _handle_batch(self,batch_id):
         self._set_console_message('Starting batch: {}'.format(batch_id))
         self._set_batch_status(batch_id=batch_id,status='starting')
@@ -93,6 +96,7 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='finished')
 
+    @mtlogging.log()
     def _check_batch_halt(self,batch_id):
         halt_key=_get_halt_key(batch_id)
         val=self._cairio_client.getValue(key=halt_key)
@@ -101,7 +105,8 @@ class ComputeResourceServer():
             # also save it locally so we can potentially stop the individual jobs
             self._local_client.setValue(key=halt_key,value=val)
             raise Exception('Stopping batch (batch_id={})'.format(batch_id))
-            
+
+    @mtlogging.log()
     def _set_batch_status(self,*,batch_id,status):
         key=dict(
             name='compute_resource_batch_statuses',
@@ -109,6 +114,7 @@ class ComputeResourceServer():
         )
         self._cairio_client.setValue(key=key,subkey=batch_id,value=status)
     
+    @mtlogging.log()
     def _run_batch(self, batch_id):
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='loading')
@@ -177,6 +183,7 @@ class ComputeResourceServer():
             )
         )
     
+    @mtlogging.log()
     def _set_console_message(self,msg):
         if msg == self._last_console_message:
             return

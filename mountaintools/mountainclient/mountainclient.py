@@ -15,6 +15,7 @@ import time
 from getpass import getpass
 import shutil
 from .filelock import FileLock
+import mtlogging
 
 env_path=os.path.join(os.environ.get('HOME',''),'.mountaintools', '.env')
 if os.path.exists(env_path):
@@ -446,7 +447,7 @@ class MountainClient():
             admin_token=admin_token
         )
 
-    # get value / set value
+    @mtlogging.log(name='MountainClient:getValue')
     def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False):
         """
         Retrieve a string value from the local database or, if connected to a
@@ -494,6 +495,7 @@ class MountainClient():
                 return None
         return ret
 
+    @mtlogging.log(name='MountainClient:setValue')
     def setValue(self, *, key, subkey=None, value, overwrite=True, local_also=False):
         """
         Store a string value to the local database or, if connected to a remote
@@ -531,6 +533,7 @@ class MountainClient():
         """
         return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, local_also=local_also)
 
+    @mtlogging.log(name='MountainClient:getSubKeys')
     def getSubKeys(self, key):
         """
         Retrieve the list of subkeys associated with a key
@@ -547,6 +550,7 @@ class MountainClient():
         """
         return list(self._get_sub_keys(key=key))
 
+    @mtlogging.log(name='MountainClient:realizeFile')
     def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, share_id=None, local_first=False):
         """
         Return a local path to the specified file, downloading the file from a
@@ -629,6 +633,7 @@ class MountainClient():
         else:
             raise Exception('Missing key or path in realizeFile().')
 
+    @mtlogging.log(name='MountainClient:saveFile')
     def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False):
         """
         Save a file to the local SHA-1 cache and/or upload to a remote KBucket
@@ -682,6 +687,7 @@ class MountainClient():
         return sha1_path
 
     # load object / save object
+    @mtlogging.log(name='MountainClient:loadObject')
     def loadObject(self, *, key=None, path=None, subkey=None, local_first=False):
         txt = self.loadText(key=key, path=path,
                             subkey=subkey, local_first=local_first)
@@ -697,6 +703,7 @@ class MountainClient():
         return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path)
 
     # load text / save text
+    @mtlogging.log(name='MountainClient:loadText')
     def loadText(self, *, key=None, path=None, subkey=None, local_first=False):
         fname = self.realizeFile(
             key=key, path=path, subkey=subkey, local_first=local_first)
@@ -709,6 +716,7 @@ class MountainClient():
             print('Unexpected problem reading file in loadText: '+fname)
             return None
 
+    @mtlogging.log(name='MountainClient:saveText')
     def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
@@ -731,6 +739,7 @@ class MountainClient():
             os.unlink(tmp_fname)
         return ret
 
+    @mtlogging.log(name='MountainClient:readDir')
     def readDir(self, path, recursive=False, include_sha1=True):
         if path.startswith('kbucket://'):
             list0 = path.split('/')
@@ -745,10 +754,12 @@ class MountainClient():
                 path=path, recursive=recursive, include_sha1=include_sha1)
         return ret
 
+    @mtlogging.log(name='MountainClient:computeDirHash')
     def computeDirHash(self, path):
         dd = self.readDir(path=path, recursive=True, include_sha1=True)
         return _sha1_of_object(dd)
 
+    @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
         if path.startswith('sha1://'):
             list0 = path.split('/')
@@ -770,6 +781,7 @@ class MountainClient():
         else:
             return self._local_db.computeFileSha1(path)
 
+    @mtlogging.log(name='MountainClient:computeFileOrDirHash')
     def computeFileOrDirHash(self, path):
         if path.startswith('kbucket://'):
             if self.findFile(path):
@@ -787,16 +799,19 @@ class MountainClient():
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
+    @mtlogging.log(name='MountainClient:findFileBySha1')
     def findFileBySha1(self, *, sha1, share_id=None):
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
         return self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id)
 
+    @mtlogging.log(name='MountainClient:findFile')
     def findFile(self, path, local_only=False, share_id=None):
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
         return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
 
+    @mtlogging.log(name='MountainClient:copyToLocalCache')
     def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
