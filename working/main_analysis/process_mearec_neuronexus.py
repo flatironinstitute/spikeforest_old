@@ -1,30 +1,32 @@
 #!/usr/bin/env python
 
-import spikeforest_analysis as sa
 from mountaintools import client as mt
-from spikeforest import spikeextractors as se
 import os, sys
-import shutil
-import sfdata as sf
-import numpy as np
 import mlprocessors as mlpr
+import mtlogging
+
+from apply_sorters_to_recordings import apply_sorters_to_recordings
 
 
+@mtlogging.log(root=True)
 def main():
     resource_name1 = 'ccmlin008-80'
-    resource_name2 = 'ccmlin008-parallel'
+    resource_name2 = 'ccmlin008-gpu'
     if len(sys.argv)>1:
         resource_name1 = sys.argv[1]
     if len(sys.argv)>2:
         resource_name2 = sys.argv[2]
     print('Compute resources used:')
     print('  resource_name1 (srun CPU): ', resource_name1)
-    print('  resource_name2 (Local GPU): ', resource_name2)    
+    print('  resource_name2 (Local GPU): ', resource_name2)
+
     mt.login(ask_password=True)
     mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
+
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
-    mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
+
+    mlpr.configComputeResource('default', resource_name=resource_name1, collection='spikeforest', share_id='spikeforest.spikeforest2')
+    mlpr.configComputeResource('gpu', resource_name=resource_name2, collection='spikeforest', share_id='spikeforest.spikeforest2')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
@@ -32,87 +34,17 @@ def main():
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = 'mearec_neuronexus'
 
-    # Grab the recordings for testing
-    group_name = 'mearec_neuronexus'
-
+    # Grab the recordings
+    recording_group_name = 'mearec_neuronexus'
     a = mt.loadObject(
-        key=dict(name='spikeforest_recording_group', group_name=group_name))
+        key=dict(name='spikeforest_recording_group', group_name=recording_group_name))
 
     recordings = a['recordings']
     studies = a['studies']
 
-    #recordings=recordings[0:2]
-    #studies=studies[0:1]
-
-    # recordings = [recordings[0]]
-
-    # Summarize the recordings
-    recordings = sa.summarize_recordings(
-        recordings=recordings, compute_resource='default')
-
-    # Sorters (algs and params) are defined below
     sorters = _define_sorters()
 
-    # We will be assembling the sorting results here
-    sorting_results = []
-
-    for sorter in sorters:
-        # Sort the recordings
-        compute_resource0 = 'default'
-        if 'KiloSort' in sorter['name'] or 'IronClust' in sorter['name']:
-            compute_resource0 = 'gpu'
-        sortings = sa.sort_recordings(
-            sorter=sorter,
-            recordings=recordings,
-            compute_resource=compute_resource0
-        )
-
-        # Append to results
-        sorting_results = sorting_results+sortings
-
-    # Summarize the sortings
-    sorting_results = sa.summarize_sortings(
-        sortings=sorting_results,
-        compute_resource='default'
-    )
-
-    # Compare with ground truth
-    sorting_results = sa.compare_sortings_with_truth(
-        sortings=sorting_results,
-        compute_resource='default'
-    )
-
-    # Aggregate the results
-    aggregated_sorting_results = sa.aggregate_sorting_results(
-         studies, recordings, sorting_results)
-
-    # Save the output
-    print('Saving the output')
-    mt.saveObject(
-        key=dict(
-            name='spikeforest_results'
-        ),
-        subkey=output_id,
-        object=dict(
-            studies=studies,
-            recordings=recordings,
-            sorting_results=sorting_results,
-            aggregated_sorting_results=mt.saveObject(
-                object=aggregated_sorting_results)
-        )
-    )
-
-    for sr in aggregated_sorting_results['study_sorting_results']:
-        study_name = sr['study']
-        sorter_name = sr['sorter']
-        n1 = np.array(sr['num_matches'])
-        n2 = np.array(sr['num_false_positives'])
-        n3 = np.array(sr['num_false_negatives'])
-        accuracies = n1/(n1+n2+n3)
-        avg_accuracy = np.mean(accuracies)
-        txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
-            study_name, sorter_name, avg_accuracy)
-        print(txt)
+    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id)
 
 def _define_sorters():
     sorter_ms4_thr3 = dict(
@@ -122,7 +54,8 @@ def _define_sorters():
             detect_sign=-1,
             adjacency_radius=50,
             detect_threshold=3
-        )
+        ),
+        compute_resource='default'
     )
 
     def sorter_irc_template(prm_template_name, detect_threshold=5):
@@ -134,7 +67,8 @@ def _define_sorters():
                 adjacency_radius=50,
                 prm_template_name="{}_template.prm".format(prm_template_name),
                 detect_threshold=detect_threshold
-            )
+            ),
+            compute_resource='gpu'
         )
         return sorter_irc
 
@@ -148,7 +82,8 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50
-        )
+        ),
+        compute_resource='default'
     )
 
     sorter_ks = dict(
@@ -157,7 +92,8 @@ def _define_sorters():
         params=dict(
             detect_sign=-1,
             adjacency_radius=50
-        )
+        ),
+        compute_resource='gpu'
     )
 
     sorter_yass = dict(
@@ -167,6 +103,7 @@ def _define_sorters():
             detect_sign=-1,
             adjacency_radius=50,
         ),
+        compute_resource='default'
     )
 
     return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]

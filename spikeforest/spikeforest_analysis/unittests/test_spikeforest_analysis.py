@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
@@ -47,7 +47,7 @@ def test_spikeforest_analysis(tmpdir):
     # Use this to optionally connect to a kbucket share:
     # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'
@@ -117,7 +117,7 @@ def test_spikeforest_analysis(tmpdir):
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results',
             output_id=output_id
@@ -126,7 +126,7 @@ def test_spikeforest_analysis(tmpdir):
             studies=studies,
             recordings=recordings,
             sorting_results=sorting_results,
-            aggregated_sorting_results=ca.saveObject(object=aggregated_sorting_results)
+            aggregated_sorting_results=mt.saveObject(object=aggregated_sorting_results)
         )
     )
 

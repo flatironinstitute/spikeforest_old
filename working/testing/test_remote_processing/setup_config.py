@@ -1,5 +1,5 @@
 import json
-from mountaintools import client as ca
+from mountaintools import client as mt
 import os
 os.environ['KBUCKET_URL'] = 'http://localhost:63240'
 
@@ -11,9 +11,9 @@ admin_token = 'test_admin_token'
 share_id = '946631a0304e'
 password = 'test_password'
 
-ca.setRemoteConfig(url=cairio_url)
+mt.setRemoteConfig(url=cairio_url)
 
-ca.addRemoteCollection(
+mt.addRemoteCollection(
     collection=collection_name,
     token=collection_token,
     admin_token=admin_token
@@ -27,9 +27,9 @@ config = dict(
     upload_token=upload_token
 )
 
-ca.setRemoteConfig(**config)
+mt.setRemoteConfig(**config)
 
-ca.setValue(key='test-readwrite', value=json.dumps(config), password=password)
+mt.setValue(key='test-readwrite', value=json.dumps(config), password=password)
 
 config = dict(
     url=cairio_url,
@@ -39,8 +39,8 @@ config = dict(
     upload_token=upload_token
 )
 
-ca.setRemoteConfig(url='https://pairio.org:20443')
-ca.addRemoteCollection(collection='test_collection1',token='test_token1',admin_token=os.environ['CAIRIO_ADMIN_TOKEN'])
+mt.setRemoteConfig(url='https://pairio.org:20443')
+mt.addRemoteCollection(collection='test_collection1',token='test_token1',admin_token=os.environ['CAIRIO_ADMIN_TOKEN'])
 
 config = dict(
     url='https://pairio.org:20443',
@@ -50,5 +50,5 @@ config = dict(
     upload_token=upload_token
 )
 
-ca.setRemoteConfig(**config)
-ca.setValue(key='test-readwrite-remote-cairio', value=json.dumps(config), password=password)
+mt.setRemoteConfig(**config)
+mt.setValue(key='test-readwrite-remote-cairio', value=json.dumps(config), password=password)

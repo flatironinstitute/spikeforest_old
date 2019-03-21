@@ -6,18 +6,7 @@ from shutil import copyfile
 from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
 import time
-try:
-    from filelock import FileLock
-except:
-    print('Warning: unable to import filelock... perhaps we are in a container that does not have this installed.')
-    # fake filelock
-    class FileLock():
-        def __init__(self, path):
-            pass
-        def __enter__(self):
-            return dict()
-        def __exit__(self, type, value, traceback):
-            pass
+from .filelock import FileLock
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -256,8 +245,7 @@ def _safe_remove_file(fname):
 
 
 def _read_json_file(path, *, delete_on_error=False):
-    lock=FileLock(path+'.lock')
-    with lock:
+    with FileLock(path+'.lock') as lock:
         try:
             with open(path) as f:
                 return json.load(f)
@@ -275,8 +263,7 @@ def _read_json_file(path, *, delete_on_error=False):
 
 
 def _write_json_file(obj, path):
-    lock=FileLock(path+'.lock')
-    with lock:
+    with FileLock(path+'.lock') as lock:
         with open(path, 'w') as f:
             return json.dump(obj, f)
 

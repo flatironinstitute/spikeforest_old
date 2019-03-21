@@ -8,7 +8,7 @@ from PIL import Image
 import os
 import base64
 import uuid
-from mountaintools import client as ca
+from mountaintools import client as mt
 import spikeforestwidgets as SFW
 
 
@@ -223,7 +223,7 @@ class SFRecordingWidget(vd.Component):
             firings=dirname+'/firings_true.mda',
             plot_out={'ext': '.jpg'}
         ).outputs['plot_out']
-        img = ca.realizeFile(img)
+        img = mt.realizeFile(img)
         self._view = ImageView(img)
         self.refresh()
 

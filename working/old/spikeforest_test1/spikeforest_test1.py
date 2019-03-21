@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from mountaintools import client as ca
+from mountaintools import client as mt
 import os
 
 # This file runs a spikeforest processing pipeline with the following steps:
@@ -35,7 +35,7 @@ import os
 
 def main():
     # Use this to optionally connect to a kbucket share:
-    ca.autoConfig(collection='spikeforest',
+    mt.autoConfig(collection='spikeforest',
                   key='spikeforest2-readwrite', ask_password=True)
 
     # Specify the compute resource (see the note above)
@@ -99,7 +99,7 @@ def main():
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results',
             output_id=output_id

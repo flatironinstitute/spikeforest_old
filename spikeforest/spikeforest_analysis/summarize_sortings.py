@@ -1,12 +1,12 @@
 import mlprocessors as mlpr
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import os
 from copy import deepcopy
 
 def summarize_sortings(sortings,compute_resource):
     print('>>>>>> summarize sortings')
-    # container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+    # container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
     # jobs_autocor_plot=[]
     for sorting in sortings:
         recording_dir=sorting['recording']['directory']
@@ -31,10 +31,6 @@ def summarize_sortings(sortings,compute_resource):
     summarized_sortings=[]
     for i,sorting in enumerate(sortings):
         summary=dict()
-        # result0=jobs_autocor_plot[i]['result']
-        # summary['plots']=dict(
-        #     autocorrelograms=ca.saveFile(path=result0['outputs']['plot_out'],basename='autocorrelograms.jpg')
-        # )
         summary['plots']=dict()
 
         sorting2=deepcopy(sorting)

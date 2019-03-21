@@ -9,13 +9,13 @@ from spikesorters import MountainSort4, SpykingCircus, YASS, KiloSort
 from spikeforest import spikeextractors as se
 import tempfile
 import shutil
-from mountaintools import client as ca
+from mountaintools import client as mt
 import pytest
 
 
 def setup_module(module):
     # Use this so we can download containers as needed
-    ca.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Check if singularity is installed
     retval = os.system('singularity --version')

@@ -1,0 +1,1 @@
+from .mtlogging import log

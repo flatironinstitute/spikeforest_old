@@ -1,7 +1,7 @@
 import os
 import vdomr as vd
 import sfdata as sf
-from mountaintools import client as ca
+from mountaintools import client as mt
 #import spikeforestwidgets as SFW
 from sfrecordingwidget import SFRecordingWidget
 
@@ -9,7 +9,7 @@ from sfrecordingwidget import SFRecordingWidget
 class MainWindow(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
-        self._recording_group_names = ca.loadObject(
+        self._recording_group_names = mt.loadObject(
             key=dict(name='spikeforest_recording_group_names'))
         self._SEL_group = vd.components.SelectBox(
             options=['']+self._recording_group_names)
@@ -28,7 +28,7 @@ class MainWindow(vd.Component):
         group_name = self._SEL_group.value()
         if not group_name:
             return
-        a = ca.loadObject(
+        a = mt.loadObject(
             key=dict(name='spikeforest_recording_group', group_name=group_name))
         # key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
         SF = sf.SFData()
@@ -86,7 +86,7 @@ class TheApp():
 
 def main():
     # Configure readonly access to kbucket
-    ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
+    mt.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
 
     APP = TheApp()
     server = vd.VDOMRServer(APP)

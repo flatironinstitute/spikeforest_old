@@ -2,7 +2,7 @@
 
 import os
 import vdomr as vd
-from mountaintools import client as ca
+from mountaintools import client as mt
 from sortingresultsexplorermainwindow import SortingResultsExplorerMainWindow
 os.environ['SIMPLOT_SRC_DIR'] = '../../simplot'
 
@@ -20,7 +20,7 @@ class TheApp():
 
 def main():
     # Configure readonly access to kbucket
-    ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
+    mt.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
 
     APP = TheApp()
     server = vd.VDOMRServer(APP)

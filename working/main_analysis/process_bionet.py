@@ -166,7 +166,10 @@ def _define_sorters():
         ),        
     )
 
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
+    #return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
+    # yass and kilosort were taking too long
+    return [sorter_ms4_thr3, sorter_sc, sorter_irc_static]
+    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_ks]
 
 
 if __name__ == "__main__":

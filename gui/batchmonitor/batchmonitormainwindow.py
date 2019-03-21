@@ -1,6 +1,6 @@
 import os
 import vdomr as vd
-from mountaintools import client as ca
+from mountaintools import client as mt
 from batchmonitor import BatchMonitor
 
 
@@ -16,7 +16,11 @@ class ResourceSelectWidget(vd.Component):
 
     def initialize(self):
         #self._resource_names = ca.getSubKeys(key=dict(name='spikeforest_results'))
-        self._resource_names = ['ccmlin008-test', 'ccmlin008-default', 'ccmlin008-80', 'ccmlin008-parallel', 'ccmlin000-80', 'ccmlin000-parallel']
+        obj = mt.getValue(key=dict(name='compute_resources'), subkey='-', parse_json=True)
+        if obj:
+            self._resource_names =  list(obj.keys())
+        else:
+            self._resource_names = ['none-found']
         self._SEL_resource_name.setOptions(['']+self._resource_names)
         self._on_resource_name_changed(value=self._SEL_resource_name.value())
 

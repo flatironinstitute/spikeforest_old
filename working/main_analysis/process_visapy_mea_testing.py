@@ -5,14 +5,14 @@ from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os, sys
 import shutil
-import sfdata as sf
 import numpy as np
 import mlprocessors as mlpr
 
-
 def main():
-    resource_name1 = 'ccmlin008-gpu'
-    resource_name2 = 'ccmlin008-gpu'
+    #resource_name1 = 'ccmlin008-80'
+    #resource_name2 = 'ccmlin008-parallel'
+    resource_name1 = 'jfm-laptop'
+    resource_name2 = 'jfm-laptop'
     if len(sys.argv)>1:
         resource_name1 = sys.argv[1]
     if len(sys.argv)>2:
@@ -25,17 +25,15 @@ def main():
     mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
     mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
     mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
-    #mlpr.configComputeResource('default', resource_name='fractal-computer')
-    #mlpr.configComputeResource('gpu', resource_name='fractal-computer')
 
     # Use this to control whether we force the processing to run (by default it uses cached results)
-    os.environ['MLPROCESSORS_FORCE_RUN'] = 'TRUE'  # FALSE or TRUE
+    os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE
 
     # This is the id of the output -- for later retrieval by GUI's, etc
-    output_id = 'magland_synth_test'
+    output_id = 'visapy_mea_testing'
 
     # Grab the recordings for testing
-    group_name = 'magland_synth_test'
+    group_name = 'visapy_mea'
 
     a = mt.loadObject(
         key=dict(name='spikeforest_recording_group', group_name=group_name))
@@ -45,8 +43,6 @@ def main():
 
     recordings=recordings[0:1]
     studies=studies[0:1]
-
-    # recordings = [recordings[0]]
 
     # Summarize the recordings
     recordings = sa.summarize_recordings(
@@ -86,7 +82,7 @@ def main():
 
     # Aggregate the results
     aggregated_sorting_results = sa.aggregate_sorting_results(
-        studies, recordings, sorting_results)
+         studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
@@ -127,49 +123,22 @@ def _define_sorters():
         )
     )
 
-    sorter_irc_tetrode = dict(
-        name='IronClust-tetrode',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=5,
-            prm_template_name="tetrode_template.prm"
-        )
-    )
-
-    sorter_irc_drift = dict(
-        name='IronClust-drift',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            prm_template_name="drift_template.prm"
-        )
-    )
-
-    sorter_irc_static = dict(
-        name='IronClust-static',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=4,
-            prm_template_name="static_template.prm"
-        )
-    )
-
-    def sorter_irc_template(prm_template_name):
+    def sorter_irc_template(prm_template_name, detect_threshold=5):
         sorter_irc = dict(
             name='IronClust-{}'.format(prm_template_name),
             processor_name='IronClust',
             params=dict(
                 detect_sign=-1,
                 adjacency_radius=50,
-                prm_template_name="{}_template.prm".format(prm_template_name)
+                prm_template_name="{}_template.prm".format(prm_template_name),
+                detect_threshold=detect_threshold
             )
         )
         return sorter_irc
+
+    #sorter_irc_tetrode = sorter_irc_template('tetrode')
+    #sorter_irc_drift = sorter_irc_template('drift')
+    sorter_irc_static = sorter_irc_template('static')
 
     sorter_sc = dict(
         name='SpykingCircus',
@@ -189,31 +158,17 @@ def _define_sorters():
         )
     )
 
-    sorter_ks2 = dict(
-        name='KiloSort2',
-        processor_name='KiloSort2',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )    
-
     sorter_yass = dict(
         name='Yass',
         processor_name='Yass',
         params=dict(
             detect_sign=-1,
-            adjacency_radius=50
-        )
+            adjacency_radius=50,
+        ),        
     )
 
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks, sorter_yass]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_irc_static, sorter_yass, sorter_ks]
-    # return [sorter_yass]
-    # return [sorter_ms4_thr3, sorter_sc, sorter_yass]
-    # return [sorter_ms4_thr3, sorter_irc_static]
-    return [sorter_irc_static, sorter_ms4_thr3]
+    #return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass]
 
 
 if __name__ == "__main__":

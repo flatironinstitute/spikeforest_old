@@ -1,5 +1,5 @@
 import vdomr as vd
-from mountaintools import client as ca
+from mountaintools import client as mt
 import numpy as np
 from mlprocessors import ComputeResourceClient
 import json
@@ -24,8 +24,12 @@ class JobView(vd.Component):
         if self._job is None:
             return vd.div('No job')
         back_button=vd.button('Back to job list',onclick=self._on_back)
+        console_out = None
+        if 'result' in self._job:
+            console_out = mt.loadText(path = self._job['result'].get('console_out',None))
         return vd.div(
             vd.div(back_button),
+            vd.div(vd.pre(console_out or '')),
             vd.div(vd.pre(json.dumps(self._job, indent=4)))
         )
 
@@ -48,7 +52,16 @@ class BatchView(vd.Component):
     def onBack(self,handler):
         self._back_handlers.append(handler)
     def _open_job(self, job_index):
-        self._job_view.setJob(self._jobs[job_index])
+        job0 = self._jobs[job_index]
+        if not 'result' in job0:
+            job_result_key = dict(
+                name='compute_resource_batch_job_results',
+                batch_id=self._batch_id
+            )
+            result0 = mt.loadObject(key=job_result_key, subkey=str(job_index))
+            if result0:
+                job0['result'] = result0
+        self._job_view.setJob(job0)
         self._list_mode=False
         self.refresh()
     def _on_refresh(self):
@@ -62,12 +75,17 @@ class BatchView(vd.Component):
         jobs=batch['jobs']
         self._jobs=jobs
         for ii,job in enumerate(jobs):
-            job['status']=self._job_statuses.get(str(ii),'Unknown')
+            job['status'] = self._job_statuses.get(str(ii),'Unknown')
 
-        job_results=self._compute_resource_client.getBatchJobResults(batch_id=self._batch_id)
+        job_results = self._compute_resource_client.getBatchJobResults(batch_id=self._batch_id)
         if job_results:
-            for ii,result in enumerate(job_results['results']):
-                jobs[ii]['result']=result
+            for ii,result in enumerate(job_results):
+                jobs[ii]['result']=dict(
+                    retcode = result.retcode,
+                    runtime_info = result.runtime_info,
+                    console_out = result.console_out,
+                    outputs = result.outputs
+                )
 
         callbacks=[
             lambda job_index=ii: self._open_job(job_index=job_index)
@@ -126,7 +144,7 @@ class BatchMonitor(vd.Component):
     def __init__(self, resource_name):
         vd.Component.__init__(self)
 
-        mt_config=ca.getRemoteConfig()
+        mt_config=mt.getRemoteConfig()
         self._compute_resource_client=ComputeResourceClient(resource_name=resource_name, collection=mt_config['collection'], share_id=mt_config['share_id'], readonly=True)
 
         self._resource_name = resource_name

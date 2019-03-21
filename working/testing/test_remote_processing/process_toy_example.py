@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import spikeforest_analysis as sa
-from mountaintools import client as ca
+from mountaintools import client as mt
 from spikeforest import spikeextractors as se
 import os
 import shutil
@@ -29,7 +29,7 @@ def main():
             sorting=sx_true, save_path=recpath+'/firings_true.mda')
 
     # for downloading containers if needed
-    ca.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     # Specify the compute resource
     compute_resource = 'testing-resource'
@@ -94,7 +94,7 @@ def main():
 
     # Save the output
     print('Saving the output')
-    ca.saveObject(
+    mt.saveObject(
         key=dict(
             name='spikeforest_results'
         ),

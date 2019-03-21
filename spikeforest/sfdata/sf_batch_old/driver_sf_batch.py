@@ -2,7 +2,7 @@
 
 import argparse
 import sfdata as sf
-from mountaintools import client as ca
+from mountaintools import client as mt
 import os
 import json
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     
     print('Loading batch: '+batch_name)
     sf.kbucketConfigRemote(name='spikeforest1-readwrite',password=spikeforest_password)
-    obj=ca.loadObject(key=dict(batch_name=batch_name))
+    obj=mt.loadObject(key=dict(batch_name=batch_name))
     if not obj:
       raise Exception('Unable to find batches object.')
 

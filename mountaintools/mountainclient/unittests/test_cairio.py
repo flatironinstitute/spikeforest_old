@@ -1,4 +1,4 @@
-from mountaintools import client as ca
+from mountaintools import client as mt
 import json
 import subprocess
 import sys
@@ -122,7 +122,6 @@ def cairioserver(request):
 @pytest.mark.exclude
 @pytest.mark.cairioserver
 def test_cairioserver(cairioserver):
-    print('test_cairioserver')
     time.sleep(2)
 
     from mountaintools import CairioClient

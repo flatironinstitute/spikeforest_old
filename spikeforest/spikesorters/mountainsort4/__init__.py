@@ -1,1 +1,1 @@
-from .mountainsort4 import MountainSort4
+from .mountainsort4 import MountainSort4, MountainSort4TestError

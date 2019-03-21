@@ -1,24 +1,21 @@
 #from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
 import json
-from mountaintools import client as ca
+from mountaintools import client as mt
 import numpy as np
 from copy import deepcopy
 import multiprocessing
 
-try:
-    # if we are running this outside the container
-    from spikeforest import spikeextractors as si
-    from spikeforest import spiketoolkit as st
-except:
-# if we are in the container
-    import spikeextractors as si
-    import spiketoolkit as st
+from spikeforest import spikeextractors as si
+from spikeforest import spiketoolkit as st
 
 def _create_job_for_sorting_helper(kwargs):
     return _create_job_for_sorting(**kwargs)
 
 def _create_job_for_sorting(sorting, container):
+    if sorting['firings'] is None:
+        from mlprocessors import MountainJob
+        return MountainJob()
     units_true=sorting.get('units_true',[])
     firings=sorting['firings']
     firings_true=sorting['firings_true']
@@ -35,7 +32,7 @@ def _create_job_for_sorting(sorting, container):
 
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     print('>>>>>> compare sortings with truth')
-    container='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+    container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
     pool = multiprocessing.Pool(20)
     jobs_gen_table=pool.map(_create_job_for_sorting_helper, [dict(sorting=sorting, container=container) for sorting in sortings])
@@ -66,8 +63,11 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     sortings_out=[]
     for i,sorting in enumerate(sortings):
         comparison_with_truth=dict()
-        comparison_with_truth['json']=jobs_gen_table[i]['result']['outputs']['json_out']
-        comparison_with_truth['html']=jobs_gen_table[i]['result']['outputs']['html_out']
+        if not jobs_gen_table[i].isNull():
+            comparison_with_truth['json']=jobs_gen_table[i].result.outputs['json_out']
+            comparison_with_truth['html']=jobs_gen_table[i].result.outputs['html_out']
+        else:
+            comparison_with_truth=None
         sorting2=deepcopy(sorting)
         sorting2['comparison_with_truth']=comparison_with_truth
         sortings_out.append(sorting2)

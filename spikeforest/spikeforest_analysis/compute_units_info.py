@@ -1,18 +1,13 @@
 import numpy as np
 import json
 import mlprocessors as mlpr
-from mountaintools import client as ca
+from mountaintools import client as mt
 
-try:
-  # if we are running this outside the container
-  from spikeforest import spikeextractors as si
-  from spikeforest import spikewidgets as sw
-except:
-  # if we are in the container
-  import spikeextractors as si
-  import spikewidgets as sw
+# if we are running this outside the container
+from spikeforest import spikeextractors as si
+from spikeforest import spikewidgets as sw
 
-_CONTAINER='sha1://05ee3860fc96435076159918dfe0781f565f509f/03-11-2019/mountaintools_basic.simg'
+_CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
@@ -63,7 +58,7 @@ def compute_channel_noise_levels(recording):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.5k'
+  VERSION='0.1.6'
   CONTAINER=_CONTAINER
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
@@ -75,19 +70,25 @@ class ComputeUnitsInfo(mlpr.Processor):
     R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if (self.channel_ids) and (len(self.channel_ids)>0):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
-    
+
     recording = R0
-    # recording=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
+
+    # load into memory
+    R0=si.NumpyRecordingExtractor(timeseries=R0.getTraces(), samplerate=R0.getSamplingFrequency())
+
+    # do filtering
+    R0=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
+    R0=si.NumpyRecordingExtractor(timeseries=R0.getTraces(), samplerate=R0.getSamplingFrequency())
 
     sorting=si.MdaSortingExtractor(firings_file=self.firings)
     unit_ids=self.unit_ids
     if (not unit_ids) or (len(unit_ids)==0):
       unit_ids=sorting.getUnitIds()
   
-    channel_noise_levels=compute_channel_noise_levels(recording=recording)
+    channel_noise_levels=compute_channel_noise_levels(recording=R0)
 
     # No longer use subset to compute the templates
-    templates=compute_unit_templates(recording=recording,sorting=sorting,unit_ids=unit_ids,max_num=100)
+    templates=compute_unit_templates(recording=R0,sorting=sorting,unit_ids=unit_ids,max_num=100)
 
     ret=[]
     for i,unit_id in enumerate(unit_ids):
@@ -95,15 +96,10 @@ class ComputeUnitsInfo(mlpr.Processor):
       max_p2p_amps_on_channels=np.max(template,axis=1)-np.min(template,axis=1)
       peak_channel_index=np.argmax(max_p2p_amps_on_channels)
       peak_channel=recording.getChannelIds()[peak_channel_index]
-      R1=si.SubRecordingExtractor(parent_recording=recording,channel_ids=[peak_channel_index])
-      R1f=sw.lazyfilters.bandpass_filter(recording=R1,freq_min=300,freq_max=6000)
-      templates2=compute_unit_templates(recording=R1f,sorting=sorting,unit_ids=[unit_id],max_num=100)
-      template2=templates2[0]
+      peak_signal = np.max(np.abs(template[peak_channel_index,:]))
       info0=dict()
       info0['unit_id']=int(unit_id)
-      info0['snr']=np.max(np.abs(template2))/channel_noise_levels[peak_channel_index]
-      #info0['snr']=compute_template_snr(template,channel_noise_levels)
-      #peak_channel_index=np.argmax(np.max(np.abs(template),axis=1))
+      info0['snr']=peak_channel/channel_noise_levels[peak_channel_index]
       info0['peak_channel']=int(recording.getChannelIds()[peak_channel])
       train=sorting.getUnitSpikeTrain(unit_id=unit_id)
       info0['num_events']=int(len(train))
@@ -126,7 +122,7 @@ def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return
     if return_format=='filename':
       return fname
     else:
-      fname=ca.realizeFile(path=fname)
+      fname=mt.realizeFile(path=fname)
       with open(fname) as f:
         return json.load(f)
 

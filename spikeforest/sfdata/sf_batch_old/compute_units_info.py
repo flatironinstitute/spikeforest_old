@@ -3,7 +3,7 @@ import json
 import mlprocessors as mlpr
 from spikeforest import spikeextractors as si
 from spikeforest import spikewidgets as sw
-from mountaintools import client as ca
+from mountaintools import client as mt
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
@@ -146,7 +146,7 @@ def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return
     if return_format=='filename':
       return fname
     else:
-      fname=ca.realizeFile(path=fname)
+      fname=mt.realizeFile(path=fname)
       with open(fname) as f:
         return json.load(f)
 
