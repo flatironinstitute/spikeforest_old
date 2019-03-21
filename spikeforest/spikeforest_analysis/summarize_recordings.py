@@ -49,7 +49,8 @@ def summarize_recordings(recordings, compute_resource=None):
           recording_dir=recording['directory'],
           channels=recording.get('channels',[]),
           json_out={'ext':'.json','upload':True},
-          _container='default'
+          _container='default',
+          _label='Summarize recording: '+recording['name']
         )
         for recording in recordings
     ])
@@ -61,7 +62,8 @@ def summarize_recordings(recordings, compute_resource=None):
           unit_ids=recording.get('units_true',None),
           channel_ids=recording.get('channels',None),
           json_out={'ext':'.json','upload':True},
-          _container='default'
+          _container='default',
+          _label='Compute units info for recording: '+recording['name']
         )
         for recording in recordings
     ])

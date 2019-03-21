@@ -75,7 +75,7 @@ class MountainJob():
 
     @mtlogging.log()
     def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, _timeout=None, **kwargs):
-        print('Create job from processor: '+proc.NAME)
+        print('Creating job {}'.format(_label or ''))
         timer=time.time()
         if _force_run is None:
             _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')
