@@ -78,9 +78,11 @@ class ShellScript():
         
         for signal0 in signals:
             self._process.send_signal(signal0)
-            retcode = self._process.wait(timeout=0.1)
-            if retcode is not None:
+            try:
+                self._process.wait(timeout=0.1)
                 return
+            except:
+                pass
             
     def elapsedTimeSinceStart(self):
         if self._start_time is None:

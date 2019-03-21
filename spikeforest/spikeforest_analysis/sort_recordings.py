@@ -229,7 +229,7 @@ def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
     )
     return result
         
-def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False, job_timeout=60*10):
+def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False, job_timeout=60*1):
     print('>>>>>> sort recordings')
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
