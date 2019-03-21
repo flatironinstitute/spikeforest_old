@@ -10,6 +10,7 @@ from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 from .mountainjob import MountainJob
 from .mountainjob import MountainJobResult
+import mtlogging
 
 # module global
 _realized_files = set()
@@ -25,6 +26,7 @@ def configComputeResource(name, *, resource_name, collection=None, share_id=None
     else:
         _compute_resources_config[name] = None
 
+@mtlogging.log()
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None):
     if len(jobs) == 0:
         return []

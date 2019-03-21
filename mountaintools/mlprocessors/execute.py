@@ -1,10 +1,12 @@
 import multiprocessing
 import time
 from .mountainjob import MountainJob
+import mtlogging
 
 def _create_job_from_kwargs(aa):
     return createJob(aa['proc'], **aa['kwargs'])
 
+@mtlogging.log()
 def createJobs(proc, argslist, *, pool_size=15):
     pool = multiprocessing.Pool(pool_size)
     jobs=pool.map(_create_job_from_kwargs, [dict(proc=proc, kwargs=kwargs) for kwargs in argslist])
@@ -12,6 +14,7 @@ def createJobs(proc, argslist, *, pool_size=15):
     pool.join()
     return jobs
 
+@mtlogging.log()
 def createJob(
     proc,
     _container=None,

@@ -15,6 +15,7 @@ from mountainclient import client as mt
 import datetime
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
+import mtlogging
 
 class MountainJob():
     def __init__(self, *, job_object=None):
@@ -72,7 +73,9 @@ class MountainJob():
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
 
+    @mtlogging.log()
     def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, _timeout=None, **kwargs):
+        print('Create job from processor: '+proc.NAME)
         timer=time.time()
         if _force_run is None:
             _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')

@@ -151,25 +151,11 @@ class ComputeResourceServer():
         self._set_batch_status(batch_id=batch_id,status='saving')
         self._set_console_message('Saving/uploading outputs: {}'.format(batch_id))
 
-        result_objects = []
         # TODO: do the following in a multiprocessing pool
-        for result in results:
-            if (result.retcode==0) and (result.outputs):
-                for output_name, output_fname in result.outputs.items():
-                    self._set_console_message('Saving/uploading {}: {}...'.format(output_name, output_fname))
-                    a = self._cairio_client.saveFile(path=output_fname)
-                    if not a:
-                        print('Warning: Unable to save/upload file: {}'.format(output_fname))
-            if result.console_out:
-                self._set_console_message('Saving/uploading console output...')
-                self._cairio_client.saveFile(path=result.console_out)
-            result_object = dict(
-                retcode = result.retcode,
-                console_out = result.console_out,
-                runtime_info = result.runtime_info,
-                outputs = result.outputs
-            )
-            result_objects.append(result_object)
+        pool = multiprocessing.Pool(20)
+        result_objects = pool.map(_save_results_helper, [dict(result=result, cairio_client=self._cairio_client) for result in results])
+        pool.close()
+        pool.join()
         
         self._set_batch_status(batch_id=batch_id,status='saving')
         self._set_console_message('Saving/uploading results: {}'.format(batch_id))
@@ -189,6 +175,27 @@ class ComputeResourceServer():
             return
         print('{}: {}'.format(self._resource_name, msg))
         self._last_console_message=msg
+
+def _save_results_helper(kwargs):
+    return _save_results(**kwargs)
+
+def _save_results(result, cairio_client):
+    if (result.retcode==0) and (result.outputs):
+        for output_name, output_fname in result.outputs.items():
+            print('Saving/uploading {}: {}...'.format(output_name, output_fname))
+            a = cairio_client.saveFile(path=output_fname)
+            if not a:
+                print('Warning: Unable to save/upload file: {}'.format(output_fname))
+    if result.console_out:
+        print('Saving/uploading console output...')
+        cairio_client.saveFile(path=result.console_out)
+    result_object = dict(
+        retcode = result.retcode,
+        console_out = result.console_out,
+        runtime_info = result.runtime_info,
+        outputs = result.outputs
+    )
+    return result_object
 
 def _get_job_status_key(batch_id):
     return dict(

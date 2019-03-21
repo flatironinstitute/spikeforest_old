@@ -8,8 +8,9 @@ import shutil
 import sfdata as sf
 import numpy as np
 import mlprocessors as mlpr
+import mtlogging
 
-
+@mtlogging.log(root=True)
 def main():
     resource_name1 = 'ccmlin008-80'
     resource_name2 = 'ccmlin008-parallel'

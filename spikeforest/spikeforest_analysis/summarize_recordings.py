@@ -16,44 +16,9 @@ import mlprocessors as mlpr
 import multiprocessing
 # from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
+import mtlogging
 
 _CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
-
-def _create_jobs_for_recording(recording):
-    print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
-    dsdir=recording['directory']
-    # raw_path=dsdir+'/raw.mda'
-    firings_true_path=dsdir+'/firings_true.mda'
-    # geom_path=dsdir+'/geom.csv'
-    channels=recording.get('channels',None)
-    units=recording.get('units_true',None)
-
-    if not mt.findFile(path=firings_true_path):
-        raise Exception('firings_true file not found: '+firings_true_path)
-    job_info=ComputeRecordingInfo.createJob(
-        recording_dir=dsdir,
-        channels=recording.get('channels',[]),
-        json_out={'ext':'.json','upload':True},
-        _container='default'
-    )
-    job_info.addFilesToRealize([dsdir+'/raw.mda',dsdir+'/firings_true.mda'])
-    # job=CreateTimeseriesPlot.createJob(
-    #     recording_dir=dsdir,
-    #     channels=recording.get('channels',[]),
-    #     jpg_out={'ext':'.jpg','upload':True},
-    #     _container='default'
-    # )
-    # jobs_timeseries_plot.append(job)
-    job_units_info=ComputeUnitsInfo.createJob(
-        recording_dir=dsdir,
-        firings=dsdir+'/firings_true.mda',
-        unit_ids=units,
-        channel_ids=channels,
-        json_out={'ext':'.json','upload':True},
-        _container='default'
-    )
-    job_units_info.addFilesToRealize([dsdir+'/raw.mda', dsdir+'/firings_true.mda'])
-    return (job_info, job_units_info)
 
 def _gather_summarized_recording_helper(kwargs):
     return _gather_summarized_recording(**kwargs)
@@ -75,19 +40,31 @@ def _gather_summarized_recording(recording, job_info, job_units_info):
     
     return rec2
 
+@mtlogging.log()
 def summarize_recordings(recordings, compute_resource=None):
     print('>>>>>> summarize recordings')
-    jobs_info=[]
-    jobs_timeseries_plot=[]
-    jobs_units_info=[]
 
-    pool = multiprocessing.Pool(20)
-    A=pool.map(_create_jobs_for_recording, [(recording) for recording in recordings])
-    pool.close()
-    pool.join()
+    jobs_info = ComputeRecordingInfo.createJobs([
+        dict(
+          recording_dir=recording['directory'],
+          channels=recording.get('channels',[]),
+          json_out={'ext':'.json','upload':True},
+          _container='default'
+        )
+        for recording in recordings
+    ])
 
-    jobs_info=[a[0] for a in A]
-    jobs_units_info=[a[1] for a in A]
+    jobs_units_info = ComputeUnitsInfo.createJobs([
+        dict(
+          recording_dir=recording['directory'],
+          firings=recording['directory']+'/firings_true.mda',
+          unit_ids=recording.get('units_true',None),
+          channel_ids=recording.get('channels',None),
+          json_out={'ext':'.json','upload':True},
+          _container='default'
+        )
+        for recording in recordings
+    ])
     
     # all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
     all_jobs=jobs_info+jobs_units_info
@@ -198,3 +175,39 @@ class ComputeRecordingInfo(mlpr.Processor):
 #   ).outputs['jpg_out']
 #   return ca.saveFile(out,basename='waveforms.jpg')
 
+
+def _create_jobs_for_recording_old(recording):
+    print('Creating jobs for recording: {}/{}'.format(recording.get('study',''),recording.get('name','')))
+    dsdir=recording['directory']
+    # raw_path=dsdir+'/raw.mda'
+    firings_true_path=dsdir+'/firings_true.mda'
+    # geom_path=dsdir+'/geom.csv'
+    channels=recording.get('channels',None)
+    units=recording.get('units_true',None)
+
+    if not mt.findFile(path=firings_true_path):
+        raise Exception('firings_true file not found: '+firings_true_path)
+    job_info=ComputeRecordingInfo.createJob(
+        recording_dir=dsdir,
+        channels=recording.get('channels',[]),
+        json_out={'ext':'.json','upload':True},
+        _container='default'
+    )
+    job_info.addFilesToRealize([dsdir+'/raw.mda',dsdir+'/firings_true.mda'])
+    # job=CreateTimeseriesPlot.createJob(
+    #     recording_dir=dsdir,
+    #     channels=recording.get('channels',[]),
+    #     jpg_out={'ext':'.jpg','upload':True},
+    #     _container='default'
+    # )
+    # jobs_timeseries_plot.append(job)
+    job_units_info=ComputeUnitsInfo.createJob(
+        recording_dir=dsdir,
+        firings=dsdir+'/firings_true.mda',
+        unit_ids=units,
+        channel_ids=channels,
+        json_out={'ext':'.json','upload':True},
+        _container='default'
+    )
+    job_units_info.addFilesToRealize([dsdir+'/raw.mda', dsdir+'/firings_true.mda'])
+    return (job_info, job_units_info)
