@@ -122,7 +122,6 @@ def cairioserver(request):
 @pytest.mark.exclude
 @pytest.mark.cairioserver
 def test_cairioserver(cairioserver):
-    print('test_cairioserver')
     time.sleep(2)
 
     from mountaintools import CairioClient

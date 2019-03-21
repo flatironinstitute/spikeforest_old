@@ -102,7 +102,6 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         return results
 
     # Not using compute resource, do this locally
-
     if job_index_file is None:
         print('Making sure files are available on local computer...')
         for fname in files_to_realize:
@@ -206,9 +205,9 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 srun_sh_script.wait(5)
             if srun_sh_script.returnCode() != 0:
                 raise Exception('Non-zero return code for srun script.')
-            print('----- sleeping 4 seconds... in future, maybe we should not need to do this.')
-            time.sleep(4)
-            print('--------------------------------------------------------------------------')
+            # print('----- sleeping 4 seconds... in future, maybe we should not need to do this.')
+            # time.sleep(4)
+            # print('--------------------------------------------------------------------------')
             result_objects=[]
             for ii, job in enumerate(jobs):
                 print('Loading result object...', job_result_key, ii)
@@ -217,8 +216,8 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                     result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
                     if result_object is None:
                         print('Problem loading result....', job_result_key, str(ii))
-                        print('-----------------', local_client.getValue(key=job_result_key, subkey='-'))
-                        print('-----------------', local_client.getValue(key=job_result_key, subkey=str(ii)))
+                        print('=====================', local_client.getValue(key=job_result_key, subkey='-'))
+                        print('=====================', local_client.getValue(key=job_result_key, subkey=str(ii)))
                         time.sleep(3)
                     # raise Exception('Unexpected problem in executeBatch (srun mode): result object is none')
                 result_objects.append(result_object)
@@ -267,8 +266,8 @@ def _set_job_result(job, result_object):
             testing = local_client.loadObject(key=job_result_key, subkey=subkey)
             if result_object and (testing is None):
                 print('WARNING: Problem loading object immediately after saving....')
-                print('---- value', local_client.getValue(key=job_result_key, subkey=subkey))
-                print('---- object', local_client.loadObject(key=job_result_key, subkey=subkey))
+                print('==== value', local_client.getValue(key=job_result_key, subkey=subkey))
+                print('==== object', local_client.loadObject(key=job_result_key, subkey=subkey))
                 print(result_object)
                 num_tries = num_tries + 1
                 if num_tries >= 3:
