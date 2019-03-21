@@ -13,11 +13,8 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
 
     # We will be assembling the sorting results here
     sorting_results = []
-
-    pool = multiprocessing.Pool(10)
-    sorting_results = pool.map(_run_sorter_helper, [dict(recordings=recordings, sorter=sorter) for sorter in sorters])
-    pool.close()
-    pool.join()
+    for sorter in sorters:
+        sorting_results = _run_sorter(sorter=sorter, recordings=recordings)
 
     # Summarize the sortings
     sorting_results = sa.summarize_sortings(
@@ -62,9 +59,6 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
         txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
             study_name, sorter_name, avg_accuracy)
         print(txt)
-
-def _run_sorter_helper(kwargs):
-    _run_sorter(**kwargs)
 
 def _run_sorter(sorter, recordings):
     # Sort the recordings
