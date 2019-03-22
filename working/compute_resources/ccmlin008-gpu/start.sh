@@ -17,11 +17,11 @@ export DISPLAY=""
 COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
 
-../../../bin/compute-resource-start ccmlin008-gpu \
-	--allow_uncontainerized --parallel 2  \
+../../../bin/compute-resource-start $RESOURCE_NAME \
+	--allow_uncontainerized --parallel 1  \
 	--collection $COLLECTION --share_id $SHARE_ID
 
 #../../../bin/compute-resource-start $RESOURCE_NAME \
 #	--allow_uncontainerized  \
 #	--collection $COLLECTION --share_id $SHARE_ID \
-#        --srun_opts "-c 8 -N 10 -p gpu --gres=gpu:1"
+#        --srun_opts "-n 4 -c 2 -p gpu --gres=gpu:1 --constraint=v100"
