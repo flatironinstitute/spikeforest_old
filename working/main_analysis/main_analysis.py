@@ -19,7 +19,7 @@ def main():
     parser.add_argument('--compute_resource_gpu',help='Name of compute resource for gpu', required=False, default='ccmlin008-gpu')
     parser.add_argument('--collection',help='Name of collection to connect to', required=False, default='spikeforest')
     parser.add_argument('--share_id',help='Name of kbucket share id to connect to', required=False, default='spikeforest.spikeforest2')
-    parser.add_argument('--sorter_codes',help='Comma-separated codes of sorters to run', required=False, default='ms4,irc,sc,yass,ks')
+    parser.add_argument('--sorter_codes',help='Comma-separated codes of sorters to run', required=False, default='ms4,irc,sc,yass')
     parser.add_argument('--test', help='Only run a few, and prepend test_ to the output', action='store_true')
 
     args = parser.parse_args()

@@ -231,7 +231,8 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
                     {srun_py_script}
                 """, keep_temp_files=keep_temp_files)
-            srun_sh_script.substitute('{srun_opts}', srun_opts)
+            srun_opts_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, len(jobs))
+            srun_sh_script.substitute('{srun_opts}', srun_opts_adjusted)
             srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
             srun_sh_script.start()
             while srun_sh_script.isRunning():
@@ -332,6 +333,14 @@ def _execute_job(job):
         _set_job_status(job, 'result-not-found')
 
     return result
+
+def _adjust_srun_opts_for_num_jobs(srun_opts, num_jobs):
+    vals = srun_opts.split()
+    for i in range(len(vals)):
+        if vals[i] == '-n' and (i+1<len(vals)):
+            if int(vals[i+1]) > num_jobs:
+                vals[i+1] = str(num_jobs)
+    return ' '.join(vals)
 
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
