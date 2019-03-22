@@ -77,9 +77,6 @@ class ComputeResourceServer():
         self._set_console_message('Starting batch: {}'.format(batch_id))
         self._set_batch_status(batch_id=batch_id,status='starting')
 
-        monitor_job_statuses_process = multiprocessing.Process(target=_monitor_job_statuses, args=(batch_id, self._local_client, self._cairio_client))
-        monitor_job_statuses_process.start()
-
         # get the batch and save it locally
         key = dict(
             name='compute_resource_batch',
@@ -94,16 +91,15 @@ class ComputeResourceServer():
             traceback.print_exc()
             print('Error running batch.')
             self._set_batch_status(batch_id=batch_id, status='error')
-            monitor_job_statuses_process.terminate()
-            monitor_job_statuses_process.join()
             return
 
-        monitor_job_statuses_process.terminate()
-        monitor_job_statuses_process.join()
+        self._set_batch_status(batch_id=batch_id,status='finalizing-job-statuses') # this should trigger the monitor to end
 
-        self._set_batch_status(batch_id=batch_id,status='finalizing')
-
-        _monitor_job_statuses(batch_id=batch_id, local_client=self._local_client, remote_client=self._cairio_client, finalize=True)
+        job_status_key = _get_job_status_key(batch_id) 
+        status_obj = self._local_client.getValue(key=job_status_key,subkey='-',parse_json=True)
+        if status_obj is not None:
+            for job_index, status in status_obj.items():
+                self._cairio_client.setValue(key=job_status_key, subkey=str(job_index), value=status)
 
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='finished')
@@ -124,7 +120,16 @@ class ComputeResourceServer():
             name='compute_resource_batch_statuses',
             resource_name=self._resource_name
         )
+        self._local_client.setValue(key=key,subkey=batch_id,value=status)
         self._cairio_client.setValue(key=key,subkey=batch_id,value=status)
+    
+    @mtlogging.log()
+    def _get_batch_status(self,*,batch_id):
+        key=dict(
+            name='compute_resource_batch_statuses',
+            resource_name=self._resource_name
+        )
+        return self._local_client.getValue(key=key,subkey=batch_id)
     
     @mtlogging.log()
     def _run_batch(self, batch_id):
@@ -137,6 +142,11 @@ class ComputeResourceServer():
             batch_id=batch_id
         )
         batch = self._local_client.loadObject(key = key)
+
+        batch_status_key = dict(
+            name='compute_resource_batch_statuses',
+            resource_name=self._resource_name
+        )
         
         job_objects = batch['jobs']
         jobs = []
@@ -148,10 +158,15 @@ class ComputeResourceServer():
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='running')
         self._set_console_message('Starting batch: {}'.format(batch_id))
+
+        # Start the job monitor (it will end when the batch status is no longer running)
+        monitor_job_statuses_process = multiprocessing.Process(target=_monitor_job_statuses, args=(batch_id, self._local_client, self._cairio_client, batch_status_key))
+        monitor_job_statuses_process.start()
+
         results = executeBatch(jobs=jobs, label=batch.get('label', batch_id), num_workers=self._num_parallel, compute_resource=None, halt_key=_get_halt_key(batch_id), job_status_key=_get_job_status_key(batch_id), job_result_key=_get_job_result_key(batch_id), srun_opts=self._srun_opts_string)
 
         self._check_batch_halt(batch_id)
-        self._set_batch_status(batch_id=batch_id,status='saving')
+        self._set_batch_status(batch_id=batch_id,status='saving-outputs')
         self._set_console_message('Saving/uploading outputs: {}'.format(batch_id))
 
         pool = multiprocessing.Pool(20)
@@ -159,7 +174,7 @@ class ComputeResourceServer():
         pool.close()
         pool.join()
         
-        self._set_batch_status(batch_id=batch_id,status='saving')
+        self._set_batch_status(batch_id=batch_id,status='saving-results')
         self._set_console_message('Saving/uploading results: {}'.format(batch_id))
         self._cairio_client.saveObject(
             key = dict(
@@ -170,6 +185,9 @@ class ComputeResourceServer():
                 results = result_objects
             )
         )
+
+        # if it hasn't already stopped
+        monitor_job_statuses_process.terminate()
     
     @mtlogging.log()
     def _set_console_message(self,msg):
@@ -219,14 +237,16 @@ def _get_halt_key(batch_id):
         batch_id=batch_id
     )
 
-def _monitor_job_statuses(batch_id, local_client, remote_client, *, finalize=False):
+def _monitor_job_statuses(batch_id, local_client, remote_client, batch_status_key):
     job_status_key=_get_job_status_key(batch_id) 
-    job_result_key=_get_job_result_key(batch_id) 
+    # job_result_key=_get_job_result_key(batch_id) 
     halt_key=_get_halt_key(batch_id)
     
     last_status_obj = dict()
-    last_result_obj = dict()
     while True:
+        batch_status = local_client.getValue(key=batch_status_key,subkey=batch_id)
+        if batch_status != 'running':
+            print('Stopping job monitor because batch status is: '+batch_status)
         status_obj = local_client.getValue(key=job_status_key,subkey='-',parse_json=True)
         if status_obj is not None:
             for job_index, status in status_obj.items():
@@ -241,17 +261,14 @@ def _monitor_job_statuses(batch_id, local_client, remote_client, *, finalize=Fal
             local_client.setValue(key=halt_key,value=halt_val)
             return # is this the best thing to do?
 
-        result_obj = local_client.getValue(key=job_result_key,subkey='-',parse_json=True)
-        if result_obj is not None:
-            for job_index, resultval in result_obj.items():
-                if result_obj[job_index] != last_result_obj.get(job_index,None):
-                    result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
-                    if result0:
-                        remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
-                        if 'console_out' in result0:
-                            remote_client.saveFile(path=result0['console_out'])
-            last_result_obj = result_obj
-        if finalize:
-            break
-        else:
-            time.sleep(2)
+        # result_obj = local_client.getValue(key=job_result_key,subkey='-',parse_json=True)
+        # if result_obj is not None:
+        #     for job_index, resultval in result_obj.items():
+        #         if result_obj[job_index] != last_result_obj.get(job_index,None):
+        #             result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
+        #             if result0:
+        #                 remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
+        #                 if 'console_out' in result0:
+        #                     remote_client.saveFile(path=result0['console_out'])
+        #     last_result_obj = result_obj
+        time.sleep(2)

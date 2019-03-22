@@ -58,7 +58,7 @@ def compute_channel_noise_levels(recording):
 
 class ComputeUnitsInfo(mlpr.Processor):
   NAME='ComputeUnitsInfo'
-  VERSION='0.1.6'
+  VERSION='0.1.8'
   CONTAINER=_CONTAINER
   recording_dir=mlpr.Input(directory=True,description='Recording directory')
   channel_ids=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
@@ -99,7 +99,7 @@ class ComputeUnitsInfo(mlpr.Processor):
       peak_signal = np.max(np.abs(template[peak_channel_index,:]))
       info0=dict()
       info0['unit_id']=int(unit_id)
-      info0['snr']=peak_channel/channel_noise_levels[peak_channel_index]
+      info0['snr']=peak_signal/channel_noise_levels[peak_channel_index]
       info0['peak_channel']=int(recording.getChannelIds()[peak_channel])
       train=sorting.getUnitSpikeTrain(unit_id=unit_id)
       info0['num_events']=int(len(train))

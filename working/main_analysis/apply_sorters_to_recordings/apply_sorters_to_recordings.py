@@ -17,7 +17,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     # We will be assembling the sorting results here
     sorting_results = []
     for sorter in sorters:
-        sorting_results = sorting_results + _run_sorter(sorter=sorter, recordings=recordings)
+        sorting_results = sorting_results + _run_sorter(sorter=sorter, recordings=recordings, label='{} ({})'.format(sorter['name'], output_id))
 
     # Summarize the sortings
     sorting_results = sa.summarize_sortings(
@@ -65,13 +65,14 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
             study_name, sorter_name, avg_accuracy)
         print(txt)
 
-def _run_sorter(sorter, recordings):
+def _run_sorter(sorter, recordings, label):
     # Sort the recordings
     compute_resource0 = sorter['compute_resource']
     sortings = sa.sort_recordings(
         sorter=sorter,
         recordings=recordings,
-        compute_resource=compute_resource0
+        compute_resource=compute_resource0,
+        label=label
     )
 
     return sortings

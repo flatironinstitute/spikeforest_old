@@ -299,6 +299,7 @@ class MountainJob():
                 for attr_name, attr_val in attributes_for_processor.items():
                     setattr(X, attr_name, attr_val)
                 try:
+                    print('Running processor directly...')
                     X.run()
                     retcode = 0
                 except:
