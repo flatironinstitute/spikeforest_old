@@ -66,7 +66,7 @@ class MainWindow(vd.Component):
             return
         a = mt.loadObject(
             key=dict(name='spikeforest_results'), subkey=output_id)
-        print('_on_group_changed: ', a)
+        #print('_on_group_changed: ', a)
         # key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
         SF = sf.SFData()
         SF.loadStudies(a['studies'])
