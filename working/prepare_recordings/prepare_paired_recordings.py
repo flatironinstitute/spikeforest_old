@@ -14,7 +14,8 @@ def prepare_paired_studies(*, basedir):
     study_set_name = 'paired'
     studies = []
     recordings = []
-    names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']
+    #names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']
+    names = ['boyden32c','crcns','mea64c','neuropix32c'] # exclude neuro
     for name in names:
         print('PREPARING: '+name)
         study_name = 'paired_' + name
