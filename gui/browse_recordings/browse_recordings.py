@@ -5,31 +5,68 @@ from mountaintools import client as mt
 #import spikeforestwidgets as SFW
 from sfrecordingwidget import SFRecordingWidget
 
-
-class MainWindow(vd.Component):
+class OutputIdSelectWidget(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
-        self._recording_group_names = mt.loadObject(
-            key=dict(name='spikeforest_recording_group_names'))
-        self._SEL_group = vd.components.SelectBox(
-            options=['']+self._recording_group_names)
-        self._SEL_group.onChange(self._on_group_changed)
+
+        self._SEL_output_id = vd.components.SelectBox(options=[])
+        self._SEL_output_id.onChange(self._on_output_id_changed)
+        self._selection_changed_handlers = []
+
+        vd.devel.loadBootstrap()
+
+    def initialize(self):
+        self._output_ids = mt.getSubKeys(key=dict(name='spikeforest_results'))
+        self._SEL_output_id.setOptions(['']+self._output_ids)
+        self._on_output_id_changed(value=self._SEL_output_id.value())
+
+    def onSelectionChanged(self, handler):
+        self._selection_changed_handlers.append(handler)
+
+    def outputId(self):
+        return self._SEL_output_id.value()
+
+    def _on_output_id_changed(self, value):
+        for handler in self._selection_changed_handlers:
+            handler()
+
+    def render(self):
+        #return vd.tr(vd.td('Select an output ID:'), vd.td(self._SEL_output_id)),
+        rows = [
+            vd.tr(vd.td('Select an output ID:'), vd.td(self._SEL_output_id)),
+        ]
+        select_table = vd.table(
+            rows, style={'text-align': 'left', 'width': 'auto'}, class_='table')
+        return vd.div(
+            select_table
+        )
+    
+    def value(self):
+        return self._SEL_output_id.value()
+
+class MainWindow(vd.Component):
+
+    def __init__(self):
+        vd.Component.__init__(self)
+        self._SEL_group = OutputIdSelectWidget()
+        self._SEL_group.onSelectionChanged(self._on_group_changed)
+
         self._SEL_study = vd.components.SelectBox(options=[])
         self._SEL_study.onChange(self._on_study_changed)
         self._SEL_recording = vd.components.SelectBox(options=[])
         self._SEL_recording.onChange(self._on_recording_changed)
         self._recording_widget = SFRecordingWidget()
-
-        self._on_group_changed(value=self._SEL_group.value())
+        self._SEL_group.initialize()
 
         vd.devel.loadBootstrap()
 
-    def _on_group_changed(self, value):
-        group_name = self._SEL_group.value()
-        if not group_name:
+    def _on_group_changed(self):
+        output_id = self._SEL_group.value()
+        if not output_id:
             return
         a = mt.loadObject(
-            key=dict(name='spikeforest_recording_group', group_name=group_name))
+            key=dict(name='spikeforest_results'), subkey=output_id)
+        print('_on_group_changed: ', a)
         # key=dict(name='spikeforest_results', output_id='spikeforest_test2'))
         SF = sf.SFData()
         SF.loadStudies(a['studies'])
@@ -37,6 +74,7 @@ class MainWindow(vd.Component):
         self._SF = SF
         self._SEL_study.setOptions(SF.studyNames())
         self._on_study_changed(value=self._SEL_study.value())
+        self.refresh()
 
     def _on_study_changed(self, value):
         if not self._SF:
@@ -62,14 +100,14 @@ class MainWindow(vd.Component):
         self._recording_widget.setRecording(rec)
 
     def render(self):
-        rows = [
-            vd.tr(vd.td('Select a group:'), vd.td(self._SEL_group)),
+        rows = [            
             vd.tr(vd.td('Select a study:'), vd.td(self._SEL_study)),
             vd.tr(vd.td('Select a recording:'), vd.td(self._SEL_recording))
         ]
         select_table = vd.table(
             rows, style={'text-align': 'left', 'width': 'auto'}, class_='table')
         return vd.div(
+            self._SEL_group.render(),
             select_table,
             self._recording_widget
         )

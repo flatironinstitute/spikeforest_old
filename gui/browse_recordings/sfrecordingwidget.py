@@ -276,6 +276,10 @@ class SFRecordingWidget(vd.Component):
         rows.append(vd.tr(
             vd.th('Samplerate'), vd.td('{}'.format(RX.getSamplingFrequency()))
         ))
+        a = RX.getNumFrames() / RX.getSamplingFrequency()
+        rows.append(vd.tr(            
+            vd.th('Duration (s)'), vd.td('{}'.format(a))
+        ))        
 
         recording_file_is_local = self._recording.recordingFileIsLocal()
         if recording_file_is_local:
