@@ -30,7 +30,7 @@ def _create_job_for_sorting(sorting, container):
     )
     return job
 
-def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
+def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None):
     print('>>>>>> compare sortings with truth')
     container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
@@ -56,7 +56,7 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     #     jobs_gen_table.append(job)
     
     all_jobs=jobs_gen_table
-    label='Compare sortings with truth'
+    label=label or 'Compare sortings with truth'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=num_workers,compute_resource=compute_resource)
 
     print('Gathering sortings after comparing with truth...')

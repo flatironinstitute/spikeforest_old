@@ -41,7 +41,7 @@ def _gather_summarized_recording(recording, job_info, job_units_info):
     return rec2
 
 #@mtlogging.log()
-def summarize_recordings(recordings, compute_resource=None):
+def summarize_recordings(recordings, compute_resource=None, label=None):
     print('>>>>>> summarize recordings')
 
     jobs_info = ComputeRecordingInfo.createJobs([
@@ -70,7 +70,7 @@ def summarize_recordings(recordings, compute_resource=None):
     
     # all_jobs=jobs_info+jobs_timeseries_plot+jobs_units_info
     all_jobs=jobs_info+jobs_units_info
-    label='Summarize recordings'
+    label=label or 'Summarize recordings'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
 
     print('Gathering summarized recordings...')

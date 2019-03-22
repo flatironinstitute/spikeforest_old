@@ -80,6 +80,14 @@ class ComputeResourceServer():
         monitor_job_statuses_process = multiprocessing.Process(target=_monitor_job_statuses, args=(batch_id, self._local_client, self._cairio_client))
         monitor_job_statuses_process.start()
 
+        # get the batch and save it locally
+        key = dict(
+            name='compute_resource_batch',
+            batch_id=batch_id
+        )
+        batch = self._cairio_client.loadObject(key = key)
+        self._local_client.saveObject(key = key, object=batch)
+
         try:
             self._run_batch(batch_id)
         except:
@@ -92,6 +100,8 @@ class ComputeResourceServer():
 
         monitor_job_statuses_process.terminate()
         monitor_job_statuses_process.join()
+
+        self._set_batch_status(batch_id=batch_id,status='finalizing')
 
         _monitor_job_statuses(batch_id=batch_id, local_client=self._local_client, remote_client=self._cairio_client, finalize=True)
 
@@ -126,16 +136,7 @@ class ComputeResourceServer():
             name='compute_resource_batch',
             batch_id=batch_id
         )
-        batch = self._cairio_client.loadObject(key = key)
-
-        # save it locally
-        self._local_client.saveObject(key = key, object=batch)
-        batch=self._local_client.loadObject(
-            key=dict(
-                name='compute_resource_batch',
-                batch_id=batch_id
-            )
-        )
+        batch = self._local_client.loadObject(key = key)
         
         job_objects = batch['jobs']
         jobs = []
@@ -153,7 +154,6 @@ class ComputeResourceServer():
         self._set_batch_status(batch_id=batch_id,status='saving')
         self._set_console_message('Saving/uploading outputs: {}'.format(batch_id))
 
-        # TODO: do the following in a multiprocessing pool
         pool = multiprocessing.Pool(20)
         result_objects = pool.map(_save_results_helper, [dict(result=result, cairio_client=self._cairio_client, label='result {} of {}'.format(ii, len(results))) for ii, result in enumerate(results)])
         pool.close()

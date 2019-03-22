@@ -9,7 +9,10 @@ import mtlogging
 def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     # Summarize the recordings
     recordings = sa.summarize_recordings(
-        recordings=recordings, compute_resource='default')
+        recordings=recordings,
+        compute_resource='default',
+        label='Summarize recordings ({})'.format(output_id)
+    )
 
     # We will be assembling the sorting results here
     sorting_results = []
@@ -19,13 +22,15 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     # Summarize the sortings
     sorting_results = sa.summarize_sortings(
         sortings=sorting_results,
-        compute_resource='default'
+        compute_resource='default',
+        label='Summarize sortings ({})'.format(output_id)
     )
 
     # Compare with ground truth
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
-        compute_resource='default'
+        compute_resource='default',
+        label='Compare with truth ({})'.format(output_id)
     )
 
     # Aggregate the results
