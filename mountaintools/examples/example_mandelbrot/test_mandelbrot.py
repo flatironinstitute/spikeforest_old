@@ -41,7 +41,7 @@ def test_mandelbrot():
 
 
 @pytest.mark.srun
-def test_mandelbrot():
+def test_mandelbrot_srun():
     from mountaintools import client as mt
     import mlprocessors as mlpr
     from .mandelbrot import compute_mandelbrot, show_mandelbrot, combine_subsampled_mandelbrot, ComputeMandelbrot, compute_mandelbrot_parallel

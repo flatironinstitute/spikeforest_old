@@ -151,12 +151,15 @@ class ComputeResourceClient():
         result_objects = obj['results']
         ret = []
         for result_object in result_objects:
-            R = MountainJobResult()
-            R.console_out = result_object['console_out']
-            R.runtime_info = result_object['runtime_info']
-            R.retcode = result_object['retcode']
-            R.outputs = result_object['outputs']
-            ret.append(R)
+            if result_object is None:
+                ret.append(None)
+            else:
+                R = MountainJobResult()
+                R.console_out = result_object['console_out']
+                R.runtime_info = result_object['runtime_info']
+                R.retcode = result_object['retcode']
+                R.outputs = result_object['outputs']
+                ret.append(R)
         return ret
     def _set_console_message(self,msg):
         if msg == self._last_console_message:

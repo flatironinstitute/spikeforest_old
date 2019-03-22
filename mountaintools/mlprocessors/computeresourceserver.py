@@ -93,6 +93,8 @@ class ComputeResourceServer():
         monitor_job_statuses_process.terminate()
         monitor_job_statuses_process.join()
 
+        _monitor_job_statuses(batch_id=batch_id, local_client=self._local_client, remote_client=self._cairio_client, finalize=True)
+
         self._check_batch_halt(batch_id)
         self._set_batch_status(batch_id=batch_id,status='finished')
 
@@ -180,6 +182,8 @@ def _save_results_helper(kwargs):
     return _save_results(**kwargs)
 
 def _save_results(result, cairio_client, label):
+    if result is None:
+        return None
     if (result.retcode==0) and (result.outputs):
         for output_name, output_fname in result.outputs.items():
             print('Saving/uploading {} for {}: {}...'.format(output_name, label, output_fname))
@@ -215,7 +219,7 @@ def _get_halt_key(batch_id):
         batch_id=batch_id
     )
 
-def _monitor_job_statuses(batch_id, local_client, remote_client):
+def _monitor_job_statuses(batch_id, local_client, remote_client, *, finalize=False):
     job_status_key=_get_job_status_key(batch_id) 
     job_result_key=_get_job_result_key(batch_id) 
     halt_key=_get_halt_key(batch_id)
@@ -247,4 +251,7 @@ def _monitor_job_statuses(batch_id, local_client, remote_client):
                         if 'console_out' in result0:
                             remote_client.saveFile(path=result0['console_out'])
             last_result_obj = result_obj
-        time.sleep(2)
+        if finalize:
+            break
+        else:
+            time.sleep(2)

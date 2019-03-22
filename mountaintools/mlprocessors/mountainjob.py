@@ -22,6 +22,7 @@ class MountainJob():
         self.result=None
         self._processor=None
         self._job=None
+        self._use_cached_results_only=False
         if job_object is not None:
             self.initFromObject(job_object)
 
@@ -72,6 +73,9 @@ class MountainJob():
         if 'additional_files_to_realize' in self._job:
             for ii, fname in enumerate(self._job['additional_files_to_realize']):
                 self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
+
+    def setUseCachedResultsOnly(self, val):
+        self._use_cached_results_only = val
 
     @mtlogging.log()
     def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, _timeout=None, **kwargs):
@@ -223,6 +227,9 @@ class MountainJob():
                 # do the following so that local can get propagated to remote and vice versa
                 self._store_result_in_cache(result)
                 return result
+
+        if self._use_cached_results_only:
+            return None
 
         keep_temp_files=True
         with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_'+self._job['processor_name']) as tmp_output_path:
