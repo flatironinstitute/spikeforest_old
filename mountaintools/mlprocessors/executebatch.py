@@ -69,6 +69,8 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         kwargs0 = all_kwargs
         kwargs0['compute_resource'] = None
         kwargs0['cached_results_only'] = True
+        kwargs0['num_workers'] = 10
+        kwargs0['srun_opts'] = None
         results0 = executeBatch(**kwargs0)
         all_complete = True
         num_found = 0
