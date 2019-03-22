@@ -11,7 +11,7 @@ OPTS="--compute_resource_default $RESOURCE_CPU --compute_resource_gpu $RESOURCE_
 OPTS="$OPTS --collection spikeforest --share_id spikeforest.spikeforest2"
 
 ./main_analysis.py --recording_group magland_synth --output_id magland_synth $OPTS "${@:3}"
-./main_analysis.py --recording_group visapy_mea --output_id visapy_mea $OPTS "${@:3}"
+./main_analysis.py --recording_group visapy_mea --output_id visapy_mea $OPTS "${@:3}" --sorter_codes ms4,irc,sc,yass
 ./main_analysis.py --recording_group paired --output_id paired $OPTS "${@:3}"
 ./main_analysis.py --recording_group manual_tetrode --output_id manual_tetrode $OPTS "${@:3}"
 ./main_analysis.py --recording_group mearec_neuronexus --output_id mearec_neuronexus $OPTS "${@:3}"
