@@ -11,6 +11,7 @@ import shutil
 import fnmatch
 import inspect
 import shlex
+from mountainclient import client as mt
 from mountainclient import MountainClient
 import datetime
 from .shellscript import ShellScript
@@ -74,6 +75,9 @@ class MountainJob():
 
     def setUseCachedResultsOnly(self, val):
         self._use_cached_results_only = val
+
+    def storeResultInCache(self, result):
+        self._store_result_in_cache(result)
 
     @mtlogging.log(name='MountainJob:execute')
     def execute(self):
@@ -196,7 +200,7 @@ class MountainJob():
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
-                        container = local_client.realizeFile(container)
+                        container = mt.realizeFile(container)
                         if not container:
                             raise Exception('Unable to realize container file: {}'.format(container_orig))
                         singularity_opts = _get_singularity_opts()
@@ -280,17 +284,17 @@ class MountainJob():
     def _realize_input(self, fname):
         if fname.startswith('kbucket://'):
             if local_client.findFile(fname):
-                return local_client.realizeFile(fname)
+                return mt.realizeFile(fname)
             else:
                 # must be a directory
                 return fname
         else:
-            return local_client.realizeFile(fname)
+            return mt.realizeFile(fname)
 
     def _generate_execute_code(self, temp_path, attributes_for_processor):
         if not self._job_object['processor_code']:
             raise Exception('Processor code is missing for job', self._job_object.get('processor_name'))
-        code = local_client.loadObject(path = self._job_object['processor_code'])
+        code = mt.loadObject(path = self._job_object['processor_code'])
         if code is None:
             raise Exception('Unable to load processor code for job.')
         _write_python_code_to_directory(temp_path+'/processor_source', code)
@@ -336,23 +340,37 @@ class MountainJob():
             signature0 = output0['signature']
             output_path = local_client.getValue(key=signature0)
             if not output_path:
+                print('--- output not found', output_name, signature0)
                 return None
             output_paths[output_name] = output_path
         
         runtime_info_signature = self._job_object['runtime_info_signature']
-        console_out_signature = self._job_object['console_out_signature']
         output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature)
-        output_paths['--console-out--'] = local_client.getValue(key=console_out_signature)
+        if not output_paths['--runtime-info--']:
+            print('--- runtime-info not found', runtime_info_signature)
+            return None
 
+        console_out_signature = self._job_object['console_out_signature']
+        output_paths['--console-out--'] = local_client.getValue(key=console_out_signature)
+        if not output_paths['--console-out--']:
+            print('--- console-out not found', console_out_signature)
+            return None
+    
         for output_name in output_paths.keys():
-            output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
+            orig_path = output_paths[output_name]
+            output_paths[output_name] = mt.getSha1Url(output_paths[output_name])
             if not output_paths[output_name]:
+                print('--- Unable to realize output', output_name, orig_path)
                 return None
             
-        runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
-        console_out_text = local_client.loadText(path=output_paths['--console-out--'])
+        runtime_info = mt.loadObject(path=output_paths['--runtime-info--'])
+        if runtime_info is None:
+            print('--- Unable to load runtime info', output_paths['--runtime-info--'])
+            return None
 
-        if (runtime_info is None) or (console_out_text is None):
+        console_out_text = mt.loadText(path=output_paths['--console-out--'])
+        if console_out_text is None:
+            print('--- Unable to load console out text:', output_paths['--console-out--'])
             return None
         
         R = MountainJobResult()
@@ -366,17 +384,22 @@ class MountainJob():
 
     def _store_result_in_cache(self, result):
         for output_name, output0 in self._job_object['outputs'].items():
-            output_path = local_client.saveFile(result.outputs[output_name])
-            local_client.setValue(key=output0['signature'], value=output_path)
+            output_path = mt.getSha1Url(result.outputs[output_name])
+            if output_path:
+                local_client.setValue(key=output0['signature'], value=output_path)
+                print('---- stored output', output_name, output0['signature'], output_path)
+            else:
+                print('--- unable to find output file', output_name)
 
         runtime_info_signature = self._job_object['runtime_info_signature']
-        console_out_signature = self._job_object['console_out_signature']
-
         runtime_info_path = local_client.saveObject(object=result.runtime_info)
         local_client.setValue(key=runtime_info_signature, value=runtime_info_path)
+        print('---stored runtime info', runtime_info_signature, runtime_info_path)
 
-        console_out_path = local_client.saveFile(path=result.console_out)
+        console_out_signature = self._job_object['console_out_signature']
+        console_out_path = result.console_out
         local_client.setValue(key=console_out_signature, value=console_out_path)
+        print('---stored console_out', console_out_signature, console_out_path)
 
     def _copy_outputs_from_result_to_dest_paths(self, result):
         for output_name, output0 in self._job_object['outputs'].items():
@@ -390,7 +413,7 @@ class MountainJob():
             else:
                 dest_path = None
             if dest_path:
-                local_client.realizeFile(result.outputs[output_name], dest_path=dest_path)
+                mt.realizeFile(result.outputs[output_name], dest_path=dest_path)
                 result.outputs[output_name] = dest_path
 
 class MountainJobResult():

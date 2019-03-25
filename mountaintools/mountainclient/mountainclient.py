@@ -805,6 +805,18 @@ class MountainClient():
             share_id=self._get_share_id_from_alias(share_id)
         return self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id)
 
+    @mtlogging.log(name='MountainClient:getSha1Url')
+    def getSha1Url(self, path, *, basename=None):
+        if basename is None:
+            basename = os.path.basename(path)
+
+        sha1 = self.computeFileSha1(path)
+        if not sha1:
+            return None
+
+        return 'sha1://{}/{}'.format(sha1, basename)
+        
+
     @mtlogging.log(name='MountainClient:findFile')
     def findFile(self, path, local_only=False, share_id=None):
         if share_id and ('.' in share_id):

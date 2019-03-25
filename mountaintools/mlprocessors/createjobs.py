@@ -163,6 +163,7 @@ def createJobs(proc, argslist):
 
     # Prepare the local file inputs
     if len(all_local_file_inputs) > 0:
+        mtlogging.sublog('Preparing local file inputs')
         print('Preparing {} local file inputs'.format(len(all_local_file_inputs)))
         for input0 in all_local_file_inputs:
             path0 = input0['path']
@@ -173,6 +174,7 @@ def createJobs(proc, argslist):
 
     # Prepare the kbucket file inputs
     if len(all_kbucket_file_inputs) > 0:
+        mtlogging.sublog('Preparing kbucket file inputs')
         print('Preparing {} kbucket file inputs'.format(len(all_kbucket_file_inputs)))
         for input0 in all_kbucket_file_inputs:
             path0 = input0['path']
@@ -183,6 +185,7 @@ def createJobs(proc, argslist):
 
     # Prepare the sha1 file inputs
     if len(all_sha1_file_inputs) > 0:
+        mtlogging.sublog('Preparing sha1 file inputs')
         print('Preparing {} sha1 file inputs'.format(len(all_sha1_file_inputs)))
         for input0 in all_sha1_file_inputs:
             path0 = input0['path']
@@ -193,6 +196,7 @@ def createJobs(proc, argslist):
 
     # Prepare the local directory inputs
     if len(all_local_dir_inputs) > 0:
+        mtlogging.sublog('Preparing local directory inputs')
         print('Preparing {} local directory inputs'.format(len(all_local_dir_inputs)))
         for input0 in all_local_dir_inputs:
             path0 = input0['path']
@@ -205,6 +209,7 @@ def createJobs(proc, argslist):
 
     # Prepare the kbucket directory inputs
     if len(all_kbucket_dir_inputs) > 0:
+        mtlogging.sublog('Preparing kbucket directory inputs')
         print('Preparing {} kbucket directory inputs'.format(len(all_kbucket_dir_inputs)))
         for input0 in all_kbucket_dir_inputs:
             path0 = input0['path']
@@ -214,6 +219,7 @@ def createJobs(proc, argslist):
             input0['hash'] = hash0
 
     print('Computing output signatures...')
+    mtlogging.sublog('computing-output-signatures')
     for job_object in job_objects:
         for output_name, output0 in job_object['outputs'].items():
             output0['signature'] = _compute_mountain_job_output_signature(
@@ -237,6 +243,7 @@ def createJobs(proc, argslist):
             parameters=job_object['parameters'],
             output_name='--console-out--'
         )
+    print('.')
 
     return [MountainJob(processor=proc, job_object=job_object) for job_object in job_objects]
 
@@ -302,9 +309,9 @@ def _compute_mountain_job_output_signature(*, processor_name, processor_version,
     input_hashes=dict()
     for input_name, input0 in inputs.items():
         if input0.get('directory', False):
-            input_hashes[input_name] = local_client.computeDirHash(input0['path'])
+            input_hashes[input_name] = input0['hash']
         else:
-            input_hashes[input_name] = local_client.computeFileSha1(input0['path'])
+            input_hashes[input_name] = input0['sha1']
 
     signature_obj = dict(
         processor_name=processor_name,
