@@ -22,4 +22,5 @@ class SortingAccuracyWidget:
             plt.plot(agreements, '.')
             plt.xticks([])
         plt.ylabel('Accuracy')
+        plt.ylim(0,1)
         plt.show()

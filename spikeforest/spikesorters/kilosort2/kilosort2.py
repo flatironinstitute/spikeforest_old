@@ -39,7 +39,7 @@ class KiloSort2(mlpr.Processor):
         optional=True, default=3, description='')
     # prm_template_name=mlpr.StringParameter(optional=False,description='TODO')
     freq_min = mlpr.FloatParameter(
-        optional=True, default=300, description='Use 0 for no bandpass filtering')
+        optional=True, default=150, description='Use 0 for no bandpass filtering')
     freq_max = mlpr.FloatParameter(
         optional=True, default=6000, description='Use 0 for no bandpass filtering')
     merge_thresh = mlpr.FloatParameter(
@@ -73,10 +73,10 @@ class KiloSort2(mlpr.Processor):
             se.MdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            if os.path.exists(tmpdir):
-                shutil.rmtree(tmpdir)
+            #if os.path.exists(tmpdir):
+            #    shutil.rmtree(tmpdir)
             raise
-        shutil.rmtree(tmpdir)
+        #shutil.rmtree(tmpdir)
 
 
 def kilosort2_helper(*,
@@ -86,7 +86,7 @@ def kilosort2_helper(*,
                     adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
                     detect_threshold=5,  # Threshold for detection
                     merge_thresh=.98,  # Cluster merging threhold 0..1
-                    freq_min=300,  # Lower frequency limit for band-pass filter
+                    freq_min=150,  # Lower frequency limit for band-pass filter
                     freq_max=6000,  # Upper frequency limit for band-pass filter
                     pc_per_chan=3,  # Number of pc per channel
                     KILOSORT2_PATH=None,  # github kilosort2

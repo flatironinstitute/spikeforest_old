@@ -7,18 +7,19 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'hybrid_drift'
+group_name = 'paired_crcns'
 
 
-def prepare_hybrid_drift_studies(*, basedir):
-    study_set_name = 'hybrid_drift'
+def prepare_paired_crcns_studies(*, basedir):
+    study_set_name = 'paired'
     studies = []
     recordings = []
-    names = ['4c', '16c', '32c', '64c']
+    #names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']
+    names = ['crcns'] # exclude neuro
     for name in names:
-        study_name = 'hybrid_drift_' + name
-        print('PREPARING: '+study_name)
-        study_dir = basedir+'/hybrid_drift'
+        print('PREPARING: '+name)
+        study_name = 'paired_' + name
+        study_dir = basedir+'/paired_recordings/'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -28,20 +29,19 @@ def prepare_hybrid_drift_studies(*, basedir):
         studies.append(study0)
         dd = mt.readDir(study_dir)
         for dsname in dd['dirs']:
-            if name in dsname:
-                dsdir = '{}/{}'.format(study_dir, dsname)
-                recordings.append(dict(
-                    name=dsname,
-                    study=study_name,
-                    directory=dsdir,
-                    description='One of the recordings in the {} study'.format(
-                        study_name)
-                ))
+            dsdir = '{}/{}'.format(study_dir, dsname)
+            recordings.append(dict(
+                name=dsname,
+                study=study_name,
+                directory=dsdir,
+                description='One of the recordings in the {} study'.format(
+                    study_name)
+            ))
     return studies, recordings
 
 
 # Prepare the studies
-studies, recordings = prepare_hybrid_drift_studies(basedir=basedir)
+studies, recordings = prepare_paired_crcns_studies(basedir=basedir)
 mt.saveObject(
     object=dict(
         studies=studies,
