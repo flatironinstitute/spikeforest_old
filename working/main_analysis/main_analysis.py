@@ -112,6 +112,17 @@ def _define_sorters():
         compute_resource='gpu'
     )
 
+    sorter_ks2 = dict(
+        code='ks2',
+        name='KiloSort2',
+        processor_name='KiloSort2',
+        params=dict(
+            detect_sign=-1,
+            adjacency_radius=50
+        ),
+        compute_resource='gpu'
+    )    
+
     sorter_yass = dict(
         code='yass',
         name='Yass',
@@ -123,7 +134,7 @@ def _define_sorters():
         compute_resource='default'
     )
 
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks, sorter_ks2]
 
 
 if __name__ == "__main__":
