@@ -76,7 +76,8 @@ def write_summary(obj, indent=''):
     children = obj['children']
     children.sort(key=lambda ch: ch['elapsed_time'], reverse=True)
     for ch in children:
-        write_summary(ch, indent=indent+'|   ')
+        if ch['elapsed_time'] >= 0.01:
+            write_summary(ch, indent=indent+'|   ')
     if indent == '':
         print('============================================================================================')
         print('')

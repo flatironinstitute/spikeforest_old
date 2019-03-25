@@ -130,6 +130,11 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 job2.result = result0
             else:
                 raise Exception('Unexpected: Unable to find result for job {}'.format(i))
+
+        # save results to local cache
+        for ii, result in enumerate(results):
+            if result and (result.retcode == 0):
+                jobs2[ii].storeResultInCache(result)
             
         return [job.result for job in jobs]
 
@@ -298,7 +303,7 @@ def _set_job_result(job, result_object):
         subkey = str(job_index)
         num_tries=0
         while True:
-            print('Saving result object...', job_result_key, subkey, result_object)
+            print('Saving result object...')
             local_client.saveObject(key=job_result_key, subkey=subkey, object=result_object)
             testing = local_client.loadObject(key=job_result_key, subkey=subkey)
             if result_object and (testing is None):

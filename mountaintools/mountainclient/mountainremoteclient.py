@@ -5,7 +5,7 @@ import base64
 import os
 import requests
 import time
-
+import mtlogging
 
 class MountainRemoteClient():
     def __init__(self):
@@ -146,6 +146,7 @@ def _sha1_of_object(obj):
     return _sha1_of_string(txt)
 
 
+@mtlogging.log()
 def _http_get_json(url, verbose=None, retry_delays=None):
     if retry_delays is None:
         retry_delays = [0.2, 0.5]
@@ -172,7 +173,7 @@ def _http_get_json(url, verbose=None, retry_delays=None):
         print('Elapsed time for _http_get_json: {} {}'.format(time.time()-timer, url))
     return ret
 
-
+@mtlogging.log()
 def _http_post_file_data(url, fname, verbose=None):
     if verbose is None:
         timer = time.time()
