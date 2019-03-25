@@ -8,6 +8,7 @@ import mtlogging
 @mtlogging.log()
 def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     # Summarize the recordings
+    mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
         recordings=recordings,
         compute_resource='default',
@@ -15,11 +16,13 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     )
 
     # We will be assembling the sorting results here
+    mtlogging.sublog('sorting')
     sorting_results = []
     for sorter in sorters:
         sorting_results = sorting_results + _run_sorter(sorter=sorter, recordings=recordings, label='{} ({})'.format(sorter['name'], output_id))
 
     # Summarize the sortings
+    mtlogging.sublog('summarize-sortings')
     sorting_results = sa.summarize_sortings(
         sortings=sorting_results,
         compute_resource='default',
@@ -27,6 +30,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     )
 
     # Compare with ground truth
+    mtlogging.sublog('compare-with-truth')
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
         compute_resource='default',
@@ -34,11 +38,13 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     )
 
     # Aggregate the results
+    mtlogging.sublog('aggregate')
     aggregated_sorting_results = sa.aggregate_sorting_results(
          studies, recordings, sorting_results)
 
     # Save the output
     print('Saving the output')
+    mtlogging.sublog('save-output')
     mt.saveObject(
         key=dict(
             name='spikeforest_results'
@@ -53,6 +59,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
         )
     )
 
+    mtlogging.sublog('show-output-summary')
     for sr in aggregated_sorting_results['study_sorting_results']:
         study_name = sr['study']
         sorter_name = sr['sorter']

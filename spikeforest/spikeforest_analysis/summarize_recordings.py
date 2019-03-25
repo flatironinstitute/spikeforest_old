@@ -54,7 +54,7 @@ def summarize_recordings(recordings, compute_resource=None, label=None):
       summary['plots']=dict()
     
       result0=jobs_units_info[ii].result
-      summary['true_units_info']=mt.saveFile(path=result0.outputs['json_out'], basename='true_units_info.json')
+      summary['true_units_info']=mt.getSha1Url(path=result0.outputs['json_out'], basename='true_units_info.json')
       
       summarized_recordings[ii]['summary'] = summary
 

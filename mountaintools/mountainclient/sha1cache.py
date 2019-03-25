@@ -199,6 +199,8 @@ class Sha1Cache():
 
 
 def _compute_file_sha1(path):
+    if not os.path.exists(path):
+        return None
     if (os.path.getsize(path) > 1024*1024*100):
         print('Computing sha1 of {}'.format(path))
     BLOCKSIZE = 65536

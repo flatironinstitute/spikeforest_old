@@ -101,6 +101,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
     if compute_resource:
         print('Ensuring files are available on remote server...')
+        mtlogging.sublog('ensuring-files-remote')
         for fname in files_to_realize:
             if fname.startswith('sha1://'):
                 if local_client.findFile(path=fname):
@@ -112,15 +113,18 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
         jobs2 = [job for job in jobs if (not job.result)]
 
+        mtlogging.sublog('initializing-batch')
         CRC=ComputeResourceClient(**compute_resource)
         batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
         CRC.startBatch(batch_id=batch_id)
+        mtlogging.sublog('running-batch')
         try:
             CRC.monitorBatch(batch_id=batch_id, jobs=jobs2, label=label)
         except:
             CRC.stopBatch(batch_id=batch_id)
             raise
 
+        mtlogging.sublog('getting-batch-results')
         results = CRC.getBatchJobResults(batch_id=batch_id)
         if results is None:
             raise Exception('Unable to get batch results.')
@@ -131,6 +135,25 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             else:
                 raise Exception('Unexpected: Unable to find result for job {}'.format(i))
 
+        mtlogging.sublog('realizing-outputs')
+        # Download outputs to local computer
+        for ii, result in enumerate(results):
+            if result and (result.retcode == 0):
+                for output_name, output_path in result.outputs.items():
+                    if not local_client.realizeFile(path=output_path):
+                        print('Downloading output {} {} ...'.format(output_name, output_path))
+                        local_path = mt.realizeFile(path=output_path)
+                        if not local_path:
+                            raise Exception('Unable to realize output {} from {}'.format(output_name, output_path))
+                if not local_client.realizeFile(path=result.console_out):
+                    print('Downloading console output {} ...'.format(result.console_out, output_path))
+                    local_path = mt.realizeFile(path=result.console_out)
+                    if not local_path:
+                        raise Exception('Unable to realize console output from {}'.format(output_name, output_path))
+                
+                
+
+        mtlogging.sublog('caching-results-locally')
         # save results to local cache
         for ii, result in enumerate(results):
             if result and (result.retcode == 0):

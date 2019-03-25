@@ -340,37 +340,34 @@ class MountainJob():
             signature0 = output0['signature']
             output_path = local_client.getValue(key=signature0)
             if not output_path:
-                print('--- output not found', output_name, signature0)
                 return None
             output_paths[output_name] = output_path
         
         runtime_info_signature = self._job_object['runtime_info_signature']
         output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature)
         if not output_paths['--runtime-info--']:
-            print('--- runtime-info not found', runtime_info_signature)
             return None
 
         console_out_signature = self._job_object['console_out_signature']
         output_paths['--console-out--'] = local_client.getValue(key=console_out_signature)
         if not output_paths['--console-out--']:
-            print('--- console-out not found', console_out_signature)
             return None
     
         for output_name in output_paths.keys():
             orig_path = output_paths[output_name]
-            output_paths[output_name] = mt.getSha1Url(output_paths[output_name])
+            output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
             if not output_paths[output_name]:
-                print('--- Unable to realize output', output_name, orig_path)
+                print('Unable to realize cached output', output_name, orig_path)
                 return None
             
-        runtime_info = mt.loadObject(path=output_paths['--runtime-info--'])
+        runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
         if runtime_info is None:
-            print('--- Unable to load runtime info', output_paths['--runtime-info--'])
+            print('Unable to load cached runtime info', output_paths['--runtime-info--'])
             return None
 
-        console_out_text = mt.loadText(path=output_paths['--console-out--'])
+        console_out_text = local_client.loadText(path=output_paths['--console-out--'])
         if console_out_text is None:
-            print('--- Unable to load console out text:', output_paths['--console-out--'])
+            print('Unable to load cached console out text:', output_paths['--console-out--'])
             return None
         
         R = MountainJobResult()
@@ -384,22 +381,19 @@ class MountainJob():
 
     def _store_result_in_cache(self, result):
         for output_name, output0 in self._job_object['outputs'].items():
-            output_path = mt.getSha1Url(result.outputs[output_name])
+            output_path = local_client.getSha1Url(result.outputs[output_name])
             if output_path:
                 local_client.setValue(key=output0['signature'], value=output_path)
-                print('---- stored output', output_name, output0['signature'], output_path)
             else:
-                print('--- unable to find output file', output_name)
+                raise Exception('Unable to store output in cache', output_name, result.outputs[output_name])
 
         runtime_info_signature = self._job_object['runtime_info_signature']
         runtime_info_path = local_client.saveObject(object=result.runtime_info)
         local_client.setValue(key=runtime_info_signature, value=runtime_info_path)
-        print('---stored runtime info', runtime_info_signature, runtime_info_path)
 
         console_out_signature = self._job_object['console_out_signature']
         console_out_path = result.console_out
         local_client.setValue(key=console_out_signature, value=console_out_path)
-        print('---stored console_out', console_out_signature, console_out_path)
 
     def _copy_outputs_from_result_to_dest_paths(self, result):
         for output_name, output0 in self._job_object['outputs'].items():
@@ -413,7 +407,7 @@ class MountainJob():
             else:
                 dest_path = None
             if dest_path:
-                mt.realizeFile(result.outputs[output_name], dest_path=dest_path)
+                local_client.realizeFile(result.outputs[output_name], dest_path=dest_path)
                 result.outputs[output_name] = dest_path
 
 class MountainJobResult():
