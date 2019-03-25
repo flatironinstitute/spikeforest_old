@@ -65,11 +65,12 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             compute_resource = None
 
     if compute_resource:
-        print('Checking for cached results...')
+        mtlogging.sublog('checking-for-cached-results-prior-to-sending-to-compute-resource')
+        print('Checking for cached results prior to sending to compute resource...')
         kwargs0 = all_kwargs
         kwargs0['compute_resource'] = None
         kwargs0['cached_results_only'] = True
-        kwargs0['num_workers'] = 10
+        kwargs0['num_workers'] = 1
         kwargs0['srun_opts'] = None
         results0 = executeBatch(**kwargs0)
         all_complete = True
@@ -84,6 +85,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             print('Found {} of {} cached results'.format(num_found, len(jobs)))
         if all_complete:
             return results0
+        mtlogging.sublog(None)
 
     if compute_resource:
         for job in jobs:
@@ -133,11 +135,13 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
     # Not using compute resource, do this locally
     if not cached_results_only:
+        mtlogging.sublog('realizing-files')
         if job_index_file is None:
             print('Making sure files are available on local computer...')
             for fname in files_to_realize:
                 print('Realizing {}...'.format(fname))
                 mt.realizeFile(path=fname)
+        mtlogging.sublog(None)
 
     if srun_opts is None:
         for job_index, job in enumerate(jobs):
@@ -255,7 +259,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             results = [MountainJobResult(result_object=obj) for obj in result_objects]
             for i, job in enumerate(jobs):
                 job.result = results[i]
-    
+
     return [job.result for job in jobs]
 
 def _take_next_batch_job_index_to_run(job_index_file):
@@ -311,6 +315,7 @@ def _set_job_result(job, result_object):
                 # we are good
                 break
 
+@mtlogging.log()
 def _execute_job(job):
     local_client = MountainClient()
     halt_key = getattr(job, 'halt_key', None)

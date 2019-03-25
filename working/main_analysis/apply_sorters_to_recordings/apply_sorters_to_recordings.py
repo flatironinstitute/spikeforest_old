@@ -65,6 +65,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
             study_name, sorter_name, avg_accuracy)
         print(txt)
 
+@mtlogging.log()
 def _run_sorter(sorter, recordings, label):
     # Sort the recordings
     compute_resource0 = sorter['compute_resource']

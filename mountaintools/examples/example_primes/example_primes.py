@@ -19,7 +19,7 @@ def compute_n_primes(n):
     prime_list = [2]
     num = 3
     while len(prime_list) < n:
-        for p in prime_list:  # TODO: we only need to check up to the square root of the number
+        for p in prime_list:  # todo: we only need to check up to the square root of the number
             if num % p == 0:
                 break
         else:

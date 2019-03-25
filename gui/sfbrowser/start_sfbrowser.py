@@ -23,11 +23,14 @@ def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest results')
     parser.add_argument(
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None)
+    parser.add_argument('--collection', help='Name of the remote collection', required=False, default=None)
+    parser.add_argument('--share_id', help='ID of the remote kbucket share', required=False, default=None)
 
     args = parser.parse_args()
 
     # Configure readonly access to kbucket
-    mt.configRemoteReadonly(collection='spikeforest',share_id='spikeforest.spikeforest2')
+    if args.collection:
+        mt.configRemoteReadonly(collection=args.collection, share_id=args.share_id)
 
     APP = TheApp()
 

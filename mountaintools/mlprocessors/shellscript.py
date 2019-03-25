@@ -55,7 +55,7 @@ class ShellScript():
         self._start_time = time.time()
         self._process = subprocess.Popen(cmd)
         
-    def wait(self, timeout):
+    def wait(self, timeout=None):
         if not self.isRunning():
             return self.returnCode()
         try:

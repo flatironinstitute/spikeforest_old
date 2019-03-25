@@ -15,10 +15,10 @@ def main():
     parser = argparse.ArgumentParser(description = 'Run a SpikeForest analysis')
     parser.add_argument('--recording_group',help='Name of recording group', required=True)
     parser.add_argument('--output_id',help='ID of the output', required=True)
-    parser.add_argument('--compute_resource_default',help='Name of default compute resource', required=False, default='ccmlin008-80')
-    parser.add_argument('--compute_resource_gpu',help='Name of compute resource for gpu', required=False, default='ccmlin008-gpu')
-    parser.add_argument('--collection',help='Name of collection to connect to', required=False, default='spikeforest')
-    parser.add_argument('--share_id',help='Name of kbucket share id to connect to', required=False, default='spikeforest.spikeforest2')
+    parser.add_argument('--compute_resource_default',help='Name of default compute resource', required=False, default=None)
+    parser.add_argument('--compute_resource_gpu',help='Name of compute resource for gpu', required=False, default=None)
+    parser.add_argument('--collection',help='Name of collection to connect to', required=False, default=None)
+    parser.add_argument('--share_id',help='Name of kbucket share id to connect to', required=False, default=None)
     parser.add_argument('--sorter_codes',help='Comma-separated codes of sorters to run', required=False, default='ms4,irc,sc,yass')
     parser.add_argument('--test', help='Only run a few, and prepend test_ to the output', action='store_true')
 
@@ -30,7 +30,7 @@ def main():
         mt.login(ask_password=True)
         mt.configRemoteReadWrite(collection=args.collection,share_id=args.share_id)
 
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    # mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
 
     mlpr.configComputeResource('default', resource_name=args.compute_resource_default, collection=args.collection, share_id=args.share_id)
     mlpr.configComputeResource('gpu', resource_name=args.compute_resource_gpu, collection=args.collection, share_id=args.share_id)
@@ -41,7 +41,17 @@ def main():
     # Grab the recordings
     recording_group_name = args.recording_group
     a = mt.loadObject(
-        key=dict(name='spikeforest_recording_group', group_name=recording_group_name))
+        key=dict(name='spikeforest_recording_groups'),
+        subkey=recording_group_name
+    )
+    if a is None:
+        # revert to old method
+        a = mt.loadObject(
+            key=dict(name='spikeforest_recording_group', group_name=recording_group_name))
+        if a is not None:
+            print('WARNING! Reverting to old method of getting the recording group. Please update your recording groups!')
+    if a is None:
+        raise Exception('Unable to find data for recording group: '+recording_group_name)
 
     recordings = a['recordings']
     studies = a['studies']

@@ -3,7 +3,9 @@ from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import os
 from copy import deepcopy
+import mtlogging
 
+@mtlogging.log()
 def summarize_sortings(sortings,compute_resource,label=None):
     print('>>>>>> summarize sortings')
     # container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
