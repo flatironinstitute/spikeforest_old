@@ -1,12 +1,3 @@
-try:
-    # if we are running this outside the container
-    from spikeforest import spikeextractors as si
-except:
-    # if we are in the container
-    import spikeextractors as si
-
-# from spikeforest import spikewidgets as sw
-import json
 import time
 from PIL import Image
 import os
@@ -16,31 +7,10 @@ import mlprocessors as mlpr
 import multiprocessing
 # from matplotlib import pyplot as plt
 from .compute_units_info import ComputeUnitsInfo
-#import mtlogging
+from .computerecordinginfo import ComputeRecordingInfo
+import mtlogging
 
-_CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
-
-def _gather_summarized_recording_helper(kwargs):
-    return _gather_summarized_recording(**kwargs)
-
-def _gather_summarized_recording(recording, job_info, job_units_info):
-    # firings_true_path = recording['directory']+'/firings_true.mda'
-    summary=dict()
-    
-    result0=job_info.result
-    summary['computed_info']=mt.loadObject(path=result0.outputs['json_out'])
-    
-    summary['plots']=dict()
-
-    result0=job_units_info.result
-    summary['true_units_info']=mt.saveFile(path=result0.outputs['json_out'],basename='true_units_info.json')
-
-    rec2=deepcopy(recording)
-    rec2['summary']=summary
-    
-    return rec2
-
-#@mtlogging.log()
+@mtlogging.log()
 def summarize_recordings(recordings, compute_resource=None, label=None):
     print('>>>>>> summarize recordings')
 
@@ -75,40 +45,21 @@ def summarize_recordings(recordings, compute_resource=None, label=None):
 
     print('Gathering summarized recordings...')
 
-    pool = multiprocessing.Pool(20)
-    summarized_recordings=pool.map(_gather_summarized_recording_helper, [dict(recording=recordings[ii], job_info=jobs_info[ii], job_units_info=jobs_units_info[ii]) for ii in range(len(recordings))])
-    pool.close()
-    pool.join()
+    summarized_recordings = deepcopy(recordings)
+    for ii in range(len(recordings)):
+      summary = dict()
+
+      result0 = jobs_info[ii].result
+      summary['computed_info'] = mt.loadObject(path=result0.outputs['json_out'])
+      summary['plots']=dict()
+    
+      result0=jobs_units_info[ii].result
+      summary['true_units_info']=mt.saveFile(path=result0.outputs['json_out'], basename='true_units_info.json')
+      
+      summarized_recordings[ii]['summary'] = summary
 
     return summarized_recordings
-
-def read_json_file(fname):
-  with open(fname) as f:
-    return json.load(f)
   
-def write_json_file(fname,obj):
-  with open(fname, 'w') as f:
-    json.dump(obj, f)
-
-# A MountainLab processor for generating the summary info for a recording
-class ComputeRecordingInfo(mlpr.Processor):
-  NAME='ComputeRecordingInfo'
-  VERSION='0.1.1'
-  CONTAINER=_CONTAINER
-
-  recording_dir=mlpr.Input(directory=True,description='Recording directory')
-  channels=mlpr.IntegerListParameter(description='List of channels to use.',optional=True,default=[])
-  json_out=mlpr.Output('Info in .json file')
-    
-  def run(self):
-    ret={}
-    recording=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
-    if len(self.channels)>0:
-      recording=si.SubRecordingExtractor(parent_recording=recording,channel_ids=self.channels)
-    ret['samplerate']=recording.getSamplingFrequency()
-    ret['num_channels']=len(recording.getChannelIds())
-    ret['duration_sec']=recording.getNumFrames()/ret['samplerate']
-    write_json_file(self.json_out,ret)
 
 # def save_plot(fname,quality=40):
 #     plt.savefig(fname+'.png')

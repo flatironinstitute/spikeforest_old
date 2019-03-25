@@ -33,8 +33,8 @@ class ComputeResourceServer():
         self._srun_opts_string=optstr
 
     @mtlogging.log(name='ComputeResourceServer:start')
-    def start(self):
-        print('registering computer resource: ', self._resource_name)
+    def start(self, exit_event=None):
+        print('registering compute resource: ', self._resource_name)
         self._cairio_client.setValue(
             key=dict(name='compute_resources'),
             subkey=self._resource_name,
@@ -53,6 +53,9 @@ class ComputeResourceServer():
         self._set_console_message('Starting compute resource: {}'.format(self._resource_name))
         self._next_delay=0.25
         while True:
+            if exit_event and exit_event.is_set():
+                print('Exiting compute resource...')
+                return
             batch_statuses=self._cairio_client.getValue(key=statuses_key,subkey='-',parse_json=True)
             if (batch_statuses is None):
                 self._set_console_message('Unable to read batch statuses.')
@@ -151,8 +154,7 @@ class ComputeResourceServer():
         job_objects = batch['jobs']
         jobs = []
         for job_object in job_objects:
-            job = MountainJob()
-            job.initFromObject(job_object)
+            job = MountainJob(job_object=job_object)
             jobs.append(job)
         
         self._check_batch_halt(batch_id)
@@ -239,7 +241,7 @@ def _get_halt_key(batch_id):
 
 def _monitor_job_statuses(batch_id, local_client, remote_client, batch_status_key):
     job_status_key=_get_job_status_key(batch_id) 
-    # job_result_key=_get_job_result_key(batch_id) 
+    job_result_key=_get_job_result_key(batch_id) 
     halt_key=_get_halt_key(batch_id)
     
     last_status_obj = dict()
@@ -247,11 +249,22 @@ def _monitor_job_statuses(batch_id, local_client, remote_client, batch_status_ke
         batch_status = local_client.getValue(key=batch_status_key,subkey=batch_id)
         if batch_status != 'running':
             print('Stopping job monitor because batch status is: '+batch_status)
+            return
         status_obj = local_client.getValue(key=job_status_key,subkey='-',parse_json=True)
         if status_obj is not None:
+            job_indices_changed = []
             for job_index, status in status_obj.items():
                 if status_obj[job_index] != last_status_obj.get(job_index,None):
-                    remote_client.setValue(key=job_status_key, subkey=str(job_index), value=status)
+                    job_indices_changed.append(job_index)
+            for job_index in job_indices_changed:
+                remote_client.setValue(key=job_status_key, subkey=str(job_index), value=status)
+            for job_index in job_indices_changed:
+                result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
+                if result0:
+                    print('Uplading result for job {}'.format(job_index))
+                    remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
+                    if 'console_out' in result0:
+                        remote_client.saveFile(path=result0['console_out'])
             last_status_obj = status_obj
 
         halt_val = remote_client.getValue(key=halt_key)

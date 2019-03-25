@@ -6,6 +6,7 @@ import shutil
 import random
 import string
 import multiprocessing
+import mtlogging
 #from . import sorters as sorters
 
 from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort, KiloSort2, MountainSort4TestError
@@ -179,57 +180,7 @@ Processors=dict(
     MountainSort4TestError=(MountainSort4TestError, 'default')
 )
 
-def _create_sorting_job_for_recording_helper(kwargs):
-    return _create_sorting_job_for_recording(**kwargs)
-
-def _create_sorting_job_for_recording(recording, sorter, job_timeout):
-    print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
-
-    sorting_params=sorter['params']
-    processor_name=sorter['processor_name']
-    SS=Processors[processor_name][0]
-    SS_container=Processors[processor_name][1]
-
-    dsdir=recording['directory']
-    job=SS.createJob(
-        _container=SS_container,
-        recording_dir=dsdir,
-        channels=recording.get('channels',[]),
-        firings_out=dict(ext='.mda',upload=True),
-        _timeout=job_timeout,
-        _label='Sort recording {} using {}'.format(recording.get('name', ''), sorter.get('name', '')),
-        **sorting_params
-    )
-    job.addFilesToRealize(dsdir+'/raw.mda')
-    return job
-
-def _gather_sorting_result_for_recording_helper(kwargs):
-    return _gather_sorting_result_for_recording(**kwargs)
-
-def _gather_sorting_result_for_recording(recording, sorter, sorting_job):
-    firings_true_path=recording['directory']+'/firings_true.mda'
-
-    result0=sorting_job.result
-    outputs0=result0.outputs
-    console_out=(mt.loadText(path=result0.console_out) or '')
-
-    processor_name=sorter['processor_name']
-    SS=Processors[processor_name][0]
-    SS_container=Processors[processor_name][1]
-
-    result=dict(
-        recording=recording,
-        sorter=sorter,
-        firings_true=firings_true_path,
-        processor_name=SS.NAME,
-        processor_version=SS.VERSION,
-        execution_stats=result0.runtime_info,
-        console_out=mt.saveText(text=console_out,basename='console_out.txt'),
-        container=SS_container,
-        firings=outputs0.get('firings_out', None)
-    )
-    return result
-        
+@mtlogging.log()
 def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False, job_timeout=60*20, label=None):
     print('>>>>>> sort recordings')
     sorting_params=sorter['params']
@@ -251,33 +202,46 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,d
         
     print('>>>>>>>>>>> Sorting recordings using {}'.format(processor_name))
 
-    pool = multiprocessing.Pool(20)
-    sorting_jobs=pool.map(_create_sorting_job_for_recording_helper, [dict(recording=recording, sorter=sorter, job_timeout=job_timeout) for recording in recordings])
-    pool.close()
-    pool.join()
+    # pool = multiprocessing.Pool(20)
+    # sorting_jobs=pool.map(_create_sorting_job_for_recording_helper, [dict(recording=recording, sorter=sorter, job_timeout=job_timeout) for recording in recordings])
+    # pool.close()
+    # pool.join()
 
-    # sorting_jobs=[]
-    # for recording in recordings:
-    #     print('Creating sorting job for recording: {}/{} ({})'.format(recording.get('study',''),recording.get('name',''),sorter['processor_name']))
-    #     dsdir=recording['directory']
-    #     job=SS.createJob(
-    #         _container=SS_container,
-    #         recording_dir=dsdir,
-    #         channels=recording.get('channels',[]),
-    #         firings_out=dict(ext='.mda',upload=True),
-    #         **sorting_params
-    #     )
-    #     sorting_jobs.append(job)
+    sorting_params=sorter['params']
+    processor_name=sorter['processor_name']
+
+    sorting_jobs=SS.createJobs([
+        dict(
+            _container=SS_container,
+            _timeout=job_timeout,
+            _label='Sort recording {} using {}'.format(recording.get('name', ''), sorter.get('name', '')),
+            _additional_files_to_realize=[recording['directory']+'/raw.mda'],
+            recording_dir=recording['directory'],
+            channels=recording.get('channels',[]),
+            firings_out=dict(ext='.mda',upload=True),
+            **sorting_params
+        )
+        for recording in recordings
+    ])
 
     label=label or 'Sort recordings using {}'.format(processor_name)
-    mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
+    sorting_job_results = mlpr.executeBatch(jobs=sorting_jobs,label=label,compute_resource=compute_resource,num_workers=num_workers)
     
     print('Gathering sorting results...')
-
-    pool = multiprocessing.Pool(20)
-    sorting_results=pool.map(_gather_sorting_result_for_recording_helper, [dict(recording=recordings[ii], sorting_job=sorting_jobs[ii], sorter=sorter) for ii in range(len(recordings))])
-    pool.close()
-    pool.join()
+    sorting_results = [
+        dict(
+            recording=recording,
+            sorter=sorter,
+            firings_true=recording['directory']+'/firings_true.mda',
+            processor_name=SS.NAME,
+            processor_version=SS.VERSION,
+            execution_stats=sorting_job_results[ii].runtime_info,
+            console_out=sorting_job_results[ii].console_out,
+            container=SS_container,
+            firings=(sorting_job_results[ii].outputs or dict()).get('firings_out', None)
+        )
+        for ii, recording in enumerate(recordings)
+    ]
 
     return sorting_results
     
