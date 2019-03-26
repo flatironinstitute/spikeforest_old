@@ -6,6 +6,7 @@ from .mountainjob import MountainJob
 import json
 import hashlib
 import inspect
+import multiprocessing
 
 local_client = MountainClient()
 
@@ -165,58 +166,41 @@ def createJobs(proc, argslist):
     if len(all_local_file_inputs) > 0:
         mtlogging.sublog('Preparing local file inputs')
         print('Preparing {} local file inputs'.format(len(all_local_file_inputs)))
-        for input0 in all_local_file_inputs:
-            path0 = input0['path']
-            if not os.path.exists(path0):
-                raise Exception('Input file does not exists: {}'.format(path0))
-            sha1 = local_client.computeFileSha1(path0)
-            input0['sha1'] = sha1
+        sha1s = _compute_sha1s_for_local_file_inputs(all_local_file_inputs)
+        for ii in range(len(all_local_file_inputs)):
+            all_local_file_inputs[ii]['sha1'] = sha1s[ii]
 
     # Prepare the kbucket file inputs
     if len(all_kbucket_file_inputs) > 0:
         mtlogging.sublog('Preparing kbucket file inputs')
         print('Preparing {} kbucket file inputs'.format(len(all_kbucket_file_inputs)))
-        for input0 in all_kbucket_file_inputs:
-            path0 = input0['path']
-            sha1 = local_client.computeFileSha1(path0)
-            if not sha1:
-                raise Exception('Unable to find input: {}'.format(path0))
-            input0['sha1'] = sha1
+        sha1s = _compute_sha1s_for_kbucket_file_inputs(all_kbucket_file_inputs)
+        for ii in range(len(all_kbucket_file_inputs)):
+            all_kbucket_file_inputs[ii]['sha1'] = sha1s[ii]
 
     # Prepare the sha1 file inputs
     if len(all_sha1_file_inputs) > 0:
         mtlogging.sublog('Preparing sha1 file inputs')
         print('Preparing {} sha1 file inputs'.format(len(all_sha1_file_inputs)))
-        for input0 in all_sha1_file_inputs:
-            path0 = input0['path']
-            sha1 = local_client.computeFileSha1(path0)
-            if not sha1:
-                raise Exception('Unable to find input: {}'.format(path0))
-            input0['sha1'] = sha1
+        sha1s = _compute_sha1s_for_sha1_file_inputs(all_sha1_file_inputs)
+        for ii in range(len(all_sha1_file_inputs)):
+            all_sha1_file_inputs[ii]['sha1'] = sha1s[ii]
 
     # Prepare the local directory inputs
     if len(all_local_dir_inputs) > 0:
         mtlogging.sublog('Preparing local directory inputs')
         print('Preparing {} local directory inputs'.format(len(all_local_dir_inputs)))
-        for input0 in all_local_dir_inputs:
-            path0 = input0['path']
-            if not os.path.isdir(path0):
-                raise Exception('Input directory not found: {}'.format(path0))
-            hash0 = local_client.computeDirHash(path0)
-            if not hash0:
-                raise Exception('Unable to compute hash of directory: {}'.format(path0))
-            input0['hash'] = hash0
+        hashes = _compute_hashes_for_local_dir_inputs(all_local_dir_inputs)
+        for ii in range(len(all_local_dir_inputs)):
+            all_local_dir_inputs[ii]['hash'] = hashes[ii]
 
     # Prepare the kbucket directory inputs
     if len(all_kbucket_dir_inputs) > 0:
         mtlogging.sublog('Preparing kbucket directory inputs')
         print('Preparing {} kbucket directory inputs'.format(len(all_kbucket_dir_inputs)))
-        for input0 in all_kbucket_dir_inputs:
-            path0 = input0['path']
-            hash0 = local_client.computeDirHash(path0)
-            if not hash0:
-                raise Exception('Unable to compute hash of kbucket directory: {}'.format(path0))
-            input0['hash'] = hash0
+        hashes = _compute_hashes_for_kbucket_dir_inputs(all_kbucket_dir_inputs)
+        for ii in range(len(all_kbucket_dir_inputs)):
+            all_kbucket_dir_inputs[ii]['hash'] = hashes[ii]
 
     print('Computing output signatures...')
     mtlogging.sublog('computing-output-signatures')
@@ -333,3 +317,89 @@ def _file_exists_or_is_sha1_url(fname):
     if local_client.findFile(path=fname):
         return True
     return False
+
+@mtlogging.log()
+def _compute_sha1s_for_local_file_inputs(inputs):
+    # do not parallelize if small number
+    if len(inputs) <= 4:
+        return [_compute_sha1_for_local_file_input(input0) for input0 in inputs]
+    pool = multiprocessing.Pool(10)
+    ret = pool.map(_compute_sha1_for_local_file_input, inputs)
+    pool.close()
+    pool.join()
+    return ret
+
+def _compute_sha1_for_local_file_input(input0):
+    path0 = input0['path']
+    if not os.path.exists(path0):
+        raise Exception('Input file does not exists: {}'.format(path0))
+    sha1 = local_client.computeFileSha1(path0)
+    return sha1
+
+@mtlogging.log()
+def _compute_sha1s_for_kbucket_file_inputs(inputs):
+    # do not parallelize if small number
+    if len(inputs) <= 4:
+        return [_compute_sha1_for_kbucket_file_input(input0) for input0 in inputs]
+    pool = multiprocessing.Pool(10)
+    ret = pool.map(_compute_sha1_for_kbucket_file_input, inputs)
+    pool.close()
+    pool.join()
+    return ret
+
+def _compute_sha1_for_kbucket_file_input(input0):
+    path0 = input0['path']
+    sha1 = local_client.computeFileSha1(path0)
+    if not sha1:
+        raise Exception('Unable to find input: {}'.format(path0))
+    return sha1
+
+@mtlogging.log()
+def _compute_sha1s_for_sha1_file_inputs(inputs):
+    # no need to parallelize -- fast enough
+    ret = []
+    for input0 in inputs:
+        path0 = input0['path']
+        sha1 = local_client.computeFileSha1(path0)
+        if not sha1:
+            raise Exception('Unable to find input: {}'.format(path0))
+        ret.append(sha1)
+    return ret
+
+@mtlogging.log()
+def _compute_hashes_for_local_dir_inputs(inputs):
+    # do not parallelize if small number
+    if len(inputs) <= 4:
+        return [_compute_hash_for_local_dir_input(input0) for input0 in inputs]
+    pool = multiprocessing.Pool(10)
+    ret = pool.map(_compute_hash_for_local_dir_input, inputs)
+    pool.close()
+    pool.join()
+    return ret
+
+def _compute_hash_for_local_dir_input(input0):
+    path0 = input0['path']
+    if not os.path.isdir(path0):
+        raise Exception('Input directory not found: {}'.format(path0))
+    hash0 = local_client.computeDirHash(path0)
+    if not hash0:
+        raise Exception('Unable to compute hash of directory: {}'.format(path0))
+    return hash0
+
+@mtlogging.log()
+def _compute_hashes_for_kbucket_dir_inputs(inputs):
+    # do not parallelize if small number
+    if len(inputs) <= 4:
+        return [_compute_hash_for_kbucket_dir_input(input0) for input0 in inputs]
+    pool = multiprocessing.Pool(10)
+    ret = pool.map(_compute_hash_for_kbucket_dir_input, inputs)
+    pool.close()
+    pool.join()
+    return ret
+
+def _compute_hash_for_kbucket_dir_input(input0):
+    path0 = input0['path']
+    hash0 = local_client.computeDirHash(path0)
+    if not hash0:
+        raise Exception('Unable to compute hash of kbucket directory: {}'.format(path0))
+    return hash0
