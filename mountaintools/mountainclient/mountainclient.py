@@ -1358,12 +1358,13 @@ class MountainClientLocal():
         else:
             database_path = self.localDatabasePath()
         path=os.path.join(database_path, keyhash[0:2], keyhash[2:4])
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except:
-                if not os.path.exists(path):
-                    raise Exception('Unexpected problem. Unable to create directory: '+path)
+        if _create:
+            if not os.path.exists(path):
+                try:
+                    os.makedirs(path)
+                except:
+                    if not os.path.exists(path):
+                        raise Exception('Unexpected problem. Unable to create directory: '+path)
         return os.path.join(path, keyhash)
 
     def _get_subkey_file_path_for_keyhash(self, keyhash, *, _create, _db_path=None):
@@ -1372,12 +1373,13 @@ class MountainClientLocal():
         else:
             database_path = self.localDatabasePath()
         path=os.path.join(database_path, keyhash[0:2], keyhash[2:4], keyhash+'.dir')
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except:
-                if not os.path.exists(path):
-                    raise Exception('Unexpected problem. Unable to create directory: '+path)
+        if _create:
+            if not os.path.exists(path):
+                try:
+                    os.makedirs(path)
+                except:
+                    if not os.path.exists(path):
+                        raise Exception('Unexpected problem. Unable to create directory: '+path)
         return path
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None):
