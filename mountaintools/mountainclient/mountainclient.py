@@ -26,6 +26,7 @@ if os.path.exists(env_path):
     load_dotenv(dotenv_path=env_path,verbose=True)
 
 _global_kbucket_mem_sha1_cache = dict()
+_global_kbucket_mem_dir_hash_cache = dict()
 class MountainClient():
     """
     MountainClient is a python client for accessing local and remote mountain
@@ -761,8 +762,13 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeDirHash')
     def computeDirHash(self, path):
+        if path in _global_kbucket_mem_dir_hash_cache:
+            return _global_kbucket_mem_dir_hash_cache[path]
         dd = self.readDir(path=path, recursive=True, include_sha1=True)
-        return _sha1_of_object(dd)
+        ret = _sha1_of_object(dd)
+        if ret:
+            _global_kbucket_mem_dir_hash_cache[path] = ret
+        return ret
 
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
