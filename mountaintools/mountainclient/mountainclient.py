@@ -742,6 +742,10 @@ class MountainClient():
     @mtlogging.log(name='MountainClient:readDir')
     def readDir(self, path, recursive=False, include_sha1=True):
         if path.startswith('kbucket://'):
+            path_local = self._local_db._find_file_in_local_kbucket_share(path, directory=True)
+            if path_local is not None:
+                return self.readDir(path=path_local, recursive=recursive, include_sha1=include_sha1)
+
             list0 = path.split('/')
             share_id = list0[2]
             path0 = '/'.join(list0[3:])
@@ -1431,14 +1435,18 @@ class MountainClientLocal():
                 else:
                     print('WARNING: Parsing {}: No such directory: {}'.format(local_kbucket_shares_fname, path0))
 
-    def _find_file_in_local_kbucket_share(self, path):
+    def _find_file_in_local_kbucket_share(self, path, directory=False):
         list0 = path.split('/')
         share_id = list0[2]
         path0 = '/'.join(list0[3:])
         if share_id in self._local_kbucket_shares:
             fname = os.path.join(self._local_kbucket_shares[share_id]['path'], path0)
-            if os.path.exists(fname):
-                return fname
+            if directory:
+                if os.path.isdir(fname):
+                    return fname
+            else:
+                if os.path.exists(fname):
+                    return fname
         return None
 
     def _get_db_path_for_keyhash(self, keyhash):
