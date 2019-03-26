@@ -818,6 +818,9 @@ class MountainClient():
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
+    def alternateLocalCacheDirs(self):
+        return self._local_db.alternateLocalCacheDirs()
+
     @mtlogging.log(name='MountainClient:findFileBySha1')
     def findFileBySha1(self, *, sha1, share_id=None):
         if share_id and ('.' in share_id):
@@ -1314,6 +1317,9 @@ class MountainClientLocal():
     def localCacheDir(self):
         return self._sha1_cache.directory()
 
+    def alternateLocalCacheDirs(self):
+        return self._sha1_cache.alternateDirectories()
+
     def localDatabasePath(self):
         return _get_default_local_db_path()
 
@@ -1630,7 +1636,12 @@ def _get_default_local_db_path():
     default_dirname = dir_new
     dirname=os.environ.get('MOUNTAIN_DIR',os.environ.get('CAIRIO_DIR', default_dirname))
     if not os.path.exists(dirname):
-        os.mkdir(dirname)
+        try:
+            os.mkdir(dirname)
+        except:
+            # maybe it was created in a different process
+            if not os.path.exists(dirname):
+                raise
     ret = dirname+'/database'
     return ret
 
