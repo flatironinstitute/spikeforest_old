@@ -41,8 +41,6 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
     if num_workers is not None:
         if compute_resource is not None:
             raise Exception('Cannot specify both num_workers and compute_resource in executeBatch.')
-        if srun_opts is not None:
-            raise Exception('Cannot specify both num_workers and srun_opts in executeBatch.', num_workers, srun_opts)
         if job_index_file is not None:
             raise Exception('Cannot specify both num_workers and job_index_file in executeBatch.')
     if compute_resource is not None:
@@ -149,10 +147,10 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                         if not local_path:
                             raise Exception('Unable to realize output {} from {}'.format(output_name, output_path))
                 if not local_client.realizeFile(path=result.console_out):
-                    print('Downloading console output {} ...'.format(result.console_out, output_path))
+                    print('Downloading console output {}...'.format(result.console_out))
                     local_path = mt.realizeFile(path=result.console_out)
                     if not local_path:
-                        raise Exception('Unable to realize console output from {}'.format(output_name, output_path))
+                        raise Exception('Unable to realize console output from {}'.format(output_name))
                 
                 
 
@@ -252,28 +250,41 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             srun_py_script.substitute('{job_index_file}', job_index_file)
             srun_py_script.write()
 
-            if srun_opts is not 'fake':
-                srun_sh_script = ShellScript("""
-                    #!/bin/bash
-                    set -e
+            srun_opts_adjusted, num_workers_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, num_workers, len(jobs2))
 
-                    srun {srun_opts} {srun_py_script}
-                """, keep_temp_files=keep_temp_files)
-            else:
-                srun_sh_script = ShellScript("""
-                    #!/bin/bash
-                    set -e
+            print('USING SRUN OPTS: {}'.format(srun_opts_adjusted))
+            print('USING NUM SIMULTANEOUS SRUN CALLS: {}'.format(num_workers_adjusted))
 
-                    {srun_py_script}
-                """, keep_temp_files=keep_temp_files)
-            srun_opts_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, len(jobs2))
-            srun_sh_script.substitute('{srun_opts}', srun_opts_adjusted)
-            srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
-            srun_sh_script.start()
-            while srun_sh_script.isRunning():
-                srun_sh_script.wait(5)
-            if srun_sh_script.returnCode() != 0:
-                raise Exception('Non-zero return code for srun script.')
+            srun_sh_scripts = []
+            for ii in range(num_workers_adjusted):
+                if srun_opts is not 'fake':
+                    srun_sh_script = ShellScript("""
+                        #!/bin/bash
+                        set -e
+
+                        srun {srun_opts} {srun_py_script}
+                    """, keep_temp_files=keep_temp_files)
+                else:
+                    srun_sh_script = ShellScript("""
+                        #!/bin/bash
+                        set -e
+
+                        {srun_py_script}
+                    """, keep_temp_files=keep_temp_files)
+                srun_sh_script.substitute('{srun_opts}', srun_opts_adjusted)
+                srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
+                srun_sh_scripts.append(srun_sh_script)
+            
+            for srun_sh_script in srun_sh_scripts:
+                srun_sh_script.start()
+            for srun_sh_script in srun_sh_scripts:
+                while srun_sh_script.isRunning():
+                    srun_sh_script.wait(5)
+                if srun_sh_script.returnCode() != 0:
+                    print('Non-zero return code for srun script. Stopping scripts...')
+                    for srun_sh_script in srun_sh_scripts:
+                        srun_sh_script.stop()
+                    raise Exception('Non-zero return code for srun script.')
             # print('----- sleeping 4 seconds... in future, maybe we should not need to do this.')
             # time.sleep(4)
             # print('--------------------------------------------------------------------------')
@@ -379,13 +390,18 @@ def _execute_job(job):
 
     return result
 
-def _adjust_srun_opts_for_num_jobs(srun_opts, num_jobs):
+def _adjust_srun_opts_for_num_jobs(srun_opts, num_workers, num_jobs):
     vals = srun_opts.split()
     for i in range(len(vals)):
         if vals[i] == '-n' and (i+1<len(vals)):
-            if int(vals[i+1]) > num_jobs:
-                vals[i+1] = str(num_jobs)
-    return ' '.join(vals)
+            nval = int(vals[i+1])
+            if num_jobs <= nval:
+                nval = num_jobs
+                num_workers = 1
+            elif num_jobs <= nval * (num_workers-1):
+                num_workers = int(num_jobs/nval) + 1
+            vals[i+1] = str(nval)
+    return ' '.join(vals), num_workers
 
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
