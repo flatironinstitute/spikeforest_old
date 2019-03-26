@@ -7,7 +7,8 @@ import mtlogging
 
 @mtlogging.log()
 def summarize_sortings(sortings,compute_resource,label=None):
-    print('>>>>>> summarize sortings')
+    print('')
+    print('>>>>>> {}'.format(label or 'summarize sortings'))
     # container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
     # jobs_autocor_plot=[]
     for sorting in sortings:
