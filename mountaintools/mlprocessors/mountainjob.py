@@ -89,8 +89,9 @@ class MountainJob():
         keep_temp_files = self._job_object['keep_temp_files']
         job_timeout = self._job_object.get('timeout', None)
         label = self._job_object.get('label', '')
+        ignore_local_cache = (os.environ.get('MLPROCESSORS_IGNORE_LOCAL_CACHE', 'FALSE') == 'TRUE')
 
-        if (use_cache) and (not force_run):
+        if (use_cache) and (not force_run) and (not ignore_local_cache):
             result = self._find_result_in_cache()
             if result:
                 self._copy_outputs_from_result_to_dest_paths(result)

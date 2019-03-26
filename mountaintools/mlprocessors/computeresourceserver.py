@@ -261,7 +261,7 @@ def _monitor_job_statuses(batch_id, local_client, remote_client, batch_status_ke
             for job_index in job_indices_changed:
                 result0 = local_client.loadObject(key=job_result_key, subkey=str(job_index))
                 if result0:
-                    print('Uplading result for job {}'.format(job_index))
+                    print('Uploading result for job {}'.format(job_index))
                     remote_client.saveObject(key=job_result_key, subkey=str(job_index), object=result0)
                     if 'console_out' in result0:
                         remote_client.saveFile(path=result0['console_out'])

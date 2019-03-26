@@ -64,9 +64,13 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         if compute_resource['resource_name'] is None:
             compute_resource = None
 
-    if compute_resource:
-        mtlogging.sublog('checking-for-cached-results-prior-to-sending-to-compute-resource')
-        print('Checking for cached results prior to sending to compute resource...')
+    if compute_resource or srun_opts:
+        if compute_resource:
+            mtlogging.sublog('checking-for-cached-results-prior-to-sending-to-compute-resource')
+            print('Checking for cached results prior to sending to compute resource...')
+        elif srun_opts:
+            mtlogging.sublog('checking-for-cached-results-prior-to-using-srun')
+            print('Checking for cached results prior to using srun...')
         kwargs0 = all_kwargs
         kwargs0['compute_resource'] = None
         kwargs0['cached_results_only'] = True
@@ -87,14 +91,15 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             return results0
         mtlogging.sublog(None)
 
+    jobs2 = [job for job in jobs if (not job.result)]
+
     if compute_resource:
-        for job in jobs:
+        for job in jobs2:
             job.useRemoteUrlsForInputFiles()
 
     files_to_realize = []
-    for job in jobs:
-        if not job.result:
-            files_to_realize.extend(job.getFilesToRealize())
+    for job in jobs2:
+        files_to_realize.extend(job.getFilesToRealize())
     files_to_realize = list(set(files_to_realize))
 
     local_client = MountainClient()
@@ -110,8 +115,6 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 pass
             else:
                 mt.saveFile(path=fname)
-
-        jobs2 = [job for job in jobs if (not job.result)]
 
         mtlogging.sublog('initializing-batch')
         CRC=ComputeResourceClient(**compute_resource)
@@ -172,7 +175,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         mtlogging.sublog(None)
 
     if srun_opts is None:
-        for job_index, job in enumerate(jobs):
+        for job_index, job in enumerate(jobs2):
             setattr(job, 'halt_key', halt_key)
             setattr(job, 'job_status_key', job_status_key)
             setattr(job, 'job_index', job_index)
@@ -181,32 +184,32 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
         if num_workers is not None:
             pool = multiprocessing.Pool(num_workers)
-            results = pool.map(_execute_job, jobs)
+            results2 = pool.map(_execute_job, jobs2)
             pool.close()
             pool.join()
         else:
-            results = []
+            results2 = []
             if job_index_file is None:
-                for job in jobs:
-                    results.append(_execute_job(job))
+                for job in jobs2:
+                    results2.append(_execute_job(job))
             else:
                 while True:
                     job_index = _take_next_batch_job_index_to_run(job_index_file)
-                    if job_index < len(jobs):
+                    if job_index < len(jobs2):
                         print('Executing job {}'.format(job_index))
-                        _execute_job(jobs[job_index])
+                        _execute_job(jobs2[job_index])
                     else:
                         break
                 return None
                     
-        for i, job in enumerate(jobs):
-            job.result = results[i]
+        for i, job in enumerate(jobs2):
+            job.result = results2[i]
     else:
         # using srun
         keep_temp_files = True
         with TemporaryDirectory(remove=(not keep_temp_files)) as temp_path:
             local_client = MountainClient()
-            job_objects = [job.getObject() for job in jobs]
+            job_objects = [job.getObject() for job in jobs2]
             jobs_path=os.path.join(temp_path, 'jobs.json')
             job_index_file=os.path.join(temp_path, 'job_index.txt')
             with open(job_index_file, 'w') as f:
@@ -263,7 +266,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
                     {srun_py_script}
                 """, keep_temp_files=keep_temp_files)
-            srun_opts_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, len(jobs))
+            srun_opts_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, len(jobs2))
             srun_sh_script.substitute('{srun_opts}', srun_opts_adjusted)
             srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
             srun_sh_script.start()
@@ -275,7 +278,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             # time.sleep(4)
             # print('--------------------------------------------------------------------------')
             result_objects=[]
-            for ii, job in enumerate(jobs):
+            for ii, job in enumerate(jobs2):
                 print('Loading result object...', job_result_key, str(ii))
                 num_tries = 0
                 while True:
@@ -293,9 +296,9 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                         print('Loaded result object...', job_result_key, str(ii))
                         break
                 result_objects.append(result_object)
-            results = [MountainJobResult(result_object=obj) for obj in result_objects]
-            for i, job in enumerate(jobs):
-                job.result = results[i]
+            results2 = [MountainJobResult(result_object=obj) for obj in result_objects]
+            for i, job in enumerate(jobs2):
+                job.result = results2[i]
 
     return [job.result for job in jobs]
 
