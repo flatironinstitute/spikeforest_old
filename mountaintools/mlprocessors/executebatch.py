@@ -399,7 +399,7 @@ def _adjust_srun_opts_for_num_jobs(srun_opts, num_workers, num_jobs):
                 nval = num_jobs
                 num_workers = 1
             elif num_jobs <= nval * (num_workers-1):
-                num_workers = int(num_jobs/nval) + 1
+                num_workers = int((num_jobs-1)/nval) + 1
             vals[i+1] = str(nval)
     return ' '.join(vals), num_workers
 
