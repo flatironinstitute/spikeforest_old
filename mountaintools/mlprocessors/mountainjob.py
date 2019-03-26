@@ -204,20 +204,18 @@ class MountainJob():
                         container = mt.realizeFile(container)
                         if not container:
                             raise Exception('Unable to realize container file: {}'.format(container_orig))
-                        singularity_opts = _get_singularity_opts()
+                        singularity_opts, env_vars = _get_singularity_opts_and_env_vars()
                         singularity_opts.append('-B {}:{}'.format(temp_path, '/run_in_container'))
                         singularity_opts.append('-B {}:{}'.format(tmp_output_path, '/processor_outputs'))
                         source_path=os.path.dirname(os.path.realpath(__file__))
                         singularity_opts.append('-B {}:/python/mountaintools'.format(os.path.abspath(os.path.join(source_path, '..'))))
                         for tobind in inputs_to_bind:
                             singularity_opts.append('-B {}:{}'.format(tobind[0], tobind[1]))
-                        env_vars = []
                         environment_variables = self._job_object.get('environment_variables', [])
                         for v in environment_variables:
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
                         env_vars.append('PYTHONPATH=/python/mountaintools')
                         
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
@@ -508,14 +506,25 @@ def _code_generate_value(val):
     else:
         return val
 
-def _get_singularity_opts():
+def _get_singularity_opts_and_env_vars():
     singularity_opts = []
     kbucket_cache_dir = local_client.localCacheDir()
+    alternate_kbucket_cache_dirs = local_client.alternateLocalCacheDirs()
+
+    env_vars = []
+
     singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir, '/sha1-cache'))
+    env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
+    alt_dirs_in_container = []
+    for ii, alt_cache_dir in enumerate(alternate_kbucket_cache_dirs):
+        dir_in_container = '/sha1-cache-alt-{}'.format(ii)
+        singularity_opts.append('-B {}:{}'.format(alt_cache_dir, dir_in_container))
+        alt_dirs_in_container.append(dir_in_container)
+    env_vars.append('KBUCKET_CACHE_DIR_ALT={}'.format(':'.join(alt_dirs_in_container)))
     singularity_opts.append('-B /tmp:/tmp')
     singularity_opts.append('--contain')
     singularity_opts.append('-e')
-    return singularity_opts
+    return singularity_opts, env_vars
 
 def _read_text_file(fname):
     with open(fname) as f:
