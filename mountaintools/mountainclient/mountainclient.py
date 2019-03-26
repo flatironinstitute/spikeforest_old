@@ -780,6 +780,9 @@ class MountainClient():
         #     print('WARNING: unexpected form of sha1-cache kbucket url: {}'.format(path))
 
         if path.startswith('kbucket://'):
+            path_local = self._local_db._find_file_in_local_kbucket_share(path)
+            if path_local:
+                return self.computeFileSha1(path=path_local)
             sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
             return sha1
         else:
@@ -1534,6 +1537,7 @@ class MountainClientLocal():
         return self._get_kbucket_file_info(path=path)
 
     def _get_kbucket_file_info(self, *, path):
+        local_path = self._get_
         list0 = path.split('/')
         kbshare_id = list0[2]
         path0 = '/'.join(list0[3:])
