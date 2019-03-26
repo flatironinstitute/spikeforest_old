@@ -12,7 +12,8 @@ import mtlogging
 
 @mtlogging.log()
 def summarize_recordings(recordings, compute_resource=None, label=None):
-    print('>>>>>> summarize recordings')
+    print('')
+    print('>>>>>> {}'.format(label or 'summarize recordings'))
 
     jobs_info = ComputeRecordingInfo.createJobs([
         dict(

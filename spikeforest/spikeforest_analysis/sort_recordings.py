@@ -182,7 +182,8 @@ Processors=dict(
 
 @mtlogging.log()
 def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,disable_container=False, job_timeout=60*20, label=None):
-    print('>>>>>> sort recordings')
+    print('')
+    print('>>>>>> {}'.format(label or 'sort recordings'))
     sorting_params=sorter['params']
     processor_name=sorter['processor_name']
     if processor_name in Processors:

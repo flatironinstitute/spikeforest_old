@@ -33,7 +33,8 @@ def _create_job_for_sorting(sorting, container):
 
 @mtlogging.log()
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None):
-    print('>>>>>> compare sortings with truth')
+    print('')
+    print('>>>>>> {}'.format(label or 'compare sortings with truth'))
     container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
     sortings_out = deepcopy(sortings)
