@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+module load matlab
+
 MLPROCESSORS_FORCE_RUN=FALSE
 
 export NUM_WORKERS=2

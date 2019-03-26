@@ -1402,6 +1402,7 @@ class MountainClientLocal():
         ret_path = 'sha1://{}/{}'.format(sha1, basename)
         return ret_path
 
+    @mtlogging.log(name='MountainClientLocal:computeFileSha1')
     def computeFileSha1(self, path):
         return self._sha1_cache.computeFileSha1(path=path)
 
@@ -1537,7 +1538,6 @@ class MountainClientLocal():
         return self._get_kbucket_file_info(path=path)
 
     def _get_kbucket_file_info(self, *, path):
-        local_path = self._get_
         list0 = path.split('/')
         kbshare_id = list0[2]
         path0 = '/'.join(list0[3:])
