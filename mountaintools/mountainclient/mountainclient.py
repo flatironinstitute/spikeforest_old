@@ -25,6 +25,7 @@ if os.path.exists(env_path):
         raise Exception('Unable to import dotenv. Use pip install python-dotenv')
     load_dotenv(dotenv_path=env_path,verbose=True)
 
+_global_kbucket_mem_sha1_cache = dict()
 class MountainClient():
     """
     MountainClient is a python client for accessing local and remote mountain
@@ -780,10 +781,15 @@ class MountainClient():
         #     print('WARNING: unexpected form of sha1-cache kbucket url: {}'.format(path))
 
         if path.startswith('kbucket://'):
+            if path in _global_kbucket_mem_sha1_cache:
+                return _global_kbucket_mem_sha1_cache[path]
             path_local = self._local_db._find_file_in_local_kbucket_share(path)
             if path_local:
-                return self.computeFileSha1(path=path_local)
-            sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
+                sha1 = self.computeFileSha1(path=path_local)
+            else:
+                sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
+            if sha1:
+                _global_kbucket_mem_sha1_cache[path] = sha1
             return sha1
         else:
             return self._local_db.computeFileSha1(path)
