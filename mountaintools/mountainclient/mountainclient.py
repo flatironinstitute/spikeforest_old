@@ -448,7 +448,7 @@ class MountainClient():
         )
 
     @mtlogging.log(name='MountainClient:getValue')
-    def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False):
+    def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False, check_alt=False):
         """
         Retrieve a string value from the local database or, if connected to a
         remote mountain collection, from a remote database. This is used to
@@ -485,7 +485,7 @@ class MountainClient():
             The string if found in the database. Otherwise returns None.
         """
         ret = self._get_value(key=key, subkey=subkey,
-                              collection=collection, local_first=local_first)
+                              collection=collection, local_first=local_first, check_alt=check_alt)
         if parse_json and ret:
             try:
                 ret = json.loads(ret)
@@ -834,11 +834,11 @@ class MountainClient():
     def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
-    def _get_value(self, *, key, subkey, collection=None, local_first=False):
+    def _get_value(self, *, key, subkey, collection=None, local_first=False, check_alt=False):
         if collection is None:
             collection = self._remote_config['collection']
         if local_first or not collection:
-            ret = self._local_db.getValue(key=key, subkey=subkey)
+            ret = self._local_db.getValue(key=key, subkey=subkey, check_alt=check_alt)
             if ret is not None:
                 return ret
         if collection:
@@ -1138,7 +1138,7 @@ class MountainClientLocal():
 
     def getSubKeys(self, *, key):
         keyhash = _hash_of_key(key)
-        subkey_db_path = self._get_subkey_db_path_for_keyhash(keyhash)
+        subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash)
         ret = []
         with FileLock(subkey_db_path+'.lock'):
             list0 = _safe_list_dir(subkey_db_path)
@@ -1147,9 +1147,11 @@ class MountainClientLocal():
                     ret.append(name0[0:-4])
         return ret
 
-    def getValue(self, *, key, subkey=None):
+    def getValue(self, *, key, subkey=None, check_alt=False, _db_path=None):
         keyhash = _hash_of_key(key)
         if subkey is not None:
+            if check_alt:
+                raise Exception('Cannot use check_alt together with subkey.')
             if subkey == '-':
                 subkeys = self.getSubKeys(key=key)
                 obj = dict()
@@ -1159,7 +1161,7 @@ class MountainClientLocal():
                         obj[subkey] = val
                 return json.dumps(obj)
             else:
-                subkey_db_path = self._get_subkey_db_path_for_keyhash(keyhash)
+                subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash, _db_path=_db_path)
                 fname0 = os.path.join(subkey_db_path, subkey+'.txt')
                 if not os.path.exists(fname0):
                     return None
@@ -1168,9 +1170,15 @@ class MountainClientLocal():
                     return txt
         else:
             # not a subkey
-            db_path = self._get_db_path_for_keyhash(keyhash)
+            db_path = self._get_file_path_for_keyhash(keyhash, _db_path=_db_path)
             fname0 = db_path
             if not os.path.exists(fname0):
+                if check_alt:
+                    alternate_db_paths = self.alternateLocalDatabasePaths()
+                    for db_path in alternate_db_paths:
+                        val = self.getValue(key=key, subkey=None, check_alt=None, _db_path=db_path)
+                        if val:
+                            return val
                 return None
             with FileLock(fname0+'.lock'):
                 txt = _read_text_file(fname0)
@@ -1182,11 +1190,11 @@ class MountainClientLocal():
             if subkey == '-':
                 if value is not None:
                     raise Exception('Cannot set all subkeys with value that is not None')
-                subkey_db_path = self._get_subkey_db_path_for_keyhash(keyhash)
+                subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash)
                 with FileLock(subkey_db_path+'.lock'):
                     shutil.rmtree(subkey_db_path)
             else:
-                subkey_db_path = self._get_subkey_db_path_for_keyhash(keyhash)
+                subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash)
                 fname0 = os.path.join(subkey_db_path, subkey+'.txt')
                 if os.path.exists(fname0):
                     if not overwrite:
@@ -1202,7 +1210,7 @@ class MountainClientLocal():
                 return True
         else:
             # not a subkey
-            db_path = self._get_db_path_for_keyhash(keyhash)
+            db_path = self._get_file_path_for_keyhash(keyhash)
             fname0 = db_path
             if os.path.exists(fname0):
                 if not overwrite:
@@ -1223,7 +1231,7 @@ class MountainClientLocal():
         if subkey is not None:
             key2=dict(subkeys=True, key=key)
             keyhash2 = _hash_of_key(key2)
-            db_path2 = self._get_db_path_for_keyhash(keyhash2)    
+            db_path2 = self._get_file_path_for_keyhash(keyhash2)    
 
             ####################################
             with FileLock(db_path2+'.lock') as lock:
@@ -1279,7 +1287,7 @@ class MountainClientLocal():
         else:
             # No subkey
             keyhash = _hash_of_key(key)
-            db_path = self._get_db_path_for_keyhash(keyhash)
+            db_path = self._get_file_path_for_keyhash(keyhash)
 
             ####################################
             with FileLock(db_path+'.lock') as lock:
@@ -1323,7 +1331,7 @@ class MountainClientLocal():
             return val.get(subkey, None)
         
         keyhash = _hash_of_key(key)
-        db_path = self._get_db_path_for_keyhash(keyhash)
+        db_path = self._get_file_path_for_keyhash(keyhash)
 
         ####################################
         with FileLock(db_path+'.lock') as lock:
@@ -1421,6 +1429,9 @@ class MountainClientLocal():
     def localDatabasePath(self):
         return _get_default_local_db_path()
 
+    def alternateLocalDatabasePaths(self):
+        return _get_default_alternate_local_db_paths()
+
     def _initialize_local_kbucket_shares(self):
         local_kbucket_shares_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'local_kbucket_shares')
         if os.path.exists(local_kbucket_shares_fname):
@@ -1453,8 +1464,12 @@ class MountainClientLocal():
                     return fname
         return None
 
-    def _get_db_path_for_keyhash(self, keyhash):
-        path=os.path.join(self.localDatabasePath(), keyhash[0:2], keyhash[2:4])
+    def _get_file_path_for_keyhash(self, keyhash, _db_path=None):
+        if _db_path:
+            database_path = _db_path
+        else:
+            database_path = self.localDatabasePath()
+        path=os.path.join(database_path, keyhash[0:2], keyhash[2:4])
         if not os.path.exists(path):
             try:
                 os.makedirs(path)
@@ -1463,8 +1478,12 @@ class MountainClientLocal():
                     raise Exception('Unexpected problem. Unable to create directory: '+path)
         return os.path.join(path, keyhash)
 
-    def _get_subkey_db_path_for_keyhash(self, keyhash):
-        path=os.path.join(self.localDatabasePath(), keyhash[0:2], keyhash[2:4], keyhash+'.dir')
+    def _get_subkey_file_path_for_keyhash(self, keyhash, _db_path=None):
+        if _db_path:
+            database_path = _db_path
+        else:
+            database_path = self.localDatabasePath()
+        path=os.path.join(database_path, keyhash[0:2], keyhash[2:4], keyhash+'.dir')
         if not os.path.exists(path):
             try:
                 os.makedirs(path)
@@ -1735,6 +1754,13 @@ def _get_default_local_db_path():
     ret = dirname+'/database'
     return ret
 
+def _get_default_alternate_local_db_paths():
+    val = os.environ.get('MOUNTAIN_DIR_ALT',None)
+    if not val:
+        return []
+    dirnames = val.split(':')
+    return [dirname+'/database' for dirname in dirnames]
+
 
 def _hash_of_key(key):
     if (type(key) == dict) or (type(key) == list):
@@ -1758,7 +1784,6 @@ def _create_temporary_file_for_text(*, text):
     with open(tmp_fname, 'w') as f:
         f.write(text)
     return tmp_fname
-
 
 def _create_temporary_fname(ext):
     tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())

@@ -339,18 +339,18 @@ class MountainJob():
         output_paths = dict()
         for output_name, output0 in self._job_object['outputs'].items():
             signature0 = output0['signature']
-            output_path = local_client.getValue(key=signature0)
+            output_path = local_client.getValue(key=signature0, check_alt=True)
             if not output_path:
                 return None
             output_paths[output_name] = output_path
         
         runtime_info_signature = self._job_object['runtime_info_signature']
-        output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature)
+        output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature, check_alt=True)
         if not output_paths['--runtime-info--']:
             return None
 
         console_out_signature = self._job_object['console_out_signature']
-        output_paths['--console-out--'] = local_client.getValue(key=console_out_signature)
+        output_paths['--console-out--'] = local_client.getValue(key=console_out_signature, check_alt=True)
         if not output_paths['--console-out--']:
             return None
     

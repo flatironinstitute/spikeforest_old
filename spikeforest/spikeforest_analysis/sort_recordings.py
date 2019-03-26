@@ -214,7 +214,7 @@ def sort_recordings(*,sorter,recordings,compute_resource=None,num_workers=None,d
         dict(
             _container=SS_container,
             _timeout=job_timeout,
-            _label='Sort recording {} using {}'.format(recording.get('name', ''), sorter.get('name', '')),
+            _label='Sort recording {}/{} using {}'.format(recording.get('study', ''), recording.get('name', ''), sorter.get('name', '')),
             _additional_files_to_realize=[recording['directory']+'/raw.mda'],
             recording_dir=recording['directory'],
             channels=recording.get('channels',[]),
