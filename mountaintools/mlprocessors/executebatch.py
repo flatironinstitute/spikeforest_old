@@ -250,7 +250,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             srun_py_script.substitute('{job_index_file}', job_index_file)
             srun_py_script.write()
 
-            srun_opts_adjusted, num_workers_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, num_workers, len(jobs2))
+            srun_opts_adjusted, num_workers_adjusted = _adjust_srun_opts_for_num_jobs(srun_opts, num_workers or 1, len(jobs2))
 
             print('USING SRUN OPTS: {}'.format(srun_opts_adjusted))
             print('USING NUM SIMULTANEOUS SRUN CALLS: {}'.format(num_workers_adjusted))
