@@ -276,13 +276,20 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             # print('--------------------------------------------------------------------------')
             result_objects=[]
             for ii, job in enumerate(jobs):
-                print('Loading result object...', job_result_key, ii)
-                result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
-                if (result_object is None) and (not cached_results_only):
-                    print('Problem loading result....', job_result_key, str(ii))
-                    print('=====================', local_client.getValue(key=job_result_key, subkey='-'))
-                    print('=====================', local_client.getValue(key=job_result_key, subkey=str(ii)))
-                    time.sleep(3)
+                print('Loading result object...', job_result_key, str(ii))
+                num_tries = 0
+                while True:
+                    result_object = local_client.loadObject(key=job_result_key, subkey=str(ii))
+                    if (result_object is None) and (not cached_results_only):
+                        print('Problem loading result....', job_result_key, str(ii))
+                        print('=====================', local_client.getValue(key=job_result_key, subkey='-'))
+                        print('=====================', local_client.getValue(key=job_result_key, subkey=str(ii)))
+                        num_tries = num_tries + 1
+                        if num_tries>=3:
+                            raise Exception('Unable to load result object after {} tries.')
+                        time.sleep(1)
+                    else:
+                        break
                 result_objects.append(result_object)
             results = [MountainJobResult(result_object=obj) for obj in result_objects]
             for i, job in enumerate(jobs):
