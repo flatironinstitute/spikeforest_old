@@ -287,8 +287,10 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                         num_tries = num_tries + 1
                         if num_tries>=3:
                             raise Exception('Unable to load result object after {} tries.')
+                        print('Retrying...')
                         time.sleep(1)
                     else:
+                        print('Loaded result object...', job_result_key, str(ii))
                         break
                 result_objects.append(result_object)
             results = [MountainJobResult(result_object=obj) for obj in result_objects]
