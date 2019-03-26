@@ -18,4 +18,5 @@ OPTS="$OPTS --collection spikeforest --share_id spikeforest.spikeforest2"
 ./main_analysis.py --recording_group mearec_sqmea --output_id mearec_sqmea $OPTS "${@:3}"
 ./main_analysis.py --recording_group mearec_tetrode --output_id mearec_tetrode $OPTS "${@:3}"
 ./main_analysis.py --recording_group bionet --output_id bionet $OPTS "${@:3}"
+./main_analysis.py --recording_group hybrid_drift --output_id hybrid_drift $OPTS "${@:3}"
 

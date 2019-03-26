@@ -7,6 +7,7 @@ from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
 import time
 from .filelock import FileLock
+import mtlogging
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -246,6 +247,7 @@ def _safe_remove_file(fname):
         print('Warning: unable to remove file that we thought existed: '+fname)
 
 
+@mtlogging.log()
 def _read_json_file(path, *, delete_on_error=False):
     with FileLock(path+'.lock') as lock:
         try:
