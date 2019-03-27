@@ -1223,7 +1223,8 @@ class MountainClientLocal():
                     if value is None:
                         os.unlink(fname0)
                     else:
-                        _write_text_file_safe(fname0, value)
+                        #_write_text_file_safe(fname0, value)
+                        _write_text_file(fname0, value)
                 return True
         else:
             # not a subkey
