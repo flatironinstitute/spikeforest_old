@@ -5,7 +5,8 @@ from functools import lru_cache
 import argparse
 import sys
 import traceback
-from .execute import execute, createJob, createJobs
+from .execute import execute
+from .createjobs import createJob, createJobs
 
 
 class ParserError(ValueError):

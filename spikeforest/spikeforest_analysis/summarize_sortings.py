@@ -3,9 +3,12 @@ from mountaintools import client as mt
 from spikeforest import spikeextractors as si
 import os
 from copy import deepcopy
+import mtlogging
 
-def summarize_sortings(sortings,compute_resource):
-    print('>>>>>> summarize sortings')
+@mtlogging.log()
+def summarize_sortings(sortings,compute_resource,label=None):
+    print('')
+    print('>>>>>> {}'.format(label or 'summarize sortings'))
     # container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
     # jobs_autocor_plot=[]
     for sorting in sortings:
@@ -24,7 +27,7 @@ def summarize_sortings(sortings,compute_resource):
     
     # all_jobs=jobs_autocor_plot
     all_jobs=[]
-    label='Summarize sortings'
+    label=label or 'Summarize sortings'
     mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=None,compute_resource=compute_resource)
     
     print('Gathering summarized sortings...')

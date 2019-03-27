@@ -5,6 +5,7 @@ from mountaintools import client as mt
 import numpy as np
 from copy import deepcopy
 import multiprocessing
+import mtlogging
 
 from spikeforest import spikeextractors as si
 from spikeforest import spiketoolkit as st
@@ -30,14 +31,25 @@ def _create_job_for_sorting(sorting, container):
     )
     return job
 
-def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
-    print('>>>>>> compare sortings with truth')
+@mtlogging.log()
+def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None):
+    print('')
+    print('>>>>>> {}'.format(label or 'compare sortings with truth'))
     container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
 
-    pool = multiprocessing.Pool(20)
-    jobs_gen_table=pool.map(_create_job_for_sorting_helper, [dict(sorting=sorting, container=container) for sorting in sortings])
-    pool.close()
-    pool.join()
+    sortings_out = deepcopy(sortings)
+    sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
+    jobs_gen_table = GenSortingComparisonTable.createJobs([
+        dict(
+            firings=sorting['firings'],
+            firings_true=sorting['firings_true'],
+            units_true=sorting.get('units_true', []),
+            json_out={'ext':'.json','upload':True},
+            html_out={'ext':'.html','upload':True},
+            _container=container
+        )
+        for sorting in sortings_valid
+    ])
 
     # jobs_gen_table=[]
     # for sorting in sortings:
@@ -55,22 +67,17 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None):
     #     )
     #     jobs_gen_table.append(job)
     
-    all_jobs=jobs_gen_table
-    label='Compare sortings with truth'
-    mlpr.executeBatch(jobs=all_jobs,label=label,num_workers=num_workers,compute_resource=compute_resource)
+    label=label or 'Compare sortings with truth'
+    mlpr.executeBatch(jobs=jobs_gen_table,label=label,num_workers=num_workers,compute_resource=compute_resource)
 
-    print('Gathering sortings after comparing with truth...')
-    sortings_out=[]
-    for i,sorting in enumerate(sortings):
-        comparison_with_truth=dict()
-        if not jobs_gen_table[i].isNull():
-            comparison_with_truth['json']=jobs_gen_table[i].result.outputs['json_out']
-            comparison_with_truth['html']=jobs_gen_table[i].result.outputs['html_out']
-        else:
-            comparison_with_truth=None
-        sorting2=deepcopy(sorting)
-        sorting2['comparison_with_truth']=comparison_with_truth
-        sortings_out.append(sorting2)
+    for sorting in sortings_out:
+        sorting['comparison_with_truth'] = None
+
+    for ii, sorting in enumerate(sortings_valid):
+        comparison_with_truth = dict()
+        comparison_with_truth['json'] = jobs_gen_table[ii].result.outputs['json_out']
+        comparison_with_truth['html'] = jobs_gen_table[ii].result.outputs['html_out']
+        sorting['comparison_with_truth'] = comparison_with_truth
 
     return sortings_out
 

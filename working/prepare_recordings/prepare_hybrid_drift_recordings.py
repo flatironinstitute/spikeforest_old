@@ -14,7 +14,7 @@ def prepare_hybrid_drift_studies(*, basedir):
     study_set_name = 'hybrid_drift'
     studies = []
     recordings = []
-    names = ['4c', '32c', '64c']
+    names = ['16c_600s', '16c_1200s', '32c_600s', '32c_1200s', '64c_600s', '64c_1200s']
     for name in names:
         study_name = 'hybrid_drift_' + name
         print('PREPARING: '+study_name)

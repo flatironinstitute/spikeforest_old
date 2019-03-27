@@ -3,6 +3,7 @@ import time
 import random
 from .mountainjob import MountainJobResult
 from .mountainjob import MountainJob
+import mtlogging
 
 class ComputeResourceClient():
     def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None, readonly=False):
@@ -17,11 +18,16 @@ class ComputeResourceClient():
             self._cairio_client.configLocal()
         self._last_console_message=''
         self._next_delay=0.25
+
+    @mtlogging.log()
     def initializeBatch(self,*,jobs, label='unlabeled'):
         batch_id = 'batch_{}_{}'.format(time.time()-0, _random_string(6))
 
         job_objects = []
         for job in jobs:
+            job_object = job.getObject()
+            if not job_object['processor_code']:
+                raise Exception('Job is missing processor code.', job_object.get('processor_name', None))
             job_objects.append(job.getObject())
         
         key=dict(
@@ -46,6 +52,7 @@ class ComputeResourceClient():
         )
         return batch
     
+    @mtlogging.log()
     def startBatch(self,*,batch_id):
         self._cairio_client.setValue(
             key=dict(
@@ -70,6 +77,7 @@ class ComputeResourceClient():
             ),
             value='halt'
         )
+    @mtlogging.log()
     def monitorBatch(self,*,batch_id, jobs, label=''):
         self._next_delay=0.25
         while True:
@@ -77,7 +85,7 @@ class ComputeResourceClient():
             if status0 is None:
                 self._set_console_message('Unable to determine status.')
             elif status0=='pending':
-                self._set_console_message('Waiting for batch to start.')
+                self._set_console_message('Waiting for batch to start on compute resource: ' + self._resource_name)
             elif status0=='finished':
                 self._set_console_message('Batch is finished.')
                 # self._finalize_batch(batch_id=batch_id)
@@ -105,6 +113,7 @@ class ComputeResourceClient():
             if self._next_delay>3:
                 self._next_delay=3
         
+    @mtlogging.log()
     def getBatchStatuses(self):
         batch_statuses = self._cairio_client.getValue(
             key=dict(
@@ -138,6 +147,7 @@ class ComputeResourceClient():
             subkey=batch_id
         )
 
+    @mtlogging.log()
     def getBatchJobResults(self,*,batch_id):
         key=dict(
             name='compute_resource_batch_results',
@@ -151,13 +161,18 @@ class ComputeResourceClient():
         result_objects = obj['results']
         ret = []
         for result_object in result_objects:
-            R = MountainJobResult()
-            R.console_out = result_object['console_out']
-            R.runtime_info = result_object['runtime_info']
-            R.retcode = result_object['retcode']
-            R.outputs = result_object['outputs']
-            ret.append(R)
+            if result_object is None:
+                ret.append(None)
+            else:
+                R = MountainJobResult()
+                R.console_out = result_object['console_out']
+                R.runtime_info = result_object['runtime_info']
+                R.retcode = result_object['retcode']
+                R.outputs = result_object['outputs']
+                ret.append(R)
         return ret
+    
+    @mtlogging.log()
     def _set_console_message(self,msg):
         if msg == self._last_console_message:
             return

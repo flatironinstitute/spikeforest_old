@@ -10,7 +10,7 @@ class SortingAccuracyWidget:
     def plot(self):
         self._do_plot()
 
-    def _do_plot(self):
+    def _do_plot(self, accuracy_thresh=.8):
         SC = self._SC
         units = SC.getSorting1().getUnitIds()
         agreements = [SC.getAgreementFraction(unit) for unit in units]
@@ -22,4 +22,7 @@ class SortingAccuracyWidget:
             plt.plot(agreements, '.')
             plt.xticks([])
         plt.ylabel('Accuracy')
+        plt.ylim(0,1)
+        nUnits_above = np.sum(np.array(agreements) >= accuracy_thresh)
+        plt.title('{} units > {} accuracy'.format(nUnits_above, accuracy_thresh))
         plt.show()

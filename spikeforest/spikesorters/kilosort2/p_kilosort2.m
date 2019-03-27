@@ -13,14 +13,34 @@ ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 % Run kilosort
 t1=tic;
 fprintf('Running kilosort on %s\n', raw_fname);
-[rez, DATA, uproj] = preprocessData(ops); % preprocess data and extract spikes for initialization
-rez                = fitTemplates(rez, DATA, uproj);  % fit templates iteratively
-rez                = fullMPMU(rez, DATA);% extract final spike times (overlapping extraction)
-try
-    rez = merge_posthoc2(rez);
-catch
-    fprintf(2, 'merge_posthoc2 error. Reporting pre-merge result\n'); 
-end
+% preprocess data to create temp_wh.dat
+rez = preprocessDataSub(ops);
+
+% time-reordering as a function of drift
+rez = clusterSingleBatches(rez);
+% save(fullfile(rootZ, 'rez.mat'), 'rez', '-v7.3');
+
+% main tracking and template matching algorithm
+rez = learnAndSolve8b(rez);
+
+% final merges
+rez = find_merges(rez, 1);
+
+% final splits by SVD
+rez = splitAllClusters(rez, 1);
+
+% final splits by amplitudes
+rez = splitAllClusters(rez, 0);
+
+% decide on cutoff
+rez = set_cutoff(rez);
+
+% discard features in final rez file (too slow to save)
+rez.cProj = [];
+rez.cProjPC = [];
+
+fprintf('\n\tfound %d good units \n', sum(rez.good>0))
+
 fprintf('\n\ttook %0.1fs\n', toc(t1));
 
 % Export kilosort
@@ -45,7 +65,9 @@ end %func
 function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
 S_txt = irc('call', 'meta2struct', {arg_fname});
-[spkTh, useGPU] = deal(-abs(S_txt.detect_threshold), 1);
+useGPU = 1;
+[freq_min, pc_per_chan, sRateHz, spkTh] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold');
+spkTh = -abs(spkTh);
 
 % convert to binary file (int16)
 fbinary = strrep(raw_fname, '.mda', '.bin');
@@ -55,8 +77,10 @@ fbinary = strrep(raw_fname, '.mda', '.bin');
 mrXY_site = csvread(geom_fname);
 vcFile_chanMap = fullfile(fpath, 'chanMap.mat');
 createChannelMapFile_(vcFile_chanMap, Nchannels, mrXY_site(:,1), mrXY_site(:,2));
+nChans = size(mrXY_site,1);
 
-ops = config_kilosort2_(fpath, fbinary, vcFile_chanMap, spkTh, useGPU, S_txt.samplerate); %obtain ops
+S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min);
+ops = config_kilosort2_(S_ops); %obtain ops
 
 end %func
 
@@ -111,24 +135,26 @@ end %func
 
 
 %--------------------------------------------------------------------------
-function ops = config_kilosort2_(fpath, fbinary, vcFile_chanMap, spkTh, useGPU, sRateHz)
+function ops = config_kilosort2_(S_opt)
+% S_opt: fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz,
+%       pc_per_chan, freq_min
 
 % rootH = '~/kilosort';
-ops.fproc       = fullfile(fpath, 'temp_wh.dat'); % proc file on a fast SSD  ;
+ops.fproc       = fullfile(S_opt.fpath, 'temp_wh.dat'); % proc file on a fast SSD  ;
 ops.trange = [0 Inf]; % time range to sort
-ops.NchanTOT    = numel(a.chanMap); % total number of channels in your recording
+ops.NchanTOT    = S_opt.nChans; % total number of channels in your recording
 
 % the binary file is in this folder
-ops.fbinary = fbinary;
+ops.fbinary = S_opt.fbinary;
 
-ops.chanMap = vcFile_chanMap;
+ops.chanMap = S_opt.vcFile_chanMap;
 % ops.chanMap = 1:ops.Nchan; % treated as linear probe if no chanMap file
 
 % sample rate
-ops.fs = sRateHz;  
+ops.fs = S_opt.sRateHz;  
 
 % frequency for high pass filtering (150)
-ops.fshigh = 150;   
+ops.fshigh = S_opt.freq_min;   
 
 % minimum firing rate on a "good" channel (0 to skip)
 ops.minfr_goodchannels = 0.1; 
@@ -156,11 +182,11 @@ ops.ThPre = 8;
 
 % danger, changing these settings can lead to fatal errors
 % options for determining PCs
-ops.spkTh           = spkTh;      % spike threshold in standard deviations (-6)
+ops.spkTh           = S_opt.spkTh;      % spike threshold in standard deviations (-6)
 ops.reorder         = 1;       % whether to reorder batches for drift correction. 
 ops.nskip           = 25;  % how many batches to skip for determining spike PCs
 
-ops.GPU                 = useGPU; % has to be 1, no CPU version yet, sorry
+ops.GPU                 = S_opt.useGPU; % has to be 1, no CPU version yet, sorry
 % ops.Nfilt               = 1024; % max number of clusters
 ops.nfilt_factor        = 4; % max number of clusters per good channel (even temporary ones)
 ops.ntbuff              = 64;    % samples of symmetrical buffer for whitening and spike detection
@@ -168,10 +194,40 @@ ops.NT                  = 64*1024+ ops.ntbuff; % must be multiple of 32 + ntbuff
 ops.whiteningRange      = 32; % number of channels to use for whitening each channel
 ops.nSkipCov            = 25; % compute whitening matrix from every N-th batch
 ops.scaleproc           = 200;   % int16 scaling of whitened data
-ops.nPCs                = 3; % how many PCs to project the spikes into
+ops.nPCs                = S_opt.pc_per_chan; % how many PCs to project the spikes into
 ops.useRAM              = 0; % not yet available
 
 end %func
 
 
-
+%--------------------------------------------------------------------------
+% 8/22/18 JJJ: changed from the cell output to varargout
+% 9/26/17 JJJ: Created and tested
+function varargout = struct_get_(varargin)
+% Obtain a member of struct
+% cvr = cell(size(varargin));
+% if varargin is given as cell output is also cell
+S = varargin{1};
+for iArg=1:nargout
+    vcName = varargin{iArg+1};
+    if iscell(vcName)
+        csName_ = vcName;
+        cell_ = cell(size(csName_));
+        for iCell = 1:numel(csName_)
+            vcName_ = csName_{iCell};
+            if isfield(S, vcName_)
+                cell_{iCell} = S.(vcName_);
+            end
+        end %for
+        varargout{iArg} = cell_;
+    elseif ischar(vcName)
+        if isfield(S, vcName)
+            varargout{iArg} = S.(vcName);
+        else
+            varargout{iArg} = [];
+        end
+    else
+        varargout{iArg} = [];
+    end
+end %for
+end %func

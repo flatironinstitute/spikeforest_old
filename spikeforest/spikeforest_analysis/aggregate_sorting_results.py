@@ -1,5 +1,7 @@
 import sfdata as sf
+import mtlogging
 
+@mtlogging.log()
 def aggregate_sorting_results(studies, recordings, sorting_results):
     SF = sf.SFData()
     SF.loadStudies(studies=studies)

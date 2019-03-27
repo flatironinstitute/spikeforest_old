@@ -7,6 +7,7 @@ from .steady_download_and_compute_sha1 import steady_download_and_compute_sha1
 import random
 import time
 from .filelock import FileLock
+import mtlogging
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -15,6 +16,7 @@ from .filelock import FileLock
 class Sha1Cache():
     def __init__(self):
         self._directory = None
+        self._alternate_directories = None
 
     def directory(self):
         if self._directory:
@@ -22,8 +24,21 @@ class Sha1Cache():
         else:
             return os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
 
+    def alternateDirectories(self):
+        if self._alternate_directories:
+            return self._alternate_directories
+        else:
+            val = os.getenv('KBUCKET_CACHE_DIR_ALT', None)
+            if val:
+                return val.split(':')
+            else:
+                return []
+
     def setDirectory(self, directory):
         self._directory = directory
+
+    def setAlternateDirectories(self, directories):
+        self._alternate_directories = directories
 
     def findFile(self, sha1):
         path, alternate_paths = self._get_path(
@@ -181,24 +196,16 @@ class Sha1Cache():
         if not return_alternates:
             return os.path.join(path0, sha1)
         else:
-            altpaths = []
-            list0 = _safe_list_dir(os.path.join(directory,'alternate'))
-            for name0 in list0:
-                altdir = os.path.join(directory,'alternate',name0)
-                altpaths.append(os.path.join(altdir,path1,sha1))
+            altpaths=[]
+            alt_dirs = self.alternateDirectories()
+            for altdir in alt_dirs:
+                altpaths.append(os.path.join(altdir, path1, sha1))
             return os.path.join(path0,sha1), altpaths
-
-    def _determine_alternate_directories(self):
-        ret = []
-        list0 = _safe_list_dir(self.directory()+'/alternate')
-        for name0 in list0:
-            path1 = self.directory()+'/alternate/'+name0
-            if os.path.isdir(path1) or os.path.islink(path1):
-                ret.append(path1)
-        return ret
 
 
 def _compute_file_sha1(path):
+    if not os.path.exists(path):
+        return None
     if (os.path.getsize(path) > 1024*1024*100):
         print('Computing sha1 of {}'.format(path))
     BLOCKSIZE = 65536
@@ -244,6 +251,7 @@ def _safe_remove_file(fname):
         print('Warning: unable to remove file that we thought existed: '+fname)
 
 
+@mtlogging.log()
 def _read_json_file(path, *, delete_on_error=False):
     with FileLock(path+'.lock') as lock:
         try:

@@ -12,220 +12,96 @@ import fnmatch
 import inspect
 import shlex
 from mountainclient import client as mt
+from mountainclient import MountainClient
 import datetime
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 import mtlogging
 
+local_client = MountainClient()
+
 class MountainJob():
-    def __init__(self, *, job_object=None):
+    def __init__(self, *, processor=None, job_object=None):
+        if processor and (job_object is None):
+            raise Exception('Use createJob() or createJobs() to create MountainJob objects.')
         self.result=None
-        self._processor=None
-        self._job=None
-        if job_object is not None:
-            self.initFromObject(job_object)
+        self._processor=processor
+        self._job_object=deepcopy(job_object)
+        self._use_cached_results_only=False
 
     def isNull(self):
-        return (self._job is None)
+        return (self._job_object is None)
 
     def getObject(self):
-        return deepcopy(self._job)
-
-    def initFromObject(self, job_object):
-        self._processor=None
-        self._job=deepcopy(job_object)
+        return deepcopy(self._job_object)
 
     def addFilesToRealize(self, files_to_realize):
-        if self._job is None:
+        if self._job_object is None:
             return
         if type(files_to_realize)==str:
-            self._job['additional_files_to_realize'].append(files_to_realize)
+            self._job_object['additional_files_to_realize'].append(files_to_realize)
         elif type(files_to_realize)==list:
-            self._job['additional_files_to_realize'].extend(files_to_realize)
+            self._job_object['additional_files_to_realize'].extend(files_to_realize)
         else:
             raise Exception('Unexpected type of files_to_realize in addFilesToRealize')
 
     def getFilesToRealize(self):
-        if self._job is None:
+        if self._job_object is None:
             return []
         # These are the files needed at the compute location to actually run the job
         ret=[]
-        if self._job['container']:
-            ret.append(self._job['container'])
-        for input0 in self._job['inputs'].values():
+        if self._job_object['container']:
+            ret.append(self._job_object['container'])
+        for input0 in self._job_object['inputs'].values():
             if not input0.get('directory', False):
                 ret.append(input0['path'])
-        if self._job['processor_code']:
-            ret.append(self._job['processor_code'])
-        if 'additional_files_to_realize' in self._job:
-            ret.extend(self._job['additional_files_to_realize'])
+        if self._job_object['processor_code']:
+            ret.append(self._job_object['processor_code'])
+        if 'additional_files_to_realize' in self._job_object:
+            ret.extend(self._job_object['additional_files_to_realize'])
         return ret
 
     def useRemoteUrlsForInputFiles(self):
-        if self._job is None:
+        if self._job_object is None:
             return
-        if self._job['container']:
-            self._job['container'] = _make_remote_url_for_file(self._job['container'])
-        for input_name, input0 in self._job['inputs'].items():
+        if self._job_object['container']:
+            self._job_object['container'] = _make_remote_url_for_file(self._job_object['container'])
+        for input_name, input0 in self._job_object['inputs'].items():
             if not input0.get('directory', False):
-                self._job['inputs'][input_name]['path'] = _make_remote_url_for_file(input0['path'])
-        if 'additional_files_to_realize' in self._job:
-            for ii, fname in enumerate(self._job['additional_files_to_realize']):
-                self._job['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
+                self._job_object['inputs'][input_name]['path'] = _make_remote_url_for_file(input0['path'])
+        if 'additional_files_to_realize' in self._job_object:
+            for ii, fname in enumerate(self._job_object['additional_files_to_realize']):
+                self._job_object['additional_files_to_realize'][ii] = _make_remote_url_for_file(fname)
 
-    @mtlogging.log()
-    def initFromProcessor(self, proc, _label=None, _force_run=None, _keep_temp_files=None, _container=None, _use_cache=True, _timeout=None, **kwargs):
-        print('Create job from processor: '+proc.NAME)
-        timer=time.time()
-        if _force_run is None:
-            _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')
+    def setUseCachedResultsOnly(self, val):
+        self._use_cached_results_only = val
 
-        if _keep_temp_files is None:
-            _keep_temp_files = (os.environ.get('MLPROCESSORS_KEEP_TEMP_FILES', '') == 'TRUE')
+    def storeResultInCache(self, result):
+        self._store_result_in_cache(result)
 
-        if _container == 'default':
-            if hasattr(proc, 'CONTAINER'):
-                _container = proc.CONTAINER
-        if _container:
-            if not _file_exists_or_is_sha1_url(_container):
-                raise Exception('Unable to find container file: '+_container)
-        
-        if _label is None:
-            _label='{} (version: {})'.format(proc.NAME, proc.VERSION)
-
-        inputs = dict()
-        for input0 in proc.INPUTS:
-            name0 = input0.name
-            if name0 in kwargs:
-                fname0 = kwargs[name0]
-                if input0.directory:
-                    if not _directory_exists(fname0):
-                        raise Exception('Unable to find input directory {}: {}'.format(name0, fname0))
-                    inputs[name0] = dict(
-                        directory = True,
-                        path = fname0
-                    )
-                else:
-                    if not _file_exists_or_is_sha1_url(fname0):
-                        raise Exception('Unable to find input file {}: {}'.format(name0, fname0))
-                    inputs[name0] = dict(
-                        path = fname0
-                    )
-                
-            else:
-                if not input0.optional:
-                    raise Exception('Missing required input: {}'.format(name0))
-
-        outputs = dict()
-        for output0 in proc.OUTPUTS:
-            name0 = output0.name
-            if name0 in kwargs:
-                val0 = kwargs[name0]
-                if type(val0) == str:
-                    _, file_extension = os.path.splitext(val0)
-                    outputs[name0] = dict(
-                        ext = file_extension,
-                        dest_path = os.path.abspath(val0)
-                    )
-                elif type(val0) == dict:
-                    outputs[name0] = val0
-                else:
-                    raise Exception('Type of output {} cannot be {}'.format(name0, str(type(val0))))
-            else:
-                if not output0.optional:
-                    raise Exception('Missing required output: {}'.format(name0))
-
-        parameters = dict()
-        for param0 in proc.PARAMETERS:
-            name0 = param0.name
-            if name0 not in kwargs:
-                if param0.optional:
-                    val0 = param0.default
-                else:
-                    raise Exception('Missing required parameter: {}'.format(name0))
-            else:
-                val0 = kwargs[name0]
-            parameters[name0] = val0
-
-        output_signatures = dict()
-
-        for output_name in list(outputs.keys())+['--runtime-info--','--console-out--']:
-            output_signatures[output_name] = _compute_mountain_job_output_signature(
-                processor_name=proc.NAME,
-                processor_version=proc.VERSION,
-                inputs=inputs,
-                parameters=parameters,
-                output_name=output_name
-            )
-
-        try:
-            processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
-        except:
-            print(proc)
-            print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource.'.format(proc.NAME))
-            processor_source_fname = None
-        if processor_source_fname is not None:
-            processor_source_dirname = os.path.dirname(processor_source_fname)
-            processor_source_basename = os.path.basename(processor_source_fname)
-            processor_source_basename_noext = os.path.splitext(processor_source_basename)[0]
-            code = _read_python_code_of_directory(
-                processor_source_dirname,
-                additional_files=getattr(proc, 'ADDITIONAL_FILES', []),
-                exclude_init=True
-            )
-            code['files'].append(dict(
-                name='__init__.py',
-                content='from .{} import {}'.format(
-                    processor_source_basename_noext, proc.__name__)
-            ))
-            code = mt.saveObject(object = code)
-        else:
-            code = None
-
-        if hasattr(proc, 'ENVIRONMENT_VARIABLES'):
-            environment_variables = proc.ENVIRONMENT_VARIABLES
-        else:
-            environment_variables = []
-
-        self._processor=proc
-        self._job=dict(
-            processor_name=proc.NAME,
-            processor_version=proc.VERSION,
-            processor_class_name=proc.__name__,
-            processor_code=code,
-            label=_label,
-            inputs=inputs,
-            outputs=outputs,
-            parameters=parameters,
-            output_signatures=output_signatures,
-            container=_container,
-            force_run=_force_run,
-            use_cache=_use_cache,
-            keep_temp_files=_keep_temp_files,
-            environment_variables=environment_variables,
-            additional_files_to_realize=[],
-            timeout=_timeout
-        )
-
+    @mtlogging.log(name='MountainJob:execute')
     def execute(self):
-        if self._job is None:
+        if self._job_object is None:
             return MountainJobResult()
-        container=self._job['container']
-        force_run=self._job['force_run']
-        use_cache=self._job['use_cache']
-        keep_temp_files=self._job['keep_temp_files']
-        job_timeout=self._job.get('timeout', None)
+        container = self._job_object['container']
+        force_run = self._job_object['force_run']
+        use_cache = self._job_object['use_cache']
+        keep_temp_files = self._job_object['keep_temp_files']
+        job_timeout = self._job_object.get('timeout', None)
+        label = self._job_object.get('label', '')
+        ignore_local_cache = (os.environ.get('MLPROCESSORS_IGNORE_LOCAL_CACHE', 'FALSE') == 'TRUE')
 
-        if (use_cache) and (not force_run):
+        if (use_cache) and (not force_run) and (not ignore_local_cache):
             result = self._find_result_in_cache()
             if result:
                 self._copy_outputs_from_result_to_dest_paths(result)
-                # do the following so that local can get propagated to remote and vice versa
-                self._store_result_in_cache(result)
                 return result
 
+        if self._use_cached_results_only:
+            return None
+
         keep_temp_files=True
-        with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_'+self._job['processor_name']) as tmp_output_path:
+        with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_'+self._job_object['processor_name']) as tmp_output_path:
             attributes_for_processor = dict()
             tmp_output_file_names = dict()
             output_files_to_copy = []
@@ -233,7 +109,7 @@ class MountainJob():
             inputs_to_bind = []
             tmp_process_console_out_fname = os.path.join(tmp_output_path, 'process_console_out.txt')
             tmp_process_console_out_fname_in_container = os.path.join('/processor_outputs', 'process_console_out.txt')
-            for input_name, input0 in self._job['inputs'].items():
+            for input_name, input0 in self._job_object['inputs'].items():
                 if not input0.get('directory', False):
                     input_fname = self._realize_input(input0['path'])
                     if not input_fname:
@@ -251,7 +127,7 @@ class MountainJob():
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
                         inputs_to_bind.append((input_fname, infile_in_container))
                     attributes_for_processor[input_name] = infile_in_container
-            for output_name, output_value in self._job['outputs'].items():
+            for output_name, output_value in self._job_object['outputs'].items():
                 if type(output_value)==str:
                     file_ext = _get_file_ext(output_value) or '.out'
                 elif type(output_value)==dict:
@@ -278,12 +154,12 @@ class MountainJob():
                 else:
                     tmp_output_fname_in_container = os.path.join('/processor_outputs', output_name+file_ext)
                     attributes_for_processor[output_name] = tmp_output_fname_in_container
-            for param_name, param_value in self._job['parameters'].items():
+            for param_name, param_value in self._job_object['parameters'].items():
                 attributes_for_processor[param_name] = param_value
 
             runtime_capture = ConsoleCapture()
             runtime_capture.start_capturing()
-            print('Job: {}'.format(self._job.get('label', '')))
+            print('Job: {}'.format(label))
             print('Timestamp: {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
             R = MountainJobResult()
             if (not container) and self._processor:
@@ -292,19 +168,22 @@ class MountainJob():
                 for attr_name, attr_val in attributes_for_processor.items():
                     setattr(X, attr_name, attr_val)
                 try:
+                    print('Running processor directly...')
+                    mtlogging.sublog('running-directly')
                     X.run()
+                    mtlogging.sublog(None)
                     retcode = 0
                 except:
                     traceback.print_exc()
                     runtime_capture.stop_capturing()
                     R.retcode = -1
                     R.runtime_info = runtime_capture.runtimeInfo()
-                    R.console_out = mt.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
+                    R.console_out = local_client.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
                     return R
             else:
                 # Otherwise we need to do code generation
                 timer = time.time()
-                with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job['processor_name']) as temp_path:
+                with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job_object['processor_name']) as temp_path:
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
 
                     run_sh_script = ShellScript("""
@@ -325,23 +204,25 @@ class MountainJob():
                         container = mt.realizeFile(container)
                         if not container:
                             raise Exception('Unable to realize container file: {}'.format(container_orig))
-                        singularity_opts = _get_singularity_opts()
+                        singularity_opts, env_vars = _get_singularity_opts_and_env_vars()
                         singularity_opts.append('-B {}:{}'.format(temp_path, '/run_in_container'))
                         singularity_opts.append('-B {}:{}'.format(tmp_output_path, '/processor_outputs'))
+                        source_path=os.path.dirname(os.path.realpath(__file__))
+                        singularity_opts.append('-B {}:/python/mountaintools'.format(os.path.abspath(os.path.join(source_path, '..'))))
                         for tobind in inputs_to_bind:
                             singularity_opts.append('-B {}:{}'.format(tobind[0], tobind[1]))
-                        env_vars = []
-                        environment_variables = self._job.get('environment_variables', [])
+                        environment_variables = self._job_object.get('environment_variables', [])
                         for v in environment_variables:
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
+                        env_vars.append('PYTHONPATH=/python/mountaintools')
                         
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
                         run_sh_script.substitute('{env_vars}', '\n'.join(['export '+env_var for env_var in env_vars]))
                         run_sh_script.write()
+
                         singularity_sh_script = ShellScript("""
                             #!/bin/bash
                             set -e
@@ -351,58 +232,21 @@ class MountainJob():
                         singularity_sh_script.substitute('{temp_path}', '/run_in_container')
                         singularity_sh_script.substitute('{singularity_opts}', ' '.join(singularity_opts))
                         singularity_sh_script.substitute('{container}', container)
-                        singularity_sh_script.substitute('{env_vars}', ' '.join(env_vars))
 
                         shell_script = singularity_sh_script
 
+                    mtlogging.sublog('running-script')
                     shell_script.start()
                     while shell_script.isRunning():
                         shell_script.wait(5)
                         if job_timeout:
                             if shell_script.elapsedTimeSinceStart() > job_timeout:
                                 print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
+                                R.timed_out = True
                                 shell_script.stop()
                     retcode = shell_script.returnCode()
+                    mtlogging.sublog(None)
 
-                    # if job_timeout:
-                    #     # python_cmd = 'timeout -s INT {}s {}'.format(job_timeout, python_cmd)
-                    #     timeout_str = 'timeout {}s '.format(job_timeout) 
-                    # else:
-                    #     timeout_str = ''
-                    # if not container:
-                    #     env = os.environ # is this needed?
-                    #     python_cmd='python3 {}/run.py'.format(temp_path)
-                    #     cmd = '{}bash -c "{} > {} 2>&1"'.format(timeout_str, python_cmd.replace('"','\\"'), tmp_process_console_out_fname)
-                    #     print('Running: '+cmd)
-                    #     retcode = subprocess.call(cmd, shell=True, env=env)
-                    #     #retcode = os.system(cmd)
-                    # else:
-                    #     print('Realizing container file: {}'.format(container))
-                    #     container_orig = container
-                    #     container = mt.realizeFile(container)
-                    #     if not container:
-                    #         raise Exception('Unable to realize container file: {}'.format(container_orig))
-                    #     singularity_opts = _get_singularity_opts()
-                    #     singularity_opts.append('-B {}:{}'.format(temp_path, '/run_in_container'))
-                    #     singularity_opts.append('-B {}:{}'.format(tmp_output_path, '/processor_outputs'))
-                    #     for tobind in inputs_to_bind:
-                    #         singularity_opts.append('-B {}:{}'.format(tobind[0], tobind[1]))
-                    #     env_vars = []
-                    #     environment_variables = self._job.get('environment_variables', [])
-                    #     for v in environment_variables:
-                    #         val = os.environ.get(v, '')
-                    #         if val:
-                    #             env_vars.append('{}={}'.format(v, val))
-                    #     python_cmd = 'python3 /run_in_container/run.py'
-                    #     cmd = '{}bash -c "KBUCKET_CACHE_DIR=/sha1-cache {} {} > {} 2>&1"'.format(timeout_str, ' '.join(env_vars), python_cmd.replace('"','\\"'), tmp_process_console_out_fname_in_container)
-                    #     singularity_cmd = 'singularity exec {} {} {}'.format(
-                    #         ' '.join(singularity_opts), container, cmd)
-                        
-                    #     env = os.environ # is this needed?
-                    #     print('Running: '+singularity_cmd)
-                    #     #retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                    #     retcode = subprocess.call(singularity_cmd, shell=True, env=env)
-                    #     #retcode = os.system(singularity_cmd)
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
@@ -413,17 +257,14 @@ class MountainJob():
                         print('>> No console out for process')
                 else:
                     print('WARNING: no process console out file found: '+tmp_process_console_out_fname)
-                if job_timeout:
-                    if retcode == 124:
-                        print('RETURN CODE IS 124 indicating the process exceeded the timeout threshold of {}s'.format(job_timeout))
                 elapsed = time.time() - timer
-                print('========== {} exited with code {} after {} sec'.format(self._job['processor_name'], retcode, elapsed))
+                print('========== {} exited with code {} after {} sec'.format(self._job_object['processor_name'], retcode, elapsed))
                 print('================================================================================')
             
             runtime_capture.stop_capturing()
-            R.retcode=retcode
+            R.retcode = retcode
             R.runtime_info = runtime_capture.runtimeInfo()
-            R.console_out = mt.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
+            R.console_out = local_client.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
             R.outputs=dict()
             if retcode == 0:
                 for output_tocopy in output_files_to_copy:
@@ -432,7 +273,7 @@ class MountainJob():
                 for output_name, fname in output_files.items():
                     if not os.path.exists(fname):
                         raise Exception('Unexpected: output file {} does not exist: {}'.format(output_name, fname), os.path.exists(fname))
-                    R.outputs[output_name] = mt.saveFile(path=fname)
+                    R.outputs[output_name] = local_client.saveFile(path=fname)
 
             if (retcode == 0) and use_cache:
                 self._store_result_in_cache(R)
@@ -441,7 +282,7 @@ class MountainJob():
 
     def _realize_input(self, fname):
         if fname.startswith('kbucket://'):
-            if mt.findFile(fname):
+            if local_client.findFile(fname):
                 return mt.realizeFile(fname)
             else:
                 # must be a directory
@@ -450,12 +291,14 @@ class MountainJob():
             return mt.realizeFile(fname)
 
     def _generate_execute_code(self, temp_path, attributes_for_processor):
-        code = mt.loadObject(path = self._job['processor_code'])
+        if not self._job_object['processor_code']:
+            raise Exception('Processor code is missing for job', self._job_object.get('processor_name'))
+        code = mt.loadObject(path = self._job_object['processor_code'])
         if code is None:
             raise Exception('Unable to load processor code for job.')
         _write_python_code_to_directory(temp_path+'/processor_source', code)
         
-        processor_class_name = self._job['processor_class_name']
+        processor_class_name = self._job_object['processor_class_name']
 
         run_py_script = ShellScript("""
             #!/usr/bin/env python
@@ -491,42 +334,68 @@ class MountainJob():
         run_py_script.write(os.path.join(temp_path, 'run.py'))
 
     def _find_result_in_cache(self):
-        output_signatures = self._job['output_signatures']
-        output_paths=dict()
-        for output_name, signature in output_signatures.items():
-            output_path = mt.getValue(key=signature, local_first=True)
+        output_paths = dict()
+        for output_name, output0 in self._job_object['outputs'].items():
+            signature0 = output0['signature']
+            output_path = local_client.getValue(key=signature0, check_alt=True)
             if not output_path:
                 return None
             output_paths[output_name] = output_path
-
-        runtime_info=mt.loadObject(path=output_paths['--runtime-info--'], local_first=True)
-        if not runtime_info:
+        
+        runtime_info_signature = self._job_object['runtime_info_signature']
+        output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature, check_alt=True)
+        if not output_paths['--runtime-info--']:
             return None
 
-        console_out_check = mt.loadText(path=output_paths['--console-out--'], local_first=True)
-        if not console_out_check:
+        console_out_signature = self._job_object['console_out_signature']
+        output_paths['--console-out--'] = local_client.getValue(key=console_out_signature, check_alt=True)
+        if not output_paths['--console-out--']:
+            return None
+    
+        for output_name in output_paths.keys():
+            orig_path = output_paths[output_name]
+            output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
+            if not output_paths[output_name]:
+                print('Unable to realize cached output', output_name, orig_path)
+                return None
+            
+        runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
+        if runtime_info is None:
+            print('Unable to load cached runtime info', output_paths['--runtime-info--'])
+            return None
+
+        console_out_text = local_client.loadText(path=output_paths['--console-out--'])
+        if console_out_text is None:
+            print('Unable to load cached console out text:', output_paths['--console-out--'])
             return None
         
         R = MountainJobResult()
         R.retcode=0
-        R.runtime_info=runtime_info
-        R.console_out = output_paths['--console-out--']
+        R.runtime_info = runtime_info
+        R.console_out = local_client.saveFile(path=output_paths['--console-out--'])
         R.outputs=dict()
-        for output_name in self._job['outputs'].keys():
-            R.outputs[output_name] = output_paths[output_name]
+        for output_name in self._job_object['outputs'].keys():
+            R.outputs[output_name] = local_client.saveFile(path=output_paths[output_name])
         return R
 
     def _store_result_in_cache(self, result):
-        output_signatures = self._job['output_signatures']
-        for output_name in self._job['outputs'].keys():
-            if output_name in result.outputs:
-                mt.setValue(key=output_signatures[output_name], value=result.outputs[output_name], local_also=True)
-        runtime_info_path = mt.saveObject(object=result.runtime_info, basename='runtime_info.json', local_also=True)
-        mt.setValue(key=output_signatures['--runtime-info--'], value=runtime_info_path, local_also=True)
-        mt.setValue(key=output_signatures['--console-out--'], value=result.console_out, local_also=True)
+        for output_name, output0 in self._job_object['outputs'].items():
+            output_path = local_client.getSha1Url(result.outputs[output_name])
+            if output_path:
+                local_client.setValue(key=output0['signature'], value=output_path)
+            else:
+                raise Exception('Unable to store output in cache', output_name, result.outputs[output_name])
+
+        runtime_info_signature = self._job_object['runtime_info_signature']
+        runtime_info_path = local_client.saveObject(object=result.runtime_info)
+        local_client.setValue(key=runtime_info_signature, value=runtime_info_path)
+
+        console_out_signature = self._job_object['console_out_signature']
+        console_out_path = result.console_out
+        local_client.setValue(key=console_out_signature, value=console_out_path)
 
     def _copy_outputs_from_result_to_dest_paths(self, result):
-        for output_name, output0 in self._job['outputs'].items():
+        for output_name, output0 in self._job_object['outputs'].items():
             if type(output0) == str:
                 dest_path = output0
             elif type(output0)==dict:
@@ -537,26 +406,29 @@ class MountainJob():
             else:
                 dest_path = None
             if dest_path:
-                mt.realizeFile(result.outputs[output_name], dest_path=dest_path)
+                local_client.realizeFile(result.outputs[output_name], dest_path=dest_path)
                 result.outputs[output_name] = dest_path
 
 class MountainJobResult():
     def __init__(self, result_object=None):
-        self.retcode=0
-        self.console_out=None
-        self.runtime_info=None
-        self.outputs=None
+        self.retcode = 0
+        self.timed_out = False
+        self.console_out = None
+        self.runtime_info = None
+        self.outputs = None
         if result_object is not None:
             self.fromObject(result_object)
     def getObject(self):
         return dict(
             retcode=self.retcode,
+            timed_out=self.timed_out,
             console_out=self.console_out,
             runtime_info=deepcopy(self.runtime_info),
             outputs=deepcopy(self.outputs)
         )
     def fromObject(self, obj):
         self.retcode = obj['retcode']
+        self.timed_out = obj.get('timed_out', False)
         self.console_out = obj['console_out']
         self.runtime_info = deepcopy(obj['runtime_info'])
         self.outputs = deepcopy(obj['outputs'])
@@ -613,74 +485,6 @@ class ConsoleCapture():
     def consoleOut(self):
         return self._console_out
 
-def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
-    input_hashes=dict()
-    for input_name, input0 in inputs.items():
-        if input0.get('directory', False):
-            input_hashes[input_name] = mt.computeDirHash(input0['path'])
-        else:
-            input_hashes[input_name] = mt.computeFileSha1(input0['path'])
-
-    signature_obj = dict(
-        processor_name=processor_name,
-        processor_version=processor_version,
-        inputs=input_hashes,
-        parameters=parameters,
-        output_name=output_name
-    )
-    signature_string = json.dumps(signature_obj, sort_keys=True)
-    return _sha1(signature_string)
-        
-def _sha1(str):
-    hash_object = hashlib.sha1(str.encode('utf-8'))
-    return hash_object.hexdigest()
-
-def _file_exists_or_is_sha1_url(fname):
-    if fname.startswith('sha1://'):
-        return True
-    if mt.findFile(path=fname):
-        return True
-    return False
-
-def _directory_exists(fname):
-    if fname.startswith('kbucket://'):
-        a = mt.readDir(path=fname,include_sha1=False)
-        return (a is not None)
-    return os.path.isdir(fname)
-
-def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
-    patterns = ['*.py']+additional_files
-    files = []
-    dirs = []
-    for fname in os.listdir(dirname):
-        if os.path.isfile(dirname+'/'+fname):
-            matches = False
-            for pattern in patterns:
-                if fnmatch.fnmatch(fname, pattern):
-                    matches = True
-            if exclude_init and (fname == '__init__.py'):
-                matches = False
-            if matches:
-                with open(dirname+'/'+fname) as f:
-                    txt = f.read()
-                files.append(dict(
-                    name=fname,
-                    content=txt
-                ))
-        elif os.path.isdir(dirname+'/'+fname):
-            if (not fname.startswith('__')) and (not fname.startswith('.')):
-                content = _read_python_code_of_directory(
-                    dirname+'/'+fname, additional_files=additional_files, exclude_init=False)
-                if len(content['files'])+len(content['dirs']) > 0:
-                    dirs.append(dict(
-                        name=fname,
-                        content=content
-                    ))
-    return dict(
-        files=files,
-        dirs=dirs
-    )
-
 def _write_python_code_to_directory(dirname, code):
     if os.path.exists(dirname):
         raise Exception(
@@ -702,14 +506,25 @@ def _code_generate_value(val):
     else:
         return val
 
-def _get_singularity_opts():
+def _get_singularity_opts_and_env_vars():
     singularity_opts = []
-    kbucket_cache_dir = mt.localCacheDir()
+    kbucket_cache_dir = local_client.localCacheDir()
+    alternate_kbucket_cache_dirs = local_client.alternateLocalCacheDirs()
+
+    env_vars = []
+
     singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir, '/sha1-cache'))
+    env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
+    alt_dirs_in_container = []
+    for ii, alt_cache_dir in enumerate(alternate_kbucket_cache_dirs):
+        dir_in_container = '/sha1-cache-alt-{}'.format(ii)
+        singularity_opts.append('-B {}:{}'.format(alt_cache_dir, dir_in_container))
+        alt_dirs_in_container.append(dir_in_container)
+    env_vars.append('KBUCKET_CACHE_DIR_ALT={}'.format(':'.join(alt_dirs_in_container)))
     singularity_opts.append('-B /tmp:/tmp')
     singularity_opts.append('--contain')
     singularity_opts.append('-e')
-    return singularity_opts
+    return singularity_opts, env_vars
 
 def _read_text_file(fname):
     with open(fname) as f:
@@ -730,7 +545,7 @@ def _make_remote_url_for_file(fname):
     elif fname.startswith('kbucket://'):
         return fname
     else:
-        sha1 = mt.computeFileSha1(fname)
+        sha1 = local_client.computeFileSha1(fname)
         return 'sha1://'+sha1+'/'+os.path.basename(fname)
 
 # def _run_command_and_print_output(command, timeout=None):

@@ -7,15 +7,15 @@ mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikefo
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'paired'
+group_name = 'paired_crcns'
 
 
-def prepare_paired_studies(*, basedir):
+def prepare_paired_crcns_studies(*, basedir):
     study_set_name = 'paired'
     studies = []
     recordings = []
     #names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']
-    names = ['boyden32c','crcns','mea64c','neuropix32c'] # exclude neuro
+    names = ['crcns'] # exclude neuro
     for name in names:
         print('PREPARING: '+name)
         study_name = 'paired_' + name
@@ -41,7 +41,7 @@ def prepare_paired_studies(*, basedir):
 
 
 # Prepare the studies
-studies, recordings = prepare_paired_studies(basedir=basedir)
+studies, recordings = prepare_paired_crcns_studies(basedir=basedir)
 mt.saveObject(
     object=dict(
         studies=studies,
