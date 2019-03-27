@@ -1,8 +1,9 @@
 import numpy as np
 
 
-def synthesize_random_firings(*, K=20, samplerate=30000, duration=60):
-    firing_rates = 3 * np.ones((K))
+def synthesize_random_firings(*, K=20, samplerate=30000, duration=60, firing_rates=None):
+    if firing_rates is None:
+        firing_rates = 3 * np.ones((K))
     refr = 4
 
     N = np.int64(duration * samplerate)

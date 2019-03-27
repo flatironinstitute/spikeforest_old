@@ -13,7 +13,7 @@ def _mda32_to_base64(X):
     return base64.b64encode(f.getvalue()).decode('utf-8')
 
 class TimeseriesWidget(vd.Component):
-    def __init__(self,sorting=None,unit_ids=None,start_frame=0,end_frame=None,*,recording):
+    def __init__(self,*,recording,sorting=None,unit_ids=None,start_frame=0,end_frame=None,size=(800,400)):
         vd.Component.__init__(self)
 
         vd.devel.loadBootstrap()
@@ -55,7 +55,7 @@ class TimeseriesWidget(vd.Component):
         print(self._array.shape)
         print('length of b64: {}'.format(len(self._array_b64)))
         vd.devel.loadJavascript(js=js)
-        self._size=(800,400)
+        self._size=size
     def setSize(self,size):
         print('setSize')
         if self._size==size:
@@ -66,7 +66,7 @@ class TimeseriesWidget(vd.Component):
         print('rendering timeserieswidget...')
         div=vd.div(id=self._div_id)
         js="""
-        console.log('testing 111');
+        console.log('testing 111b');
         function _base64ToArrayBuffer(base64) {
             var binary_string =  window.atob(base64);
             var len = binary_string.length;
@@ -79,7 +79,9 @@ class TimeseriesWidget(vd.Component):
         let W=new window.TimeseriesWidget();
         //W.setTimeseriesModel(new window.TestTimeseriesModel());
         let X=_base64ToArrayBuffer(window.sfdata['array_b64_{div_id}']);
+        console.log(X)
         let A=new window.Mda();
+        console.log(A.N1(), A.N2())
         A.setFromArrayBuffer(X);
         let TS=new window.TimeseriesModel(A);
         W.setTimeseriesModel(TS);

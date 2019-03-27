@@ -2,15 +2,17 @@ import numpy as np
 from .synthesize_single_waveform import synthesize_single_waveform
 
 
-def synthesize_random_waveforms(*, M=5, T=500, K=20, upsamplefac=13, timeshift_factor=3, average_peak_amplitude=-10):
+def synthesize_random_waveforms(*, M=5, T=500, K=20, upsamplefac=13, timeshift_factor=0.3, average_peak_amplitude=-10):
     geometry = None
     avg_durations = [200, 10, 30, 200]
     avg_amps = [0.5, 10, -1, 0]
     rand_durations_stdev = [10, 4, 6, 20]
     rand_amps_stdev = [0.2, 3, 0.5, 0]
     rand_amp_factor_range = [0.5, 1]
-    geom_spread_coef1 = 0.2
-    geom_spread_coef2 = 1
+    #geom_spread_coef1 = 0.2
+    #geom_spread_coef2 = 1
+    geom_spread_coef1 = 0.5
+    geom_spread_coef2 = 0.4
 
     if not geometry:
         geometry = np.zeros((2, M))
@@ -50,19 +52,8 @@ def get_default_neuron_locations(M, K, geometry):
     num_dims = geometry.shape[0]
     neuron_locations = np.zeros((num_dims, K))
     for k in range(1, K + 1):
-        if K > 0:
-            ind = (k - 1) / (K - 1) * (M - 1) + 1
-            ind0 = int(ind)
-            if ind0 == M:
-                ind0 = M - 1
-                p = 1
-            else:
-                p = ind - ind0
-            if M > 0:
-                neuron_locations[:, k - 1] = (1 - p) * geometry[:, ind0 - 1] + p * geometry[:, ind0]
-            else:
-                neuron_locations[:, k - 1] = geometry[:, 0]
-        else:
-            neuron_locations[:, k - 1] = geometry[:, 0]
-
+        ind = k / (K + 1) * M
+        ind0 = int(ind)
+        p = ind - ind0
+        neuron_locations[:, k - 1] = (1 - p) * geometry[:, ind0 - 1] + p * geometry[:, ind0]
     return neuron_locations

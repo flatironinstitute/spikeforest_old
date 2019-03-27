@@ -1164,7 +1164,7 @@ class MountainClientLocal():
                     ret.append(name0[0:-4])
         return ret
 
-    def getValue(self, *, key, subkey=None, check_alt=False, _db_path=None):
+    def getValue(self, *, key, subkey=None, check_alt=False, _db_path=None, _disable_lock=False):
         keyhash = _hash_of_key(key)
         if subkey is not None:
             if check_alt:
@@ -1182,7 +1182,7 @@ class MountainClientLocal():
                 fname0 = os.path.join(subkey_db_path, subkey+'.txt')
                 if not os.path.exists(fname0):
                     return None
-                with FileLock(subkey_db_path+'.lock'):
+                with FileLock(subkey_db_path+'.lock', _disable_lock=_disable_lock):
                     txt = _read_text_file(fname0)
                     return txt
         else:
@@ -1193,7 +1193,7 @@ class MountainClientLocal():
                 if check_alt:
                     alternate_db_paths = self.alternateLocalDatabasePaths()
                     for db_path in alternate_db_paths:
-                        val = self.getValue(key=key, subkey=None, check_alt=None, _db_path=db_path)
+                        val = self.getValue(key=key, subkey=None, check_alt=None, _db_path=db_path, _disable_lock=True)
                         if val:
                             return val
                 return None
