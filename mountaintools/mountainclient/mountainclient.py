@@ -1197,7 +1197,7 @@ class MountainClientLocal():
                         if val:
                             return val
                 return None
-            with FileLock(fname0+'.lock'):
+            with FileLock(fname0+'.lock', _disable_lock=_disable_lock):
                 txt = _read_text_file(fname0)
                 return txt
 
@@ -1223,7 +1223,7 @@ class MountainClientLocal():
                     if value is None:
                         os.unlink(fname0)
                     else:
-                        _write_text_file(fname0, value)
+                        _write_text_file_safe(fname0, value)
                 return True
         else:
             # not a subkey
