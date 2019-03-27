@@ -17,11 +17,18 @@ export DISPLAY=""
 COLLECTION=spikeforest
 SHARE_ID=69432e9201d0
 
-../../../bin/compute-resource-start $RESOURCE_NAME \
-	--allow_uncontainerized --parallel 1  \
-	--collection $COLLECTION --share_id $SHARE_ID
+#../../../bin/compute-resource-start $RESOURCE_NAME \
+#	--allow_uncontainerized --parallel 1  \
+#	--collection $COLLECTION --share_id $SHARE_ID
 
 #../../../bin/compute-resource-start $RESOURCE_NAME \
 #	--allow_uncontainerized  \
 #	--collection $COLLECTION --share_id $SHARE_ID \
-#        --srun_opts "-n 4 -c 2 -p gpu --gres=gpu:1 --constraint=v100"
+#        --srun_opts "-n 6 -c 2 -p gpu --gres=gpu:1 --constraint=v100" \
+#        --parallel 4
+
+../../../bin/compute-resource-start $RESOURCE_NAME \
+	--allow_uncontainerized  \
+	--collection $COLLECTION --share_id $SHARE_ID \
+        --srun_opts "-n 1 -c 8 -p gpu --gres=gpu:1 --constraint=v100" \
+        --parallel 6
