@@ -13,6 +13,7 @@ import shutil
 from spikeforest.spikeextractors import mdaio
 from spikeforest import spikeextractors as se
 from mountaintools import client as mt
+from mlprocessors import ShellScript
 import json
 
 
@@ -141,16 +142,51 @@ def ironclust_helper(*,
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
     print('Running IronClust...')
-    cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
-        ironclust_path, ironclust_path, ironclust_path)
-    # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
-    cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
-        .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-        cmd_path, cmd_call)
-    print(cmd)
-    #retcode = _run_command_and_print_output(cmd)
-    retcode = os.system(cmd)
+
+    S_m = ShellScript("""
+        disp('Running ironclust.')
+        disp('IRONCLUST PATH = {ironclust_path})')
+        disp('DATASET DIR = {dataset_dir})')
+        addpath('{ironclust_path}', '{ironclust_path}/matlab', '{ironclust_path}/matlab/mdaio');
+        try
+            p_ironclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '', '', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
+        catch
+            dbstack();
+            disp(lasterr());
+            exit(-1);
+        exit(0);
+    """)
+    S_m.substitute('{ironclust_path}', ironclust_path)
+    S_m.substitute('{tmpdir}', tmpdir)
+    S_m.substitute('{dataset_dir}', dataset_dir)
+
+    rand_str = _random_string(5)
+    S_m.write(os.path.join(tmpdir, 'ironclust_script_{}.m'.format(rand_str)))
+
+    S_sh = ShellScript("""
+        #!/bin/bash
+        set -e
+
+        matlab -nosplash -nodisplay -r "addpath('{tmpdir}'); ironclust_script_{rand_str};"
+    """)
+    S_sh.substitute('{tmpdir}', tmpdir)
+    S_sh.substitute('{rand_str}', rand_str)
+
+    S_sh.start()
+    while True:
+        S_sh.wait(5)
+    retcode = S_sh.returnCode()
+
+    # cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
+    #     ironclust_path, ironclust_path, ironclust_path)
+    # # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
+    # cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
+    #     .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
+    # cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
+    #     cmd_path, cmd_call)
+    # print(cmd)
+    # #retcode = _run_command_and_print_output(cmd)
+    # retcode = os.system(cmd)
 
     if retcode != 0:
         raise Exception('IronClust returned a non-zero exit code')
@@ -201,3 +237,6 @@ def read_dataset_params(dsdir):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:
         return json.load(f)
+
+def _random_string(num):
+    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
