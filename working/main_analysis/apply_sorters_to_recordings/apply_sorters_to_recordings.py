@@ -6,7 +6,7 @@ import mtlogging
 
 
 @mtlogging.log()
-def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
+def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_timeout=60*20):
     # Summarize the recordings
     mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
@@ -19,7 +19,13 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
     mtlogging.sublog('sorting')
     sorting_results = []
     for sorter in sorters:
-        sorting_results = sorting_results + _run_sorter(sorter=sorter, recordings=recordings, label='{} ({})'.format(sorter['name'], output_id))
+        sorting_results0 = _run_sorter(
+            sorter=sorter,
+            recordings=recordings, 
+            label='{} ({})'.format(sorter['name'], output_id),
+            job_timeout=job_timeout
+        )
+        sorting_results = sorting_results + sorting_results0
 
     # Summarize the sortings
     mtlogging.sublog('summarize-sortings')
@@ -73,14 +79,15 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id):
         print(txt)
 
 @mtlogging.log()
-def _run_sorter(sorter, recordings, label):
+def _run_sorter(sorter, recordings, label, job_timeout):
     # Sort the recordings
     compute_resource0 = sorter['compute_resource']
     sortings = sa.sort_recordings(
         sorter=sorter,
         recordings=recordings,
         compute_resource=compute_resource0,
-        label=label
+        label=label,
+        job_timeout=job_timeout
     )
 
     return sortings

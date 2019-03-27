@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--collection',help='Name of collection to connect to', required=False, default=None)
     parser.add_argument('--share_id',help='Name of kbucket share id to connect to', required=False, default=None)
     parser.add_argument('--sorter_codes',help='Comma-separated codes of sorters to run', required=False, default='ms4,irc,sc,yass')
+    parser.add_argument('--job_timeout',help='Number of seconds before timeing out a sorting job', required=False, default=60*20)
     parser.add_argument('--test', help='Only run a few, and prepend test_ to the output', action='store_true')
 
     args = parser.parse_args()
@@ -66,7 +67,7 @@ def main():
     sorters = [sorter for sorter in sorters if sorter['code'] in sorter_codes]
     print('Using sorters: ',[sorter['name'] for sorter in sorters])
 
-    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id)
+    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id, job_timeout=args.job_timeout)
 
 def _define_sorters():
     sorter_ms4_thr3 = dict(
