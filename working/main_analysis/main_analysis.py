@@ -67,7 +67,7 @@ def main():
     sorters = [sorter for sorter in sorters if sorter['code'] in sorter_codes]
     print('Using sorters: ',[sorter['name'] for sorter in sorters])
 
-    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id, job_timeout=args.job_timeout)
+    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id, job_timeout=float(args.job_timeout))
 
 def _define_sorters():
     sorter_ms4_thr3 = dict(
