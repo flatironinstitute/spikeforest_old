@@ -18,8 +18,8 @@ class NeuroscopeSortingExtractor(SortingExtractor):
     """
     def __init__(self, resfile, clufile):
         SortingExtractor.__init__(self)
-        res = np.loadtxt(resfile, dtype=np.int64, usecols=0)
-        clu = np.loadtxt(clufile, dtype=np.int64, usecols=0)
+        res = np.loadtxt(resfile, dtype=np.int64, usecols=0, ndmin=1)
+        clu = np.loadtxt(clufile, dtype=np.int64, usecols=0, ndmin=1)
         if len(res) > 0:
             n_clu = clu[0]
             clu = np.delete(clu,0)
