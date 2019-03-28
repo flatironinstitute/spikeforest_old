@@ -41,8 +41,6 @@ class FeatureSpaceWidget(vd.Component):
         vd.devel.loadJavascript(path=source_path+'/featurespacewidget.js')
         vd.devel.loadJavascript(path=source_path+'/../dist/jquery-3.3.1.min.js')
 
-        self._array=self._recording.getTraces()
-        self._array_b64=_mda32_to_base64(self._array)
         self._div_id='SFFeatureSpaceWidget-'+str(uuid.uuid4())
 	
         features = arr_to_js_string(self._features)
@@ -50,8 +48,6 @@ class FeatureSpaceWidget(vd.Component):
         js_lines=[
                 "window.sfdata=window.sfdata||{}",
                 "window.sfdata.test=0",
-                "window.sfdata['array_b64_{div_id}']='{b64}'".format(div_id=self._div_id,
-                    b64=self._array_b64),
                 "window.sfdata['features']={}".format(features)
                     ]
         js = ";".join(js_lines)
@@ -70,19 +66,8 @@ class FeatureSpaceWidget(vd.Component):
         print('rendering featurespacewidget...')
         div=vd.div(id=self._div_id)
         js="""
-        function _base64ToArrayBuffer(base64) {
-            var binary_string =  window.atob(base64);
-            var len = binary_string.length;
-            var bytes = new Uint8Array( len );
-            for (var i = 0; i < len; i++)        {
-                bytes[i] = binary_string.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
         let W=new window.FeatureSpaceWidget();
-        let X=_base64ToArrayBuffer(window.sfdata['array_b64_{div_id}']);
         let A=new window.Mda();
-        A.setFromArrayBuffer(X);
         W.setFeatures(window.sfdata['features']);
         W.setSize({width},{height})
         $('#{div_id}').empty();
@@ -119,9 +104,10 @@ class FeatureSpaceWidget(vd.Component):
         for unit in units:
             st = self._sorting.getUnitSpikeTrain(unit_id=unit)
             if st is not None:
-                spikes = self._get_random_spike_waveforms(unit=unit, max_num=self._max_num_spikes_per_unit,
+                spikes,spiketimes = self._get_random_spike_waveforms(unit=unit, max_num=self._max_num_spikes_per_unit,
                                                           channels=channels)
                 item = dict(
+                    representative_spiketimes=spiketimes,
                     representative_waveforms=spikes,
                     title='Unit {}'.format(int(unit))
                 )
@@ -158,10 +144,15 @@ class FeatureSpaceWidget(vd.Component):
             self._get_spikes_in_feature_space(d, feature_space, opts)
 
     def _get_spikes_in_feature_space(self, spikes_dict, feature_space, opts):
-        waveforms = spikes_dict['representative_waveforms']
+        waveforms  = spikes_dict['representative_waveforms']
+        spiketimes = spikes_dict['representative_spiketimes']
         if not (np.shape(waveforms)[1] > 0):
             raise Exception('{} does not exist or has no spikes.'.format(spikes_dict['title']))
-        self._features.append(feature_space.transform(waveforms.T).T)
+        features = feature_space.transform(waveforms.T).T
+        spiketimes = (np.array(spiketimes)-np.max(spiketimes)/2)/2
+        spiketimes.shape = (1,len(spiketimes))
+        features = np.concatenate([spiketimes, features], axis=0)
+        self._features.append(features)
         # TODO: Optionally exclude outliers
 
     def _plot_spikes_in_feature_space_multi(self,list,opts):
@@ -196,7 +187,7 @@ class FeatureSpaceWidget(vd.Component):
             spikes = np.dstack(tuple(spikes))
         else:
             spikes = np.zeros((self._recording.getNumChannels(), self._snippet_len, 0))
-        return spikes
+        return spikes, st[event_indices]
 
 import re
 def arr_to_js_string(arr):

@@ -27,8 +27,8 @@ function FeatureSpaceWidget() {
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
     this.setFeatures=function(features) {m_features=features;};
-    this.setFetX=function(fetx) {m_fetx=fetx};
-    this.setFetY=function(fety) {m_fety=fety};
+    this.setFetX=function(fetx) { if(fetx == 'time') {m_fetx=0} else {m_fetx=fetx} };
+    this.setFetY=function(fety) { if(fety == 'time') {m_fety=0} else {m_fety=fety} };
     this.clickStart=[0,0];
     this.clickEnd=[0,0];
 
@@ -56,8 +56,8 @@ function FeatureSpaceWidget() {
       .append(
         $('<select id="fetx"><option value="0">Feature X</option></select>')
         .one('click', function () {
-          $.each([0,1,2,3,4,5,6], function(x) {
-            let dropdown = $('#fetx').append($('<option></option>').val(x).html(x))
+          $.each(['time',1,2,3,4,5,6], function(x,i) {
+            let dropdown = $('#fetx').append($('<option></option>').val(x).html(i))
           })
         })
         .on('change', function () {that.setFetX(this.value);update_plot();})
@@ -65,7 +65,7 @@ function FeatureSpaceWidget() {
       .append(
         $('<select id="fety"><option value="1">Feature Y</option></select>')
         .one('click', function () {
-          $.each([0,1,2,3,4,5,6], function(x) {
+          $.each(['time',1,2,3,4,5,6], function(x) {
             let dropdown = $('#fety').append($('<option></option>').val(x).html(x))
           })
         })
@@ -177,7 +177,7 @@ function FeatureSpaceWidget() {
           for (let i=0; i<n; i++) {
             let px = (fux[i]/xlim)+m_left; //(800-m_left);
             let py = (fuy[i]/ylim)+m_bottom; //(400-m_bottom);
-            let rect = [px,py,5,5]
+            let rect = [px,py,2,2]
             painter.fillEllipse(rect,{'color':colorArray[u+4]})
           }
         }
