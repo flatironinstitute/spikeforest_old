@@ -1,1 +1,1 @@
-from .components import SelectBox, Button, LineEdit, Pyplot, ScrollArea, LazyDiv
+from .components import SelectBox, Button, LineEdit, Pyplot, ScrollArea, LazyDiv, PlotlyPlot

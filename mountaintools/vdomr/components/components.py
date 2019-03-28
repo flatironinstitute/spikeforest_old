@@ -2,7 +2,7 @@ import vdomr as vd
 from abc import ABC, abstractmethod
 import os
 import uuid
-
+import json
 
 class SelectBox(vd.Component):
     def __init__(self, options=[]):
@@ -148,6 +148,63 @@ class Pyplot(vd.Component):
         elmt = vd.img(src=src)
         return elmt
 
+class PlotlyPlot(vd.Component):
+    def __init__(self, data, opts=None, size=None):
+        vd.Component.__init__(self)
+        self._elmt_id = 'PlotlyPlot-'+str(uuid.uuid4())
+        self._data = data
+        self._opts = opts
+        self._size = size
+        vd.devel.loadJavascript(url='https://cdn.plot.ly/plotly-latest.min.js')
+
+    def _filter_data(self, data):
+        import numpy as np
+        if type(data)==list:
+            ret = []
+            for ii, val in enumerate(data):
+                ret.append(self._filter_data(val))
+            return ret
+        elif type(data)==dict:
+            ret = dict()
+            for key, val in data.items():
+                ret[key]=self._filter_data(val)
+            return ret
+        elif type(data) == np.ndarray:
+            if data.ndim != 1:
+                raise Exception('At the moment, we only support 1-d numpy arrays.')
+            return data.tolist()
+        else:
+            if _is_jsonable(data):
+                return data
+            else:
+                raise Exception('Unable to JSON serialize data of type {}'.format(str(type(data))))
+
+    def render(self):
+        div = vd.div(id=self._elmt_id)
+        data = self._filter_data(self._data)
+        if type(data)!=list:
+            data=[data]
+        js = """
+        let div=document.getElementById('{elmt_id}');
+        if (({width}) && ({height})) {
+            div.style="width:{width}px; height:{height}px"
+        }
+        Plotly.plot(div, {data}, {opts});
+        """
+        js = js.replace('{elmt_id}', self._elmt_id)
+        js = js.replace('{data}', json.dumps(data))
+        js = js.replace('{opts}', json.dumps(self._opts or {}))
+        if self._size:
+            width0 = self._size[0]
+            height0 = self._size[1]
+        else:
+            width0 = 'null'
+            height0 = 'null'
+        js = js.replace('{width}', str(width0))
+        js = js.replace('{height}', str(height0))
+        vd.devel.loadJavascript(js=js, delay=100)
+        return div
+
 
 class ScrollArea(vd.Component):
     def __init__(self, child, *, width=None, height=None):
@@ -250,3 +307,10 @@ class LazyDiv(vd.Component):
             js = callback_id.join(js.split('{callback_id}'))
             vd.devel.loadJavascript(js=js, delay=100)
             return vd.div('Loading...', id=self._div_id, style=div_style)
+
+def _is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
