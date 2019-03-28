@@ -209,11 +209,11 @@ def pyqt5_start(*, root, title):
             return None
 
     class VdomrWebView(QWebEngineView):
-        def __init__(self, root):
+        def __init__(self, root, title):
             super(VdomrWebView, self).__init__()
 
             self._root = root
-
+            self._title = title
             self._channel = QWebChannel()
             self._pyqt5_api = PyQt5Api()
             self._channel.registerObject('pyqt5_api', self._pyqt5_api)
@@ -288,9 +288,11 @@ def pyqt5_start(*, root, title):
             html = html.replace('{script}', script)
 
             self.page().setHtml(html)
-
-    app = QApplication([])
-    view = VdomrWebView(root=root)
+    if title is not None:
+        app = QApplication([title])
+    else:
+        app = QApplication([])
+    view = VdomrWebView(root=root, title=title)
     vdomr_global['pyqt5_view'] = view
     view.show()
     app.exec_()
