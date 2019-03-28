@@ -42,6 +42,7 @@ UnitWaveformWidget = SFW.UnitWaveformWidget
 
 
 def get_unmatched_times(times1, times2, *, delta):
+    # spikes in first sorting that are not matched to spikes in second sorting
     times1 = np.array(times1)
     times2 = np.array(times2)
     times_concat = np.concatenate((times1, times2))
@@ -63,6 +64,7 @@ def get_unmatched_times(times1, times2, *, delta):
 
 
 def get_unmatched_sorting(sx1, sx2, ids1, ids2):
+    # spikes in first sorting that are not matched to spikes in second sorting
     ret = se.NumpySortingExtractor()
     for ii in range(len(ids1)):
         id1 = ids1[ii]

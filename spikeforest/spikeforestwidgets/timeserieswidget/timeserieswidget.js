@@ -59,6 +59,7 @@ function TimeseriesWidget() {
     let m_time_axis_xrange=null;
     let m_channel_y_positions=null;
     let m_channel_spacing=null;
+    let m_channel_colors=mv_default_channel_colors();
 
     m_main_canvas.onPaint(paint_main_canvas);
     m_cursor_canvas.onPaint(paint_cursor_canvas);
@@ -71,12 +72,16 @@ function TimeseriesWidget() {
         if (t1<0) t1=0;
         if (t2>=m_model.numTimepoints()) t2=m_model.numTimepoints();
         for (let m=0; m<M; m++) {
+            painter.setPen({'color':m_channel_colors[m % m_channel_colors.length]});
             let pp=new PainterPath();
             let data0=m_model.getChannelData(m,t1,t2);
             for (let tt=0; tt<t2; tt++) {
                 let val=data0[tt-t1];
                 let pt=val2pix(m,tt,val);
-                pp.lineTo(pt[0],pt[1]);
+                if (val)
+                    pp.lineTo(pt[0],pt[1]);
+                else
+                    pp.moveTo(pt[0],pt[1]);
             }
             painter.drawPath(pp);
         }
@@ -98,8 +103,10 @@ function TimeseriesWidget() {
         let i = 0
         for (m_marker_group of m_markers) {
           i = i + 1;
-          painter.setPen({'color':colorArray[i % colorArray.length]});
-          painter.setBrush({'color':colorArray[i % colorArray.length]});
+          // col = colorArray[i % colorArray.length]
+          col = 'red'
+          painter.setPen({'color':col});
+          painter.setBrush({'color':col});
           for(m of m_marker_group) {
             let pt1=val2pix(M-1,m,-m_y_offsets[M-1]);
             let pt2=val2pix(0,m,-m_y_offsets[0]);
@@ -359,6 +366,15 @@ function MouseHandler(elmt) {
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+function mv_default_channel_colors() {
+    var ret=[];
+    ret.push('rgb(40,40,40)');
+    ret.push('rgb(64,32,32)');
+    ret.push('rgb(32,64,32)');
+    ret.push('rgb(32,32,112)');
+    return ret;
 }
 
 // Standard Normal variate using Box-Muller transform.

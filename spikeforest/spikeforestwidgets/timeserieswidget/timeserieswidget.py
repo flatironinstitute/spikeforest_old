@@ -52,18 +52,14 @@ class TimeseriesWidget(vd.Component):
                 "window.sfdata['spike_times']={}".format(spike_trains_str)
                     ]
         js = ";".join(js_lines)
-        print(self._array.shape)
-        print('length of b64: {}'.format(len(self._array_b64)))
         vd.devel.loadJavascript(js=js)
         self._size=size
     def setSize(self,size):
-        print('setSize')
         if self._size==size:
             return
         self._size=size
         self.refresh()
     def render(self):
-        print('rendering timeserieswidget...')
         div=vd.div(id=self._div_id)
         js="""
         console.log('testing 111b');

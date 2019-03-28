@@ -11,12 +11,13 @@ import multiprocessing
 local_client = MountainClient()
 
 @mtlogging.log()
-def createJobs(proc, argslist):
+def createJobs(proc, argslist, verbose=None):
+    if verbose is None:
+        verbose = True
     # Get the code for the processor
     try:
         processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     except:
-        print(proc)
         print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource.'.format(proc.NAME))
         processor_source_fname = None
     if processor_source_fname is not None:
@@ -165,7 +166,8 @@ def createJobs(proc, argslist):
     # Prepare the local file inputs
     if len(all_local_file_inputs) > 0:
         mtlogging.sublog('Preparing local file inputs')
-        print('Preparing {} local file inputs'.format(len(all_local_file_inputs)))
+        if verbose:
+            print('Preparing {} local file inputs'.format(len(all_local_file_inputs)))
         sha1s = _compute_sha1s_for_local_file_inputs(all_local_file_inputs)
         for ii in range(len(all_local_file_inputs)):
             all_local_file_inputs[ii]['sha1'] = sha1s[ii]
@@ -173,7 +175,8 @@ def createJobs(proc, argslist):
     # Prepare the kbucket file inputs
     if len(all_kbucket_file_inputs) > 0:
         mtlogging.sublog('Preparing kbucket file inputs')
-        print('Preparing {} kbucket file inputs'.format(len(all_kbucket_file_inputs)))
+        if verbose:
+            print('Preparing {} kbucket file inputs'.format(len(all_kbucket_file_inputs)))
         sha1s = _compute_sha1s_for_kbucket_file_inputs(all_kbucket_file_inputs)
         for ii in range(len(all_kbucket_file_inputs)):
             all_kbucket_file_inputs[ii]['sha1'] = sha1s[ii]
@@ -181,7 +184,8 @@ def createJobs(proc, argslist):
     # Prepare the sha1 file inputs
     if len(all_sha1_file_inputs) > 0:
         mtlogging.sublog('Preparing sha1 file inputs')
-        print('Preparing {} sha1 file inputs'.format(len(all_sha1_file_inputs)))
+        if verbose:
+            print('Preparing {} sha1 file inputs'.format(len(all_sha1_file_inputs)))
         sha1s = _compute_sha1s_for_sha1_file_inputs(all_sha1_file_inputs)
         for ii in range(len(all_sha1_file_inputs)):
             all_sha1_file_inputs[ii]['sha1'] = sha1s[ii]
@@ -189,7 +193,8 @@ def createJobs(proc, argslist):
     # Prepare the local directory inputs
     if len(all_local_dir_inputs) > 0:
         mtlogging.sublog('Preparing local directory inputs')
-        print('Preparing {} local directory inputs'.format(len(all_local_dir_inputs)))
+        if verbose:
+            print('Preparing {} local directory inputs'.format(len(all_local_dir_inputs)))
         hashes = _compute_hashes_for_local_dir_inputs(all_local_dir_inputs)
         for ii in range(len(all_local_dir_inputs)):
             all_local_dir_inputs[ii]['hash'] = hashes[ii]
@@ -197,12 +202,14 @@ def createJobs(proc, argslist):
     # Prepare the kbucket directory inputs
     if len(all_kbucket_dir_inputs) > 0:
         mtlogging.sublog('Preparing kbucket directory inputs')
-        print('Preparing {} kbucket directory inputs'.format(len(all_kbucket_dir_inputs)))
+        if verbose:
+            print('Preparing {} kbucket directory inputs'.format(len(all_kbucket_dir_inputs)))
         hashes = _compute_hashes_for_kbucket_dir_inputs(all_kbucket_dir_inputs)
         for ii in range(len(all_kbucket_dir_inputs)):
             all_kbucket_dir_inputs[ii]['hash'] = hashes[ii]
 
-    print('Computing output signatures...')
+    if verbose:
+        print('Computing output signatures...')
     mtlogging.sublog('computing-output-signatures')
     for job_object in job_objects:
         for output_name, output0 in job_object['outputs'].items():
@@ -227,7 +234,8 @@ def createJobs(proc, argslist):
             parameters=job_object['parameters'],
             output_name='--console-out--'
         )
-    print('.')
+    if verbose:
+        print('.')
 
     return [MountainJob(processor=proc, job_object=job_object) for job_object in job_objects]
 
@@ -241,6 +249,7 @@ def createJob(
     _label=None,
     _timeout=None,
     _additional_files_to_realize=None,
+    _verbose=None,
     **kwargs
 ):
     args = dict(
@@ -253,7 +262,7 @@ def createJob(
         _additional_files_to_realize=_additional_files_to_realize,
         **kwargs
     )
-    jobs = createJobs(proc, [args])
+    jobs = createJobs(proc, [args], verbose=_verbose)
     return jobs[0]
 
 def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
