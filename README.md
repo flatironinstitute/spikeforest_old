@@ -43,7 +43,7 @@ More advanced installation instructions for Windows 10 users and developers can 
 - Add `export KILOSORT_PATH=install_location` in `.bashrc`
 
 ### Installing Kilosort2
-- Clone `IronClust` from Github by running `git clone https://github.com/MouseLand/Kilosort2`
+- Clone `Kilosort2` from Github by running `git clone https://github.com/MouseLand/Kilosort2`
 - Add `export KILOSORT2_PATH=install_location` in `.bashrc`
 
 ## Basic usage
