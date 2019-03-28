@@ -34,6 +34,18 @@ In the future we will provide conda packages for these.
 
 More advanced installation instructions for Windows 10 users and developers can be found below.
 
+### Installing IronClust
+- Clone `IronClust` from Github by running `git clone https://github.com/jamesjun/ironclust`
+- Add `export IRONCLUST_PATH=install_location` in `.bashrc`
+
+### Installing KiloSort
+- Clone `KiloSort` from Github by running `git clone https://github.com/cortex-lab/KiloSort`
+- Add `export KILOSORT_PATH=install_location` in `.bashrc`
+
+### Installing Kilosort2
+- Clone `IronClust` from Github by running `git clone https://github.com/MouseLand/Kilosort2`
+- Add `export KILOSORT2_PATH=install_location` in `.bashrc`
+
 ## Basic usage
 
 ![Basic flow chart - SpikeForest](docs/basic_flow_chart_spikeforest.jpg?raw=true "Basic flow chart - SpikeForest")
