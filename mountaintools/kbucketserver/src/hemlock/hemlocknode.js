@@ -460,8 +460,10 @@ function HemlockNode(hemlock_node_directory, node_type) {
         msg.data_delta = delta;
       else
         msg.data_nochange = true;
+        console.log('======================= reporting node data with data delta');
     } else {
       msg.data = node_data;
+      console.log('======================= reporting node data with data');
     }
     msg.data_hash=object_hash(node_data);
     m_last_node_data_reported = node_data;

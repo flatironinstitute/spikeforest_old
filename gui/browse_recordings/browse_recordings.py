@@ -99,6 +99,14 @@ class MainWindow(vd.Component):
         rec = study.recording(recording_name)
         self._recording_widget.setRecording(rec)
 
+    def setSize(self, size):
+        # todo
+        pass
+
+    def size(self):
+        # todo
+        pass
+
     def render(self):
         rows = [            
             vd.tr(vd.td('Select a study:'), vd.td(self._SEL_study)),

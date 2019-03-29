@@ -59,6 +59,14 @@ class SFBrowserMainWindow(vd.Component):
         self._sf_browser = SFBrowser(output_id=output_id)
         self.refresh()
 
+    def setSize(self, size):
+        # todo
+        pass
+
+    def size(self):
+        # todo
+        pass
+
     def render(self):
         list = [self._output_id_select_widget]
         if self._sf_browser:

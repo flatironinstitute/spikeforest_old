@@ -55,6 +55,14 @@ class BatchMonitorMainWindow(vd.Component):
             self._on_selection_changed)
         self._resource_select_widget.initialize()
 
+    def setSize(self, size):
+        # todo
+        pass
+
+    def size(self):
+        # todo
+        pass
+
     def _on_selection_changed(self):
         resource_name = self._resource_select_widget.resourceName()
         if not resource_name:

@@ -299,7 +299,7 @@ class LazyDiv(vd.Component):
                 }
                 setTimeout(function() {
                   initialize();
-                },50);
+                },500);
               }
             }
             initialize();

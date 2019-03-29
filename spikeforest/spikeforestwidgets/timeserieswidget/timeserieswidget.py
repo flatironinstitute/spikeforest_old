@@ -59,6 +59,8 @@ class TimeseriesWidget(vd.Component):
             return
         self._size=size
         self.refresh()
+    def size(self):
+        return self._size
     def render(self):
         div=vd.div(id=self._div_id)
         js="""

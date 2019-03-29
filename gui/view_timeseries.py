@@ -7,7 +7,7 @@ from mountaintools import client as mt
 import spikeforestwidgets as SFW
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor
-
+import uuid
 
 class TheApp():
     def __init__(self, recording_directory):
@@ -21,6 +21,7 @@ class TheApp():
         recording = se.NumpyRecordingExtractor(
             timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
         W = SFW.TimeseriesWidget(recording=recording)
+        _make_full_browser(W)
         return W
 
 
@@ -44,11 +45,32 @@ def main():
         server.setPort(int(args.port))
         server.start()
     else:
-        vd.config_pyqt5()
-        W = APP.createSession()
-        vd.exec_javascript('console.log("test123")')
-        vd.pyqt5_start(root=W, title='view_timeseries')
+        vd.pyqt5_start(APP=APP, title='view_timeseries')
 
+def _make_full_browser(W):
+    resize_callback_id = 'resize-callback-' + str(uuid.uuid4())
+    vd.register_callback(resize_callback_id, lambda width, height: W.setSize((width, height)))
+    js = """
+    document.body.style="overflow:hidden";
+    let onresize_scheduled=false;
+    function schedule_onresize() {
+        if (onresize_scheduled) return;
+        onresize_scheduled=true;
+        setTimeout(function() {
+            onresize();
+            onresize_scheduled=false;
+        },100);
+    }
+    function onresize() {
+        width = document.body.clientWidth;
+        height = document.body.clientHeight;
+        window.vdomr_invokeFunction('{resize_callback_id}', [width, height], {})
+    }
+    window.addEventListener("resize", schedule_onresize);
+    schedule_onresize();
+    """
+    js = js.replace('{resize_callback_id}', resize_callback_id)
+    vd.devel.loadJavascript(js=js, delay=1)
 
 if __name__ == "__main__":
     main()
