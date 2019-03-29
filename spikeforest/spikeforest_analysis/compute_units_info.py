@@ -2,12 +2,11 @@ import numpy as np
 import json
 import mlprocessors as mlpr
 from mountaintools import client as mt
-
-# if we are running this outside the container
-from spikeforest import spikeextractors as si
+import spikeextractors as si
 from spikeforest import spikewidgets as sw
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
-_CONTAINER='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
+_CONTAINER='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
 
 def write_json_file(fname,obj):
   with open(fname, 'w') as f:
@@ -67,7 +66,7 @@ class ComputeUnitsInfo(mlpr.Processor):
   json_out=mlpr.Output('The info as a .json file')
   
   def run(self):
-    R0=si.MdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
+    R0=SFMdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     if (self.channel_ids) and (len(self.channel_ids)>0):
       R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
 
@@ -80,7 +79,7 @@ class ComputeUnitsInfo(mlpr.Processor):
     R0=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
     R0=si.NumpyRecordingExtractor(timeseries=R0.getTraces(), samplerate=R0.getSamplingFrequency())
 
-    sorting=si.MdaSortingExtractor(firings_file=self.firings)
+    sorting=SFMdaSortingExtractor(firings_file=self.firings)
     unit_ids=self.unit_ids
     if (not unit_ids) or (len(unit_ids)==0):
       unit_ids=sorting.getUnitIds()

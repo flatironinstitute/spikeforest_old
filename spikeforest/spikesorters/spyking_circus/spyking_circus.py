@@ -8,6 +8,9 @@ import shlex
 import random
 import string
 import shutil
+from spikeforest import spikeextractors as sfse
+import spikeextractors as se
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 
 class SpykingCircus(mlpr.Processor):
@@ -16,7 +19,7 @@ class SpykingCircus(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
-    CONTAINER = 'sha1://030aae3a7c5638ae2795da05d2c79ca53fd940e9/03-11-2019/spyking_circus.simg'
+    CONTAINER = 'sha1://8daaf751fc3f40dd6f86696e8fcb675bcf1ba212/03-29-2019/spyking_circus.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -38,13 +41,6 @@ class SpykingCircus(mlpr.Processor):
         optional=True, default=10000, description='I believe it relates to subsampling and affects compute time')
 
     def run(self):
-        try:
-            # if we are running this outside the container
-            from spikeforest import spikeextractors as se
-        except:
-            # if we are in the container
-            import spikeextractors as se
-
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/spyking-circus-tmp-'+code
@@ -52,7 +48,7 @@ class SpykingCircus(mlpr.Processor):
         num_workers = os.environ.get('NUM_WORKERS', 1)
 
         try:
-            recording = se.MdaRecordingExtractor(self.recording_dir)
+            recording = SFMdaRecordingExtractor(self.recording_dir)
             if len(self.channels) > 0:
                 recording = se.SubRecordingExtractor(
                     parent_recording=recording, channel_ids=self.channels)
@@ -74,7 +70,7 @@ class SpykingCircus(mlpr.Processor):
                 whitening_max_elts=self.whitening_max_elts,
                 clustering_max_elts=self.clustering_max_elts,
             )
-            se.MdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             if not getattr(self, '_keep_temp_files', False):
@@ -103,13 +99,6 @@ def spyking_circus(
     clustering_max_elts=10000,
     singularity_container=None
 ):
-    try:
-        # if we are running this outside the container
-        from spikeforest import spikeextractors as se
-    except:
-        # if we are in the container
-        import spikeextractors as se
-
     if not singularity_container:
         try:
             import circus
@@ -133,7 +122,7 @@ def spyking_circus(
 
     # save prb file:
     if probe_file is None:
-        se.saveProbeFile(recording, join(output_folder, 'probe.prb'), format='spyking_circus', radius=adjacency_radius,
+        sfse.saveProbeFile(recording, join(output_folder, 'probe.prb'), format='spyking_circus', radius=adjacency_radius,
                          dimensions=electrode_dimensions)
         probe_file = join(output_folder, 'probe.prb')
     # save binary file
@@ -204,7 +193,7 @@ def spyking_circus(
     #    raise Exception('Spyking circus merging returned a non-zero exit code')
     processing_time = time.time() - t_start_proc
     print('Elapsed time: ', processing_time)
-    sorting = se.SpykingCircusSortingExtractor(join(output_folder, file_name))
+    sorting = sfse.SpykingCircusSortingExtractor(join(output_folder, file_name))
 
     return sorting
 

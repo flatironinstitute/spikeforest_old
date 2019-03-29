@@ -15,7 +15,8 @@ except:
 import spikeforest_analysis as sa
 from spikeforest_analysis.compare_sortings_with_truth import GenSortingComparisonTable
 #from mountaintools import client as ca
-from spikeforest import spikeextractors as se
+import spikeextractors as se
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, example_datasets
 import os
 from spikeforest_analysis.sorters import ironclust
 from spikeforest.spiketoolkit.comparison.sortingcomparison import SortingComparison
@@ -26,15 +27,15 @@ from spikesorters import IronClust
 """ recording_path = 'irc_test1'
 if not os.path.isdir(recording_path):
     os.mkdir(recording_path)
-rx, sx = se.example_datasets.yass_example(set_id=1) """
+rx, sx = example_datasets.yass_example(set_id=1) """
 
 # %%
 recording_path = 'kbucket://15734439d8cf/groundtruth/visapy_mea/set1'
 firings_true = recording_path+'/firings_true.mda'
 #recording_path = recording_path+'/recording'
-# se.MdaRecordingExtractor.writeRecording(
+# SFMdaRecordingExtractor.writeRecording(
 # recording=rx, save_path=recording_path)
-# se.MdaSortingExtractor.writeSorting(
+# SFMdaSortingExtractor.writeSorting(
 # sorting=sx, save_path=firings_true)
 result_path = os.path.abspath('test_irc')
 if not os.path.exists(result_path):

@@ -1,6 +1,7 @@
 from mountainlab_pytools import mlproc as mlp
 from mountainlab_pytools import mdaio
-from spikeforest import spikeextractors as si
+import spikeextractors as si
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
 import sys
 import numpy as np
@@ -43,9 +44,9 @@ def gen_synth_datasets(datasets, *, outdir, samplerate=32000):
         )
         IX = si.NumpyRecordingExtractor(
             timeseries=X, samplerate=samplerate, geom=geom)
-        si.MdaRecordingExtractor.writeRecording(
+        SFMdaRecordingExtractor.writeRecording(
             IX, outdir+'/{}'.format(ds_name))
-        si.MdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.writeSorting(
             OX, outdir+'/{}/firings_true.mda'.format(ds_name))
     print('Done.')
 

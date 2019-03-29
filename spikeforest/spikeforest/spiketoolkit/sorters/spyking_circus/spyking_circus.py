@@ -1,4 +1,4 @@
-from .... import spikeextractors as se
+from spikeforest import spikeextractors as sfse
 import os
 import time
 import numpy as np
@@ -111,7 +111,7 @@ def _spyking_circus(
     # save prb file:
     if probe_file is None:
         probe_file = output_folder / 'probe.prb'
-        se.saveProbeFile(recording, probe_file, format='spyking_circus', radius=adjacency_radius,
+        sfse.saveProbeFile(recording, probe_file, format='spyking_circus', radius=adjacency_radius,
                          dimensions=electrode_dimensions)
     # save binary file
     if file_name is None:
@@ -157,6 +157,6 @@ def _spyking_circus(
         retcode = _run_command_and_print_output(cmd_merge)
         if retcode != 0:
             raise Exception('Spyking circus merging returned a non-zero exit code')
-    sorting = se.SpykingCircusSortingExtractor(output_folder / file_name)
+    sorting = sfse.SpykingCircusSortingExtractor(output_folder / file_name)
 
     return sorting

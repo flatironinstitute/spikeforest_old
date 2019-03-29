@@ -1,4 +1,5 @@
-from spikeforest import spikeextractors as se
+from spikeforest import example_datasets
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
 import shutil
 from mountaintools import client as mt
@@ -49,11 +50,11 @@ def _generate_toy_recordings():
         else:
             print('Recording already exists: {}'.format(recpath))
         if not os.path.exists(recpath):
-            rx, sx_true = se.example_datasets.toy_example1(
+            rx, sx_true = example_datasets.toy_example1(
                 duration=60, num_channels=4, samplerate=30000, K=K)
-            se.MdaRecordingExtractor.writeRecording(
+            SFMdaRecordingExtractor.writeRecording(
                 recording=rx, save_path=recpath)
-            se.MdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.writeSorting(
                 sorting=sx_true, save_path=recpath+'/firings_true.mda')
         ret.append(dict(
             name='example_K{}'.format(K),

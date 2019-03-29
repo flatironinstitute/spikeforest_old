@@ -1,4 +1,4 @@
-from .... import spikeextractors as se
+from spikeforest import spikeextractors as sfse
 from pathlib import Path
 import time
 from spikeforest.spiketoolkit.sorters.tools import _run_command_and_print_output, _spikeSortByProperty, _call_command
@@ -108,14 +108,14 @@ def _klusta(
     # save prb file:
     if probe_file is None:
         probe_file = output_folder / 'probe.prb'
-        se.saveProbeFile(recording, probe_file, format='klusta', radius=adjacency_radius)
+        sfse.saveProbeFile(recording, probe_file, format='klusta', radius=adjacency_radius)
 
     # save binary file
     if file_name is None:
         file_name = Path('recording')
     elif file_name.suffix == '.dat':
         file_name = file_name.stem
-    se.writeBinaryDatFormat(recording, output_folder / file_name)
+    sfse.writeBinaryDatFormat(recording, output_folder / file_name)
 
     if detect_sign < 0:
         detect_sign = 'negative'
@@ -146,6 +146,6 @@ def _klusta(
     if not (output_folder / (file_name.name + '.kwik')).is_file():
         raise Exception('Klusta did not run successfully')
 
-    sorting = se.KlustaSortingExtractor(output_folder / (file_name.name + '.kwik'))
+    sorting = sfse.KlustaSortingExtractor(output_folder / (file_name.name + '.kwik'))
 
     return sorting

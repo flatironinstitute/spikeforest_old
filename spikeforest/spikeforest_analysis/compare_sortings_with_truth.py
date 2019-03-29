@@ -7,7 +7,8 @@ from copy import deepcopy
 import multiprocessing
 import mtlogging
 
-from spikeforest import spikeextractors as si
+import spikeextractors as si
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from spikeforest import spiketoolkit as st
 
 def _create_job_for_sorting_helper(kwargs):
@@ -35,7 +36,7 @@ def _create_job_for_sorting(sorting, container):
 def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None):
     print('')
     print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg'
+    container='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
 
     sortings_out = deepcopy(sortings)
     sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
@@ -90,8 +91,8 @@ class GenSortingComparisonTable(mlpr.Processor):
     html_out=mlpr.Output('Table as .html file produced from pandas dataframe')
     
     def run(self):
-        sorting=si.MdaSortingExtractor(firings_file=self.firings)
-        sorting_true=si.MdaSortingExtractor(firings_file=self.firings_true)
+        sorting=SFMdaSortingExtractor(firings_file=self.firings)
+        sorting_true=SFMdaSortingExtractor(firings_file=self.firings_true)
         if (self.units_true is not None) and (len(self.units_true)>0):
             sorting_true=si.SubSortingExtractor(parent_sorting=sorting_true,unit_ids=self.units_true)
         SC=st.comparison.SortingComparison(sorting_true,sorting)

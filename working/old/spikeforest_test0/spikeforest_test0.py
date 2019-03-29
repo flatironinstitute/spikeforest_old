@@ -2,7 +2,8 @@
 
 import spikeforest_analysis as sa
 from mountaintools import client as mt
-from spikeforest import spikeextractors as se
+from spikeforest import example_datasets
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
 import shutil
 
@@ -29,11 +30,11 @@ def main():
             if os.path.exists(name):
                 shutil.rmtree(name)
         if not os.path.exists(name):
-            rx, sx_true = se.example_datasets.toy_example1(
+            rx, sx_true = example_datasets.toy_example1(
                 duration=60, num_channels=4, samplerate=30000, K=10)
-            se.MdaRecordingExtractor.writeRecording(
+            SFMdaRecordingExtractor.writeRecording(
                 recording=rx, save_path=name)
-            se.MdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.writeSorting(
                 sorting=sx_true, save_path=name+'/firings_true.mda')
 
     # Use this to optionally connect to a kbucket share:

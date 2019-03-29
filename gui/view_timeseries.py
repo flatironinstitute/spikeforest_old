@@ -5,7 +5,8 @@ import os
 import vdomr as vd
 from mountaintools import client as mt
 import spikeforestwidgets as SFW
-from spikeforest import spikeextractors as se
+import spikeextractors as se
+from spikeforest import SFMdaRecordingExtractor
 
 
 class TheApp():
@@ -13,7 +14,7 @@ class TheApp():
         self._recording_directory = recording_directory
 
     def createSession(self):
-        recording = se.MdaRecordingExtractor(
+        recording = SFMdaRecordingExtractor(
             dataset_directory=self._recording_directory, download=False)
         recording = se.SubRecordingExtractor(
             parent_recording=recording, start_frame=0, end_frame=10000)

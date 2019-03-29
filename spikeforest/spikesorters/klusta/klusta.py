@@ -1,4 +1,4 @@
-from spikeforest import spikeextractors as si
+from spikeforest import spikeextractors as sfsi
 import os
 from os.path import join
 import time
@@ -40,7 +40,7 @@ def klusta(
 
     # save prb file:
     if probe_file is None:
-        si.saveProbeFile(recording, join(
+        sfsi.saveProbeFile(recording, join(
             output_folder, 'probe.prb'), format='klusta')
         probe_file = join(output_folder, 'probe.prb')
     # save binary file
@@ -48,7 +48,7 @@ def klusta(
         file_name = 'recording'
     elif file_name.endswith('.dat'):
         file_name = file_name[file_name.find('.dat')]
-    si.writeBinaryDatFormat(recording, join(output_folder, file_name))
+    sfsi.writeBinaryDatFormat(recording, join(output_folder, file_name))
 
     # set up klusta config file
     with open(join(source_dir, 'config_default.prm'), 'r') as f:
@@ -74,7 +74,7 @@ def klusta(
         raise Exception('Klusta returned a non-zero exit code')
     print('Elapsed time: ', time.time() - t_start_proc)
 
-    sorting = si.KlustaSortingExtractor(
+    sorting = sfsi.KlustaSortingExtractor(
         join(output_folder, file_name + '.kwik'))
 
     return sorting

@@ -6,7 +6,8 @@ import sys
 #         sys.path.append(dir0)
 # append_to_path(os.getcwd()+'/..')
 from spikesorters import KiloSort2
-from spikeforest import spikeextractors as se
+from spikeforest import example_datasets
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import tempfile
 import shutil
 from mountaintools import client as mt
@@ -38,13 +39,13 @@ def teardown_function(function):
 def test_kilosort2(tmpdir):
     tmpdir = str(tmpdir)
 
-    #rx, sx = se.example_datasets.toy_example1()
-    rx = se.MdaRecordingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11')
-    sx = se.MdaSortingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11/firings_true.mda')
+    #rx, sx = example_datasets.toy_example1()
+    rx = SFMdaRecordingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11')
+    sx = SFMdaSortingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11/firings_true.mda')
 
-    se.MdaRecordingExtractor.writeRecording(
+    SFMdaRecordingExtractor.writeRecording(
         recording=rx, save_path=tmpdir+'/recording')
-    se.MdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.writeSorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     KiloSort2.execute(

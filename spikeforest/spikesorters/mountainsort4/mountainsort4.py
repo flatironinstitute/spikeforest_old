@@ -7,8 +7,9 @@ class MountainSort4(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://1aa15c357c9092b9bf25d3aa073f448d20fd7d39/03-20-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://d6e7ec1a18df847c36c9c5924183106e08d97439/03-29-2019/mountainsort4.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
+    PYTHON_PACKAGES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
@@ -33,20 +34,14 @@ class MountainSort4(mlpr.Processor):
         optional=True, default=0.15, description='Use None for no automated curation')
 
     def run(self):
-        try:
-            # if we are running this outside the container
-            from spikeforest import spikeextractors as se
-            from spikeforest import spiketoolkit as st
-        except:
-            # if we are in the container
-            import spikeextractors as se
-            import spiketoolkit as st
-
+        from spikeforest import SFMdaRecordingExtractor
+        from spikeforest import SFMdaSortingExtractor
+        from spikeforest import spiketoolkit as st
         
         import ml_ms4alg
 
         print('MountainSort4......')
-        recording = se.MdaRecordingExtractor(self.recording_dir)
+        recording = SFMdaRecordingExtractor(self.recording_dir)
         num_workers = os.environ.get('NUM_WORKERS', None)
         if num_workers:
             num_workers = int(num_workers)
@@ -79,7 +74,7 @@ class MountainSort4(mlpr.Processor):
         #      noise_overlap_threshold=self.noise_overlap_threshold
         #    )
 
-        se.MdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.writeSorting(
             sorting=sorting, save_path=self.firings_out)
 
 class MountainSort4TestError(mlpr.Processor):
@@ -87,7 +82,7 @@ class MountainSort4TestError(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://1aa15c357c9092b9bf25d3aa073f448d20fd7d39/03-20-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://d6e7ec1a18df847c36c9c5924183106e08d97439/03-29-2019/mountainsort4.simg'
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -120,20 +115,15 @@ class MountainSort4TestError(mlpr.Processor):
             sys.stdout.flush()
             time.sleep(3)
             raise Exception('Intentional error.')
-        try:
-            # if we are running this outside the container
-            from spikeforest import spikeextractors as se
-            from spikeforest import spiketoolkit as st
-        except:
-            # if we are in the container
-            import spikeextractors as se
-            import spiketoolkit as st
 
+        from spikeforest import SFMdaRecordingExtractor
+        from spikeforest import SFMdaSortingExtractor
+        from spikeforest import spiketoolkit as st
         
         import ml_ms4alg
 
         print('MountainSort4......')
-        recording = se.MdaRecordingExtractor(self.recording_dir)
+        recording = SFMdaRecordingExtractor(self.recording_dir)
         num_workers = os.environ.get('NUM_WORKERS', None)
         if num_workers:
             num_workers = int(num_workers)
@@ -166,5 +156,5 @@ class MountainSort4TestError(mlpr.Processor):
         #      noise_overlap_threshold=self.noise_overlap_threshold
         #    )
 
-        se.MdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.writeSorting(
             sorting=sorting, save_path=self.firings_out)

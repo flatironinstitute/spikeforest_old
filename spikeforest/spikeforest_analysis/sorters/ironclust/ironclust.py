@@ -1,4 +1,5 @@
-from spikeforest import spikeextractors as si
+import spikeextractors as si
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
 from spikeforest.spikeextractors import mdaio
 import subprocess, shlex
@@ -24,7 +25,7 @@ def ironclust(*,
 
     dataset_dir=tmpdir+'/ironclust_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
-    si.MdaRecordingExtractor.writeRecording(recording=recording,save_path=dataset_dir)
+    SFMdaRecordingExtractor.writeRecording(recording=recording,save_path=dataset_dir)
         
     samplerate=recording.getSamplingFrequency()
 

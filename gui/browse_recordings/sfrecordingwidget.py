@@ -1,4 +1,5 @@
-from spikeforest import spikeextractors as se
+import spikeextractors as se
+from spikeforest import extractors as ex
 from spikeforest import spiketoolkit as st
 import vdomr as vd
 from spikeforest import spikewidgets as sw
@@ -110,12 +111,12 @@ class PlotUnitWaveforms(mlpr.Processor):
     plot_out = mlpr.Output('Plot as .jpg image file')
 
     def run(self):
-        recording = se.MdaRecordingExtractor(
+        recording = ex.SFMdaSortingExtractor(
             dataset_directory=self.recording_dir)
         if len(self.channels) > 0:
             recording = se.SubRecordingExtractor(
                 parent_recording=recording, channel_ids=self.channels)
-        sorting = se.MdaSortingExtractor(firings_file=self.firings)
+        sorting = ex.SFMdaSortingExtractor(firings_file=self.firings)
         sw.UnitWaveformsWidget(recording=recording, sorting=sorting).plot()
         fname = save_plot(self.plot_out)
 
@@ -131,15 +132,15 @@ class PlotAutoCorrelograms(mlpr.Processor):
     plot_out = mlpr.Output('Plot as .jpg image file')
 
     def run(self):
-        recording = se.MdaRecordingExtractor(
+        recording = ex.SFMdaRecordingExtractor(
             dataset_directory=self.recording_dir, download=False)
         if len(self.channels) > 0:
             recording = se.SubRecordingExtractor(
                 parent_recording=recording, channel_ids=self.channels)
-        sorting = se.MdaSortingExtractor(firings_file=self.firings)
+        sorting = ex.SFMdaSortingExtractor(firings_file=self.firings)
         sw.CrossCorrelogramsWidget(
             samplerate=recording.getSamplingFrequency(), sorting=sorting).plot()
-        fname = save_plot(self.plot_out)
+        save_plot(self.plot_out)
 
 
 def save_plot(fname, quality=40):

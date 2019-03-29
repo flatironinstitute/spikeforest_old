@@ -2,7 +2,7 @@ from mountaintools import client as mt
 from PIL import Image
 import json
 import pandas as pd
-from spikeforest import spikeextractors as si
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 def kb_read_text_file(fname):
     return mt.loadText(path=fname)
@@ -24,7 +24,7 @@ class SFSortingResult():
         plots=self._obj['summary'].get('plots',dict())
         return list(plots.keys())
     def sorting(self):
-        return si.MdaSortingExtractor(firings_file=self._obj['firings'])
+        return SFMdaSortingExtractor(firings_file=self._obj['firings'])
     def plot(self,name,format='image'):
         plots=self._obj['summary'].get('plots',dict())
         url=plots[name]
@@ -93,13 +93,13 @@ class SFRecording():
         fname=self.directory()+'/firings_true.mda'
         return mt.realizeFile(fname)
     def recordingExtractor(self,download=False):
-        X=si.MdaRecordingExtractor(dataset_directory=self.directory(),download=download)
+        X=SFMdaRecordingExtractor(dataset_directory=self.directory(),download=download)
         if 'channels' in self._obj:
             if self._obj['channels']:
                 X=si.SubRecordingExtractor(parent_recording=X,channel_ids=self._obj['channels'])
         return X
     def sortingTrue(self):
-        return si.MdaSortingExtractor(firings_file=self.directory()+'/firings_true.mda')
+        return SFMdaSortingExtractor(firings_file=self.directory()+'/firings_true.mda')
     def plotNames(self):
         if not self._summary_result:
             return []

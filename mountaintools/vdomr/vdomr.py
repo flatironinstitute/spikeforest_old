@@ -176,7 +176,7 @@ def config_pyqt5():
 #         webview.evaluate_js('window.hide_overlay();')
 
 
-def pyqt5_start(*, root, title):
+def pyqt5_start(*, root, title, size=(1500, 800)):
     try:
         # from PyQt5.QtCore import *
         from PyQt5.QtCore import QObject, QVariant, pyqtSlot
@@ -274,10 +274,10 @@ def pyqt5_start(*, root, title):
                 }
                 window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
                     window.show_overlay();
-                    setTimeout(function() {
+                    //setTimeout(function() {
                         pyqt5_api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
                         window.hide_overlay();
-                    },100); // the timeout might be important to prevent crashes, not sure
+                    //},0); // the timeout might be important to prevent crashes, not sure
                 }
             """
             while True:
@@ -294,6 +294,7 @@ def pyqt5_start(*, root, title):
         app = QApplication([])
     view = VdomrWebView(root=root, title=title)
     vdomr_global['pyqt5_view'] = view
+    view.resize(size[0], size[1])
     view.show()
     app.exec_()
 

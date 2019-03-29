@@ -6,7 +6,8 @@ import sys
 #         sys.path.append(dir0)
 # append_to_path(os.getcwd()+'/..')
 from spikesorters import MountainSort4, SpykingCircus, YASS, KiloSort
-from spikeforest import spikeextractors as se
+from spikeforest import example_datasets
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import tempfile
 import shutil
 from mountaintools import client as mt
@@ -39,10 +40,10 @@ def teardown_function(function):
 def test_mountainsort4(tmpdir):
     tmpdir = str(tmpdir)
 
-    rx, sx = se.example_datasets.toy_example1()
-    se.MdaRecordingExtractor.writeRecording(
+    rx, sx = example_datasets.toy_example1()
+    SFMdaRecordingExtractor.writeRecording(
         recording=rx, save_path=tmpdir+'/recording')
-    se.MdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.writeSorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     MountainSort4.execute(
@@ -60,10 +61,10 @@ def test_mountainsort4(tmpdir):
 def test_spyking_circus(tmpdir):
     tmpdir = str(tmpdir)
 
-    rx, sx = se.example_datasets.toy_example1()
-    se.MdaRecordingExtractor.writeRecording(
+    rx, sx = example_datasets.toy_example1()
+    SFMdaRecordingExtractor.writeRecording(
         recording=rx, save_path=tmpdir+'/recording')
-    se.MdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.writeSorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     SpykingCircus.execute(
@@ -81,10 +82,10 @@ def test_spyking_circus(tmpdir):
 def test_yass(tmpdir):
     tmpdir = str(tmpdir)
 
-    rx, sx = se.example_datasets.toy_example1()
-    se.MdaRecordingExtractor.writeRecording(
+    rx, sx = example_datasets.toy_example1()
+    SFMdaRecordingExtractor.writeRecording(
         recording=rx, save_path=tmpdir+'/recording')
-    se.MdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.writeSorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     YASS.execute(
@@ -102,10 +103,10 @@ def test_yass(tmpdir):
 def test_kilosort(tmpdir):
     tmpdir = str(tmpdir)
 
-    rx, sx = se.example_datasets.toy_example1()
-    se.MdaRecordingExtractor.writeRecording(
+    rx, sx = example_datasets.toy_example1()
+    SFMdaRecordingExtractor.writeRecording(
         recording=rx, save_path=tmpdir+'/recording')
-    se.MdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.writeSorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     KiloSort.execute(

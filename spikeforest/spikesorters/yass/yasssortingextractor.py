@@ -1,9 +1,4 @@
-try:
-    # if we are running this outside the container
-    from spikeforest import spikeextractors as se
-except:
-    # if we are in the container
-    import spikeextractors as se
+import spikeextractors as se
 
 import numpy as np
 from pathlib import Path

@@ -10,7 +10,7 @@ except:
 import spikeforest_analysis as sa
 from spikeforest_analysis.compare_sortings_with_truth import GenSortingComparisonTable
 #from mountaintools import client as ca
-from spikeforest import spikeextractors as se
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, example_datasets
 import os
 from spikesorters import YASS
 from spikeforest.spiketoolkit.comparison.sortingcomparison import SortingComparison
@@ -20,14 +20,14 @@ from spikeforest import spikewidgets as sw
 tmpdir = 'yass_test1'
 if not os.path.isdir(tmpdir):
     os.mkdir(tmpdir)
-rx, sx = se.example_datasets.yass_example(set_id=1)
+rx, sx = example_datasets.yass_example(set_id=1)
 
 # %%
 firings_true = tmpdir+'/recording/firings_true.mda'
 recording_path = tmpdir+'/recording'
-se.MdaRecordingExtractor.writeRecording(
+SFMdaRecordingExtractor.writeRecording(
     recording=rx, save_path=recording_path)
-se.MdaSortingExtractor.writeSorting(
+SFMdaSortingExtractor.writeSorting(
     sorting=sx, save_path=firings_true)
 
 YASS.execute(

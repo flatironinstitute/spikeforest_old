@@ -8,14 +8,9 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "20 March 2019"
+RUN echo "29 March 2019 b"
 
-#########################################
-### mountaintools
 RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
-WORKDIR /src/spikeforest
-RUN pip install -e ./mountaintools
 
 #########################################
 ### MountainSort
@@ -25,7 +20,8 @@ RUN git clone https://github.com/magland/ml_ms4alg /src/ml_ms4alg
 WORKDIR /src/ml_ms4alg
 RUN python setup.py develop
 
-# spikeforest
+##################################################################
+# spikeforest (but not mountaintools -- because that gets injected at runtime)
+RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
 WORKDIR /src/spikeforest
 RUN pip install -e ./spikeforest
-

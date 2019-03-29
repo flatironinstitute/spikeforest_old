@@ -158,6 +158,7 @@ class PlotlyPlot(vd.Component):
         vd.devel.loadJavascript(url='https://cdn.plot.ly/plotly-latest.min.js')
 
     def _filter_data(self, data):
+        # mostly to handle numpy arrays
         import numpy as np
         if type(data)==list:
             ret = []

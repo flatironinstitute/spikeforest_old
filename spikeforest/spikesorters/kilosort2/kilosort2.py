@@ -1,6 +1,4 @@
 import mlprocessors as mlpr
-from spikeforest import spikeextractors as se
-
 import os
 import time
 import numpy as np
@@ -11,7 +9,8 @@ import random
 import string
 import shutil
 from spikeforest.spikeextractors import mdaio
-from spikeforest import spikeextractors as se
+import spikeextractors as se
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
 #import h5py
@@ -53,7 +52,7 @@ class KiloSort2(mlpr.Processor):
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/kilosort2-tmp-'+code
 
         try:
-            recording = se.MdaRecordingExtractor(self.recording_dir)
+            recording = SFMdaRecordingExtractor(self.recording_dir)
             if len(self.channels) > 0:
                 recording = se.SubRecordingExtractor(
                     parent_recording=recording, channel_ids=self.channels)
@@ -70,7 +69,7 @@ class KiloSort2(mlpr.Processor):
                 freq_max=self.freq_max,
                 pc_per_chan=self.pc_per_chan
             )
-            se.MdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             #if os.path.exists(tmpdir):
@@ -108,7 +107,7 @@ def kilosort2_helper(*,
 
     dataset_dir = tmpdir+'/kilosort2_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
-    se.MdaRecordingExtractor.writeRecording(
+    SFMdaRecordingExtractor.writeRecording(
         recording=recording, save_path=dataset_dir)
 
     samplerate = recording.getSamplingFrequency()

@@ -1,6 +1,7 @@
 import sys
 
-from spikeforest import spikeextractors as si
+import spikeextractors as si
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 import os
 from shutil import copyfile
@@ -36,7 +37,7 @@ def kilosort(*,
 
     dataset_dir=tmpdir+'/kilosort_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
-    si.MdaRecordingExtractor.writeRecording(recording=recording,save_path=dataset_dir)
+    SFMdaRecordingExtractor.writeRecording(recording=recording,save_path=dataset_dir)
         
     samplerate=recording.getSamplingFrequency()
 

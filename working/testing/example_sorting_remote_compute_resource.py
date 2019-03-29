@@ -5,7 +5,7 @@
 
 import spikeforest_analysis as sa
 from mountaintools import client as mt
-from spikeforest import spikeextractors as se
+import spikeextractors as se
 import os
 import shutil
 import sfdata as sf

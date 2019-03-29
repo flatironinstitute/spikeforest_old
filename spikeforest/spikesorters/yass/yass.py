@@ -22,10 +22,11 @@ class YASS(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.yaml']
 
-    # revert to old container for now (uses python 2)
-    CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
-    # after everything works, let's try moving to the following container, which uses python 3 (Rather than python 2)
-    # CONTAINER = 'sha1://61e3132d0f4897eaeeead6477a777828187fa00a/03-15-2019/yass.simg'
+    # The following container uses python 2
+    # CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
+    
+    # this one uses python 3
+    CONTAINER = 'sha1://348be6fb09807c774e469c3aeabf4bca867c039f/03-29-2019/yass.simg'
     
     CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
@@ -43,12 +44,8 @@ class YASS(mlpr.Processor):
     filter = mlpr.BoolParameter(optional=True, default=True)
 
     def run(self):
-        try:
-            # if we are running this outside the container
-            from spikeforest import spikeextractors as se
-        except:
-            # if we are in the container
-            import spikeextractors as se
+        from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+        import spikeextractors as se
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
@@ -57,7 +54,7 @@ class YASS(mlpr.Processor):
         #num_workers = os.environ.get('NUM_WORKERS', 1)
         #print('num_workers: {}'.format(num_workers))
         try:
-            recording = se.MdaRecordingExtractor(self.recording_dir)
+            recording = SFMdaRecordingExtractor(self.recording_dir)
             if len(self.channels) > 0:
                 recording = se.SubRecordingExtractor(
                     parent_recording=recording, channel_ids=self.channels)
@@ -72,7 +69,7 @@ class YASS(mlpr.Processor):
                 adjacency_radius=self.adjacency_radius,
                 template_width_ms=self.template_width_ms,
                 filter=self.filter)
-            se.MdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
             #shutil.copyfile(yaml_file, self.paramfile_out)
         except:
@@ -93,12 +90,8 @@ def yass_helper(
         filter=True,
         adjacency_radius=100):
 
-    try:
-        # if we are running this outside the container
-        from spikeforest import spikeextractors as se
-    except:
-        # if we are in the container
-        import spikeextractors as se
+    from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+    from spikeforest import spikeextractors as sfse
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -114,7 +107,7 @@ def yass_helper(
     # save prb file:
     if probe_file is None:
         probe_file = join_abspath_(output_folder, 'probe.npy')
-    se.saveProbeFile(recording, probe_file, format='yass')
+    sfse.saveProbeFile(recording, probe_file, format='yass')
 
     # save binary file
     if file_name is None:
