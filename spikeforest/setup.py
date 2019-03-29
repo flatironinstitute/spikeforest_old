@@ -20,7 +20,8 @@ setuptools.setup(
         'spikeforestwidgets': ['*.js','timeserieswidget/*.js', 'dist/*.js']
         },
     install_requires=[
-        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git','scikit-learn'
+        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git','scikit-learn',
+        'spikeextractors>=0.3,<0.4'
     ],
     classifiers=(
         "Programming Language :: Python :: 3",
