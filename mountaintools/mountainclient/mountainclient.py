@@ -776,6 +776,9 @@ class MountainClient():
             list0 = path.split('/')
             sha1 = list0[2]
             return sha1
+    
+    def sha1OfObject(self, obj):
+        return _sha1_of_object(obj)
 
         # the following might be a helpful shortcut at some point
         # elif path.startswith('kbucket://sha1-cache/'):

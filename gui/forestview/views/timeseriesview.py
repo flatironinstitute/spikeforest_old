@@ -9,7 +9,7 @@ class TimeseriesView(vd.Component):
         self._context = context
         self._size=(100, 100)
         rx = self._context.recordingExtractor()
-        rx = se.SubRecordingExtractor(parent_recording=rx, start_frame=0, end_frame=int(rx.getSamplingFrequency()*1))
+        # rx = se.SubRecordingExtractor(parent_recording=rx, start_frame=0, end_frame=int(rx.getSamplingFrequency()*1))
         self._timeseries_widget = SFW.TimeseriesWidget(recording=rx)
     def setSize(self, size):
         self._timeseries_widget.setSize(size)

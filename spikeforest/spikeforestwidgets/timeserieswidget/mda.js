@@ -20,6 +20,7 @@ function Mda(arg1,arg2,arg3,arg4,arg5) {
 	this.subArray=function(arg1,arg2,arg3,arg4,arg5,arg6) {return _subArray(arg1,arg2,arg3,arg4,arg5,arg6);};
 	this.load=function(url,callback) {return _load(url,callback);};
 	this.setFromArrayBuffer=function(buf) {return _setFromArrayBuffer(buf);};
+	this.setFromBase64=function(x) {return _setFromBase64(x);};
 	this.minimum=function() {return _minimum();};
 	this.maximum=function() {return _maximum();};
 	
@@ -156,6 +157,9 @@ function Mda(arg1,arg2,arg3,arg4,arg5) {
 			*/
 		});
 	};
+	function _setFromBase64(x) {
+		_setFromArrayBuffer(_base64ToArrayBuffer(x));
+	}
 	function _setFromArrayBuffer(buf) {
 		var X=new Int32Array(buf.slice(0,64));
 		var num_bytes_per_entry=X[1];
@@ -303,4 +307,14 @@ function MdaBinaryLoader(url) {
 			}
 		});
 	}
+}
+
+function _base64ToArrayBuffer(base64) {
+	var binary_string =  window.atob(base64);
+	var len = binary_string.length;
+	var bytes = new Uint8Array( len );
+	for (var i = 0; i < len; i++)        {
+		bytes[i] = binary_string.charCodeAt(i);
+	}
+	return bytes.buffer;
 }

@@ -4,6 +4,7 @@ import threading
 import time
 import sys
 import multiprocessing
+import mtlogging
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
@@ -209,9 +210,9 @@ def pyqt5_start(*, APP, title):
                 **x
             ))
 
-        @pyqtSlot(str, result=QVariant)
-        def console_log(self, a):
-            print('JS:', a)
+        @pyqtSlot(str, str, str, str, result=QVariant)
+        def console_log(self, a, b='', c='', d=''):
+            print('JS:', a, b, c, d)
             return None
 
     class VdomrWebView(QWebEngineView):
@@ -248,7 +249,7 @@ def pyqt5_start(*, APP, title):
                 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
                 <script>
                 // we do the following so we can get all console.log messages on the python console
-                console.log=console.error;
+                //console.log=console.error;
                 {script}
                 </script>
                 </head>
@@ -258,16 +259,12 @@ def pyqt5_start(*, APP, title):
                 <script language="JavaScript">
                     new QWebChannel(qt.webChannelTransport, function (channel) {
                         window.pyqt5_api = channel.objects.pyqt5_api;
-                        /*
+                        
                         // instead of doing the following, we map console.log to console.error above
-                        console.log=function(a,b,c) {
-                            let txt;
-                            if (c) txt=a+' '+b+' '+c;
-                            else if (b) txt=a+' '+b;
-                            else txt=a+'';
-                            pyqt5_api.console_log(txt);
+                        console.log=function(a,b,c,d) {
+                            pyqt5_api.console_log((a||'')+'',(b||'')+'',(c||'')+'',(d||'')+'');
                         }
-                        */
+                        
                     });
                 </script>
                 </body>
@@ -282,7 +279,7 @@ def pyqt5_start(*, APP, title):
                     document.getElementById('overlay').style.display='none'
                 }
                 window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
-                    window.show_overlay();
+                    // window.show_overlay();
                     pyqt5_api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
                 }
             """

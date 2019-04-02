@@ -1,5 +1,4 @@
 window.TimeseriesWidget=TimeseriesWidget;
-window.TestTimeseriesModel=TestTimeseriesModel;
 
 PainterPath=window.PainterPath;
 CanvasWidget=window.CanvasWidget;
@@ -7,7 +6,7 @@ CanvasWidget=window.CanvasWidget;
 function TimeseriesWidget() {
     let that=this;
 
-    this.setTimeseriesModel=function(M) {m_model=M; auto_compute_y_offsets(); auto_compute_y_scale_factor()};
+    this.setTimeseriesModel=function(M) {setTimeseriesModel(M);};
     this.setSize=function(W,H) {m_size=[W,H]; update_size();};
     this.element=function() {return m_div;};
     this.setTimeRange=function(t1,t2) {set_time_range(t1,t2);};
@@ -25,14 +24,15 @@ function TimeseriesWidget() {
     let m_model=null;
     let m_main_canvas=new CanvasWidget();
     let m_cursor_canvas=new CanvasWidget();
-    let m_trange=[0,1000];
+    let m_trange=[0,5000];
     let m_current_time=-1;
     let m_y_scale_factor=1;
     let m_y_offsets=null;
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
-    let m_markers=[[100,1000],[150,1050]];
+    // let m_markers=[[100,1000],[150,1050]];
+    let m_markers=[];
 
     m_div.append(m_main_canvas.canvasElement());
     m_div.append(m_cursor_canvas.canvasElement());
@@ -45,12 +45,13 @@ function TimeseriesWidget() {
 
     // Note that we cannot use this method within jupyter notebooks -- need to think about it
     m_div.bind('keydown',function(event) {
-        console.log('keydown');
         switch(event.keyCode){
             case 38: handle_key_up(event); return false;
             case 40: handle_key_down(event); return false;
             case 37: handle_key_left(event); return false;
             case 39: handle_key_right(event); return false;
+            case 187: that.zoomTime(1.15); return false;
+            case 189: that.zoomTime(1/1.15); return false;
             default: console.info('key: '+event.keyCode);
         }
     });
@@ -64,6 +65,15 @@ function TimeseriesWidget() {
     m_main_canvas.onPaint(paint_main_canvas);
     m_cursor_canvas.onPaint(paint_cursor_canvas);
 
+    function determine_downsample_factor_from_num_timepoints(target_num_pix, num) {
+        let ds_factor = 1;
+        let factor = 3;
+        while (num/(ds_factor*factor) > target_num_pix) {
+            ds_factor*=factor;
+        }
+        return ds_factor;
+    }
+
     function paint_main_canvas(painter) {
         painter.clear();
         let M=m_model.numChannels();
@@ -71,17 +81,43 @@ function TimeseriesWidget() {
         let t2=Math.floor(m_trange[1]+1);
         if (t1<0) t1=0;
         if (t2>=m_model.numTimepoints()) t2=m_model.numTimepoints();
+        let downsample_factor = determine_downsample_factor_from_num_timepoints(m_size[0]*1.3, t2-t1);
+        let t1b = Math.floor(t1/downsample_factor);
+        let t2b = Math.floor(t2/downsample_factor);
         for (let m=0; m<M; m++) {
             painter.setPen({'color':m_channel_colors[m % m_channel_colors.length]});
             let pp=new PainterPath();
-            let data0=m_model.getChannelData(m,t1,t2);
-            for (let tt=0; tt<t2; tt++) {
-                let val=data0[tt-t1];
-                let pt=val2pix(m,tt,val);
-                if (val)
-                    pp.lineTo(pt[0],pt[1]);
-                else
-                    pp.moveTo(pt[0],pt[1]);
+            let data0=m_model.getChannelData(m, t1b, t2b, downsample_factor);
+            // trigger pre-loading
+            m_model.getChannelData(m, Math.floor(t1b/3), Math.floor(t2b/3), downsample_factor*3, {request_only:true});
+            if (downsample_factor == 1) {
+                for (let tt=t1; tt<t2; tt++) {
+                    let val=data0[tt-t1];
+                    if (!isNaN(val)) {
+                        let pt=val2pix(m,tt,val);
+                        pp.lineTo(pt[0],pt[1]);
+                    }
+                    else {
+                        let pt=val2pix(m,tt,0);
+                        pp.moveTo(pt[0],pt[1]);
+                    }
+                }
+            }
+            else {
+                for (let tt=t1b; tt<t2b; tt++) {
+                    let val_min=data0[(tt-t1b)*2];
+                    let val_max=data0[(tt-t1b)*2+1];
+                    if ((!isNaN(val_min))&&(!isNaN(val_max))) {
+                        let pt_min=val2pix(m,tt*downsample_factor,val_min);
+                        let pt_max=val2pix(m,tt*downsample_factor,val_max);
+                        pp.lineTo(pt_min[0],pt_min[1]);
+                        pp.lineTo(pt_max[0],pt_max[1]);
+                    }
+                    else {
+                        let pt=val2pix(m,tt*downsample_factor,0);
+                        pp.moveTo(pt[0],pt[1]);
+                    }
+                }
             }
             painter.drawPath(pp);
         }
@@ -173,6 +209,7 @@ function TimeseriesWidget() {
         update_plot();
     }
     function update_plot() {
+        let timer=new Date();
         let M=m_model.numChannels();
 
         let H0=m_size[1]-m_margins.top-m_margins.bottom;;
@@ -193,17 +230,34 @@ function TimeseriesWidget() {
     }
 
     function compute_mean(vals) {
-        if (vals.length==0) return 0;
         let sum=0;
-        for (let i in vals) sum+=vals[i];
-        return sum/vals.length;
+        let count=0;
+        for (let i in vals) {
+            if (!isNaN(vals[i])) {
+                sum+=vals[i];
+                count++;
+            }
+        }
+        if (!count) return 0;
+        return sum/count;
+    }
+
+    function setTimeseriesModel(M) {
+        m_model=M;
+        auto_compute_y_offsets();
+        auto_compute_y_scale_factor();
+        m_model.onDataSegmentSet(function(ds_factor, t1, t2) {
+            if ((t1<=m_trange[1]) && (t2>=m_trange[0])) {
+                update_plot();
+            }
+        });
     }
 
     function auto_compute_y_offsets() {
         let offsets=[];
         let M=m_model.numChannels();
         for (let m=0; m<M; m++) {
-            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),1000));
+            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),5000),1);
             let mean0=compute_mean(data);
             offsets.push(-mean0);
         }
@@ -214,16 +268,20 @@ function TimeseriesWidget() {
         let vals=[];
         let M=m_model.numChannels();
         for (let m=0; m<M; m++) {
-            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),1000));
+            let data=m_model.getChannelData(m,0,Math.min(m_model.numTimepoints(),5000),1);
             for (let j in data)
-                vals.push(Math.abs(data[j]+m_y_offsets[m]));
+                if (!isNaN(data[j])) {
+                    vals.push(Math.abs(data[j]+m_y_offsets[m]));
+                }
         }
-        vals.sort(function(a, b){return a - b});
-        let vv=vals[Math.floor(vals.length*0.9)];
-        if (vv>0)
-            that.setYScaleFactor(1/(2*vv));
-        else
-            that.setYScaleFactor(1);
+        if (vals.length > 0) {
+            vals.sort(function(a, b){return a - b});
+            let vv=vals[Math.floor(vals.length*0.9)];
+            if (vv>0)
+                that.setYScaleFactor(1/(2*vv));
+            else
+                that.setYScaleFactor(1);
+        }
     }
 
     function handle_mouse_press(X) {
@@ -282,42 +340,8 @@ function TimeseriesWidget() {
         else if (X.delta<0) that.zoomTime(1/1.15);
     }
 
-    that.setTimeseriesModel(new DummyModel());
+    that.setTimeseriesModel(new TimeseriesModel({num_channels:0, num_timepoints:0, samplerate:0, segment_size:1000}));
     update_size();
-}
-
-function DummyModel() {
-    this.numChannels=function() {return 0;};
-    this.numTimepoints=function() {return 0;};
-    this.getChannelData=function() {return [];};
-}
-
-function TestTimeseriesModel() {
-    this.numChannels=function() {return m_channels.length;};
-    this.numTimepoints=function() {return m_num_timepoints;};
-    this.getChannelData=function(ch,t1,t2) {return get_channel_data(ch,t1,t2);};
-
-    let m_channels=[];
-    let m_num_timepoints=10000;
-
-    m_channels=[];
-    let num_channels=64;
-    for (let ch=0; ch<num_channels; ch++) {
-        let C={data:_rand_array(m_num_timepoints)};
-        m_channels.push(C);
-    }
-
-    function get_channel_data(ch,t1,t2) {
-        return m_channels[ch].data.slice(t1,t2);
-    }
-
-    function _rand_array(N) {
-        let ret=[];
-        for (let i=0; i<N; i++) {
-            ret.push(0+150*randn_bm());
-        }
-        return ret;
-    }
 }
 
 function MouseHandler(elmt) {

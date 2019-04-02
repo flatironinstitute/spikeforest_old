@@ -10,11 +10,12 @@ import json
 from viewrecordingcontext import ViewRecordingContext
 from views import RecordingSummaryView, TimeseriesView
 import uuid
+import mtlogging
 
 recording_object = {'name': '001_synth',
  'study': 'mearec_neuronexus_noise10_K10_C32',
- 'directory2': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/001_synth',
- 'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
+ 'directory': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/001_synth',
+ #'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
  'description': 'One of the recordings in the mearec_neuronexus_noise10_K10_C32 study',
  'summary': {'computed_info': {'samplerate': 30000.0,
    'num_channels': 32,

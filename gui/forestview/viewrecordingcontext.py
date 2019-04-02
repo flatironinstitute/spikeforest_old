@@ -1,10 +1,14 @@
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, EfficientAccessRecordingExtractor
 from copy import deepcopy
 
 class ViewRecordingContext():
     def __init__(self, recording_object):
         self._recording_object = recording_object
-        self._rx = SFMdaRecordingExtractor(dataset_directory = self._recording_object['directory'])
+        rx = SFMdaRecordingExtractor(dataset_directory = self._recording_object['directory'])
+        self._rx = rx
+        print('Creating efficient access recording file...')
+        self._rx = EfficientAccessRecordingExtractor(recording=rx)
+        print('Done creating efficient access recording file.')
         self._state = dict(
             current_timepoint = None,
             selected_time_range = None

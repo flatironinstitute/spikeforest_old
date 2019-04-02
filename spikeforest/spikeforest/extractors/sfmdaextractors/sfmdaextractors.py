@@ -5,6 +5,7 @@ import json
 import numpy as np
 from .mdaio import DiskReadMda, readmda, writemda32, writemda64
 import os
+import mtlogging
 
 def _load_required_modules():
     try:
@@ -47,6 +48,18 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         for m in range(self._num_channels):
             self.setChannelProperty(m, 'location', self._geom[m, :])
 
+    def hash(self):
+        from mountainclient import client as mt
+        obj = dict(
+            raw = mt.computeFileSha1(self._timeseries_path),
+            geom = mt.computeFileSha1(self._geom_fname),
+            params = self._dataset_params
+        )
+        return mt.sha1OfObject(obj)
+
+    def recordingDirectory(self):
+        return self._dataset_directory
+
     def getChannelIds(self):
         return list(range(self._num_channels))
 
@@ -56,6 +69,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
     def getSamplingFrequency(self):
         return self._samplerate
 
+    @mtlogging.log(name='SFMdaRecordingExtractor:getTraces')
     def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
         ca = _load_required_modules()
         if start_frame is None:
