@@ -16,10 +16,11 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
         elif recording is not None:
             if not hasattr(recording, 'hash'):
                 raise Exception('Recording does not have required attribute: hash')
-            self._path = mt.realizeFile(CreateEfficientAccessRecordingFile.execute(
+            path0 = CreateEfficientAccessRecordingFile.execute(
                 recording=recording,
                 hdf5_out=dict(ext='.hdf5', dest_path=_dest_path)
-            ).outputs['hdf5_out'])
+            ).outputs['hdf5_out']
+            self._path = mt.realizeFile(path=path0)
         else:
             raise Exception('Missing argument: path or recording')
         
@@ -86,7 +87,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
         rx = EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
 
 class CreateEfficientAccessRecordingFile(mlpr.Processor):
-    NAME = 'CreateEfficientAccessRecordingFile'
+    NAME = 'CreateEfficientAccessR---ecordingFile'
     VERSION = '0.1.2'
     recording = mlpr.Input()
     segment_size = mlpr.IntegerParameter(optional=True, default=1000000)

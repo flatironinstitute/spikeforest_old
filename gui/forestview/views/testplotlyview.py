@@ -1,19 +1,17 @@
 import vdomr as vd
-import spikeforestwidgets as SFW
-from spikeforest import EfficientAccessRecordingExtractor
-import spikeextractors as se
 import time
 import multiprocessing
 import sys
 from .stdoutsender import StdoutSender
 import mtlogging
-class TimeseriesView(vd.Component):
+import numpy as np
+
+class TestPlotlyView(vd.Component):
     def __init__(self, context):
         vd.Component.__init__(self)
         self._context = context
         self._size=(100, 100)
-        self._timeseries_widget = None
-
+        self._test_plotly_widget = None
 
         self._connection_to_init, connection_to_parent = multiprocessing.Pipe()
         self._init_process = multiprocessing.Process(target=_initialize, args=(context, connection_to_parent))
@@ -22,22 +20,21 @@ class TimeseriesView(vd.Component):
         self._init_log_text = ''
         vd.set_timeout(self._check_init, 0.5)
     def _on_init_completed(self, init):
-        earx = EfficientAccessRecordingExtractor(path=init['earx_file'])
-        self._timeseries_widget = SFW.TimeseriesWidget(recording=earx)
-        self._timeseries_widget.setSize(self._size)
+        self._test_plotly_widget = TestPlotlyWidget()
+        self._test_plotly_widget.setSize(self._size)
         self.refresh()
     def setSize(self, size):
         self._size=size
-        if self._timeseries_widget:
-            self._timeseries_widget.setSize(size)
+        if self._test_plotly_widget:
+            self._test_plotly_widget.setSize(size)
     def size(self):
         return self._size
     def tabLabel(self):
-        return 'Timeseries'
+        return 'Test plotly'
     def render(self):
-        if self._timeseries_widget:
+        if self._test_plotly_widget:
             return vd.div(
-                self._timeseries_widget
+                self._test_plotly_widget
             )
         else:
             return vd.div(
@@ -45,7 +42,7 @@ class TimeseriesView(vd.Component):
                 vd.pre(self._init_log_text)
             )
     def _check_init(self):
-        if not self._timeseries_widget:
+        if not self._test_plotly_widget:
             if self._connection_to_init.poll():
                 msg = self._connection_to_init.recv()
                 if msg['name'] == 'log':
@@ -56,18 +53,35 @@ class TimeseriesView(vd.Component):
                     return
             vd.set_timeout(self._check_init, 1)
 
+class TestPlotlyWidget(vd.Component):
+    def __init__(self):
+        vd.Component.__init__(self)
+        self._size = (100,100)
+        self._plot=None
+        self._update_plot()
+    def setSize(self, size):
+        self._size = size
+        self._update_plot()
+    def _update_plot(self):
+        xx = np.linspace(0,1,10)
+        yy = np.cos((10*xx)**2)
+        self._plot = vd.components.PlotlyPlot(
+            data = dict(x=xx, y=yy),
+            opts=dict(margin=dict(t=5)),
+            size=self._size
+        )
+        self.refresh()
+    def render(self):
+        if not self._plot:
+            return vd.div('no plot.')
+        return self._plot
+
 # Initialization in a worker thread
 mtlogging.log(root=True)
 def _initialize(context, connection_to_parent):
     with StdoutSender(connection=connection_to_parent):
-        print('***** Preparing efficient access recording extractor...')
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
-        
-        print('***** Precomputing multiscale recordings...')
-        SFW.precomputeMultiscaleRecordings(recording=earx)
+        print('test 1')
     connection_to_parent.send(dict(
         name='result',
-        result=dict(
-            earx_file=earx.path()
-        )
+        result=dict()
     )) 

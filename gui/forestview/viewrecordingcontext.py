@@ -1,14 +1,27 @@
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, EfficientAccessRecordingExtractor
 from copy import deepcopy
+import spikeforestwidgets as SFW
+from mountaintools import client as mt
 
 class ViewRecordingContext():
-    def __init__(self, recording_object):
+    def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
+        print('******** FORESTVIEW: Initializing recording context')
         self._recording_object = recording_object
-        rx = SFMdaRecordingExtractor(dataset_directory = self._recording_object['directory'])
-        self._rx = rx
-        print('Creating efficient access recording file...')
-        self._rx = EfficientAccessRecordingExtractor(recording=rx)
-        print('Done creating efficient access recording file.')
+        if download:
+            print('******** FORESTVIEW: Downloading recording file if needed...')
+        recdir = self._recording_object['directory']
+        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=download)
+
+        firings_true_path = recdir + '/firings_true.mda'
+        self._sx = None
+        if mt.findFile(path=firings_true_path):
+            print('******** FORESTVIEW: Downloading true firings file if needed...')
+            if not mt.realizeFile(firings_true_path):
+                print('Warning: unable to realize true firings file: '+firings_true_path)
+            else:
+                self._sx = SFMdaSortingExtractor(firings_file = firings_true_path)
+
+        print('******** FORESTVIEW: Done initializing recording context')
         self._state = dict(
             current_timepoint = None,
             selected_time_range = None
@@ -29,6 +42,9 @@ class ViewRecordingContext():
 
     def recordingExtractor(self):
         return self._rx
+
+    def sortingExtractor(self):
+        return self._sx
 
     # current timepoint
     def setCurrentTimepoint(self, tp):

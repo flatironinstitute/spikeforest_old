@@ -985,6 +985,7 @@ class MountainClient():
                         return url
         return None
 
+    @mtlogging.log()
     def _save_file(self, *, path, basename, prevent_upload=False, return_sha1_url=True):
         path = self.realizeFile(path)
         if not path:
@@ -1247,6 +1248,7 @@ class MountainClientLocal():
                     _write_text_file(fname0, value)
             return True
 
+    @mtlogging.log()
     def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None):
         if path.startswith('sha1://'):
             list0 = path.split('/')
@@ -1285,6 +1287,7 @@ class MountainClientLocal():
     def realizeFileFromUrl(self, *, url, sha1, size, dest_path=None):
         return self._sha1_cache.downloadFile(url=url, sha1=sha1, size=size, target_path=dest_path)
 
+    @mtlogging.log()
     def saveFile(self, *, path, basename, return_sha1_url=True):
         if basename is None:
             basename = os.path.basename(path)

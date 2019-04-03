@@ -8,7 +8,7 @@ from core import ForestViewMainWindow
 import uuid
 import json
 from viewrecordingcontext import ViewRecordingContext
-from views import RecordingSummaryView, TimeseriesView
+from views import RecordingSummaryView, TimeseriesView, TestPlotlyView, UnitsTableView, TemplatesView
 import uuid
 import mtlogging
 
@@ -94,6 +94,18 @@ def _register_views(W):
     W.addViewLauncher('timeseries', dict(
         label='Timeseries',
         view_class=TimeseriesView
+    ))
+    W.addViewLauncher('true-unit-templates', dict(
+        label='True unit templates',
+        view_class=TemplatesView
+    ))
+    W.addViewLauncher('true-units-table', dict(
+        label='True units table',
+        view_class=UnitsTableView
+    ))
+    W.addViewLauncher('testplotly', dict(
+        label='Test plotly',
+        view_class=TestPlotlyView
     ))
 
 

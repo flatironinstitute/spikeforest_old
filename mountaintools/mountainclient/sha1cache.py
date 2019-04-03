@@ -128,6 +128,7 @@ class Sha1Cache():
 
         return path0
 
+    @mtlogging.log()
     def copyFileToCache(self, path):
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
@@ -137,6 +138,7 @@ class Sha1Cache():
             _rename_file(tmp_path, path0, remove_if_exists=False)
         return path0, sha1
 
+    @mtlogging.log()
     def computeFileSha1(self, path, _known_sha1=None):
         aa = _get_stat_object(path)
         aa_hash = _compute_string_sha1(json.dumps(aa, sort_keys=True))
@@ -203,9 +205,11 @@ class Sha1Cache():
             return os.path.join(path0,sha1), altpaths
 
 
+@mtlogging.log()
 def _compute_file_sha1(path):
     if not os.path.exists(path):
         return None
+    timer=time.time()
     if (os.path.getsize(path) > 1024*1024*100):
         print('Computing sha1 of {}'.format(path))
     BLOCKSIZE = 65536
@@ -294,6 +298,7 @@ def _rename_or_copy(path1, path2):
         except:
             raise Exception('Problem renaming or copying file: {} -> {}'.format(path1, path2))
 
+@mtlogging.log()
 def _rename_file(path1, path2, remove_if_exists):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return

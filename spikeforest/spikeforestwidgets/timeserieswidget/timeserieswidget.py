@@ -34,7 +34,7 @@ class TimeseriesWidget(vd.Component):
 
         self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
         self._recording = recording
-        self._progressive_downsampled_recordings = _create_progressive_downsampled_recordings(recording=recording, progressive_ds_factor=3)
+        self._multiscale_recordings = _create_multiscale_recordings(recording=recording, progressive_ds_factor=3)
         self._segment_size = 1000
         self._data_segments_set = dict()
 
@@ -105,7 +105,7 @@ class TimeseriesWidget(vd.Component):
         if ds_factor == 1:
             X = _extract_data_segment(recording=self._recording, segment_num=segment_num, segment_size=self._segment_size)
         else:
-            rx = self._progressive_downsampled_recordings[ds_factor]
+            rx = self._multiscale_recordings[ds_factor]
             X = _extract_data_segment(recording=rx, segment_num=segment_num, segment_size=self._segment_size*2)
 
         # X = ComputeDataSegment.execute(
@@ -116,7 +116,6 @@ class TimeseriesWidget(vd.Component):
         #     array_out=True
         # ).outputs['array_out']
 
-        mtlogging.sublog(name='test1')
         X_b64=_mda32_to_base64(X)
         js = """
         let TS = window.timeseries_models['{div_id}'];
@@ -128,9 +127,7 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{X_b64}', X_b64)
         js = js.replace('{ds_factor}', str(ds_factor))
         js = js.replace('{segment_num}', str(segment_num))
-        mtlogging.sublog(name='test2')
         vd.devel.loadJavascript(js=js)
-        mtlogging.sublog(name='test3')
     def setSize(self,size):
         if self._size==size:
             return
@@ -208,8 +205,10 @@ def _extract_data_segment(*, recording, segment_num, segment_size):
 #         print('===================== Saving file to:', self.array_out, X.shape)
 #         np.save(self.array_out, X)
 
+def precomputeMultiscaleRecordings(*, recording):
+    _create_multiscale_recordings(recording=recording, progressive_ds_factor=3)
 
-def _create_progressive_downsampled_recordings(*, recording, progressive_ds_factor):
+def _create_multiscale_recordings(*, recording, progressive_ds_factor):
     ret = dict()
     current_rx = recording
     current_ds_factor = 1

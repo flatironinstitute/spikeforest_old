@@ -185,13 +185,15 @@ class PlotlyPlot(vd.Component):
         data = self._filter_data(self._data)
         if type(data)!=list:
             data=[data]
+        print('render A', self._size)
         js = """
         let div=document.getElementById('{elmt_id}');
-        if (({width}) && ({height})) {
-            div.style="width:{width}px; height:{height}px"
+        if (({width}) && ({height}) && (div)) {
+            div.style="width:{width}px; height:{height}px";
+            Plotly.newPlot(div, {data}, {opts});
         }
-        Plotly.plot(div, {data}, {opts});
         """
+        print('render B', self._size)
         js = js.replace('{elmt_id}', self._elmt_id)
         js = js.replace('{data}', json.dumps(data))
         js = js.replace('{opts}', json.dumps(self._opts or {}))

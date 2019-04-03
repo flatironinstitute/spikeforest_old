@@ -5,6 +5,7 @@ import time
 import sys
 import multiprocessing
 import mtlogging
+import uuid
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
@@ -14,6 +15,7 @@ vdomr_global = dict(
     pyqt5_worker_process=False, # for mode=pyqt5 (in the worker process)
     pyqt5_view=None,  # for mode=pyqt5
     pyqt5_connection_to_gui=None,  # for mode=pyqt5
+    timeout_callbacks=list()
 )
 
 default_session = dict(javascript_to_execute=[])
@@ -55,6 +57,17 @@ def register_callback(callback_id, callback):
     elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pyqt5'):
         vdomr_global['invokable_functions'][callback_id] = the_callback
 
+def set_timeout(callback, timeout_sec):
+    timeout_callback_id = 'timeout-callback-' + str(uuid.uuid4())
+    register_callback(timeout_callback_id, callback)
+    js = """
+    setTimeout(function() {
+        window.vdomr_invokeFunction('{timeout_callback_id}', [], {})
+    }, {timeout_msec});
+    """
+    js = js.replace('{timeout_callback_id}', timeout_callback_id)
+    js = js.replace('{timeout_msec}', str(timeout_sec*1000))
+    exec_javascript(js)
 
 def exec_javascript(js):
     if vdomr_global['mode'] == 'colab':

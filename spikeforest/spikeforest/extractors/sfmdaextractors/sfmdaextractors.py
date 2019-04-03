@@ -136,6 +136,10 @@ class SFMdaSortingExtractor(SortingExtractor):
         inds = np.where((self._labels == unit_id) & (start_frame <= self._times) & (self._times < end_frame))
         return np.rint(self._times[inds]).astype(int)
 
+    def hash(self):
+        from mountaintools import client as mt
+        return mt.computeFileSha1(self._firings_path)
+
     @staticmethod
     def writeSorting(sorting, save_path):
         ca = _load_required_modules()
