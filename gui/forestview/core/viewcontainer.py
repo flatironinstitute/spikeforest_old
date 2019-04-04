@@ -91,7 +91,7 @@ class ViewContainer(vd.Component):
   def render(self):
     f=self._current_frame
     style0=dict(width='100%',height='100%',position='absolute')
-    style1=dict(left='5px',right='5px',top='5px',bottom='5px',position='absolute')
+    style1=dict(left='5px',right='5px',top='5px',bottom='{}px'.format(5+self._tab_bar.height()),position='absolute')
     onclick=self._on_click
     if not f:
       style1['background-color']='lightgray'

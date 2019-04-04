@@ -182,15 +182,20 @@ class PlotlyPlot(vd.Component):
 
     def render(self):
         div = vd.div(id=self._elmt_id)
+        return div
+
+    def postRenderScript(self):
         data = self._filter_data(self._data)
         if type(data)!=list:
             data=[data]
         js = """
-        let div=document.getElementById('{elmt_id}');
-        if (({width}) && ({height})) {
-            div.style="width:{width}px; height:{height}px"
-        }
-        Plotly.plot(div, {data}, {opts});
+        setTimeout(function() { // wait until plotly has loaded
+            let div=document.getElementById('{elmt_id}');
+            if (({width}) && ({height}) && (div)) {
+                div.style="width:{width}px; height:{height}px";
+                Plotly.newPlot(div, {data}, {opts});
+            }
+        },100);
         """
         js = js.replace('{elmt_id}', self._elmt_id)
         js = js.replace('{data}', json.dumps(data))
@@ -203,8 +208,7 @@ class PlotlyPlot(vd.Component):
             height0 = 'null'
         js = js.replace('{width}', str(width0))
         js = js.replace('{height}', str(height0))
-        vd.devel.loadJavascript(js=js, delay=100)
-        return div
+        return js
 
 
 class ScrollArea(vd.Component):

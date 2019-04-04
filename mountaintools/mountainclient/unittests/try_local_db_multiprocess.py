@@ -22,7 +22,6 @@ def _test1(ii):
     val0='{}'.format(ii)
     mt.setValue(key=key,value=val0)
     val1=mt.getValue(key=key)
-    print(val0,'------',val1)
     return val1
 
 pool=multiprocessing.Pool(100)

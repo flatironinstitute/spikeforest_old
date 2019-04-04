@@ -22,11 +22,6 @@ class RecordingSummaryView(vd.Component):
         rows.append(vd.tr(
             vd.th('Directory'), vd.td(self._context.recordingDirectory())
         ))
-        # true_units = rec.trueUnitsInfo(format='json')
-        # if true_units:
-        #     rows.append(vd.tr(
-        #         vd.th('Num. true units'), vd.td('{}'.format(len(true_units)))
-        #     ))
         RX = self._context.recordingExtractor()
         rows.append(vd.tr(
             vd.th('Num. channels'), vd.td('{}'.format(len(RX.getChannelIds())))
@@ -38,6 +33,13 @@ class RecordingSummaryView(vd.Component):
         rows.append(vd.tr(            
             vd.th('Duration (s)'), vd.td('{}'.format(a))
         ))
+
+        SX = self._context.sortingExtractor()
+        if SX:
+            true_unit_ids = SX.getUnitIds()
+            rows.append(vd.tr(
+                vd.th('Num. true units'), vd.td('{}'.format(len(true_unit_ids)))
+            ))
 
         table = vd.table(rows, style={
                          'text-align': 'left', 'width': 'auto', 'font-size': '13px'}, class_='table')

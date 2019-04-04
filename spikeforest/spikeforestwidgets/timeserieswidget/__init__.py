@@ -1,1 +1,1 @@
-from .timeserieswidget import TimeseriesWidget
+from .timeserieswidget import TimeseriesWidget, precomputeMultiscaleRecordings

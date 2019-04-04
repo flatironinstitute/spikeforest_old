@@ -141,7 +141,7 @@ def _read_header(path):
     if is_url(path):
         tmp_fname=_download_bytes_to_tmpfile(path,0,200)
         if not tmp_fname:
-            raise Exception('Problem downloading bytes from '+url)
+            raise Exception('Problem downloading bytes from '+path)
         try:
             ret=_read_header(tmp_fname)
         except:
@@ -152,7 +152,7 @@ def _read_header(path):
     f=open(path,"rb")
     try:
         dt_code=_read_int32(f)
-        num_bytes_per_entry=_read_int32(f)
+        # num_bytes_per_entry=_read_int32(f)
         num_dims=_read_int32(f)
         uses64bitdims=False
         if (num_dims<0):
@@ -477,25 +477,25 @@ def _header_from_file(f):
         print (e)
         return None
 
-def mdaio_test():
-    M=4
-    N=12
-    X=np.ndarray((M,N))
-    for n in range(0,N):
-        for m in range(0,M):
-            X[m,n]=n*10+m
-    writemda32(X,'tmp1.mda')
-    Y=readmda('tmp1.mda')
-    print (Y)
-    print (np.absolute(X-Y).max())
-    Z=DiskReadMda('tmp1.mda')
-    print (Z.readChunk(i1=0,i2=4,N1=M,N2=N-4))
+# def mdaio_test():
+#     M=4
+#     N=12
+#     X=np.ndarray((M,N))
+#     for n in range(0,N):
+#         for m in range(0,M):
+#             X[m,n]=n*10+m
+#     writemda32(X,'tmp1.mda')
+#     Y=readmda('tmp1.mda')
+#     print (Y)
+#     print (np.absolute(X-Y).max())
+#     Z=DiskReadMda('tmp1.mda')
+#     print (Z.readChunk(i1=0,i2=4,N1=M,N2=N-4))
 
-    A=DiskWriteMda('tmpA.mda',(M,N))
-    A.writeChunk(Y,i1=0,i2=0)
-    B=readmda('tmpA.mda')
-    print (B.shape)
-    print (B)
+#     A=DiskWriteMda('tmpA.mda',(M,N))
+#     A.writeChunk(Y,i1=0,i2=0)
+#     B=readmda('tmpA.mda')
+#     print (B.shape)
+#     print (B)
     
 
 #mdaio_test()

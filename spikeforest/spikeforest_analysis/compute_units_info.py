@@ -67,48 +67,58 @@ class ComputeUnitsInfo(mlpr.Processor):
   
   def run(self):
     R0=SFMdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
-    if (self.channel_ids) and (len(self.channel_ids)>0):
-      R0=si.SubRecordingExtractor(parent_recording=R0,channel_ids=self.channel_ids)
-
-    recording = R0
-
-    # load into memory
-    R0=si.NumpyRecordingExtractor(timeseries=R0.getTraces(), samplerate=R0.getSamplingFrequency())
-
-    # do filtering
-    R0=sw.lazyfilters.bandpass_filter(recording=R0,freq_min=300,freq_max=6000)
-    R0=si.NumpyRecordingExtractor(timeseries=R0.getTraces(), samplerate=R0.getSamplingFrequency())
-
     sorting=SFMdaSortingExtractor(firings_file=self.firings)
-    unit_ids=self.unit_ids
-    if (not unit_ids) or (len(unit_ids)==0):
-      unit_ids=sorting.getUnitIds()
-  
-    channel_noise_levels=compute_channel_noise_levels(recording=R0)
-
-    # No longer use subset to compute the templates
-    templates=compute_unit_templates(recording=R0,sorting=sorting,unit_ids=unit_ids,max_num=100)
-
-    ret=[]
-    for i,unit_id in enumerate(unit_ids):
-      template=templates[i]
-      max_p2p_amps_on_channels=np.max(template,axis=1)-np.min(template,axis=1)
-      peak_channel_index=np.argmax(max_p2p_amps_on_channels)
-      peak_channel=recording.getChannelIds()[peak_channel_index]
-      peak_signal = np.max(np.abs(template[peak_channel_index,:]))
-      info0=dict()
-      info0['unit_id']=int(unit_id)
-      info0['snr']=peak_signal/channel_noise_levels[peak_channel_index]
-      info0['peak_channel']=int(recording.getChannelIds()[peak_channel])
-      train=sorting.getUnitSpikeTrain(unit_id=unit_id)
-      info0['num_events']=int(len(train))
-      info0['firing_rate']=float(len(train)/(recording.getNumFrames()/recording.getSamplingFrequency()))
-      ret.append(info0)
+    ret = compute_units_info_helper(recording=R0, sorting=sorting, channel_ids=self.channel_ids, unit_ids=self.unit_ids)
     write_json_file(self.json_out,ret)
+    
+
+def compute_units_info(*, recording, sorting, channel_ids=[], unit_ids=[]):
+  if (channel_ids) and (len(channel_ids)>0):
+      recording=si.SubRecordingExtractor(parent_recording=recording, channel_ids=channel_ids)
+
+  # load into memory
+  print('Loading recording into RAM...')
+  recording=si.NumpyRecordingExtractor(timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
+
+  # do filtering
+  print('Filtering...')
+  recording=sw.lazyfilters.bandpass_filter(recording=recording,freq_min=300,freq_max=6000)
+  recording=si.NumpyRecordingExtractor(timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
+
+  
+  if (not unit_ids) or (len(unit_ids)==0):
+    unit_ids=sorting.getUnitIds()
+
+  print('Computing channel noise levels...')
+  channel_noise_levels=compute_channel_noise_levels(recording=recording)
+
+  # No longer use subset to compute the templates
+  print('Computing unit templates...')
+  templates=compute_unit_templates(recording=recording, sorting=sorting, unit_ids=unit_ids, max_num=100)
+
+  print(recording.getChannelIds())
+
+  ret=[]
+  for i,unit_id in enumerate(unit_ids):
+    print('Unit {} of {} (id={})'.format(i+1, len(unit_ids), unit_id))
+    template=templates[i]
+    max_p2p_amps_on_channels=np.max(template,axis=1)-np.min(template,axis=1)
+    peak_channel_index=np.argmax(max_p2p_amps_on_channels)
+    peak_channel=recording.getChannelIds()[peak_channel_index]
+    peak_signal = np.max(np.abs(template[peak_channel_index,:]))
+    info0=dict()
+    info0['unit_id']=int(unit_id)
+    info0['snr']=peak_signal/channel_noise_levels[peak_channel_index]
+    info0['peak_channel']=int(recording.getChannelIds()[peak_channel])
+    train=sorting.getUnitSpikeTrain(unit_id=unit_id)
+    info0['num_events']=int(len(train))
+    info0['firing_rate']=float(len(train)/(recording.getNumFrames()/recording.getSamplingFrequency()))
+    ret.append(info0)
+  return ret
   
   
 ## return format can be 'json' or 'filename'
-def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return_format='json'):
+def compute_units_info_b(*,recording_dir,firings,channel_ids=[],unit_ids=[],return_format='json'):
     out=ComputeUnitsInfo.execute(
       recording_dir=recording_dir,
       firings=firings,
@@ -126,7 +136,7 @@ def compute_units_info(*,recording_dir,firings,channel_ids=[],unit_ids=[],return
         return json.load(f)
 
 def select_units_on_channels(recording_dir,firings,channels):
-  info=compute_units_info(recording_dir=recording_dir,firings=firings)
+  info=compute_units_info_b(recording_dir=recording_dir,firings=firings)
   units=[]
   for info0 in info:
     if info0['peak_channel'] in channels:

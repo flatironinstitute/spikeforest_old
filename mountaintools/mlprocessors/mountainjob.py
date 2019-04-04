@@ -17,6 +17,7 @@ import datetime
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 import mtlogging
+import numpy as np
 
 local_client = MountainClient()
 
@@ -95,7 +96,7 @@ class MountainJob():
             result = self._find_result_in_cache()
             if result:
                 self._copy_outputs_from_result_to_dest_paths(result)
-                return result
+                return self._post_process_result(result)
 
         if self._use_cached_results_only:
             return None
@@ -111,21 +112,28 @@ class MountainJob():
             tmp_process_console_out_fname_in_container = os.path.join('/processor_outputs', 'process_console_out.txt')
             for input_name, input0 in self._job_object['inputs'].items():
                 if not input0.get('directory', False):
-                    input_fname = self._realize_input(input0['path'])
-                    if not input_fname:
-                        raise Exception('Unable to realize input {}: {}'.format(input_name, input0['path']))
+                    if input0['path']:
+                        input_value = self._realize_input(input0['path'])
+                        if not input_value:
+                            raise Exception('Unable to realize input {}: {}'.format(input_name, input0['path']))
+                    else:
+                        if (not container) and self._processor:
+                            # running directly so we are okay with an input object
+                            input_value = input0['object']
+                        else:
+                            raise Exception('Cannot run job indirectly with input {} that is not a file'.format(input_name))
                 else:
-                    input_fname = input0['path']
+                    input_value = input0['path']
                 if not container:
-                    attributes_for_processor[input_name] = input_fname
+                    attributes_for_processor[input_name] = input_value
                 else:
-                    ext = _get_file_ext(input_fname) or '.in'
+                    ext = _get_file_ext(input_value) or '.in'
                     
                     if input0.get('directory', False) and (input0['path'].startswith('kbucket://')):
                         infile_in_container = input0['path']
                     else:
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
-                        inputs_to_bind.append((input_fname, infile_in_container))
+                        inputs_to_bind.append((input_value, infile_in_container))
                     attributes_for_processor[input_name] = infile_in_container
             for output_name, output_value in self._job_object['outputs'].items():
                 if type(output_value)==str:
@@ -278,7 +286,24 @@ class MountainJob():
             if (retcode == 0) and use_cache:
                 self._store_result_in_cache(R)
 
-            return R
+            return self._post_process_result(R)
+
+    def _post_process_result(self, R):
+        output_names = R.outputs.keys()
+        for output_name in output_names:
+            out_fname = R.outputs[output_name]
+            out_obj = self._job_object['outputs'][output_name]
+            if type(out_obj) != dict:
+                out_obj = dict()
+            if out_obj.get('is_array', False):
+                out_fname = mt.realizeFile(out_fname)
+                try:
+                    R.outputs[output_name] = np.load(out_fname)
+                except:
+                    raise
+                    print('Error loading output array', output_name, out_fname)
+                    R.retcode == -1
+        return R
 
     def _realize_input(self, fname):
         if fname.startswith('kbucket://'):

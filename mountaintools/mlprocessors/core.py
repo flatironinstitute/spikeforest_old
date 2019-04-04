@@ -28,7 +28,6 @@ class InOutBase():
     def spec(self):
         return {'name': self.name, 'description': self.description, 'optional': self.optional}
 
-
 class Input(InOutBase):
     def __init__(self, description=None, optional=False, multi=False, directory=False, validators=None, *args, **kwargs):
         super().__init__(description, optional, multi,
@@ -36,13 +35,17 @@ class Input(InOutBase):
         self.validators.append(FileExistsValidator())
         # self.formats = []
 
-
 class Output(InOutBase):
-    def __init__(self, description=None, optional=False, multi=False, validators=None, *args, **kwargs):
+    def __init__(self, description=None, optional=False, multi=False, validators=None, is_array=False, *args, **kwargs):
         directory = False
         super().__init__(description, optional, multi,
                          directory, validators, *args, **kwargs)
+        self.is_array = is_array
 
+class OutputArray(Output):
+    def __init__(self, description=None, optional=False, multi=False, validators=None, *args, **kwargs):
+        super().__init__(description, optional, multi,
+                         validators, is_array=True, *args, **kwargs)
 
 class StreamInput(Input):
     """

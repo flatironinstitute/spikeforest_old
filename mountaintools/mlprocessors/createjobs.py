@@ -77,9 +77,22 @@ def createJobs(proc, argslist, verbose=None):
                         path = fname0
                     )
                 else:
-                    inputs[name0] = dict(
-                        path = fname0
-                    )
+                    if type(fname0) == str:
+                        inputs[name0] = dict(
+                            path = fname0
+                        )
+                    else:
+                        if not hasattr(fname0, 'hash'):
+                            raise Exception('Input {} is not a string and does not have hash attribute.'.format(name0))
+                        if callable(fname0.hash):
+                            hash0 = fname0.hash()
+                        else:
+                            hash0 = fname0.hash
+                        inputs[name0] = dict(
+                            path = None,
+                            object = fname0,
+                            hash = hash0
+                        )
             else:
                 if not input0.optional:
                     raise Exception('Missing required input: {}'.format(name0))
@@ -98,8 +111,15 @@ def createJobs(proc, argslist, verbose=None):
                     )
                 elif type(val0) == dict:
                     outputs[name0] = val0
+                elif type(val0) == bool:
+                    if output0.is_array:
+                        outputs[name0] = dict(ext='.npy')
+                    else:
+                        outputs[name0] = dict(ext='.dat')
                 else:
                     raise Exception('Type of output {} cannot be {}'.format(name0, str(type(val0))))
+                if output0.is_array:
+                    outputs[name0]['is_array'] = True
             else:
                 if not output0.optional:
                     raise Exception('Missing required output: {}'.format(name0))
@@ -149,19 +169,20 @@ def createJobs(proc, argslist, verbose=None):
     all_local_file_inputs = []
     for job_object in job_objects:
         for _, input0 in job_object['inputs'].items():
-            path0 = input0['path']
-            if input0.get('directory', False):
-                if path0.startswith('kbucket://'):
-                    all_kbucket_dir_inputs.append(input0)
+            path0 = input0.get('path', None)
+            if path0:
+                if input0.get('directory', False):
+                    if path0.startswith('kbucket://'):
+                        all_kbucket_dir_inputs.append(input0)
+                    else:
+                        all_local_dir_inputs.append(input0)
                 else:
-                    all_local_dir_inputs.append(input0)
-            else:
-                if path0.startswith('kbucket://'):
-                    all_kbucket_file_inputs.append(input0)
-                elif path0.startswith('sha1://'):
-                    all_sha1_file_inputs.append(input0)
-                else:
-                    all_local_file_inputs.append(input0)
+                    if path0.startswith('kbucket://'):
+                        all_kbucket_file_inputs.append(input0)
+                    elif path0.startswith('sha1://'):
+                        all_sha1_file_inputs.append(input0)
+                    else:
+                        all_local_file_inputs.append(input0)
 
     # Prepare the local file inputs
     if len(all_local_file_inputs) > 0:
@@ -304,7 +325,7 @@ def _compute_mountain_job_output_signature(*, processor_name, processor_version,
         if input0.get('directory', False):
             input_hashes[input_name] = input0['hash']
         else:
-            input_hashes[input_name] = input0['sha1']
+            input_hashes[input_name] = input0.get('sha1', input0['hash'])
 
     signature_obj = dict(
         processor_name=processor_name,

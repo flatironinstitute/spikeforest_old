@@ -1,4 +1,5 @@
-from .timeserieswidget import TimeseriesWidget
+from .timeserieswidget import TimeseriesWidget, precomputeMultiscaleRecordings
+from .templatewidget import TemplateWidget
 from .featurespacewidget import FeatureSpaceWidget
 from .electrodegeometrywidget import ElectrodeGeometryWidget
 from .unitwaveformswidget import UnitWaveformWidget, UnitWaveformsWidget
