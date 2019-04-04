@@ -9,6 +9,7 @@ import signal
 import tempfile
 
 
+@pytest.mark.cairio
 def test_cairio(tmpdir):
     tmpdir = str(tmpdir)
     os.environ['KBUCKET_CACHE_DIR'] = tmpdir+'/sha1-cache'

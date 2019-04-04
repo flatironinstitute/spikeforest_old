@@ -68,7 +68,7 @@ class ComputeUnitsInfo(mlpr.Processor):
   def run(self):
     R0=SFMdaRecordingExtractor(dataset_directory=self.recording_dir,download=True)
     sorting=SFMdaSortingExtractor(firings_file=self.firings)
-    ret = compute_units_info_helper(recording=R0, sorting=sorting, channel_ids=self.channel_ids, unit_ids=self.unit_ids)
+    ret = compute_units_info(recording=R0, sorting=sorting, channel_ids=self.channel_ids, unit_ids=self.unit_ids)
     write_json_file(self.json_out,ret)
     
 

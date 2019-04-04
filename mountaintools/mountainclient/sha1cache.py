@@ -140,6 +140,13 @@ class Sha1Cache():
 
     @mtlogging.log()
     def computeFileSha1(self, path, _known_sha1=None):
+        basename = os.path.basename(path)
+        if len(basename)==40:
+            # suspect it is itself a file in the cache
+            if self._get_path(sha1=basename) == path:
+                # in that case we don't need to compute
+                return basename
+
         aa = _get_stat_object(path)
         aa_hash = _compute_string_sha1(json.dumps(aa, sort_keys=True))
 

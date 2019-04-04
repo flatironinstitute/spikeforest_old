@@ -25,6 +25,7 @@ import pytest
 
 
 @pytest.mark.slow
+@pytest.mark.analysis
 def test_spikeforest_analysis(tmpdir):
     tmpdir = str(tmpdir)
 

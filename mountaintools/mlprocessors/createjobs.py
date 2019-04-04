@@ -323,9 +323,12 @@ def _compute_mountain_job_output_signature(*, processor_name, processor_version,
     input_hashes=dict()
     for input_name, input0 in inputs.items():
         if input0.get('directory', False):
-            input_hashes[input_name] = input0['hash']
+            hash0 = input0.get('hash', None)
         else:
-            input_hashes[input_name] = input0.get('sha1', input0['hash'])
+            hash0 = input0.get('sha1', input0.get('hash', None))
+        if not hash0:
+            raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+        input_hashes[input_name] = hash0
 
     signature_obj = dict(
         processor_name=processor_name,

@@ -81,7 +81,6 @@ class UnitDetailWidget(vd.Component):
         snippets = result0['snippets']
         template = result0['template']
         peak_chan_index=np.argmax(np.max(np.abs(template),axis=1),axis=0)
-        print('--------------------',peak_chan_index,template.shape)
         peak_chan=self._context.recordingExtractor().getChannelIds()[peak_chan_index]
         return vd.div(
             vd.pre(

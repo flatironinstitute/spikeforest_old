@@ -772,10 +772,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
-        if path.startswith('sha1://'):
-            list0 = path.split('/')
-            sha1 = list0[2]
-            return sha1
+        return self._local_db.computeFileSha1(path=path)
     
     def sha1OfObject(self, obj):
         return _sha1_of_object(obj)
@@ -1310,7 +1307,18 @@ class MountainClientLocal():
 
     @mtlogging.log(name='MountainClientLocal:computeFileSha1')
     def computeFileSha1(self, path):
-        return self._sha1_cache.computeFileSha1(path=path)
+        if path.startswith('sha1://'):
+            list0 = path.split('/')
+            sha1 = list0[2]
+            return sha1
+        elif path.startswith('kbucket://'):
+            path_local = self._find_file_in_local_kbucket_share(path)
+            if path_local is not None:
+                return self.computeFileSha1(path=path_local)
+            sha1, _, __ = self._get_kbucket_file_info(path=path)
+            return sha1
+        else:
+            return self._sha1_cache.computeFileSha1(path=path)
 
     def getNodeInfo(self, *, share_id):
         return self._get_node_info(share_id=share_id)
