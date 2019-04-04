@@ -127,4 +127,3 @@ class Container(vd.Component):
         style=style,
         id=self._elmt_id
     )
-

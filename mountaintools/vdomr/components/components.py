@@ -162,7 +162,7 @@ class PlotlyPlot(vd.Component):
         import numpy as np
         if type(data)==list:
             ret = []
-            for ii, val in enumerate(data):
+            for val in data:
                 ret.append(self._filter_data(val))
             return ret
         elif type(data)==dict:
@@ -234,7 +234,7 @@ def _save_plot(fig, fname, quality=40):
     old_display = os.environ.get('DISPLAY', '')
     os.environ['DISPLAY'] = ''
 
-    dpi = 100
+    # dpi = 100
     plt.savefig(fname+'.png', pad_inches=0)  # ,bbox_inches='tight')
     plt.close(fig)
     im = Image.open(fname+'.png').convert('RGB')

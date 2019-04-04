@@ -61,7 +61,6 @@ class FilterRecording(se.RecordingExtractor):
         raise NotImplementedError('filterChunk not implemented')
 
     def _get_filtered_chunk(self, ind):
-        code = str(ind)
         start0 = ind * self._chunk_size
         end0 = (ind + 1) * self._chunk_size
         chunk1 = self.filterChunk(start_frame=start0, end_frame=end0)

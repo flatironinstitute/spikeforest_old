@@ -50,7 +50,7 @@ def register_callback(callback_id, callback):
             traceback.print_exc()
             print('Error: ', err)
     if vdomr_global['mode'] == 'colab':
-        from google.colab import output as colab_output
+        from google.colab import output as colab_output # pylint: disable=import-error
         colab_output.register_callback(callback_id, the_callback)
         exec_javascript(
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
@@ -80,7 +80,7 @@ def _exec_queued_javascript():
 def exec_javascript(js):
     if vdomr_global['mode'] == 'colab':
         from IPython.display import Javascript
-        display(Javascript(js))
+        display(Javascript(js)) # pylint: disable=undefined-variable
     elif vdomr_global['mode'] == 'jp_proxy_widget':
         vdomr_global['jp_widget'].js_init(js)
     elif vdomr_global['mode'] == 'server':
@@ -103,7 +103,7 @@ def exec_javascript(js):
             vdomr_global['pyqt5_view'].page().runJavaScript(js)
     else:
         from IPython.display import Javascript
-        display(Javascript(js))
+        display(Javascript(js)) # pylint: disable=undefined-variable
 
 
 def _take_javascript_to_execute():
@@ -174,7 +174,7 @@ def config_jupyter():
     window.vdomr_invokeFunction = invokeFunction;
     """, invokeFunction=invoke_callback)
     vdomr_global['jp_widget'] = jp_widget
-    display(jp_widget)
+    display(jp_widget) # pylint: disable=undefined-variable
 
 
 def config_colab():

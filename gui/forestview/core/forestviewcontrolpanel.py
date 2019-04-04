@@ -16,7 +16,7 @@ class ForestViewControlPanel(vd.Component):
 
     def render(self):
         view_launcher_buttons = []
-        for name, VL in self._view_launchers.items():
+        for _, VL in self._view_launchers.items():
             button0 = vd.components.Button(label=VL['label'], onclick=lambda VL=VL: self._trigger_launch_view(VL), style=dict(width='130px', height='80px', margin='5px'))
             view_launcher_buttons.append(button0)
 
