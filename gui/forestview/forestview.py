@@ -8,14 +8,14 @@ from core import ForestViewMainWindow
 import uuid
 import json
 from viewrecordingcontext import ViewRecordingContext
-from views import RecordingSummaryView, TimeseriesView, TestPlotlyView, UnitsTableView, TemplatesView, ElectrodeGeometryView
+from views import RecordingSummaryView, TimeseriesView, TestPlotlyView, UnitsTableView, TemplatesView, ElectrodeGeometryView, CurrentStateView, UnitDetailView
 import uuid
 import mtlogging
 
 recording_object = {'name': '001_synth',
  'study': 'mearec_neuronexus_noise10_K10_C32',
- #'directory': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth',
- 'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
+ 'directory': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth',
+ #'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
  'description': 'One of the recordings in the mearec_neuronexus_noise10_K10_C32 study',
  'summary': {'computed_info': {'samplerate': 30000.0,
    'num_channels': 32,
@@ -100,16 +100,20 @@ def _register_views(W):
         view_class=TimeseriesView
     ))
     W.addViewLauncher('true-unit-templates', dict(
-        label='True unit templates',
+        label='Template plots',
         view_class=TemplatesView
     ))
     W.addViewLauncher('true-units-table', dict(
-        label='True units table',
+        label='Units table',
         view_class=UnitsTableView
     ))
-    W.addViewLauncher('testplotly', dict(
-        label='Test plotly',
-        view_class=TestPlotlyView
+    W.addViewLauncher('current-unit-detail', dict(
+        label='Current unit detail',
+        view_class=UnitDetailView
+    ))
+    W.addViewLauncher('current-state', dict(
+        label='Current state',
+        view_class=CurrentStateView
     ))
 
 

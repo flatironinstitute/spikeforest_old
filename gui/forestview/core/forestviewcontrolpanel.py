@@ -17,13 +17,28 @@ class ForestViewControlPanel(vd.Component):
     def render(self):
         view_launcher_buttons = []
         for name, VL in self._view_launchers.items():
-            button0 = vd.components.Button(label=VL['label'], onclick=lambda VL=VL: self._trigger_launch_view(VL))
+            button0 = vd.components.Button(label=VL['label'], onclick=lambda VL=VL: self._trigger_launch_view(VL), style=dict(width='130px', height='80px', margin='5px'))
             view_launcher_buttons.append(button0)
 
+        table = _make_button_table(view_launcher_buttons, num_columns=2)
         return vd.div(
-            *view_launcher_buttons
+            table
         )
 
     def _trigger_launch_view(self, VL):
         for handler in self._launch_view_handlers:
             handler(VL)
+
+def _make_button_table(buttons, num_columns):
+    rows = []
+    i = 0
+    while i<len(buttons):
+        row_buttons = buttons[i:i+num_columns]
+        while len(row_buttons)<num_columns:
+            row_buttons.append(vd.span())
+        rows.append(vd.tr([
+            vd.td(button)
+            for button in row_buttons
+        ]))
+        i = i+num_columns
+    return vd.table(*rows)

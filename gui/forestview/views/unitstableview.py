@@ -108,7 +108,7 @@ def _initialize(context, connection_to_parent):
             print('***** Preparing efficient access recording extractor...')
             earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
             print('***** computing units info...')
-            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=context.recordingExtractor(), sorting=context.sortingExtractor(), json_out=True).outputs['json_out'])
+            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=earx, sorting=context.sortingExtractor(), json_out=True).outputs['json_out'])
             print('*****')
         except:
             traceback.print_exc()

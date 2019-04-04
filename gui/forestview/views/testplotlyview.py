@@ -80,7 +80,7 @@ class TestPlotlyWidget(vd.Component):
 mtlogging.log(root=True)
 def _initialize(context, connection_to_parent):
     with StdoutSender(connection=connection_to_parent):
-        print('test 1')
+        pass
     connection_to_parent.send(dict(
         name='result',
         result=dict()

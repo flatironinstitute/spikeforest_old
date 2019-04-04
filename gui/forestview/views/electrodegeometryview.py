@@ -70,7 +70,6 @@ class ElectrodeGeometryWidget(vd.Component):
             ch = channel_ids[int(current_electrode_index)]
         else:
             ch=None
-        print('setting current channel', ch)
         self.setCurrentChannel(ch)
     def render(self):
         div=vd.div(id=self._div_id)

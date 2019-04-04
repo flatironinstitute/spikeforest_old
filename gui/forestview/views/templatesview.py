@@ -5,12 +5,14 @@ import sys
 from .stdoutsender import StdoutSender
 import mtlogging
 import numpy as np
+from copy import deepcopy
 import spikeforest_analysis as sa
 from spikeforest import EfficientAccessRecordingExtractor
 import spikeforestwidgets as SFW
 import json
 from matplotlib import pyplot as plt
 import mlprocessors as mlpr
+import uuid
 
 class TemplatesView(vd.Component):
     def __init__(self, context):
@@ -27,6 +29,11 @@ class TemplatesView(vd.Component):
         vd.set_timeout(self._check_init, 0.5)
     def _on_init_completed(self, units):
         self._templates_widget = TemplatesWidget(units=units)
+        self._update_selected()
+        self._templates_widget.onSelectedUnitIdsChanged(lambda: self._context.setSelectedUnitIds(self._templates_widget.selectedUnitIds()))
+        self._context.onSelectedUnitIdsChanged(lambda: self._templates_widget.setSelectedUnitIds(self._context.selectedUnitIds()))
+        self._templates_widget.onCurrentUnitIdChanged(lambda: self._context.setCurrentUnitId(self._templates_widget.currentUnitId()))
+        self._context.onCurrentUnitIdChanged(lambda: self._templates_widget.setCurrentUnitId(self._context.currentUnitId()))
         #self._templates_widget.setSize(self._size)
         self.refresh()
     def setSize(self, size):
@@ -38,7 +45,7 @@ class TemplatesView(vd.Component):
     def size(self):
         return self._size
     def tabLabel(self):
-        return 'Unit table'
+        return 'Templates'
     def render(self):
         if self._templates_widget:
             return vd.div(
@@ -49,6 +56,10 @@ class TemplatesView(vd.Component):
                 vd.h3('Initializing...'),
                 vd.pre(self._init_log_text)
             )
+
+    def _update_selected(self):
+        self._templates_widget.setSelectedUnitIds(self._context.selectedUnitIds())
+        self._templates_widget.setCurrentUnitId(self._context.currentUnitId())
     def _check_init(self):
         if not self._templates_widget:
             if self._connection_to_init.poll():
@@ -121,7 +132,7 @@ class ComputeUnitTemplates(mlpr.Processor):
     templates_out = mlpr.OutputArray()
 
     def run(self):
-        templates = compute_unit_templates(recording=self.recording, sorting=self.sorting, unit_ids=self.sorting.getUnitIds())
+        templates = compute_unit_templates(recording=self.recording, sorting=self.sorting, unit_ids=self.sorting.getUnitIds()) # pylint: disable=no-member
         print('Saving templates...')
         np.save(self.templates_out, templates)
         
@@ -130,27 +141,95 @@ class TemplatesWidget(vd.Component):
   def __init__(self,*,units):
     vd.Component.__init__(self)
     y_scale_factor = _compute_initial_y_scale_factor(units)
+    self._current_unit_id = None
+    self._selected_unit_ids = []
+    self._selected_unit_ids_changed_handlers = []
+    self._current_unit_id_changed_handlers = []
     self._widgets=[
         TemplateWidget(
             template=unit['template'],
             unit_id=unit['unit_id'],
-            y_scale_factor=y_scale_factor
+            y_scale_factor=y_scale_factor,
+            size=(150,300)
         )
         for unit in units
     ]
+    self._uuid=str(uuid.uuid4())
+    vd.register_callback(self._uuid+'_box_clicked', self._handle_box_clicked)
     vd.devel.loadBootstrap()
   def setSelectedUnitIds(self,ids):
-    ids=set(ids)
+    if ids is None:
+        ids=[]
+    ids = sorted([int(id) for id in ids])
+    if ids == self._selected_unit_ids:
+        return
+    self._selected_unit_ids = ids
+    ids_set=set(ids)
     for W in self._widgets:
-        W.setSelected(W.unitId() in ids)
+        W.setSelected(W.unitId() in ids_set)
+    for handler in self._selected_unit_ids_changed_handlers:
+        handler()
+
+  def selectedUnitIds(self):
+      return deepcopy(self._selected_unit_ids)
+
+  def onSelectedUnitIdsChanged(self, handler):
+      self._selected_unit_ids_changed_handlers.append(handler)
+
+  def setCurrentUnitId(self,id):
+    if id == self._current_unit_id:
+        return
+    self._current_unit_id = id
+    for W in self._widgets:
+        W.setCurrent(W.unitId() == id)
+    for handler in self._current_unit_id_changed_handlers:
+        handler()
+
+  def currentUnitId(self):
+      return self._current_unit_id
+
+  def onCurrentUnitIdChanged(self, handler):
+      self._current_unit_id_changed_handlers.append(handler)
+    
+  def _handle_box_clicked(self, *, index, ctrlKey):
+      W = self._widgets[int(index)]
+      if ctrlKey:
+          a = self.selectedUnitIds()
+          if W.unitId() in a:
+              a.remove(W.unitId())
+          else:
+              a.append(W.unitId())
+          self.setSelectedUnitIds(a)
+      else:
+        self.setSelectedUnitIds([W.unitId()])
+        self.setCurrentUnitId(W.unitId())
+
   def render(self):
     box_style=dict(float='left')
     boxes=[
-        vd.div(W,style=box_style)
-        for W in self._widgets
+        vd.div(W,id=self._uuid+'-{}'.format(i),style=box_style)
+        for i,W in enumerate(self._widgets)
     ]
-    div=vd.div(boxes)
+    div=vd.div(
+        boxes,
+        style=dict(overflow='auto',height='100%')
+    )
     return div
+
+  def postRenderScript(self):
+      js="""
+      for (let i=0; i<{num_widgets}; i++) {
+          (function(index) {
+            document.getElementById('{uuid}-'+index).onclick=function(evt) {
+                window.vdomr_invokeFunction('{box_clicked_callback_id}', [], {index:index, ctrlKey:evt.ctrlKey});
+            }
+          })(i);
+      }
+      """
+      js=js.replace('{num_widgets}', str(len(self._widgets)))
+      js=js.replace('{uuid}', self._uuid)
+      js=js.replace('{box_clicked_callback_id}', self._uuid+'_box_clicked')
+      return js
 
 def _compute_initial_y_scale_factor(units):
     templates_list = [unit['template'] for unit in units]
@@ -162,45 +241,41 @@ def _compute_initial_y_scale_factor(units):
     else:
         return 1
 class TemplateWidget(vd.Component):
-  def __init__(self,*,unit_id,template,y_scale_factor=None):
+  def __init__(self,*,unit_id,template,y_scale_factor=None,size=(200,200)):
     vd.Component.__init__(self)
-    self._plot=SFW.TemplateWidget(template=template)
-    self._plot.setYScaleFactor(y_scale_factor)
     self._unit_id=unit_id
     self._selected=False
+    self._current=False
+    self._size=size
+    self._size_plot=(size[0]-20, size[1]-40)
+    self._plot=SFW.TemplateWidget(template=template,size=self._size_plot)
+    self._plot.setYScaleFactor(y_scale_factor)
   def setSelected(self,val):
     if self._selected==val:
         return
     self._selected=val
     self.refresh()
+  def setCurrent(self,val):
+    if self._current==val:
+        return
+    self._current=val
+    self.refresh()
   def unitId(self):
     return self._unit_id
   def render(self):
-    style0={'border':'solid 1px black','margin':'5px'}
-    style1={}
+    style_plot={'position':'relative', 'border':'solid 1px black', 'background-color':'white', 'left':'10px', 'bottom':'10px', 'width':'{}px'.format(self._size_plot[0]), 'height':'{}px'.format(self._size_plot[1])}
+    style1={'width':'{}px'.format(self._size[0]), 'height':'{}px'.format(self._size[1])}
     if self._selected:
-        style1['background-color']='yellow'
+        style1['background-color']='rgb(240,240,200)'
+        style1['border']='solid 1px gray'
+        if self._current:
+            style1['background-color']='rgb(220,220,180)'
+    if self._current:
+        style1['border']='solid 2px rgb(150,50,50)'
     return vd.div(
         vd.p('Unit {}'.format(self._unit_id),style={'text-align':'center'}),
-        vd.div(self._plot,style=style0),
+        vd.div(self._plot,style=style_plot,size=()),
         style=style1
     )
 
-class _TemplatePlot(vd.components.Pyplot):
-  def __init__(self,*,template):
-    vd.components.Pyplot.__init__(self)
-    self._template=template
-  def plot(self):
-    #W=sw.UnitWaveformsWidget(recording=self._recording,sorting=self._sorting,unit_ids=[self._unit_id],width=5,height=5)
-    #W.plot()
-    _plot_template(
-        template=self._template
-    )
-
-def _plot_template(*,template):
-  M = template.shape[0]
-  T = template.shape[1]
-  tt = np.arange(T)
-  for m in range(M):
-    plt.plot(tt, template[m,:])
 

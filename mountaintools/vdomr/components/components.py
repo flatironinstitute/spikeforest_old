@@ -189,13 +189,14 @@ class PlotlyPlot(vd.Component):
         if type(data)!=list:
             data=[data]
         js = """
-        let div=document.getElementById('{elmt_id}');
-        if (({width}) && ({height}) && (div)) {
-            div.style="width:{width}px; height:{height}px";
-            Plotly.newPlot(div, {data}, {opts});
-        }
+        setTimeout(function() { // wait until plotly has loaded
+            let div=document.getElementById('{elmt_id}');
+            if (({width}) && ({height}) && (div)) {
+                div.style="width:{width}px; height:{height}px";
+                Plotly.newPlot(div, {data}, {opts});
+            }
+        },100);
         """
-        print('render B', self._size)
         js = js.replace('{elmt_id}', self._elmt_id)
         js = js.replace('{data}', json.dumps(data))
         js = js.replace('{opts}', json.dumps(self._opts or {}))

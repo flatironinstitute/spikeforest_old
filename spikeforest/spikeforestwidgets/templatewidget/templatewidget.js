@@ -30,7 +30,7 @@ function TemplateWidget() {
     m_mouse_handler.onMouseRelease(handle_mouse_release);
     m_mouse_handler.onMouseMove(handle_mouse_move);
     m_mouse_handler.onMouseLeave(handle_mouse_leave);
-    m_mouse_handler.onMouseWheel(handle_mouse_wheel);
+    //m_mouse_handler.onMouseWheel(handle_mouse_wheel);
 
     // Note that we cannot use this method within jupyter notebooks -- need to think about it
     m_div.bind('keydown',function(event) {
@@ -233,7 +233,7 @@ function MouseHandler(elmt) {
     elmt.mouseenter(function(e) {report('enter',mouse_event($(this),e)); return true;});
     elmt.mouseleave(function(e) {report('leave',mouse_event($(this),e)); return true;});
     elmt.on('dragstart',function() {return false;});
-    elmt.on('mousewheel', function(e){report('wheel',wheel_event($(this),e)); return false;});
+    //elmt.on('mousewheel', function(e){report('wheel',wheel_event($(this),e)); return false;});
 
     let m_handlers={
         press:[],release:[],move:[],enter:[],leave:[],wheel:[]

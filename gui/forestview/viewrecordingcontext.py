@@ -2,6 +2,7 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, Efficien
 from copy import deepcopy
 import spikeforestwidgets as SFW
 from mountaintools import client as mt
+from bandpass_filter import bandpass_filter
 
 class ViewRecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
@@ -15,6 +16,7 @@ class ViewRecordingContext():
             print('******** FORESTVIEW: Downloading recording file if needed...')
         recdir = self._recording_object['directory']
         self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=download)
+        self._rx = bandpass_filter(self._rx)
 
         firings_true_path = recdir + '/firings_true.mda'
         self._sx = None
@@ -29,7 +31,9 @@ class ViewRecordingContext():
         self._state = dict(
             current_timepoint = None,
             selected_time_range = None,
-            current_channel = None
+            current_channel = None,
+            current_unit_id = None,
+            selected_unit_ids = []
         )
 
     def recordingObject(self):
@@ -50,10 +54,19 @@ class ViewRecordingContext():
     def sortingExtractor(self):
         return self._sx
 
+    def onAnyStateChanged(self, handler):
+        for key in self._state.keys():
+            self._register_state_change_handler(key, handler)
+
+    def stateObject(self):
+        return deepcopy(self._state)
+
+    # current channel
     def currentChannel(self):
         return self._get_state_value('current_channel')
 
     def setCurrentChannel(self, ch):
+        ch=int(ch)
         self._set_state_value('current_channel', ch)
 
     def onCurrentChannelChanged(self, handler):
@@ -61,6 +74,7 @@ class ViewRecordingContext():
 
     # current timepoint
     def setCurrentTimepoint(self, tp):
+        tp = int(tp)
         self._set_state_value('current_timepoint', tp)
 
     def currentTimepoint(self):
@@ -71,6 +85,7 @@ class ViewRecordingContext():
 
     # current time range
     def setCurrentTimeRange(self, range):
+        range=(int(range[0]), int(range[1]))
         self._set_state_value('current_time_range', range)
 
     def currentTimeRange(self):
@@ -78,6 +93,30 @@ class ViewRecordingContext():
 
     def onCurrentTimeRangeChanged(self, handler):
         self._register_state_change_handler('current_time_range', handler)
+
+    # current unit ID
+    def setCurrentUnitId(self, unit_id):
+        unit_id = int(unit_id)
+        self._set_state_value('current_unit_id', unit_id)
+
+    def currentUnitId(self):
+        return self._get_state_value('current_unit_id')
+
+    def onCurrentUnitIdChanged(self, handler):
+        self._register_state_change_handler('current_unit_id', handler)
+
+    # selected unit IDs
+    def setSelectedUnitIds(self, unit_ids):
+        if unit_ids is None:
+            unit_ids=[]
+        unit_ids = sorted([int(id) for id in unit_ids])
+        self._set_state_value('selected_unit_ids', sorted(unit_ids))
+
+    def selectedUnitIds(self):
+        return self._get_state_value('selected_unit_ids')
+
+    def onSelectedUnitIdsChanged(self, handler):
+        self._register_state_change_handler('selected_unit_ids', handler)
 
     def _set_state_value(self, name, val):
         if self._state[name] == val:
