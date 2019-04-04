@@ -111,6 +111,9 @@ function CanvasPainter(canvas) {
 			x=rect[0]+rect[2];
 			textAlign='right';
 		}
+		else {
+			console.log('WARNING: Missing horizontal alignment flag in drawText.');
+		}
 
 		if (alignment.AlignTop) {
 			y=rect[1];
@@ -123,6 +126,9 @@ function CanvasPainter(canvas) {
 		else if (alignment.AlignVCenter) {
 			y=rect[1]+rect[3]/2;
 			textBaseline='middle';
+		}
+		else {
+			console.log('WARNING: Missing vertical alignment flag in drawText.');
 		}
 
 		ctx.font=m_font['pixel-size']+'px'+' '+m_font.family;

@@ -5,6 +5,10 @@ from mountaintools import client as mt
 
 class ViewRecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
+        self._signal_handlers = dict()
+        
+        self._current_channel = -1
+        
         print('******** FORESTVIEW: Initializing recording context')
         self._recording_object = recording_object
         if download:
@@ -24,9 +28,9 @@ class ViewRecordingContext():
         print('******** FORESTVIEW: Done initializing recording context')
         self._state = dict(
             current_timepoint = None,
-            selected_time_range = None
+            selected_time_range = None,
+            current_channel = None
         )
-        self._signal_handlers = dict()
 
     def recordingObject(self):
         return self._recording_object
@@ -45,6 +49,15 @@ class ViewRecordingContext():
 
     def sortingExtractor(self):
         return self._sx
+
+    def currentChannel(self):
+        return self._get_state_value('current_channel')
+
+    def setCurrentChannel(self, ch):
+        self._set_state_value('current_channel', ch)
+
+    def onCurrentChannelChanged(self, handler):
+        self._register_state_change_handler('current_channel', handler)
 
     # current timepoint
     def setCurrentTimepoint(self, tp):

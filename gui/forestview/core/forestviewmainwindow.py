@@ -49,8 +49,8 @@ class ForestViewMainWindow(vd.Component):
         height1 = int(height/2)-5
         height2 = height-height1-30
 
-        self._container_main.setSize((width-20,height-20))
-        self._container_main.setPosition((10,10))
+        self._container_main.setSize((width,height))
+        self._container_main.setPosition((0,0))
         
         self._container_CP.setSize((width1, height-20))
         self._container_CP.setPosition((10,10))

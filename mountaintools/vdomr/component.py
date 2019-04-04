@@ -2,7 +2,7 @@ import base64
 import uuid
 import abc
 
-from .vdomr import exec_javascript
+from .vdomr import exec_javascript, _queue_javascript, _exec_queued_javascript
 
 
 class Component(object):
@@ -22,6 +22,7 @@ class Component(object):
         js = "{{var elmt=document.getElementById('{}'); if (elmt) elmt.innerHTML=atob('{}');}}".format(
             self._div_id, html_encoded)
         exec_javascript(js)
+        _exec_queued_javascript()
 
     def to_html(self):
         return self._repr_html_()
@@ -34,11 +35,12 @@ class Component(object):
         html = self.render().to_html()
         js = self.postRenderScript()
         if js:
+            # Note the following has a terrible race condition
             js2 = """
-            setTimeout(function() {
+            (function() {
                 {js}
-            },100)
+            })()
             """
             js2=js2.replace('{js}', js)
-            exec_javascript(js2)
+            _queue_javascript(js2)
         return html

@@ -7,6 +7,10 @@ function ElectrodeGeometryWidget() {
     let that=this;
 
     this.setElectrodeLocations=function(locations) {setElectrodeLocations(locations);};
+    this.setElectrodeLabels=function(labels) {setElectrodeLabels(labels);};
+    this.setCurrentElectrodeIndex=function(ind) {setCurrentElectrodeIndex(ind);};
+    this.currentElectrodeIndex=function() {return m_current_electrode_index;};
+    this.onCurrentElectrodeIndexChanged=function(handler) {m_current_electrode_index_changed_handlers.push(handler);};
     this.setSize=function(W,H) {m_size=[W,H]; update_size();};
     this.element=function() {return m_div;};
 
@@ -14,6 +18,7 @@ function ElectrodeGeometryWidget() {
     m_div.css({position:'absolute'});
     let m_size=[200,200];
     let m_locations=null;
+    let m_labels=[];
     let m_xmin = 0, m_xmax = 1;
     let m_ymin = 0, m_ymax = 1;
     let m_mindist = 0;
@@ -21,6 +26,10 @@ function ElectrodeGeometryWidget() {
     let m_main_canvas=new CanvasWidget();
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
+    let m_channel_rects={};
+    let m_hovered_electrode_index=-1;
+    let m_current_electrode_index=-1;
+    let m_current_electrode_index_changed_handlers=[];
 
     m_div.append(m_main_canvas.canvasElement());
 
@@ -65,6 +74,7 @@ function ElectrodeGeometryWidget() {
             scale = H1 / h0;
             offset = [(W1 - w0 * scale) / 2 - x1 * scale, 0 - y1 * scale];
         }
+        m_channel_rects=[];
         for (let i in m_locations) {
             let pt0 = m_locations[i];
             let x = pt0[0] * scale + offset[0];
@@ -75,8 +85,16 @@ function ElectrodeGeometryWidget() {
                 x1 = y;
                 y1 = x;
             }
-            let col = get_channel_color(Number(i) + 1);
-            painter.fillEllipse([x1 - rad, y1 - rad, rad * 2, rad * 2], col);
+            let col = get_channel_color(i);
+            let rect0 = [x1 - rad, y1 - rad, rad * 2, rad * 2];
+            painter.fillEllipse(rect0, col);
+            m_channel_rects[i] = rect0;
+            let label0 = m_labels[i];
+            if ((label0) || (label0==0)) {
+                painter.setBrush({color:'white'});
+                painter.setFont({'pixel-size':rad});
+                painter.drawText(rect0, {AlignCenter: true, AlignVCenter: true}, label0);
+            }
         }
     }
 
@@ -138,17 +156,72 @@ function ElectrodeGeometryWidget() {
         m_locations=locations;
         update_positions();
     }
+    function setElectrodeLabels(labels) {
+        m_labels=labels;
+        m_main_canvas.update();
+    }
+    function setCurrentElectrodeIndex(ind) {
+        set_current_electrode_index(ind);
+    }
+
+    function elec_index_at_pixel(pos) {
+        for (let i in m_channel_rects) {
+            rect0 = m_channel_rects[i];
+            if ((rect0[0]<=pos[0])&&(pos[0]<=rect0[0]+rect0[2])) {
+                if ((rect0[1]<=pos[1])&&(pos[1]<=rect0[1]+rect0[2])) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    function set_hovered_electrode_index(ind) {
+        if (ind == m_hovered_electrode_index) return;
+        m_hovered_electrode_index=ind;
+        m_main_canvas.update();
+    }
+
+    function set_current_electrode_index(ind) {
+        if (ind == m_current_electrode_index) return;
+        m_current_electrode_index=ind;
+        m_main_canvas.update();
+        m_current_electrode_index_changed_handlers.forEach(function(handler) {
+            handler();
+        });
+    }
+
+    function get_channel_color(ind) {
+        let color='rgb(0,0,255)';
+        let color_hover='rgb(100,100,255)';
+        let color_current='rgb(200,200,100)';
+        let color_current_hover='rgb(220,220,150)';
+
+        if (ind == m_current_electrode_index) {
+            if (ind == m_hovered_electrode_index) return color_current_hover;
+            else return color_current;
+        }
+        else {
+            if (ind == m_hovered_electrode_index) return color_hover;
+            else return color;
+        }
+    }
 
     function handle_mouse_press(X) {
     }
 
     function handle_mouse_release(X) {
+        let elec_ind = elec_index_at_pixel(X.pos);
+        set_current_electrode_index(elec_ind);
     }
 
     function handle_mouse_leave(X) {
+        set_hovered_electrode_index(-1);
     }
 
     function handle_mouse_move(X) {
+        let elec_ind = elec_index_at_pixel(X.pos);
+        set_hovered_electrode_index(elec_ind);
     }
 
     function handle_key_up(X) {
@@ -168,10 +241,6 @@ function ElectrodeGeometryWidget() {
     let dummy=[];
     that.setElectrodeLocations(dummy);
     update_size();
-}
-
-function get_channel_color(ch) {
-    return 'blue';
 }
 
 function MouseHandler(elmt) {

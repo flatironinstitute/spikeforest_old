@@ -15,7 +15,7 @@ vdomr_global = dict(
     pyqt5_worker_process=False, # for mode=pyqt5 (in the worker process)
     pyqt5_view=None,  # for mode=pyqt5
     pyqt5_connection_to_gui=None,  # for mode=pyqt5
-    timeout_callbacks=list()
+    queued_javascript=[]
 )
 
 default_session = dict(javascript_to_execute=[])
@@ -68,6 +68,14 @@ def set_timeout(callback, timeout_sec):
     js = js.replace('{timeout_callback_id}', timeout_callback_id)
     js = js.replace('{timeout_msec}', str(timeout_sec*1000))
     exec_javascript(js)
+
+def _queue_javascript(js):
+    vdomr_global['queued_javascript'].append(js)
+
+def _exec_queued_javascript():
+    for js in vdomr_global['queued_javascript']:
+        exec_javascript(js)
+    vdomr_global['queued_javascript']=[]
 
 def exec_javascript(js):
     if vdomr_global['mode'] == 'colab':
@@ -223,9 +231,9 @@ def pyqt5_start(*, APP, title):
                 **x
             ))
 
-        @pyqtSlot(str, str, str, str, result=QVariant)
-        def console_log(self, a, b='', c='', d=''):
-            print('JS:', a, b, c, d)
+        @pyqtSlot(str, str, str, str, str, str, str, result=QVariant)
+        def console_log(self, a, b='', c='', d='', e='', f='', g=''):
+            print('JS:', a, b, c, d, e, f, g)
             return None
 
     class VdomrWebView(QWebEngineView):
@@ -262,7 +270,6 @@ def pyqt5_start(*, APP, title):
                 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
                 <script>
                 // we do the following so we can get all console.log messages on the python console
-                //console.log=console.error;
                 {script}
                 </script>
                 </head>
@@ -273,9 +280,8 @@ def pyqt5_start(*, APP, title):
                     new QWebChannel(qt.webChannelTransport, function (channel) {
                         window.pyqt5_api = channel.objects.pyqt5_api;
                         
-                        // instead of doing the following, we map console.log to console.error above
-                        console.log=function(a,b,c,d) {
-                            pyqt5_api.console_log((a||'')+'',(b||'')+'',(c||'')+'',(d||'')+'');
+                        console.log=function(a,b,c,d,e,f,g) {
+                            pyqt5_api.console_log((a||'')+'',(b||'')+'',(c||'')+'',(d||'')+'',(e||'')+'',(f||'')+'',(g||'')+'');
                         }
                         
                     });
