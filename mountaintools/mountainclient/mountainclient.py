@@ -777,29 +777,6 @@ class MountainClient():
     def sha1OfObject(self, obj):
         return _sha1_of_object(obj)
 
-        # the following might be a helpful shortcut at some point
-        # elif path.startswith('kbucket://sha1-cache/'):
-        #     list0 = path.split('/')
-        #     if len(list0) >= 7:
-        #         if (len(list0[4])==1) and (len(list0[5])==2) and (len(list0[6])==40):
-        #             raise Exception('test')
-        #             return list0[6]
-        #     print('WARNING: unexpected form of sha1-cache kbucket url: {}'.format(path))
-
-        if path.startswith('kbucket://'):
-            if path in _global_kbucket_mem_sha1_cache:
-                return _global_kbucket_mem_sha1_cache[path]
-            path_local = self._local_db._find_file_in_local_kbucket_share(path)
-            if path_local:
-                sha1 = self.computeFileSha1(path=path_local)
-            else:
-                sha1, size, url = self._local_db.getKBucketFileInfo(path=path)
-            if sha1:
-                _global_kbucket_mem_sha1_cache[path] = sha1
-            return sha1
-        else:
-            return self._local_db.computeFileSha1(path)
-
     @mtlogging.log(name='MountainClient:computeFileOrDirHash')
     def computeFileOrDirHash(self, path):
         if path.startswith('kbucket://'):

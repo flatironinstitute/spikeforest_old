@@ -216,7 +216,6 @@ class Sha1Cache():
 def _compute_file_sha1(path):
     if not os.path.exists(path):
         return None
-    timer=time.time()
     if (os.path.getsize(path) > 1024*1024*100):
         print('Computing sha1 of {}'.format(path))
     BLOCKSIZE = 65536
@@ -264,7 +263,7 @@ def _safe_remove_file(fname):
 
 @mtlogging.log()
 def _read_json_file(path, *, delete_on_error=False):
-    with FileLock(path+'.lock') as lock:
+    with FileLock(path+'.lock'):
         try:
             with open(path) as f:
                 return json.load(f)
@@ -282,7 +281,7 @@ def _read_json_file(path, *, delete_on_error=False):
 
 
 def _write_json_file(obj, path):
-    with FileLock(path+'.lock') as lock:
+    with FileLock(path+'.lock'):
         with open(path, 'w') as f:
             return json.dump(obj, f)
 

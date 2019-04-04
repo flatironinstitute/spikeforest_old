@@ -45,7 +45,7 @@ def compute_template_snr(template,channel_noise_levels):
     
 def compute_channel_noise_levels(recording):
     channel_ids=recording.getChannelIds()
-    M=len(channel_ids)
+    # M=len(channel_ids)
     samplerate=int(recording.getSamplingFrequency())
     X=recording.getTraces(start_frame=samplerate*1,end_frame=samplerate*2)
     ret=[]

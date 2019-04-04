@@ -94,7 +94,7 @@ class SnippetsPlot(vd.Component):
         vd.Component.__init__(self)
         data=[]
         for snippet in snippets:
-            M = snippet.shape[0]
+            # M = snippet.shape[0]
             T = snippet.shape[1]
             data.append(dict(
                 x=np.arange(0,T),
