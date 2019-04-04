@@ -17,7 +17,7 @@ class ForestViewMainWindow(vd.Component):
         self._view_container_north.onClick(self._on_click_north)
         self._view_container_south.onClick(self._on_click_south)
 
-        style0 = dict(border='solid 1px gray')
+        #style0 = dict(border='solid 1px gray')
         self._container_CP = Container(self._control_panel)
         self._container_VCN = Container(self._view_container_north)
         self._container_VCS = Container(self._view_container_south)
@@ -38,8 +38,8 @@ class ForestViewMainWindow(vd.Component):
     def size(self):
         return self._size
 
-    def addViewLauncher(self, name, view_launcher):
-        self._control_panel.addViewLauncher(name, view_launcher)
+    def addViewLauncher(self, view_launcher):
+        self._control_panel.addViewLauncher(view_launcher)
 
     def _update_sizes(self):
         width = self._size[0]

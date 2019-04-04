@@ -8,8 +8,8 @@ class ForestViewControlPanel(vd.Component):
         self._view_launchers = dict()
         self._launch_view_handlers = []
 
-    def addViewLauncher(self, name, view_launcher):
-        self._view_launchers[name] = view_launcher
+    def addViewLauncher(self, view_launcher):
+        self._view_launchers[view_launcher['name']] = view_launcher
 
     def onLaunchView(self, handler):
         self._launch_view_handlers.append(handler)

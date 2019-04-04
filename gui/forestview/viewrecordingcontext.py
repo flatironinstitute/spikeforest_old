@@ -8,8 +8,6 @@ class ViewRecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
         self._signal_handlers = dict()
         
-        self._current_channel = -1
-        
         print('******** FORESTVIEW: Initializing recording context')
         self._recording_object = recording_object
         if download:
@@ -37,7 +35,7 @@ class ViewRecordingContext():
         )
 
     def recordingObject(self):
-        return self._recording_object
+        return deepcopy(self._recording_object)
 
     def studyName(self):
         return self._recording_object.get('study', '')

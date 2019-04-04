@@ -14,7 +14,7 @@ class FilterRecording(se.RecordingExtractor):
         return None
 
     def hash(self):
-        params = self.paramsForHash()
+        params = self.paramsForHash() # pylint: disable=assignment-from-none
         if params is None:
             raise Exception('Cannot compute hash. Params for hash not implemented.')
         return mt.sha1OfObject(dict(

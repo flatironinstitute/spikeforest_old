@@ -8,36 +8,59 @@ from core import ForestViewMainWindow
 import uuid
 import json
 from viewrecordingcontext import ViewRecordingContext
-from views import RecordingSummaryView, TimeseriesView, TestPlotlyView, UnitsTableView, TemplatesView, ElectrodeGeometryView, CurrentStateView, UnitDetailView
+from viewstudycontext import ViewStudyContext
+from recording_views import get_recording_view_launchers
+from study_views import get_study_view_launchers
 import uuid
 import mtlogging
 
-recording_object = {'name': '001_synth',
- 'study': 'mearec_neuronexus_noise10_K10_C32',
- 'directory': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth',
- #'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
- 'description': 'One of the recordings in the mearec_neuronexus_noise10_K10_C32 study',
- 'summary': {'computed_info': {'samplerate': 30000.0,
-   'num_channels': 32,
-   'duration_sec': 600.0},
-  'plots': {},
-  'true_units_info': 'sha1://b81dbb15d34f3c1b34693fe6e6a5b0b0ee3bf099/true_units_info.json'}}
+# recording_object = {'name': '001_synth',
+#  'study': 'mearec_neuronexus_noise10_K10_C32',
+#  'directory': 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth',
+#  #'directory': '/home/magland/src/spikeforest/working/prepare_recordings/toy_recordings/example_K10',
+#  'description': 'One of the recordings in the mearec_neuronexus_noise10_K10_C32 study',
+#  'summary': {'computed_info': {'samplerate': 30000.0,
+#    'num_channels': 32,
+#    'duration_sec': 600.0},
+#   'plots': {},
+#   'true_units_info': 'sha1://b81dbb15d34f3c1b34693fe6e6a5b0b0ee3bf099/true_units_info.json'}}
 
 class TheApp():
-    def __init__(self):
-        pass
+    def __init__(self, *, mode, path):
+        self._mode = mode
+        self._path = path
 
     def createSession(self):
-        W = ForestViewMainWindow(context=ViewRecordingContext(recording_object=recording_object))
-        _register_views(W)
+        mode = self._mode
+        if mode == 'recording':
+            context = _load_context_from_recording(self._path)
+            view_launchers = get_recording_view_launchers()
+        elif mode == 'study':
+            context = _load_context_from_study(self._path)
+            view_launchers = get_study_view_launchers()
+        else:
+            raise Exception('Invalid mode: '+mode)
+
+        W = ForestViewMainWindow(context=context)
+        for view_launcher in view_launchers:
+            W.addViewLauncher(view_launcher)
         _make_full_browser(W)
         return W
 
+_default_recording_dir = 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth'
+_default_study_dir = 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32'
 
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest results')
     parser.add_argument(
-        '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None)
+        '--mode', help="Possible modes: recording, study", required=False, default='recording'
+    )
+    parser.add_argument(
+        '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None
+    )
+    parser.add_argument(
+        '--path', help='Path to the recording directory or study file', required=False, default=None
+    )
     parser.add_argument(
         '--collection', help='The remote collection', required=False, default=None
     )
@@ -51,7 +74,7 @@ def main():
     if args.collection and args.share_id:
         mt.configRemoteReadonly(collection=args.collection,share_id=args.share_id)
 
-    APP = TheApp()
+    APP = TheApp(mode=args.mode, path=args.path)
 
     if args.port is not None:
         vd.config_server()
@@ -86,36 +109,23 @@ def _make_full_browser(W):
     js = js.replace('{resize_callback_id}', resize_callback_id)
     vd.devel.loadJavascript(js=js, delay=1)
 
-def _register_views(W):
-    W.addViewLauncher('recording-summary', dict(
-        label='Recording summary',
-        view_class=RecordingSummaryView
-    ))
-    W.addViewLauncher('electrode-geometry', dict(
-        label='Electrode geometry',
-        view_class=ElectrodeGeometryView
-    ))
-    W.addViewLauncher('timeseries', dict(
-        label='Timeseries',
-        view_class=TimeseriesView
-    ))
-    W.addViewLauncher('true-unit-templates', dict(
-        label='Template plots',
-        view_class=TemplatesView
-    ))
-    W.addViewLauncher('true-units-table', dict(
-        label='Units table',
-        view_class=UnitsTableView
-    ))
-    W.addViewLauncher('current-unit-detail', dict(
-        label='Current unit detail',
-        view_class=UnitDetailView
-    ))
-    W.addViewLauncher('current-state', dict(
-        label='Current state',
-        view_class=CurrentStateView
-    ))
+def _load_context_from_recording(path):
+    if path is None:
+        path = _default_recording_dir
+    context = ViewRecordingContext(dict(
+        study='',
+        name='',
+        directory=path
+    ), download=True)
+    return context
 
+def _load_context_from_study(path):
+    if path is None:
+        path = _default_study_dir
+    context = ViewStudyContext(dict(
+        directory=path
+    ))
+    return context
 
 if __name__ == "__main__":
     main()

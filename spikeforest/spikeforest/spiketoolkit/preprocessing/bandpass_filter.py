@@ -41,10 +41,10 @@ class BandpassFilterRecording(FilterRecording):
 
         val = np.ones(fgrid.shape)
         if freq_min != 0:
-            val = val * (1 + special.erf(relwid * (absf - freq_min) / freq_min)) / 2
-            val = np.where(np.abs(k_inds) < 0.1, 0, val)  # kill DC part exactly
+            val = val * (1 + special.erf(relwid * (absf - freq_min) / freq_min)) / 2 # pylint: disable=no-member
+            val = np.where(np.abs(k_inds) < 0.1, 0, val)  # kill DC part exactly 
         if freq_max != 0:
-            val = val * (1 - special.erf((absf - freq_max) / freq_wid)) / 2;
+            val = val * (1 - special.erf((absf - freq_max) / freq_wid)) / 2 # pylint: disable=no-member
         val = np.sqrt(val)  # note sqrt of filter func to apply to spectral intensity not ampl
         return val
 

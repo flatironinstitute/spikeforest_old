@@ -143,8 +143,8 @@ class ComputeUnitDetail(mlpr.Processor):
     output = mlpr.Output()
 
     def run(self):
-        event_times = self.sorting.getUnitSpikeTrain(unit_id=self.unit_id)
-        snippets = self.recording.getSnippets(reference_frames=event_times, snippet_len=100)
+        event_times = self.sorting.getUnitSpikeTrain(unit_id=self.unit_id) # pylint: disable=no-member
+        snippets = self.recording.getSnippets(reference_frames=event_times, snippet_len=100) # pylint: disable=no-member
         template = np.median(np.stack(snippets), axis=0)
         result0 = dict(
             unit_id=self.unit_id,
