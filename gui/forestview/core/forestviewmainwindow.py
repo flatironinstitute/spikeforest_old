@@ -17,21 +17,53 @@ class ForestViewMainWindow(vd.Component):
         self._view_container_north.onClick(self._on_click_north)
         self._view_container_south.onClick(self._on_click_south)
 
+        style0 = dict(border='solid 1px gray')
+        self._container_CP = Container(self._control_panel)
+        self._container_VCN = Container(self._view_container_north)
+        self._container_VCS = Container(self._view_container_south)
+        self._container_main = Container(self._container_CP, self._container_VCN, self._container_VCS, position_mode='relative')
+
         self._highlight_view_containers()
 
         self._size = (1200, 800)
 
         vd.devel.loadBootstrap()
 
+        self._update_sizes()
+
     def setSize(self, size):
         self._size = size
-        self.refresh()
+        self._update_sizes()
 
     def size(self):
         return self._size
 
     def addViewLauncher(self, name, view_launcher):
         self._control_panel.addViewLauncher(name, view_launcher)
+
+    def _update_sizes(self):
+        width = self._size[0]
+        width1 = int(min(300, width*0.3))
+        width2 = width-width1-30
+        height = self._size[1]
+        height1 = int(height/2)-5
+        height2 = height-height1-30
+
+        self._container_main.setSize((width-20,height-20))
+        self._container_main.setPosition((10,10))
+        
+        self._container_CP.setSize((width1, height-20))
+        self._container_CP.setPosition((10,10))
+        
+        self._container_VCN.setSize((width2, height1))
+        self._container_VCN.setPosition((width1+20, 10))
+
+        self._container_VCS.setSize((width2,height2))
+        self._container_VCS.setPosition((width1+20,height1+20))
+
+        self._view_container_north.setSize((width2, height1))
+        self._view_container_south.setSize((width2, height2))
+        
 
     def _highlight_view_containers(self):
         for VC in [self._view_container_north, self._view_container_south]:
@@ -53,31 +85,35 @@ class ForestViewMainWindow(vd.Component):
         return self._context
 
     def render(self):
-        width = self._size[0]
-        width1 = int(min(300, width*0.3))
-        width2 = width-width1-30
-        height = self._size[1]
-        height1 = int(height/2)-5
-        height2 = height-height1-30
-        style0 = dict(border='solid 1px gray')
-        W_CP = Container(self._control_panel, position=(
-            10, 10), size=(width1, height-20), style=style0)
-        self._view_container_north.setSize((width2, height1))
-        self._view_container_south.setSize((width2, height2))
-        W_VCN = Container(self._view_container_north, position=(
-            width1+20, 10), size=(width2, height1), style=style0)
-        W_VCS = Container(self._view_container_south, position=(
-            width1+20, height1+20), size=(width2, height2), style=style0)
-        return Container(W_CP, W_VCN, W_VCS, position=(0, 0), size=(width, height), position_mode='relative')
+        return self._container_main
 
 class Container(vd.Component):
-  def __init__(self,*args,position,size,position_mode='absolute',style=dict()):
+  def __init__(self,*args,position=(0,0),size=(0,0),position_mode='absolute',style=dict()):
     vd.Component.__init__(self)
+    self._elmt_id = 'Container-'+str(uuid.uuid4())
     self._children=list(args)
     self._position=position
     self._size=size
     self._position_mode=position_mode
     self._style=style
+  def setSize(self, size):
+    js="""
+    document.getElementById('{elmt_id}').style.width='{width}px';
+    document.getElementById('{elmt_id}').style.height='{height}px';
+    """
+    js=js.replace('{elmt_id}',self._elmt_id)
+    js=js.replace('{width}',str(size[0]))
+    js=js.replace('{height}',str(size[1]))
+    vd.devel.loadJavascript(js=js)
+  def setPosition(self, position):
+    js="""
+    document.getElementById('{elmt_id}').style.left='{left}px';
+    document.getElementById('{elmt_id}').style.top='{top}px';
+    """
+    js=js.replace('{elmt_id}',self._elmt_id)
+    js=js.replace('{left}',str(position[0]))
+    js=js.replace('{top}',str(position[1]))
+    vd.devel.loadJavascript(js=js)
   def render(self):
     style=self._style
     style['position']=self._position_mode
@@ -88,6 +124,7 @@ class Container(vd.Component):
     style['overflow']='hidden'
     return vd.div(
         self._children,
-        style=style
+        style=style,
+        id=self._elmt_id
     )
 

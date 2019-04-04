@@ -30,9 +30,11 @@ class TemplatesView(vd.Component):
         #self._templates_widget.setSize(self._size)
         self.refresh()
     def setSize(self, size):
-        self._size=size
+        if self._size != size:
+            self._size=size
         #if self._templates_widget:
         #    self._templates_widget.setSize(size)
+
     def size(self):
         return self._size
     def tabLabel(self):
@@ -127,10 +129,12 @@ class ComputeUnitTemplates(mlpr.Processor):
 class TemplatesWidget(vd.Component):
   def __init__(self,*,units):
     vd.Component.__init__(self)
+    y_scale_factor = _compute_initial_y_scale_factor(units)
     self._widgets=[
         TemplateWidget(
             template=unit['template'],
-            unit_id=unit['unit_id']
+            unit_id=unit['unit_id'],
+            y_scale_factor=y_scale_factor
         )
         for unit in units
     ]
@@ -148,14 +152,20 @@ class TemplatesWidget(vd.Component):
     div=vd.div(boxes)
     return div
 
+def _compute_initial_y_scale_factor(units):
+    templates_list = [unit['template'] for unit in units]
+    all_templates = np.stack(templates_list)
+    all_abs_vals = np.abs(all_templates.ravel())
+    vv = np.percentile(all_abs_vals, 99)
+    if vv>0:
+        return 1/(2*vv)
+    else:
+        return 1
 class TemplateWidget(vd.Component):
-  def __init__(self,*,unit_id,template):
+  def __init__(self,*,unit_id,template,y_scale_factor=None):
     vd.Component.__init__(self)
-    self._plot=_TemplatePlot(
-        template=template
-    )
-    #self._plot_div=vd.components.LazyDiv(self._plot)
-    self._plot_div=vd.div(self._plot)
+    self._plot=SFW.TemplateWidget(template=template)
+    self._plot.setYScaleFactor(y_scale_factor)
     self._unit_id=unit_id
     self._selected=False
   def setSelected(self,val):
@@ -172,7 +182,7 @@ class TemplateWidget(vd.Component):
         style1['background-color']='yellow'
     return vd.div(
         vd.p('Unit {}'.format(self._unit_id),style={'text-align':'center'}),
-        vd.div(self._plot_div,style=style0),
+        vd.div(self._plot,style=style0),
         style=style1
     )
 

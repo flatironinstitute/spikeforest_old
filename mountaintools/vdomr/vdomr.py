@@ -327,6 +327,7 @@ def pyqt5_start(*, APP, title):
                         exec_javascript(x['js'])
                     elif x['message'] == 'ok':
                         exec_javascript('window.hide_overlay();')
+            time.sleep(0.001)
             if not view.isVisible():
                 break
     except:
@@ -364,6 +365,7 @@ def _pyqt5_worker_process(APP, connection_to_gui):
                     traceback.print_exc()
                     pass
                 connection_to_gui.send(dict(message='ok'))
+        time.sleep(0.001)
 
 def mode():
     return vdomr_global['mode']

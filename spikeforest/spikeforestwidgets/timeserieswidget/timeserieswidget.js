@@ -90,6 +90,11 @@ function TimeseriesWidget() {
             let data0=m_model.getChannelData(m, t1b, t2b, downsample_factor);
             // trigger pre-loading
             m_model.getChannelData(m, Math.floor(t1b/3), Math.floor(t2b/3), downsample_factor*3, {request_only:true});
+            if ((downsample_factor>1) && (m_current_time>=0)) {
+                t1c = Math.floor(Math.max(0, (m_current_time-800)/(downsample_factor/3)))
+                t2c = Math.floor(Math.min(m_model.numTimepoints(), (m_current_time+800)/(downsample_factor/3)))
+                m_model.getChannelData(m, t1c, t2c, downsample_factor/3, {request_only:true});
+            }
             if (downsample_factor == 1) {
                 for (let tt=t1; tt<t2; tt++) {
                     let val=data0[tt-t1];

@@ -182,10 +182,12 @@ class PlotlyPlot(vd.Component):
 
     def render(self):
         div = vd.div(id=self._elmt_id)
+        return div
+
+    def postRenderScript(self):
         data = self._filter_data(self._data)
         if type(data)!=list:
             data=[data]
-        print('render A', self._size)
         js = """
         let div=document.getElementById('{elmt_id}');
         if (({width}) && ({height}) && (div)) {
@@ -205,8 +207,7 @@ class PlotlyPlot(vd.Component):
             height0 = 'null'
         js = js.replace('{width}', str(width0))
         js = js.replace('{height}', str(height0))
-        vd.devel.loadJavascript(js=js, delay=100)
-        return div
+        return js
 
 
 class ScrollArea(vd.Component):

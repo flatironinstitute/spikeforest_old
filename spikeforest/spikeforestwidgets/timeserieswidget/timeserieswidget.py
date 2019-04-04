@@ -137,19 +137,8 @@ class TimeseriesWidget(vd.Component):
         return self._size
     def render(self):
         div=vd.div(id=self._div_id)
-        # js="""
-        # let W=new window.TimeseriesWidget();
-        # let X=_base64ToArrayBuffer(window.sfdata['array_b64_{div_id}']);
-        # let A=new window.Mda();
-        # A.setFromArrayBuffer(X);
-        # let TS=new window.TimeseriesModel(A);
-        # W.setTimeseriesModel(TS);
-        # W.setMarkers(window.sfdata['spike_times']);
-        # W.setSize({width},{height})
-        # $('#{div_id}').empty();
-        # $('#{div_id}').css({width:'{width}px',height:'{height}px'})
-        # $('#{div_id}').append(W.element());
-        # """
+        return div
+    def postRenderScript(self):
         js="""
         let W=new window.TimeseriesWidget();
         let TS=window.timeseries_models['{div_id}'];
@@ -163,8 +152,7 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{div_id}', self._div_id)
         js = js.replace('{width}', str(self._size[0]))
         js = js.replace('{height}', str(self._size[1]))
-        vd.devel.loadJavascript(js=js, delay=1)
-        return div
+        return js
 
 def _do_downsample(X, ds_factor):
     M = X.shape[0]
