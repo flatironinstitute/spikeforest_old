@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 import mlprocessors as mlpr
 import spikeextractors as se
 import h5py
@@ -84,7 +86,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
     
     @staticmethod
     def writeRecording(recording, save_path):
-        rx = EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
+        EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
 
 class CreateEfficientAccessRecordingFile(mlpr.Processor):
     NAME = 'CreateEfficientAccessR---ecordingFile'

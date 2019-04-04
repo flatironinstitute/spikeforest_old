@@ -2,6 +2,7 @@ sha1-cache
 test_output
 cairio.env
 spikesprays
+run1.sh
 
 website_data
 .vscode
