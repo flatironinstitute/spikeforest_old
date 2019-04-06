@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+from mountaintools import client as mt
+import mtlogging
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description = 'Compute the hash of a local or remote file or directory and print the kbucket address representing a snapshot.')
+    parser.add_argument('path', help='Path to local file or directory')
+    parser.add_argument('--download', help='Download all remote files to the local SHA-1 cache.',action='store_true')
+
+    args = parser.parse_args()
+    path = args.path
+
+    if mt.isFile(path):
+        address = mt.saveFile(path=path)
+        print(address)
+    else:
+        dd = mt.readDir(path=path, recursive=True, include_sha1=True)
+        if not dd:
+            print('Unable to read file or directory')
+            exit(-1)
+        if _is_local_path(path) or args.download:
+            _copy_files_to_local_cache(basepath=path, dd=dd)
+        address = mt.saveObject(dd, basename='')
+        address = address.replace('sha1://', 'sha1dir://')
+        print(address)
+
+def _is_local_path(path):
+    if path.startswith('sha1://') or path.startswith('sha1dir://') or path.startswith('kbucket://'):
+        return False
+    return True
+
+def _copy_files_to_local_cache(basepath, dd):
+    for fname in dd['files'].keys():
+        fpath = os.path.join(basepath, fname)
+        if not mt.copyToLocalCache(path=fpath):
+            raise Exception('Unable to copy file to local cache: '+fpath)
+    for dname, dd0 in dd['dirs'].items():
+        dpath = os.path.join(basepath, dname)
+        _copy_files_to_local_cache(basepath=dpath, dd=dd0)
+
+if __name__== "__main__":
+    main()
+  

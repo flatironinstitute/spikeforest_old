@@ -129,7 +129,7 @@ class MountainJob():
                 else:
                     ext = _get_file_ext(input_value) or '.in'
                     
-                    if input0.get('directory', False) and (input0['path'].startswith('kbucket://')):
+                    if input0.get('directory', False) and (input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://')):
                         infile_in_container = input0['path']
                     else:
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
@@ -300,13 +300,12 @@ class MountainJob():
                 try:
                     R.outputs[output_name] = np.load(out_fname)
                 except:
-                    raise
                     print('Error loading output array', output_name, out_fname)
                     R.retcode == -1
         return R
 
     def _realize_input(self, fname):
-        if fname.startswith('kbucket://'):
+        if fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
             if local_client.findFile(fname):
                 return mt.realizeFile(fname)
             else:
@@ -567,7 +566,7 @@ def _get_file_ext(fname):
 def _make_remote_url_for_file(fname):
     if fname.startswith('sha1://'):
         return fname
-    elif fname.startswith('kbucket://'):
+    elif fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
         return fname
     else:
         sha1 = local_client.computeFileSha1(fname)

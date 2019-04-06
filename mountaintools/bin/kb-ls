@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+import mtlogging
+from mountainclient import _kb_ls_helper
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description = 'List the contents of a kbucket directory')
+    parser.add_argument('path',help='Local or kbucket path (kbucket://... or sha1dir://...)')
+
+    args = parser.parse_args()
+    _kb_ls_helper(path=args.path)
+
+if __name__== "__main__":
+    main()
+  

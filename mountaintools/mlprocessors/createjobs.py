@@ -172,12 +172,12 @@ def createJobs(proc, argslist, verbose=None):
             path0 = input0.get('path', None)
             if path0:
                 if input0.get('directory', False):
-                    if path0.startswith('kbucket://'):
+                    if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
                         all_kbucket_dir_inputs.append(input0)
                     else:
                         all_local_dir_inputs.append(input0)
                 else:
-                    if path0.startswith('kbucket://'):
+                    if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
                         all_kbucket_file_inputs.append(input0)
                     elif path0.startswith('sha1://'):
                         all_sha1_file_inputs.append(input0)

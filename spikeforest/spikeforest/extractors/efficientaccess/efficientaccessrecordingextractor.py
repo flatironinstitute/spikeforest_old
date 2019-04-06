@@ -89,7 +89,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
         EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
 
 class CreateEfficientAccessRecordingFile(mlpr.Processor):
-    NAME = 'CreateEfficientAccessR---ecordingFile'
+    NAME = 'CreateEfficientAccessRecordingFile'
     VERSION = '0.1.2'
     recording = mlpr.Input()
     segment_size = mlpr.IntegerParameter(optional=True, default=1000000)

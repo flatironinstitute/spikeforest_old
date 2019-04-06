@@ -109,7 +109,8 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             if fname.startswith('sha1://'):
                 if local_client.findFile(path=fname):
                     mt.saveFile(path=fname)
-            elif fname.startswith('kbucket://'):
+            elif fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
+                # todo: in case of sha1dir, save the dir
                 pass
             else:
                 mt.saveFile(path=fname)

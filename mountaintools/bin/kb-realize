@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+import mtlogging
+from mountainclient import _kb_ls_helper
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description = 'Copy or download a local or remote file to a destination path.')
+    parser.add_argument('src_path',help='KBucket or local path of source file')
+    parser.add_argument('dst_path',help='Local destination path')
+
+    args = parser.parse_args()
+    _kb_ls_helper(path=args.src_path, _dest=args.dst_path)
+
+if __name__== "__main__":
+    main()
+  
