@@ -44,7 +44,7 @@ def main():
             mt.login()
             mt.configRemoteReadWrite(share_id=args.upload_to)
             mt.saveObject(dd, basename='')
-            if not _upload_files_to_share(dd):
+            if not _upload_files_to_share(refdir='', dd=dd):
                 print('Unable to upload files to share', file=sys.stderr)
                 exit(-1)
         print(address)
@@ -61,13 +61,14 @@ def _copy_files_to_local_cache(basepath, dd):
             return False
     return True
 
-def _upload_files_to_share(dd):
+def _upload_files_to_share(refdir, dd):
     for fname, file0 in dd['files'].items():
-        if not mt.saveFile(path='sha1://'+file0['sha1']):
-            print('Unable upload file: '+fname, file=sys.stderr)
+        path2 = 'sha1://'+file0['sha1']+'/'+fname
+        if not mt.saveFile(path=path2):
+            print('Unable upload file: '+os.path.join(refdir, fname), file=sys.stderr)
             return False
-    for _, dd0 in dd['dirs'].items():
-        if not _upload_files_to_share(dd0):
+    for dname, dd0 in dd['dirs'].items():
+        if not _upload_files_to_share(os.path.join(refdir, dname), dd0):
             return False
     return True
 
