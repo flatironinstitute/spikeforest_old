@@ -1371,7 +1371,7 @@ class MountainClientLocal():
                 if os.path.isdir(fname):
                     return fname
             else:
-                if os.path.exists(fname):
+                if os.path.isfile(fname):
                     return fname
         return None
 
