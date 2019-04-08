@@ -194,7 +194,6 @@ class Sha1Cache():
         return sha1
 
     def reportFileSha1(self, path, sha1):
-        print('---------- report file sha1', path, sha1)
         self.computeFileSha1(path, _known_sha1=sha1)
 
     def _get_path(self, sha1, *, create=True, directory=None, return_alternates=False):
