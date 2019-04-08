@@ -5,7 +5,7 @@ import sys
 import argparse
 import time
 import mtlogging
-from mountainclient import _kb_ls_helper
+from mountaintools import client as mt
 
 # @mtlogging.log(root=True)
 def main():
@@ -13,8 +13,29 @@ def main():
     parser.add_argument('path',help='Local or kbucket path (kbucket://... or sha1dir://...)')
 
     args = parser.parse_args()
-    _kb_ls_helper(path=args.path)
+    path = args.path
+
+    if mt.isFile(path):
+        path2 = path2 = mt.realizeFile(path=path)
+        if path2:
+            print(os.path.basename(path))
+            exit(0)
+        else:
+            print('Problem realizing file.', file=sys.stderr)
+            exit(-1)
+    else:
+        dd = mt.readDir(path, recursive=False, include_sha1=False)
+        if not dd:
+            print('Not found.', file=sys.stderr)
+            exit(-1)
+        dnames = sorted(dd['dirs'].keys())
+        for dname in dnames:
+            print(dname+'/')
+        fnames = sorted(dd['files'].keys())
+        for fname in fnames:
+            print(fname)
+        
+        
 
 if __name__== "__main__":
     main()
-  

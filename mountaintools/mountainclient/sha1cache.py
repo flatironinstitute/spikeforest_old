@@ -106,8 +106,8 @@ class Sha1Cache():
         if alternate_target_path:
             if os.path.exists(target_path):
                 _safe_remove_file(target_path)
-            _rename_file(path_tmp, target_path, remove_if_exists=True)
-            self.computeFileSha1(target_path, _known_sha1=sha1)
+            _rename_file(path_tmp, target_path, remove_if_exists=True)            
+            self.reportFileSha1(target_path, sha1)
         else:
             if not os.path.exists(target_path):
                 _rename_file(path_tmp, target_path, remove_if_exists=False)
@@ -140,6 +140,7 @@ class Sha1Cache():
 
     @mtlogging.log()
     def computeFileSha1(self, path, _known_sha1=None):
+        path = os.path.abspath(path)
         basename = os.path.basename(path)
         if len(basename)==40:
             # suspect it is itself a file in the cache
@@ -151,13 +152,15 @@ class Sha1Cache():
         aa_hash = _compute_string_sha1(json.dumps(aa, sort_keys=True))
 
         path0 = self._get_path(aa_hash, create=True)+'.record.json'
-        if os.path.exists(path0):
-            obj = _read_json_file(path0, delete_on_error=True)
-            if obj:
-                bb = obj['stat']
-                if _stat_objects_match(aa, bb):
-                    if obj.get('sha1', None):
-                        return obj['sha1']
+        if not _known_sha1:
+            if os.path.exists(path0):
+                obj = _read_json_file(path0, delete_on_error=True)
+                if obj:
+                    bb = obj['stat']
+                    if _stat_objects_match(aa, bb):
+                        if obj.get('sha1', None):
+                            return obj['sha1']
+
         if _known_sha1 is None:
             sha1 = _compute_file_sha1(path)
         else:
@@ -189,6 +192,10 @@ class Sha1Cache():
             print('Warning: problem writing .hints.json file: '+path1)
         # todo: use hints for findFile
         return sha1
+
+    def reportFileSha1(self, path, sha1):
+        print('---------- report file sha1', path, sha1)
+        self.computeFileSha1(path, _known_sha1=sha1)
 
     def _get_path(self, sha1, *, create=True, directory=None, return_alternates=False):
         if directory is None:

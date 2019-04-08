@@ -813,6 +813,11 @@ class MountainClient():
         else:
             return os.path.isfile(path)
 
+    def isLocalPath(self, path):
+        if path.startswith('sha1://') or path.startswith('sha1dir://') or path.startswith('kbucket://'):
+            return False
+        return True
+
     def localCacheDir(self):
         return self._local_db.localCacheDir()
 
@@ -1233,6 +1238,7 @@ class MountainClientLocal():
                     if show_progress:
                         print('Copying file {} -> {}'.format(ret, dest_path))
                     shutil.copyfile(ret, dest_path)
+                    self._sha1_cache.reportFileSha1(dest_path, sha1)
                     return dest_path
             return ret
         elif path.startswith('sha1dir://'):
@@ -1399,12 +1405,14 @@ class MountainClientLocal():
         return path
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None, show_progress=False):
+        print('--- REALIZE FILE FROM SHA1', sha1, dest_path)
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
             if (dest_path is not None) and (os.path.abspath(fname) != os.path.abspath(dest_path)):
                 if show_progress:
                     print('Copying file {} -> {}'.format(fname, dest_path))
                 shutil.copyfile(fname, dest_path)
+                self._sha1_cache.reportFileSha1(dest_path, sha1)
                 return os.path.abspath(dest_path)
             return os.path.abspath(fname)
         return None

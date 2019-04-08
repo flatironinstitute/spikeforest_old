@@ -5,7 +5,7 @@ import sys
 import argparse
 import time
 import mtlogging
-from mountainclient import _kb_ls_helper
+from mountaintools import client as mt
 
 # @mtlogging.log(root=True)
 def main():
@@ -13,7 +13,18 @@ def main():
     parser.add_argument('path',help='KBucket or local path of file')
 
     args = parser.parse_args()
-    _kb_ls_helper(path=args.path, _cat=True)
+    path2 = mt.realizeFile(path=args.path)
+
+    if not path2:
+        print('Unable to realize file.', file=sys.stderr)
+        exit(-1)
+
+    with open(path2,'rb') as f:
+        while True:
+            data = os.read(f.fileno(), 4096)
+            if len(data) == 0:
+                break
+            os.write(sys.stdout.fileno(), data)
 
 if __name__== "__main__":
     main()

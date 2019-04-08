@@ -24,16 +24,11 @@ def main():
         if not dd:
             print('Unable to read file or directory')
             exit(-1)
-        if _is_local_path(path) or args.download:
+        if mt.isLocalPath(path) or args.download:
             _copy_files_to_local_cache(basepath=path, dd=dd)
         address = mt.saveObject(dd, basename='')
         address = address.replace('sha1://', 'sha1dir://')
         print(address)
-
-def _is_local_path(path):
-    if path.startswith('sha1://') or path.startswith('sha1dir://') or path.startswith('kbucket://'):
-        return False
-    return True
 
 def _copy_files_to_local_cache(basepath, dd):
     for fname in dd['files'].keys():
