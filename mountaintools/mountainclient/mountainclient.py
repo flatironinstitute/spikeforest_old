@@ -1405,7 +1405,6 @@ class MountainClientLocal():
         return path
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None, show_progress=False):
-        print('--- REALIZE FILE FROM SHA1', sha1, dest_path)
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
             if (dest_path is not None) and (os.path.abspath(fname) != os.path.abspath(dest_path)):
