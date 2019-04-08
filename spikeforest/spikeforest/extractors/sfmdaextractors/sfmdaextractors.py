@@ -174,12 +174,12 @@ def _concatenate(list):
 
 
 def is_kbucket_url(path):
-    return path.startswith('kbucket://') or path.startswith('sha1://')
+    return path.startswith('kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 
 
 def is_url(path):
     return path.startswith('http://') or path.startswith('https://') or path.startswith(
-        'kbucket://') or path.startswith('sha1://')
+        'kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 
 
 def read_dataset_params(dsdir):

@@ -65,18 +65,24 @@ def main():
     parser.add_argument(
         '--path', help='Path to the recording directory or study file', required=False, default=None
     )
+    # parser.add_argument(
+    #     '--collection', help='The remote collection', required=False, default=None
+    # )
+    # parser.add_argument(
+    #     '--share_id', help='The remote kbucket share_id', required=False, default=None
+    # )
     parser.add_argument(
-        '--collection', help='The remote collection', required=False, default=None
-    )
-    parser.add_argument(
-        '--share_id', help='The remote kbucket share_id', required=False, default=None
+        '--download-from', required=False, default='spikeforest.spikeforest2'
     )
 
     args = parser.parse_args()
 
+    if args.download_from:
+        mt.configRemoteReadonly(share_id=args.download_from)
+
     # Configure readonly access to kbucket
-    if args.collection and args.share_id:
-        mt.configRemoteReadonly(collection=args.collection,share_id=args.share_id)
+    # if args.collection and args.share_id:
+    #     mt.configRemoteReadonly(collection=args.collection,share_id=args.share_id)
 
     APP = TheApp(mode=args.mode, path=args.path)
 
