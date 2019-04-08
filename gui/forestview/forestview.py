@@ -48,7 +48,10 @@ class TheApp():
         return W
 
 _default_recording_dir = 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth'
-_default_study_dir = 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32'
+# _default_study_dir = 'kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32'
+
+# snapshot of kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32
+_default_study_dir = 'sha1dir://d3463584046918c052654f43875936aab2da29c8'
 
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest results')

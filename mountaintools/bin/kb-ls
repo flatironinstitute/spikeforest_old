@@ -11,9 +11,13 @@ from mountaintools import client as mt
 def main():
     parser = argparse.ArgumentParser(description = 'List the contents of a kbucket directory')
     parser.add_argument('path',help='Local or kbucket path (kbucket://... or sha1dir://...)')
+    parser.add_argument('--download-from', required=False, default=None)
 
     args = parser.parse_args()
     path = args.path
+
+    if args.download_from:
+        mt.configRemoteReadonly(share_id=args.download_from)
 
     if mt.isFile(path):
         path2 = path2 = mt.realizeFile(path=path)

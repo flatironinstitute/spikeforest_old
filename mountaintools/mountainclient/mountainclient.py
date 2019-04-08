@@ -275,7 +275,7 @@ class MountainClient():
             upload_token=''
         )
     
-    def configRemoteReadonly(self, *, collection, share_id=''):
+    def configRemoteReadonly(self, *, collection=None, share_id=''):
         """
         Configure to connect to a remote collection and optionally also to a
         remote kbucket share with readonly access.
@@ -299,7 +299,7 @@ class MountainClient():
             upload_token=''
         )
 
-    def configRemoteReadWrite(self, *, collection, share_id, token=None, upload_token=None):
+    def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
         """
         Configure to connect to a remote collection and optionally to a remote
         kbucket share with read/write access. If you are logged in (see
@@ -323,10 +323,11 @@ class MountainClient():
             in via login() and have access then you do not need to provide this
             (the default is None)
         """
-        if token is None:
-            token=self._find_collection_token_from_login(collection)
-            if not token:
-                raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
+        if collection is not None:
+            if token is None:
+                token=self._find_collection_token_from_login(collection)
+                if not token:
+                    raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
         if share_id and ('.' in share_id):
             share_id=self._get_share_id_from_alias(share_id)
         if share_id is not None:
@@ -1707,7 +1708,6 @@ def _safe_list_dir(path):
     except:
         print('Warning: unable to listdir: '+path)
         return []
-
 
 # The global module client
 _global_client = MountainClient()

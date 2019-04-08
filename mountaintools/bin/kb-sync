@@ -14,9 +14,13 @@ def main():
     parser.add_argument('src_path',help='KBucket or local path of source file')
     parser.add_argument('dst_path',help='Local destination path')
     parser.add_argument('--verbose', action='store_true', help='Turn on verbose output')
+    parser.add_argument('--download-from', required=False, default=None)
 
     args = parser.parse_args()
     path = args.src_path
+
+    if args.download_from:
+        mt.configRemoteReadonly(share_id=args.download_from)
 
     if mt.isFile(path):
         path2 = mt.realizeFile(path=path, dest_path=args.dst_path)
