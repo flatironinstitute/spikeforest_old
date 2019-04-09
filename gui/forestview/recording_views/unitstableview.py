@@ -11,6 +11,7 @@ import json
 import mlprocessors as mlpr
 import traceback
 from mountaintools import client as mt
+from .tablewidget import TableWidget
 
 class UnitsTableView(vd.Component):
     def __init__(self, context):
@@ -65,40 +66,25 @@ class UnitTableWidget(vd.Component):
         vd.Component.__init__(self)
         self._size = (100,100)
         self._units_info = units_info
+        self._update_table()
     def setSize(self, size):
         self._size = size
+        self._update_table()
+    def _update_table(self):
+        self._table_widget = TableWidget(
+            columns = [
+                dict(label='Unit ID', name='unit_id'),
+                dict(label='SNR', name='snr'),
+                dict(label='Peak channel', name='peak_channel'),
+                dict(label='Num. events', name='num_events'),
+                dict(label='Firing rate', name='firing_rate')
+            ],
+            records = self._units_info,
+            height=self._size[1]
+        )
         self.refresh()
     def render(self):
-        rows = []
-        rows.append(vd.tr(
-            vd.th('Unit ID'),
-            vd.th('SNR'),
-            vd.th('Peak channel'),
-            vd.th('Num. events'),
-            vd.th('Firing rate')
-        ))
-        if self._units_info:
-            for unit in self._units_info:
-                rows.append(vd.tr(
-                    vd.td(str(unit['unit_id'])),
-                    vd.td(str(unit['snr'])),
-                    vd.td(str(unit['peak_channel'])),
-                    vd.td(str(unit['num_events'])),
-                    vd.td(str(unit['firing_rate']))
-                ))
-        else:
-            print('WARNING: units info not found.')
-        table = vd.table(rows, class_='table')
-        return vd.div(ScrollArea(vd.div(table), height=self._size[1]))
-
-class ScrollArea(vd.Component):
-    def __init__(self, child, *, height):
-        vd.Component.__init__(self)
-        self._child = child
-        self._height = height
-
-    def render(self):
-        return vd.div(self._child, style=dict(overflow='auto', height='{}px'.format(self._height)))
+        return self._table_widget
 
 # Initialization in a worker thread
 mtlogging.log(root=True)
