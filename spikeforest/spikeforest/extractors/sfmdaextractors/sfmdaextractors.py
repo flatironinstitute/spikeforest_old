@@ -100,10 +100,10 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
     @staticmethod
     def writeRecording(recording, save_path, params=dict()):
-        ca = _load_required_modules()
+        # ca = _load_required_modules()
         channel_ids = recording.getChannelIds()
         M = len(channel_ids)
-        N = recording.getNumFrames()
+        # N = recording.getNumFrames()
         raw = recording.getTraces()
         location0 = recording.getChannelProperty(channel_ids[0], 'location')
         nd = len(location0)
@@ -156,12 +156,12 @@ class SFMdaSortingExtractor(SortingExtractor):
 
     @staticmethod
     def writeSorting(sorting, save_path):
-        ca = _load_required_modules()
+        # ca = _load_required_modules()
         unit_ids = sorting.getUnitIds()
-        if len(unit_ids) > 0:
-            K = np.max(unit_ids)
-        else:
-            K = 0
+        # if len(unit_ids) > 0:
+        #     K = np.max(unit_ids)
+        # else:
+        #     K = 0
         times_list = []
         labels_list = []
         for i in range(len(unit_ids)):

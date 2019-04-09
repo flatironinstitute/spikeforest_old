@@ -286,9 +286,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                     for srun_sh_script in srun_sh_scripts:
                         srun_sh_script.stop()
                     raise Exception('Non-zero return code for srun script.')
-            # print('----- sleeping 4 seconds... in future, maybe we should not need to do this.')
-            # time.sleep(4)
-            # print('--------------------------------------------------------------------------')
+            
             result_objects=[]
             for ii, job in enumerate(jobs2):
                 print('Loading result object...', job_result_key, str(ii))

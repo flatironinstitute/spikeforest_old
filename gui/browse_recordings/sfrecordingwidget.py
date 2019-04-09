@@ -1,5 +1,4 @@
 import spikeextractors as se
-from spikeforest import extractors as ex
 from spikeforest import spiketoolkit as st
 import vdomr as vd
 from spikeforest import spikewidgets as sw
@@ -11,6 +10,7 @@ import base64
 import uuid
 from mountaintools import client as mt
 import spikeforestwidgets as SFW
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 
 class ScrollArea(vd.Component):
@@ -111,14 +111,14 @@ class PlotUnitWaveforms(mlpr.Processor):
     plot_out = mlpr.Output('Plot as .jpg image file')
 
     def run(self):
-        recording = ex.SFMdaSortingExtractor(
+        recording = SFMdaRecordingExtractor(
             dataset_directory=self.recording_dir)
         if len(self.channels) > 0:
             recording = se.SubRecordingExtractor(
                 parent_recording=recording, channel_ids=self.channels)
-        sorting = ex.SFMdaSortingExtractor(firings_file=self.firings)
+        sorting = SFMdaSortingExtractor(firings_file=self.firings)
         sw.UnitWaveformsWidget(recording=recording, sorting=sorting).plot()
-        fname = save_plot(self.plot_out)
+        save_plot(self.plot_out)
 
 
 class PlotAutoCorrelograms(mlpr.Processor):
@@ -132,12 +132,12 @@ class PlotAutoCorrelograms(mlpr.Processor):
     plot_out = mlpr.Output('Plot as .jpg image file')
 
     def run(self):
-        recording = ex.SFMdaRecordingExtractor(
+        recording = SFMdaRecordingExtractor(
             dataset_directory=self.recording_dir, download=False)
         if len(self.channels) > 0:
             recording = se.SubRecordingExtractor(
                 parent_recording=recording, channel_ids=self.channels)
-        sorting = ex.SFMdaSortingExtractor(firings_file=self.firings)
+        sorting = SFMdaSortingExtractor(firings_file=self.firings)
         sw.CrossCorrelogramsWidget(
             samplerate=recording.getSamplingFrequency(), sorting=sorting).plot()
         save_plot(self.plot_out)
@@ -253,7 +253,7 @@ class SFRecordingWidget(vd.Component):
 
     def render(self):
         if not self._recording:
-            return vd.div('---')
+            return vd.div('___')
         rec = self._recording
         rows = []
         rows.append(vd.tr(

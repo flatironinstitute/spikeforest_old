@@ -42,11 +42,13 @@ class RecordingTableWidget(vd.Component):
         self._size = (100,100)
         self._context = context
         self._update_table()
+        self._context.onCurrentRecordingChanged(self._on_context_selection_changed)
     def setSize(self, size):
         self._size = size
         self._update_table()
     def _update_table(self):
-        recobjs = [self._context.recordingObject(recid) for recid in self._context.recordingIds()]
+        self._recording_ids = self._context.recordingIds()
+        recobjs = [self._context.recordingObject(recid) for recid in self._recording_ids]
         records = [
             dict(
                 study_name=obj['study'],
@@ -57,6 +59,7 @@ class RecordingTableWidget(vd.Component):
             )
             for obj in recobjs
         ]
+        
         self._table_widget = TableWidget(
             columns = [
                 dict(label='Study', name='study_name'),
@@ -68,7 +71,26 @@ class RecordingTableWidget(vd.Component):
             records = records,
             height=self._size[1]
         )
+        self._table_widget.onSelectionChanged(self._on_widget_selection_changed)
+        self._on_context_selection_changed()
         self.refresh()
+    def _on_widget_selection_changed(self):
+        current_row_index = self._table_widget.currentRowIndex()
+        if current_row_index is not None:
+            self._context.setCurrentRecordingId(self._recording_ids[current_row_index])
+        else:
+            self._context.setCurrentRecordingId(None)
+    def _on_context_selection_changed(self):
+        recid = self._context.currentRecordingId()
+        if recid is not None:
+            try:
+                index0 = self._recording_ids.index(recid)
+            except:
+                index0 = None
+        else:
+            index0 = None
+        self._table_widget.setCurrentRowIndex(index0)
+
     def render(self):
         return self._table_widget
 

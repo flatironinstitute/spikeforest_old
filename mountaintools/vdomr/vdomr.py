@@ -56,6 +56,14 @@ def register_callback(callback_id, callback):
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
     elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pyqt5'):
         vdomr_global['invokable_functions'][callback_id] = the_callback
+    ret = "(function(args, kwargs) {window.vdomr_invokeFunction('{callback_id}', args, kwargs);})"
+    ret = ret.replace('{callback_id}', callback_id)
+    return ret
+
+def create_callback(callback):
+    callback_id = 'callback-'+str(uuid.uuid4())
+    return register_callback(callback_id, callback)
+    
 
 def set_timeout(callback, timeout_sec):
     timeout_callback_id = 'timeout-callback-' + str(uuid.uuid4())

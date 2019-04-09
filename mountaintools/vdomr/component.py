@@ -7,7 +7,8 @@ from .vdomr import exec_javascript, _queue_javascript, _exec_queued_javascript
 
 class Component(object):
     def __init__(self):
-        self._div_id = str(uuid.uuid4())
+        self._component_id = str(uuid.uuid4())
+        self._div_id = 'component-div-'+self._component_id
 
     @abc.abstractmethod
     def render(self):
@@ -15,6 +16,9 @@ class Component(object):
 
     def postRenderScript(self):
         return None
+
+    def componentId(self):
+        return self._component_id
 
     def refresh(self):
         html=self._render_and_get_html()
@@ -33,7 +37,7 @@ class Component(object):
 
     def _render_and_get_html(self):
         html = self.render().to_html()
-        js = self.postRenderScript()
+        js = self.postRenderScript() # pylint: disable=assignment-from-none
         if js:
             # Note the following has a terrible race condition
             js2 = """

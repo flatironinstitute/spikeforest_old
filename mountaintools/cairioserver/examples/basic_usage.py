@@ -1,6 +1,6 @@
 from mountaintools import client as mt
 
-print('------------------------------------------------')
+print('===================')
 
 # Local key/value store for associating relatively short strings (<=80 characters) with arbitrary keys (strings or dicts)
 
@@ -14,7 +14,7 @@ val2 = mt.getValue(key=dict(name='some_name', number=2))
 print(val1)
 print(val2)
 
-print('------------------------------------------------')
+print('===================')
 
 # Setting password-protected values
 mt.setValue(key='some_key2', password='my_password', value='the-secret-*y$#a')
@@ -22,7 +22,7 @@ mt.setValue(key='some_key2', password='my_password', value='the-secret-*y$#a')
 # Retrieving password-protected values
 print(mt.getValue(key='some_key2', password='my_password'))
 
-print('------------------------------------------------')
+print('===================')
 
 # Local storage of data and files, retrievable by SHA-1 hash
 
@@ -45,7 +45,7 @@ mt.saveText(key=dict(name='key-for-repeating-text'),
 txt = mt.loadText(key=dict(name='key-for-repeating-text'))
 print(len(txt))  # Output: 2500
 
-print('------------------------------------------------')
+print('===================')
 
 # Similarly we can store python dicts via json content
 path = mt.saveObject(dict(some='object'), basename='object.json')
@@ -60,7 +60,7 @@ mt.saveObject(object=dict(some_other='object'), key=dict(some='key'))
 obj = mt.loadObject(key=dict(some='key'))
 print(obj)
 
-print('------------------------------------------------')
+print('===================')
 
 # You can do the same with files
 with open('test___.txt', 'w') as f:
