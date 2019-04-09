@@ -153,7 +153,7 @@ def _read_header(path):
     if is_url(path):
         tmp_fname=_download_bytes_to_tmpfile(path,0,200)
         if not tmp_fname:
-            raise Exception('Problem downloading bytes from '+url)
+            raise Exception('Problem downloading bytes from '+path)
         try:
             ret=_read_header(tmp_fname)
         except:
