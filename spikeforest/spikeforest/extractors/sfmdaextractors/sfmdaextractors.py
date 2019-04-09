@@ -6,6 +6,7 @@ import numpy as np
 from .mdaio import DiskReadMda, readmda, writemda32, writemda64
 import os
 import mtlogging
+import mlprocessors as mlpr
 
 def _load_required_modules():
     try:
@@ -22,23 +23,35 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
-        timeseries0 = dataset_directory + '/raw.mda'
+        self._timeseries_path = dataset_directory + '/raw.mda'
         self._dataset_params = read_dataset_params(dataset_directory)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
-        if is_kbucket_url(timeseries0):
-            download_needed = is_url(ca.findFile(path=timeseries0))
-        else:
-            download_needed = is_url(timeseries0)
-        if download and download_needed:
-            print('Downloading file: ' + timeseries0)
-            self._timeseries_path = ca.realizeFile(path=timeseries0)
-            print('Done.')
-        else:
-            self._timeseries_path = ca.findFile(path=timeseries0)
+        if download:
+            self._timeseries_path = ca.realizeFile(path=self._timeseries_path)
+        
         geom0 = dataset_directory + '/geom.csv'
         self._geom_fname = ca.realizeFile(path=geom0)
         self._geom = np.genfromtxt(self._geom_fname, delimiter=',')
-        X = DiskReadMda(self._timeseries_path)
+
+        timeseries_path_or_url = self._timeseries_path
+        if not ca.isLocalPath(timeseries_path_or_url):
+            a = ca.findFile(timeseries_path_or_url)
+            if not a:
+                raise Exception('Cannot find timeseries file: '+timeseries_path_or_url)
+            timeseries_path_or_url = a
+
+        # if is_kbucket_url(timeseries0):
+        #     download_needed = is_url(ca.findFile(path=timeseries0))
+        # else:
+        #     download_needed = is_url(timeseries0)
+        # if download and download_needed:
+        #     print('Downloading file: ' + timeseries0)
+        #     self._timeseries_path = ca.realizeFile(path=timeseries0)
+        #     print('Done.')
+        # else:
+        #     self._timeseries_path = ca.findFile(path=timeseries0)
+
+        X = DiskReadMda(timeseries_path_or_url)
         if self._geom.shape[0] != X.N1():
             raise Exception(
                 'Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0],
@@ -72,6 +85,8 @@ class SFMdaRecordingExtractor(RecordingExtractor):
     @mtlogging.log(name='SFMdaRecordingExtractor:getTraces')
     def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
         ca = _load_required_modules()
+        if not ca.isLocalPath(self._timeseries_path):
+            raise Exception('Cannot get traces -- timeseries file is not downloaded')
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
@@ -103,7 +118,6 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         with open(save_path + '/params.json','w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
-
 
 class SFMdaSortingExtractor(SortingExtractor):
     def __init__(self, firings_file):

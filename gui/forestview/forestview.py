@@ -7,10 +7,11 @@ from mountaintools import client as mt
 from core import ForestViewMainWindow
 import uuid
 import json
-from viewrecordingcontext import ViewRecordingContext
-from viewstudycontext import ViewStudyContext
+import sys
+from recordingcontext import RecordingContext
+from spikeforestcontext import SpikeForestContext
 from recording_views import get_recording_view_launchers
-from study_views import get_study_view_launchers
+from spikeforest_views import get_spikeforest_view_launchers
 import uuid
 import mtlogging
 
@@ -33,11 +34,11 @@ class TheApp():
     def createSession(self):
         mode = self._mode
         if mode == 'recording':
-            context = _load_context_from_recording(self._path)
+            context = _load_recording_context(self._path)
             view_launchers = get_recording_view_launchers()
-        elif mode == 'study':
-            context = _load_context_from_study(self._path)
-            view_launchers = get_study_view_launchers()
+        elif mode == 'spikeforest':
+            context = _load_spikeforest_context(self._path)
+            view_launchers = get_spikeforest_view_launchers()
         else:
             raise Exception('Invalid mode: '+mode)
 
@@ -52,18 +53,18 @@ _default_recording_dir = 'sha1dir://d2876a413dc666ac016e8696219305fd091016ee'
 
 
 # snapshot of kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32
-_default_study_dir = 'sha1dir://d3463584046918c052654f43875936aab2da29c8'
+_default_spikeforest_file = 'sha1://cee430a1dde64f3ef730997ced77842cfd6831e4/mearec_neuronexus_04_09_2019.json'
 
 def main():
-    parser = argparse.ArgumentParser(description='Browse SpikeForest results')
+    parser = argparse.ArgumentParser(description='Browse SpikeForest studies, recordings, and results')
     parser.add_argument(
-        '--mode', help="Possible modes: recording, study", required=False, default='recording'
+        '--mode', help="Possible modes: recording, spikeforest", required=False, default='recording'
     )
     parser.add_argument(
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None
     )
     parser.add_argument(
-        '--path', help='Path to the recording directory or study file', required=False, default=None
+        '--path', help='Path to the recording directory, a directory of recordings, or a spikeforest file', required=False, default=None
     )
     # parser.add_argument(
     #     '--collection', help='The remote collection', required=False, default=None
@@ -119,23 +120,31 @@ def _make_full_browser(W):
     js = js.replace('{resize_callback_id}', resize_callback_id)
     vd.devel.loadJavascript(js=js, delay=1)
 
-def _load_context_from_recording(path):
+def _load_recording_context(path):
     if path is None:
         path = _default_recording_dir
-    context = ViewRecordingContext(dict(
+    context = RecordingContext(dict(
         study='',
         name='',
         directory=path
     ), download=True)
     return context
 
-def _load_context_from_study(path):
+def _load_spikeforest_context(path):
     if path is None:
-        path = _default_study_dir
-    context = ViewStudyContext(dict(
-        directory=path
-    ))
-    return context
+        path = _default_spikeforest_file
+    if mt.isFile(path):
+        obj = mt.loadObject(path=path)
+        if not obj:
+            print('Unable to load file: '+path, file=sys.stderr)
+            return None
+        context = SpikeForestContext(dict(
+            studies = obj.get('studies', []),
+            recordings = obj.get('recordings', [])
+        ))
+        return context
+    else:
+        raise Exception('Not yet implemented')
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ import spikeforestwidgets as SFW
 from mountaintools import client as mt
 from bandpass_filter import bandpass_filter
 
-class ViewRecordingContext():
+class RecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
         self._signal_handlers = dict()
         

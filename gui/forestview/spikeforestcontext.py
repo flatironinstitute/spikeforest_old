@@ -1,36 +1,45 @@
 from copy import deepcopy
 from mountaintools import client as mt
+from spikeforest import SFMdaRecordingExtractor
+from mountaintools import MountainClient
 
-class ViewStudyContext():
-    def __init__(self, study_object):
+local_client = MountainClient()
+
+class SpikeForestContext():
+    def __init__(self, studies=[], recordings=[]):
         self._signal_handlers = dict()
         
         print('******** FORESTVIEW: Initializing study context')
-        self._study_object = study_object
-        studydir = self._study_object['directory']
-        dd = mt.readDir(studydir)
-        self._recording_names = []
-        for recname in dd['dirs']:
-            print(recname)
-            self._recording_names.append(recname)
+        self._studies = studies
+        self._recordings = recordings
+        self._recordings_by_id = dict()
+        for rec in self._recordings:
+            self._recordings_by_id[rec['study']+'/'+rec['name']] = rec
 
         print('******** FORESTVIEW: Done initializing study context')
         self._state = dict(
-            current_recording = None,
-            selected_recordings = []
+            current_recording_id = None,
+            selected_recording_ids = []
         )
 
-    def studyObject(self):
-        return deepcopy(self._study_object)
+    def studyNames(self):
+        return [study['name'] for study in self._studies]
 
-    def studyName(self):
-        return self._study_object.get('name', '')
+    def recordingIds(self):
+        return sorted(list(self._recordings_by_id.keys()))
 
-    def studyDirectory(self):
-        return self._study_object.get('directory', '')
+    def recordingInfo(self, recording_name):
+        recdir = self._study_dir+'/'+recording_name
+        timeseries_fname = recdir+'/raw.mda'
+        geom_fname = recdir+'/geom.csv'
+        timeseries_fname = local_client.realizeFile(timeseries_fname)
+        geom_fname = local_client.realizeFile(geom_fname)
+        ret = dict()
+        mt.realizeFile()
 
-    def recordingNames(self):
-        return self._recording_names
+    def recordingExtractor(self, recording_name, *, download):
+        print('loading recording extractor....', recording_name, download)
+        return SFMdaRecordingExtractor(self._study_dir + '/' + recording_name, download=download)
 
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():
