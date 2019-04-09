@@ -138,10 +138,7 @@ def _load_spikeforest_context(path):
         if not obj:
             print('Unable to load file: '+path, file=sys.stderr)
             return None
-        context = SpikeForestContext(dict(
-            studies = obj.get('studies', []),
-            recordings = obj.get('recordings', [])
-        ))
+        context = SpikeForestContext(studies = obj.get('studies', []), recordings = obj.get('recordings', []))
         return context
     else:
         raise Exception('Not yet implemented')

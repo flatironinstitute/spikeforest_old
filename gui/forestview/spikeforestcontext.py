@@ -12,6 +12,11 @@ class SpikeForestContext():
         print('******** FORESTVIEW: Initializing study context')
         self._studies = studies
         self._recordings = recordings
+
+        self._studies_by_name = dict()
+        for stu in self._studies:
+            self._studies_by_name[stu['name']] = stu
+
         self._recordings_by_id = dict()
         for rec in self._recordings:
             self._recordings_by_id[rec['study']+'/'+rec['name']] = rec
@@ -23,23 +28,17 @@ class SpikeForestContext():
         )
 
     def studyNames(self):
-        return [study['name'] for study in self._studies]
+        return sorted(list())
 
     def recordingIds(self):
         return sorted(list(self._recordings_by_id.keys()))
 
-    def recordingInfo(self, recording_name):
-        recdir = self._study_dir+'/'+recording_name
-        timeseries_fname = recdir+'/raw.mda'
-        geom_fname = recdir+'/geom.csv'
-        timeseries_fname = local_client.realizeFile(timeseries_fname)
-        geom_fname = local_client.realizeFile(geom_fname)
-        ret = dict()
-        mt.realizeFile()
+    def recordingObject(self, recid):
+        return deepcopy(self._recordings_by_id[recid])
 
-    def recordingExtractor(self, recording_name, *, download):
-        print('loading recording extractor....', recording_name, download)
-        return SFMdaRecordingExtractor(self._study_dir + '/' + recording_name, download=download)
+    # def recordingExtractor(self, recording_name, *, download):
+    #     print('loading recording extractor....', recording_name, download)
+    #     return SFMdaRecordingExtractor(self._study_dir + '/' + recording_name, download=download)
 
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():
@@ -49,27 +48,27 @@ class SpikeForestContext():
         return deepcopy(self._state)
 
     # current recording
-    def currentRecordingName(self):
-        return self._get_state_value('current_recording')
+    def currentRecordingId(self):
+        return self._get_state_value('current_recording_id')
 
-    def setCurrentRecordingName(self, recname):
-        self._set_state_value('current_recording', recname)
+    def setCurrentRecordingId(self, recname):
+        self._set_state_value('current_recording_id', recname)
 
     def onCurrentRecordingChanged(self, handler):
-        self._register_state_change_handler('current_recording', handler)
+        self._register_state_change_handler('current_recording_id', handler)
 
     # selected recordings
-    def setSelectedRecordingNames(self, recnames):
-        if recnames is None:
-            recnames=[]
-        recnames = sorted(recnames)
-        self._set_state_value('selected_recordings', recnames)
+    def setSelectedRecordingIds(self, recids):
+        if recids is None:
+            recids=[]
+        recids = sorted(recids)
+        self._set_state_value('selected_recording_ids', recids)
 
-    def selectedRecordingNames(self):
-        return self._get_state_value('selected_recordings')
+    def selectedRecordingIds(self):
+        return self._get_state_value('selected_recording_ids')
 
     def onSelectedRecordingsChanged(self, handler):
-        self._register_state_change_handler('selected_recordings', handler)
+        self._register_state_change_handler('selected_recording_ids', handler)
 
     def _set_state_value(self, name, val):
         if self._state[name] == val:

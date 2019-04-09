@@ -1,7 +1,7 @@
 from .currentstateview import CurrentStateView
 from .recordingtableview import RecordingTableView
 
-def get_study_view_launchers():
+def get_spikeforest_view_launchers():
     return [
         dict(
             name='recording-table',

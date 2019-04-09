@@ -46,21 +46,24 @@ class RecordingTableWidget(vd.Component):
         self._size = size
         self._update_table()
     def _update_table(self):
-        recording_names = self._context.recordingNames()
-        recording_infos = [self._context.recordingInfo(rname) for rname in recording_names]
+        recobjs = [self._context.recordingObject(recid) for recid in self._context.recordingIds()]
         records = [
             dict(
-                recording_name=rname,
-                duration = recording_infos[ii].get('duration', '[unknown]'),
-                num_channels = recording_infos[ii].get('num_channels', '[unknown]')
+                study_name=obj['study'],
+                recording_name=obj['name'],
+                duration_sec=_get_computed_info(obj, 'duration_sec'),
+                samplerate=_get_computed_info(obj, 'samplerate'),
+                num_channels=_get_computed_info(obj, 'num_channels')
             )
-            for ii, rname in enumerate(recording_names)
+            for obj in recobjs
         ]
         self._table_widget = TableWidget(
             columns = [
+                dict(label='Study', name='study_name'),
                 dict(label='Recording', name='recording_name'),
-                dict(label='Duration', name='duration'),
-                dict(label='Num. channels', name='num_channels')
+                dict(label='Duration (sec)', name='duration_sec'),
+                dict(label='Sampling freq. (Hz)', name='samplerate'),
+                dict(label='Num. channels', name='num_channels'),
             ],
             records = records,
             height=self._size[1]
@@ -68,3 +71,8 @@ class RecordingTableWidget(vd.Component):
         self.refresh()
     def render(self):
         return self._table_widget
+
+def _get_computed_info(recobj, name):
+    summary = recobj.get('summary', dict())
+    computed_info = summary.get('computed_info', dict())
+    return computed_info.get(name, None)
