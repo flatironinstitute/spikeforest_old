@@ -19,6 +19,18 @@ class MdaHeader:
             self.header_size=3*4+self.num_dims*8
         else:
             self.header_size=(3+self.num_dims)*4
+    def write(self, f):
+        H = self
+        _write_int32(f,H.dt_code)
+        _write_int32(f,H.num_bytes_per_entry)
+        if H.uses64bitdims:
+            _write_int32(f,-H.num_dims)
+            for j in range(0,H.num_dims):
+                _write_int64(f,H.dims[j])
+        else:
+            _write_int32(f,H.num_dims)
+            for j in range(0,H.num_dims):
+                _write_int32(f,H.dims[j])
 
 def npy_dtype_to_string(dt):
     str=dt.str[1:]
@@ -254,16 +266,7 @@ def _write_header(path,H,rewrite=False):
     else:
         f=open(path,"wb")
     try:
-        _write_int32(f,H.dt_code)
-        _write_int32(f,H.num_bytes_per_entry)
-        if H.uses64bitdims:
-            _write_int32(f,-H.num_dims)
-            for j in range(0,H.num_dims):
-                _write_int64(f,H.dims[j])
-        else:
-            _write_int32(f,H.num_dims)
-            for j in range(0,H.num_dims):
-                _write_int32(f,H.dims[j])
+        H.write(f)
         f.close()
         return True
     except Exception as e: # catch *all* exceptions
@@ -332,7 +335,7 @@ def writemda(X,fname,*,dtype):
 
 def _writemda(X,fname,dt):
     dt_code=0
-    num_bytes_per_entry=get_num_bytes_per_entry_from_dt(dt)
+    # num_bytes_per_entry=get_num_bytes_per_entry_from_dt(dt)
     dt_code=_dt_code_from_dt(dt)
     if dt_code is None:
         print ("Unexpected data type: {}".format(dt))
@@ -343,11 +346,15 @@ def _writemda(X,fname,dt):
     else:
         f=fname
     try:
-        _write_int32(f,dt_code)
-        _write_int32(f,num_bytes_per_entry)
-        _write_int32(f,X.ndim)
-        for j in range(0,X.ndim):
-            _write_int32(f,X.shape[j])
+        H = MdaHeader(dt0=dt, dims0=X.shape)
+        H.write(f)
+        
+        # _write_int32(f,dt_code)
+        # _write_int32(f,num_bytes_per_entry)
+        # _write_int32(f,X.ndim)
+        # for j in range(0,X.ndim):
+        #     _write_int32(f,X.shape[j])
+
         #This is how I do column-major order
         #A=np.reshape(X,X.size,order='F').astype(dt)
         #A.tofile(f)
