@@ -15,10 +15,7 @@ def main():
 
     args = parser.parse_args()
     
-    if args.download_from:
-        mt.configRemoteReadonly(share_id=args.download_from)
-    
-    path2 = mt.realizeFile(path=args.path)
+    path2 = mt.realizeFile(path=args.path, share_id=args.download_from)
 
     if not path2:
         print('Unable to realize file.', file=sys.stderr)

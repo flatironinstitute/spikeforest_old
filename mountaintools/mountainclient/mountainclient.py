@@ -9,7 +9,7 @@ import tempfile
 from copy import deepcopy
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
-from .mountainremoteclient import MountainRemoteClient
+from .mountainremoteclient import MountainRemoteClient, _format_file_size, _http_post_file_data
 from .mountainremoteclient import _http_get_json
 import time
 from getpass import getpass
@@ -165,11 +165,13 @@ class MountainClient():
             alternate_share_ids=None,
             upload_token=None
         )
+        self._kacheries=dict()
         self._verbose = False
         self._remote_client = MountainRemoteClient()
         self._login_config=None
         self._share_ids_by_alias=dict()
         self._local_db = MountainClientLocal(parent=self)
+        self._initialize_kacheries()
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadonly(), configRemoteReadWrite()')
@@ -341,6 +343,9 @@ class MountainClient():
             share_id=share_id,
             upload_token=upload_token
         )
+
+    def addKachery(self, *, name, url, upload_token=None):
+        self._kacheries[name]=dict(url=url, upload_token=upload_token)
 
     def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
         """
@@ -635,7 +640,7 @@ class MountainClient():
             raise Exception('Missing key or path in realizeFile().')
 
     @mtlogging.log(name='MountainClient:saveFile')
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False):
+    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False, share_id=None):
         """
         Save a file to the local SHA-1 cache and/or upload to a remote KBucket
         share, and return a SHA-1 URL referring to the file.
@@ -681,7 +686,7 @@ class MountainClient():
                           value=None, local_also=local_also)
             return None
         sha1_path = self._save_file(
-            path=path, basename=basename)
+            path=path, basename=basename, share_id=share_id)
         if key is not None:
             self.setValue(key=key, subkey=subkey,
                           value=sha1_path, local_also=local_also)
@@ -696,12 +701,12 @@ class MountainClient():
             return None
         return json.loads(txt)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, share_id=None):
         if object is None:
             self.setValue(key=key, subkey=subkey,
                           value=None)
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path)
+        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, share_id=share_id)
 
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
@@ -718,7 +723,7 @@ class MountainClient():
             return None
 
     @mtlogging.log(name='MountainClient:saveText')
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None):
+    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None, share_id=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, local_also=local_also)
@@ -731,7 +736,7 @@ class MountainClient():
             tmp_fname=dest_path
         try:
             ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
-                                basename=basename, local_also=local_also)
+                                basename=basename, local_also=local_also, share_id=share_id)
         except:
             if dest_path is None:
                 os.unlink(tmp_fname)
@@ -853,6 +858,36 @@ class MountainClient():
     def copyToLocalCache(self, path, basename=None):
         return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
 
+    def _initialize_kacheries(self):
+        kacheries_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'kacheries')
+        kachery_upload_tokens_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'kachery_upload_tokens')
+        kachery_urls = dict()
+        kachery_upload_tokens = dict()
+        if os.path.exists(kacheries_fname):
+            txt = _read_text_file(kacheries_fname)
+            lines = txt.splitlines()
+            for line in lines:
+                if not line.startswith('#'):
+                    vals = line.split()
+                    if len(vals) != 2:
+                        print('WARNING: problem parsing kacheries file.')
+                    else:
+                        kachery_urls[vals[0]] = vals[1]
+        if os.path.exists(kachery_upload_tokens_fname):
+            txt = _read_text_file(kachery_upload_tokens_fname)
+            lines = txt.splitlines()
+            for line in lines:
+                if not line.startswith('#'):
+                    vals = line.split()
+                    if len(vals) != 2:
+                        print('WARNING: problem parsing kachery_upload_tokens file.')
+                    else:
+                        kachery_upload_tokens[vals[0]] = vals[1]
+        for name, url in kachery_urls.items():
+            upload_token = kachery_upload_tokens.get(name, None)
+            self.addKachery(name=name, url=url, upload_token=upload_token)
+            
+
     def _get_value(self, *, key, subkey, collection=None, local_first=False, check_alt=False):
         if collection is None:
             collection = self._remote_config['collection']
@@ -967,7 +1002,7 @@ class MountainClient():
         return None
 
     @mtlogging.log()
-    def _save_file(self, *, path, basename, prevent_upload=False, return_sha1_url=True):
+    def _save_file(self, *, path, basename, prevent_upload=False, return_sha1_url=True, share_id=None):
         path = self.realizeFile(path)
         if not path:
             return None
@@ -975,19 +1010,59 @@ class MountainClient():
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:
             return None
-        share_id = self._remote_config['share_id']
-        upload_token = self._remote_config['upload_token']
+        if share_id is None:
+            share_id = self._remote_config['share_id']
+            upload_token = self._remote_config['upload_token']
+        if share_id in self._kacheries.keys():
+            upload_token=self._kacheries[share_id].get('upload_token', None)
         if (share_id) and (upload_token) and (not prevent_upload):
             sha1 = self.computeFileSha1(path=path)
             if sha1:
-                url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-                if not url:
-                    cas_upload_server_url = self._get_cas_upload_server_url_for_share(
-                        share_id=share_id)
-                    if cas_upload_server_url:
-                        if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
-                            raise Exception('Problem uploading file {}'.format(path))
+                if share_id in self._kacheries.keys():
+                    kachery_url=self._kacheries[share_id]['url']
+                    self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=upload_token)
+                else:
+                    url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
+                    if not url:
+                        cas_upload_server_url = self._get_cas_upload_server_url_for_share(
+                            share_id=share_id)
+                        if cas_upload_server_url:
+                            if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
+                                raise Exception('Problem uploading file {}'.format(path))
         return ret
+
+    def _upload_to_kachery(self, *, path, sha1, kachery_url, upload_token):
+        url_check_path0 = '/check/sha1/'+sha1
+        url_check = kachery_url+url_check_path0
+        resp_obj = _http_get_json(url_check)
+        if not resp_obj['success']:
+            print('Warning: Problem checking for upload: '+resp_obj['error'])
+            return False
+
+        if not resp_obj['found']:
+            url_path0 = '/set/sha1/'+sha1
+            signature = _sha1_of_object(
+                {'path': url_path0, 'token': upload_token})
+            url = kachery_url+url_path0+'?signature='+signature
+            size0 = os.path.getsize(path)
+            if size0 > 10000:
+                print(
+                    'Uploading to kachery --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
+
+            timer=time.time()
+            resp_obj = _http_post_file_data(url, path)
+            elapsed=time.time()-timer
+
+            if size0 > 10000:
+                print('File uploaded ({}) in {} sec'.format(_format_file_size(size0), elapsed))
+            
+            if not resp_obj.get('success', False):
+                print('Problem posting file data: '+resp_obj.get('error', ''))
+                return False
+            return True
+        else:
+            print('Already on server (***)')
+            return True
 
     # def _wait_until_found_on_kbucket(self, *, share_id, sha1):
     #     timer = time.time()
@@ -1016,6 +1091,30 @@ class MountainClient():
 
     def _find_on_kbucket(self, *, share_id, sha1):
         assert share_id, 'Cannot find_on_kbucket for share_id: '+share_id
+
+        if _is_http_url(share_id):
+            kachery_url = share_id
+        elif share_id in self._kacheries.keys():
+            kachery_url = self._kacheries[share_id]['url']
+        else:
+            kachery_url = None
+
+        if kachery_url:
+            check_url = kachery_url + '/check/sha1/' + sha1
+            try:
+                obj = _http_get_json(check_url)
+            except:
+                print('WARNING: failed in check to kachery {}: {}'.format(share_id, check_url))
+                return (None, None)
+            if not obj['success']:
+                print('WARNING: problem checking kachery {}: {}'.format(share_id, check_url))
+                return (None, None)
+            if not obj['found']:
+                return (None, None)
+            return (kachery_url + '/get/sha1/' + sha1, obj['size'])
+            
+
+
         # first check in the upload location
         (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(
             path='kbucket://'+share_id+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
@@ -1650,6 +1749,9 @@ def _get_default_local_db_path():
                 raise
     ret = dirname+'/database'
     return ret
+
+def _is_http_url(url):
+    return url.startswith('http://') or url.startswith('https://')
 
 def _get_default_alternate_local_db_paths():
     val = os.environ.get('MOUNTAIN_DIR_ALT',None)

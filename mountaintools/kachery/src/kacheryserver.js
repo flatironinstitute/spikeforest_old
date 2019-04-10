@@ -51,7 +51,8 @@ GET:/check/sha1/[sha1]
   Returns the JSON of the following object
   {
     success:[boolean],
-    found:[boolean]
+    found:[boolean],
+    size:[int]
   }
 
 GET:/probe
@@ -75,6 +76,10 @@ var path = require('path');
 
 const MAX_FILE_SIZE=Number(process.env['KACHERY_UPLOAD_MAX_SIZE'])||(1024*1024*100);
 const TEST_SIGNATURE=process.env['KACHERY_TEST_SIGNATURE']||null;
+
+process.on('SIGINT', function() {
+    process.exit();
+});
 
 function KacheryServer() {
   this.app = function() {
@@ -113,11 +118,14 @@ function KacheryServer() {
       error_response(req,res,500,'Invalid sha1 string.')
       return;  
     }
-    // TODO: use DownloadHandler
-    let X=new UploadHandler(m_sha1_cache);
-    X.setSha1(params.sha1);
-    let found=X.checkExists();
-    res.json({success:true,found:found});
+    let found=false;
+    let size=0;
+    let relpath = m_sha1_cache.findFileForSha1(params.sha1);
+    if (relpath) {
+        found=true;
+        size=safe_file_size(m_sha1_cache.directory()+'/'+relpath);
+    }
+    res.json({success:true,found:found,size:size});
   });
 
   // API:GET /get/sha1/:sha1
@@ -531,7 +539,7 @@ function make_random_id(num_chars) {
 }
 
 function error_response(req,res,code,err) {
-  console.log(`Responding with error: ${code} ${err}`);
+  console.log (`Responding with error: ${code} ${err}`);
   res.status(code).send(err);
   setTimeout(function() {
     try {
@@ -619,4 +627,15 @@ function write_json_file(fname,obj) {
 	catch(err) {
 		return false;
 	}
+}
+
+function safe_file_size(fname) {
+    let stat;
+    try {
+      stat=fs.statSync(fname);
+    }
+    catch(err) {
+      return null;
+    }
+    return stat.size||null;
 }
