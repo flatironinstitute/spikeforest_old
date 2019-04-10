@@ -8,10 +8,11 @@ import sys
 from .stdoutsender import StdoutSender
 import mtlogging
 class TimeseriesView(vd.Component):
-    def __init__(self, *, context, opts=None, prepare_result):
+    def __init__(self, *, context, opts, prepare_result):
         vd.Component.__init__(self)
         self._context = context
         self._size=(100, 100)
+        self._opts=opts
         
         earx = EfficientAccessRecordingExtractor(path=prepare_result['earx_file'])
         self._timeseries_widget = SFW.TimeseriesWidget(recording=earx)
@@ -20,12 +21,21 @@ class TimeseriesView(vd.Component):
 
     # this will be done in a worker thread
     @staticmethod
-    def prepareView(context, opts=None):
+    def prepareView(context, opts):
         print('***** Initializing context...')
         context.initialize()
 
+        use_intra = False
+        if opts and opts['use_intra']:
+            use_intra = True
+
+        if not use_intra:
+            rx = context.recordingExtractor()
+        else:
+            rx = context.intraRecordingExtractor()
+
         print('***** Preparing efficient access recording extractor...')
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
+        earx = EfficientAccessRecordingExtractor(recording=rx)
         
         print('***** Precomputing multiscale recordings...')
         SFW.precomputeMultiscaleRecordings(recording=earx)
@@ -45,20 +55,3 @@ class TimeseriesView(vd.Component):
         return vd.div(
             self._timeseries_widget
         )
-
-# Initialization in a worker thread
-mtlogging.log(root=True)
-def _initialize(context, connection_to_parent):
-    context.initialize()
-    with StdoutSender(connection=connection_to_parent):
-        print('***** Preparing efficient access recording extractor...')
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
-        
-        print('***** Precomputing multiscale recordings...')
-        SFW.precomputeMultiscaleRecordings(recording=earx)
-    connection_to_parent.send(dict(
-        name='result',
-        result=dict(
-            earx_file=earx.path()
-        )
-    )) 

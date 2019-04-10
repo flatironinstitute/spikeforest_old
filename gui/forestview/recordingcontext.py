@@ -77,7 +77,7 @@ class RecordingContext():
 
     def hasIntraRecording(self):
         recdir = self._recording_object['directory']
-        intra_raw_fname = recdir+'/raw.mda'
+        intra_raw_fname = recdir+'/raw_true.mda'
         if mt.computeFileSha1(intra_raw_fname):
             return True
         else:

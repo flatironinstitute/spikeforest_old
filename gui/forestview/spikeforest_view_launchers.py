@@ -72,7 +72,8 @@ def get_spikeforest_view_launchers(context):
             launchers.append(dict(
                 group='recording', name='intra-timeseries', label='Intra-timeseries',
                 view_class=TimeseriesView,
-                context=recording_context, opts=dict(),
+                context=recording_context,
+                opts=dict(use_intra=True),
                 enabled=(recording_context is not None)
             ))
 
