@@ -53,9 +53,11 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
         X = DiskReadMda(timeseries_path_or_url)
         if self._geom.shape[0] != X.N1():
-            raise Exception(
-                'Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0],
-                                                                                               X.N1()))
+            #raise Exception(
+            #    'Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0], X.N1()))
+            print('WARNING: Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0], X.N1()))
+            self._geom=np.zeros((X.N1(), 2))
+
         self._num_channels = X.N1()
         self._num_timepoints = X.N2()
         for m in range(self._num_channels):
