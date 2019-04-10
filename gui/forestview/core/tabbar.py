@@ -11,7 +11,14 @@ class TabBarTab(vd.Component):
   def key(self):
     return self._key
   def setSelected(self,selected):
+    if self._selected == selected:
+      return
     self._selected=selected
+    self.refresh()
+  def setLabel(self, label):
+    if self._label == label:
+      return
+    self._label=label
     self.refresh()
   def onClick(self,handler):
     self._click_handlers.append(handler)
@@ -67,6 +74,11 @@ class TabBar(vd.Component):
     self._tabs.append(tab)
     self.setCurrentTab(tab)
     self.refresh()
+  def tab(self, key):
+    for tab in self._tabs:
+      if tab.key() == key:
+        return tab
+    return None
   def render(self):
     style0=dict(
         position='absolute',
