@@ -151,12 +151,19 @@ def _make_obj_from_dir(path):
         description='Loaded from '+path
     ))
     dd = mt.readDir(path)
-    for dname, dd0 in dd['dirs'].items():
+    if 'raw.mda' in dd['files']:
         recordings.append(dict(
             study=study_name,
-            name=dname,
-            directory=path+'/'+dname
+            name='recording',
+            directory=path
         ))
+    else:
+        for dname, dd0 in dd['dirs'].items():
+            recordings.append(dict(
+                study=study_name,
+                name=dname,
+                directory=path+'/'+dname
+            ))
     return dict(
         studies=studies,
         recordings=recordings

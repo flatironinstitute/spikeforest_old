@@ -41,6 +41,17 @@ class RecordingContext():
             else:
                 self._sx = SFMdaSortingExtractor(firings_file = firings_true_path)
 
+        intra_raw_fname = recdir+'/raw_true.mda'
+        if mt.computeFileSha1(intra_raw_fname):
+            self._rx_intra = SFMdaRecordingExtractor(
+                dataset_directory = recdir,
+                raw_fname='raw_true.mda',
+                params_fname='params_true.json',
+                download=self._download
+            )
+        else:
+            self._rx_intra = None
+
         print('******** FORESTVIEW: Done initializing recording context')
 
     def recordingObject(self):
@@ -60,6 +71,17 @@ class RecordingContext():
 
     def sortingExtractor(self):
         return self._sx
+
+    def intraRecordingExtractor(self):
+        return self._rx_intra
+
+    def hasIntraRecording(self):
+        recdir = self._recording_object['directory']
+        intra_raw_fname = recdir+'/raw.mda'
+        if mt.computeFileSha1(intra_raw_fname):
+            return True
+        else:
+            return False
 
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():

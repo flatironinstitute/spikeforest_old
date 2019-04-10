@@ -18,13 +18,13 @@ def _load_required_modules():
 
 
 class SFMdaRecordingExtractor(RecordingExtractor):
-    def __init__(self, dataset_directory, *, download=True):
+    def __init__(self, dataset_directory, *, download=True, raw_fname='raw.mda', params_fname='params.json'):
         ca = _load_required_modules()
 
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
-        self._timeseries_path = dataset_directory + '/raw.mda'
-        self._dataset_params = read_dataset_params(dataset_directory)
+        self._timeseries_path = dataset_directory + '/' + raw_fname
+        self._dataset_params = read_dataset_params(dataset_directory, params_fname)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if download:
             self._timeseries_path = ca.realizeFile(path=self._timeseries_path)
@@ -99,7 +99,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         return recordings
 
     @staticmethod
-    def writeRecording(recording, save_path, params=dict()):
+    def writeRecording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json'):
         # ca = _load_required_modules()
         channel_ids = recording.getChannelIds()
         M = len(channel_ids)
@@ -113,9 +113,9 @@ class SFMdaRecordingExtractor(RecordingExtractor):
             geom[ii, :] = list(location_ii)
         if not os.path.isdir(save_path):
             os.mkdir(save_path)
-        writemda32(raw, save_path + '/raw.mda')
+        writemda32(raw, save_path + '/' + raw_fname)
         params["samplerate"] = recording.getSamplingFrequency()
-        with open(save_path + '/params.json','w') as f:
+        with open(save_path + '/' + params_fname,'w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
 
@@ -196,10 +196,10 @@ def is_url(path):
         'kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 
 
-def read_dataset_params(dsdir):
+def read_dataset_params(dsdir, params_fname):
     ca = _load_required_modules()
 
-    fname1=dsdir+'/params.json'
+    fname1=dsdir+'/'+params_fname
     fname2=ca.realizeFile(path=fname1)
     if not fname2:
         raise Exception('Unable to find file: '+fname1)

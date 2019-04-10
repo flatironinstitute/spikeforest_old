@@ -59,7 +59,8 @@ class DiskReadMda:
             self._header=header
             self._header.header_size=0
         else:
-            self._header=_read_header(self._path)            
+            self._header=_read_header(self._path)
+        print('---------------', self._path, self._header)          
     def dims(self):
         if self._npy_mode:
             A=np.load(self._path,mmap_mode='r')

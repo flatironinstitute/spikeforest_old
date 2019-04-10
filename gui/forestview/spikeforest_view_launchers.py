@@ -11,7 +11,8 @@ def get_spikeforest_view_launchers(context):
     ret = dict(
         groups=[
             dict(name='general',label=''),
-            dict(name='recording',label='Recording')
+            dict(name='recording',label='Recording'),
+            dict(name='unit',label='Unit')
         ],
         launchers=launchers
     )
@@ -61,16 +62,26 @@ def get_spikeforest_view_launchers(context):
         enabled=(recording_context is not None)
     ))
     launchers.append(dict(
-        group='recording', name='test', label='Test',
-        view_class=TemplatesView,
-        context=recording_context, opts=dict(),
-        enabled=(recording_context is not None) and (recording_context.currentUnitId() is not None)
-    ))
-    launchers.append(dict(
         group='recording', name='recording-current-state', label='Current state',
         view_class=CurrentStateView,
         context=recording_context, opts=dict(),
         enabled=(recording_context is not None)
     ))
+    if recording_context:
+        if recording_context.hasIntraRecording():
+            launchers.append(dict(
+                group='recording', name='intra-timeseries', label='Intra-timeseries',
+                view_class=TimeseriesView,
+                context=recording_context, opts=dict(),
+                enabled=(recording_context is not None)
+            ))
+
+    launchers.append(dict(
+        group='unit', name='test', label='Test',
+        view_class=TemplatesView,
+        context=recording_context, opts=dict(),
+        enabled=(recording_context is not None) and (recording_context.currentUnitId() is not None)
+    ))
+    
     
     return ret
