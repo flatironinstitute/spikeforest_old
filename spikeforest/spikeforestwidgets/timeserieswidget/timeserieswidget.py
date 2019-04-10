@@ -141,6 +141,7 @@ class TimeseriesWidget(vd.Component):
     def postRenderScript(self):
         js="""
         let W=new window.TimeseriesWidget();
+        W.setSyncGroup('test');
         let TS=window.timeseries_models['{div_id}'];
         W.setTimeseriesModel(TS);
         //W.setMarkers(window.spike_times['{div_id}']);

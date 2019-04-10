@@ -3,6 +3,8 @@ window.TimeseriesWidget=TimeseriesWidget;
 PainterPath=window.PainterPath;
 CanvasWidget=window.CanvasWidget;
 
+window.timeserieswidget_sync_groups = window.timeserieswidget_sync_groups||{};
+
 function TimeseriesWidget() {
     let that=this;
 
@@ -10,13 +12,20 @@ function TimeseriesWidget() {
     this.setSize=function(W,H) {m_size=[W,H]; update_size();};
     this.element=function() {return m_div;};
     this.setTimeRange=function(t1,t2) {set_time_range(t1,t2);};
-    this.setCurrentTime=function(t) {m_current_time=t; update_cursor();};
+    this.timeRange=function() {return clone(m_trange);};
+    this.onTimeRangeChanged=function(handler) {m_div.on('time-range-changed', handler);};
+    this.setCurrentTime=function(t) {set_current_time(t);};
+    this.currentTime=function() {return m_current_time;};
+    this.onCurrentTimeChanged=function(handler) {m_div.on('current-time-changed', handler);};
     this.zoomTime=function(factor) {zoom_time(factor);};
     this.translateTime=function(dt) {translate_time(dt);};
     this.zoomAmplitude=function(factor) {zoom_amplitude(factor);};
     this.setYOffsets=function(offsets) {m_y_offsets=clone(offsets); update_plot();};
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
     this.setMarkers=function(markers) { m_markers=markers;};
+    this.setSyncGroup=function(sync_group_name) {setSyncGroup(sync_group_name);};
+    this._triggerOff=function() {m_do_trigger=false;};
+    this._triggerOn=function() {m_do_trigger=true;};
 
     let m_div=$('<div tabindex="0" />'); // tabindex needed to handle keypress
     m_div.css({position:'absolute'});
@@ -33,6 +42,7 @@ function TimeseriesWidget() {
     let m_mouse_press_anchor=null;
     // let m_markers=[[100,1000],[150,1050]];
     let m_markers=[];
+    let m_do_trigger=true;
 
     m_div.append(m_main_canvas.canvasElement());
     m_div.append(m_cursor_canvas.canvasElement());
@@ -164,8 +174,21 @@ function TimeseriesWidget() {
         if (t2>N) {t1-=(t2-N); t2-=(t2-N);};
         if (t1<=0) {t2-=t1; t1-=t1;};
         if (t2>N) t2=N;
+        if ((t1==m_trange[0])&&(t2==m_trange[1]))
+            return;
         m_trange=[t1,t2];
         update_plot();
+        if (m_do_trigger) {
+            m_div.trigger('time-range-changed');
+        }
+    }
+
+    function set_current_time(t) {
+        if (m_current_time == t) return;
+        m_current_time=t;
+        update_cursor();
+        if (m_do_trigger)
+            m_div.trigger('current-time-changed');
     }
 
     function zoom_time(factor) {
@@ -256,6 +279,15 @@ function TimeseriesWidget() {
                 update_plot();
             }
         });
+    }
+
+    function setSyncGroup(sync_group_name) {
+        let sync_groups=window.timeserieswidget_sync_groups;
+        if (!(sync_group_name in sync_groups)) {
+            sync_groups[sync_group_name]=new SyncGroup();
+        }
+        let G=sync_groups[sync_group_name];
+        G.connect(that);
     }
 
     function auto_compute_y_offsets() {
@@ -391,6 +423,32 @@ function MouseHandler(elmt) {
         };
     }
 
+}
+
+function SyncGroup() {
+    let that=this;
+    this.connect=function(W) {connect(W);};
+
+    let m_widgets=[];
+
+    function connect(W) {
+        m_widgets.push(W);
+        W.onCurrentTimeChanged(function() {
+            m_widgets.forEach(function(W2) {
+                W2._triggerOff();
+                W2.setCurrentTime(W.currentTime());
+                W2._triggerOn();
+            })
+        });
+        W.onTimeRangeChanged(function() {
+            let trange = W.timeRange();
+            m_widgets.forEach(function(W2) {
+                W2._triggerOff();
+                W2.setTimeRange(trange[0], trange[1]);
+                W2._triggerOn();
+            })
+        });
+    }
 }
 
 function clone(obj) {

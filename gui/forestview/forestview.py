@@ -8,9 +8,7 @@ from core import ForestViewMainWindow
 import uuid
 import json
 import sys
-from recordingcontext import RecordingContext
 from spikeforestcontext import SpikeForestContext
-from recording_views import get_recording_view_launchers
 import uuid
 import mtlogging
 
@@ -32,10 +30,7 @@ class TheApp():
 
     def createSession(self):
         mode = self._mode
-        if mode == 'recording':
-            context = _load_recording_context(self._path)
-            view_launchers = get_recording_view_launchers()
-        elif mode == 'spikeforest':
+        if mode == 'spikeforest':
             context = _load_spikeforest_context(self._path)
         else:
             raise Exception('Invalid mode: '+mode)
@@ -44,17 +39,13 @@ class TheApp():
         _make_full_browser(W)
         return W
 
-# snapshot of kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32/002_synth
-_default_recording_dir = 'sha1dir://d2876a413dc666ac016e8696219305fd091016ee'
-
-
 # snapshot of kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32
 _default_spikeforest_file = 'sha1://cee430a1dde64f3ef730997ced77842cfd6831e4/mearec_neuronexus_04_09_2019.json'
 
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest studies, recordings, and results')
     parser.add_argument(
-        '--mode', help="Possible modes: recording, spikeforest", required=False, default='spikeforest'
+        '--mode', help="Possible modes: spikeforest", required=False, default='spikeforest'
     )
     parser.add_argument(
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None
@@ -118,16 +109,6 @@ def _make_full_browser(W):
     """
     js = js.replace('{resize_callback_id}', resize_callback_id)
     vd.devel.loadJavascript(js=js, delay=1)
-
-def _load_recording_context(path):
-    if path is None:
-        path = _default_recording_dir
-    context = RecordingContext(dict(
-        study='',
-        name='',
-        directory=path
-    ), download=True)
-    return context
 
 def _load_spikeforest_context(path):
     if path is None:

@@ -1,0 +1,22 @@
+{
+  "name": "@magland/kachery",
+  "version": "0.1.0",
+  "description": "Share data for scientific research",
+  "scripts": {
+    "test": "echo \"No tests\" && exit 0"
+  },
+  "keywords": [
+    "mountaintools"
+  ],
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/flatironinstitute/spikeforest",
+  "main": "src/kacheryserver.js",
+  "dependencies": {
+    "cors": "^2.8.4",
+    "dotenv": "latest",
+    "express": "^4.16.3",
+    "fs-extra": ""
+  },
+  "bin": {}
+}

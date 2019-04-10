@@ -1,0 +1,21 @@
+You define the following in a test .env file:
+
+KACHERY_UPLOAD_DIR=kachery
+KACHERY_TEST_SIGNATURE=test1
+KACHERY_UPLOAD_TOKEN=token1
+
+Now start the server by running: src/kacheryserver.js
+
+Suppose we have a file file.txt with hash
+d4a4fd472647f5ad8cc564048ed17ff6bf4a16f8 and that the kachery server is
+listening at http://localhost:25481. Also, assume that the
+KACHERY_TEST_SIGNATURE variable is set to test1 for the server.
+
+To add a file:
+> curl --request POST --data-binary "@file.txt" http://localhost:25481/set/sha1/d4a4fd472647f5ad8cc564048ed17ff6bf4a16f8?signature=test1
+
+To check the file:
+> curl http://localhost:25481/check/sha1/d4a4fd472647f5ad8cc564048ed17ff6bf4a16f8
+
+To download the file:
+> curl http://localhost:25481/download/sha1/d4a4fd472647f5ad8cc564048ed17ff6bf4a16f8
