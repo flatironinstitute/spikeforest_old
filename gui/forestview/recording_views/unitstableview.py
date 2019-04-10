@@ -14,22 +14,30 @@ from mountaintools import client as mt
 from .tablewidget import TableWidget
 
 class UnitsTableView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
         self._context = context
         self._size=(100, 100)
-        self._unit_table_widget = None
-
-        self._connection_to_init, connection_to_parent = multiprocessing.Pipe()
-        self._init_process = multiprocessing.Process(target=_initialize, args=(context, connection_to_parent))
-        self._init_process.start()
-
-        self._init_log_text = ''
-        vd.set_timeout(self._check_init, 0.5)
-    def _on_init_completed(self, result):
-        self._unit_table_widget = UnitTableWidget(context=self._context, units_info=result)
+        self._unit_table_widget = UnitTableWidget(
+            context=self._context,
+            units_info=prepare_result['units_info']
+        )
         self._unit_table_widget.setSize(self._size)
-        self.refresh()
+    @staticmethod
+    def prepareView(context, opts):
+        try:
+            context.initialize()
+            print('***** Preparing efficient access recording extractor...')
+            earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
+            print('***** computing units info...')
+            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=earx, sorting=context.sortingExtractor(), json_out=True).outputs['json_out'])
+            print('*****')
+        except:
+            traceback.print_exc()
+            raise
+        return dict(
+            units_info=info0
+        )
     def setSize(self, size):
         self._size=size
         if self._unit_table_widget:
@@ -49,17 +57,6 @@ class UnitsTableView(vd.Component):
                 vd.pre(self._init_log_text),
                 style=dict(overflow='auto')
             )
-    def _check_init(self):
-        if not self._unit_table_widget:
-            if self._connection_to_init.poll():
-                msg = self._connection_to_init.recv()
-                if msg['name'] == 'log':
-                    self._init_log_text = self._init_log_text + msg['text']
-                    self.refresh()
-                elif msg['name'] == 'result':
-                    self._on_init_completed(msg['result'])
-                    return
-            vd.set_timeout(self._check_init, 1)
 
 class UnitTableWidget(vd.Component):
     def __init__(self, *, context, units_info):
@@ -85,24 +82,6 @@ class UnitTableWidget(vd.Component):
         self.refresh()
     def render(self):
         return self._table_widget
-
-# Initialization in a worker thread
-mtlogging.log(root=True)
-def _initialize(context, connection_to_parent):
-    with StdoutSender(connection=connection_to_parent):
-        try:
-            print('***** Preparing efficient access recording extractor...')
-            earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
-            print('***** computing units info...')
-            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=earx, sorting=context.sortingExtractor(), json_out=True).outputs['json_out'])
-            print('*****')
-        except:
-            traceback.print_exc()
-            raise
-    connection_to_parent.send(dict(
-        name='result',
-        result=info0
-    )) 
 
 class ComputeUnitsInfo(mlpr.Processor):
     NAME = 'ComputeUnitsInfo'

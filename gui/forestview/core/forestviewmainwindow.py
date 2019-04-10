@@ -2,6 +2,10 @@ import vdomr as vd
 from .viewcontainer import ViewContainer
 from .forestviewcontrolpanel import ForestViewControlPanel
 import uuid
+import multiprocessing
+import traceback
+import sys
+import time
 
 class ForestViewMainWindow(vd.Component):
     def __init__(self, context):
@@ -37,9 +41,6 @@ class ForestViewMainWindow(vd.Component):
 
     def size(self):
         return self._size
-
-    def addViewLauncher(self, view_launcher):
-        self._control_panel.addViewLauncher(view_launcher)
 
     def _update_sizes(self):
         width = self._size[0]
@@ -78,14 +79,142 @@ class ForestViewMainWindow(vd.Component):
         self._highlight_view_containers()
 
     def _trigger_launch_view(self, view_launcher):
-        V = view_launcher['view_class'](self._context)
-        self._current_view_container.addView(V)
+        frame = ViewFrame(view_launcher=view_launcher)
+        self._current_view_container.addView(frame)
+        frame.initialize()
 
     def context(self):
         return self._context
 
     def render(self):
         return self._container_main
+
+class ViewFrame(vd.Component):
+    def __init__(self, *, view_launcher):
+        vd.Component.__init__(self)
+        self._view_launcher = view_launcher
+        self._connection_to_prepare = None
+        self._prepare_log_text = ''
+        self._view = None
+        self._size = None
+    def setSize(self, size):
+        self._size=size
+        if self._view:
+            self._view.setSize(size)
+    def size(self):
+        return self._size
+    def tabLabel(self):
+        if self._view:
+            return self._view.tabLabel()
+        else:
+            return self._view_launcher['label']+'...'
+    def initialize(self):
+        view_launcher = self._view_launcher
+        context = view_launcher['context']
+        opts = view_launcher['opts']
+        view_class = view_launcher['view_class']
+        if hasattr(view_class, 'prepareView'):
+            self._connection_to_prepare, connection_to_parent = multiprocessing.Pipe()
+            self._init_process = multiprocessing.Process(
+                target=_prepare_in_worker,
+                args=(view_class, context, opts, connection_to_parent)
+            )
+            self._init_process.start()
+
+            vd.set_timeout(self._check_prepare, 0.5)
+        else:
+            if hasattr(context, 'initialize'):
+                context.initialize()
+            self._view = view_class(context=context, opts=opts)
+            self._view.setSize(self._size)
+        self.refresh()
+    def render(self):
+        if self._view:
+            return self._view
+        else:
+            return vd.div(
+                vd.h3('Preparing...'),
+                vd.pre(self._prepare_log_text),
+                style=dict(overflow='auto')
+            )
+    def _check_prepare(self):
+        if not self._view:
+            if self._connection_to_prepare.poll():
+                msg = self._connection_to_prepare.recv()
+                if msg['name'] == 'log':
+                    self._prepare_log_text = self._prepare_log_text + msg['text']
+                    self.refresh()
+                elif msg['name'] == 'result':
+                    self._on_prepare_completed(msg['result'])
+                    return
+            vd.set_timeout(self._check_prepare, 1)
+    def _on_prepare_completed(self, result):
+        view_launcher = self._view_launcher
+        context = view_launcher['context']
+        opts = view_launcher['opts']
+        view_class = view_launcher['view_class']
+        if hasattr(context, 'initialize'):
+            context.initialize()
+        self._view = view_class(context=context, opts=opts, prepare_result=result)
+        self._view.setSize(self._size)
+        self.refresh()
+
+class StdoutSender():
+    def __init__(self, connection):
+        self._connection = connection
+        self._handler = _StdoutHandler(connection)
+    def __enter__(self):
+        self._old_stdout = sys.stdout
+        self._old_stderr = sys.stderr
+        self._handler.setOtherStdout(self._old_stdout)
+        sys.stdout = self._handler
+        sys.stderr = self._handler
+        return dict()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._handler.send()
+        sys.stdout = self._old_stdout
+        sys.stderr = self._old_stderr
+
+class _StdoutHandler(object):
+    def __init__(self, connection):
+        self._connection = connection
+        self._text = ''
+        self._timer = time.time()
+        self._other_stdout = None
+
+    def write(self, data):
+        if self._other_stdout:
+            self._other_stdout.write(data)
+        self._text = self._text + str(data)
+        elapsed = time.time() - self._timer
+        if elapsed > 5:
+            self.send()
+            self._timer = time.time()
+
+    def flush(self):
+        if self._other_stdout:
+            self._other_stdout.flush()
+
+    def setOtherStdout(self, other_stdout):
+        self._other_stdout = other_stdout
+
+    def send(self):
+        if self._text:
+            self._connection.send(dict(name="log", text=self._text))
+            self._text=''
+
+def _prepare_in_worker(view_class, context, opts, connection_to_parent):
+    with StdoutSender(connection=connection_to_parent):
+        try:
+            print('***** Preparing...')
+            result0 = view_class.prepareView(context=context, opts=opts)
+        except:
+            traceback.print_exc()
+            raise
+    connection_to_parent.send(dict(
+        name='result',
+        result=result0
+    )) 
 
 class Container(vd.Component):
   def __init__(self,*args,position=(0,0),size=(0,0),position_mode='absolute',style=dict()):

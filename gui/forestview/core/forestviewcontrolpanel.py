@@ -5,24 +5,39 @@ class ForestViewControlPanel(vd.Component):
         vd.Component.__init__(self)
         self._context = context
 
-        self._view_launchers = dict()
         self._launch_view_handlers = []
-
-    def addViewLauncher(self, view_launcher):
-        self._view_launchers[view_launcher['name']] = view_launcher
+        self._context.onAnyStateChanged(self.refresh)
 
     def onLaunchView(self, handler):
         self._launch_view_handlers.append(handler)
 
     def render(self):
-        view_launcher_buttons = []
-        for _, VL in self._view_launchers.items():
-            button0 = vd.components.Button(label=VL['label'], onclick=lambda VL=VL: self._trigger_launch_view(VL), style=dict(width='130px', height='80px', margin='5px'))
-            view_launcher_buttons.append(button0)
+        view_launchers = self._context.viewLaunchers()
+        groups = view_launchers['groups']
+        elements = []
+        for group in groups:
+            view_launcher_buttons = []
+            for VL in view_launchers['launchers']:
+                if VL['group'] == group['name']:
+                    attrs=dict()
+                    style0=dict(width='130px', height='80px', margin='5px')
+                    if not VL['enabled']:
+                        attrs['disabled'] = 'disabled'
+                        style0['color'] = 'lightgray'
+                    button0 = vd.components.Button(
+                        label=VL['label'],
+                        onclick=lambda VL=VL: self._trigger_launch_view(VL),
+                        style=style0,
+                        **attrs
+                    )
+                    view_launcher_buttons.append(button0)
+            table = _make_button_table(view_launcher_buttons, num_columns=2)
+            if group['label'] is not '':
+                elements.append(vd.h3(group['label']))
+            elements.append(table)
 
-        table = _make_button_table(view_launcher_buttons, num_columns=2)
         return vd.div(
-            table
+            *elements
         )
 
     def _trigger_launch_view(self, VL):

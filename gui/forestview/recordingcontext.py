@@ -7,13 +7,29 @@ from bandpass_filter import bandpass_filter
 class RecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
         self._signal_handlers = dict()
+        self._recording_object = recording_object
+        self._download = download
+
+        self._state = dict(
+            current_timepoint = None,
+            selected_time_range = None,
+            current_channel = None,
+            current_unit_id = None,
+            selected_unit_ids = []
+        )
+
+        self._initialized = False
+
+    def initialize(self):
+        if self._initialized:
+            return
         
         print('******** FORESTVIEW: Initializing recording context')
-        self._recording_object = recording_object
-        if download:
+        self._recording_object = self._recording_object
+        if self._download:
             print('******** FORESTVIEW: Downloading recording file if needed...')
         recdir = self._recording_object['directory']
-        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=download)
+        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download)
         self._rx = bandpass_filter(self._rx)
 
         firings_true_path = recdir + '/firings_true.mda'
@@ -26,13 +42,6 @@ class RecordingContext():
                 self._sx = SFMdaSortingExtractor(firings_file = firings_true_path)
 
         print('******** FORESTVIEW: Done initializing recording context')
-        self._state = dict(
-            current_timepoint = None,
-            selected_time_range = None,
-            current_channel = None,
-            current_unit_id = None,
-            selected_unit_ids = []
-        )
 
     def recordingObject(self):
         return deepcopy(self._recording_object)

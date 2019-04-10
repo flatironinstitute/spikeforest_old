@@ -11,7 +11,6 @@ import sys
 from recordingcontext import RecordingContext
 from spikeforestcontext import SpikeForestContext
 from recording_views import get_recording_view_launchers
-from spikeforest_views import get_spikeforest_view_launchers
 import uuid
 import mtlogging
 
@@ -38,13 +37,10 @@ class TheApp():
             view_launchers = get_recording_view_launchers()
         elif mode == 'spikeforest':
             context = _load_spikeforest_context(self._path)
-            view_launchers = get_spikeforest_view_launchers()
         else:
             raise Exception('Invalid mode: '+mode)
 
         W = ForestViewMainWindow(context=context)
-        for view_launcher in view_launchers:
-            W.addViewLauncher(view_launcher)
         _make_full_browser(W)
         return W
 
@@ -79,7 +75,10 @@ def main():
     args = parser.parse_args()
 
     if args.download_from:
-        mt.configRemoteReadonly(share_id=args.download_from)
+        try:
+            mt.configRemoteReadonly(share_id=args.download_from)
+        except:
+            print('WARNING: unable to configure to download from {}. Perhaps you are offline.'.format(args.download_from))
 
     # Configure readonly access to kbucket
     # if args.collection and args.share_id:
@@ -138,10 +137,30 @@ def _load_spikeforest_context(path):
         if not obj:
             print('Unable to load file: '+path, file=sys.stderr)
             return None
-        context = SpikeForestContext(studies = obj.get('studies', []), recordings = obj.get('recordings', []))
-        return context
     else:
-        raise Exception('Not yet implemented')
+        obj = _make_obj_from_dir(path)
+    context = SpikeForestContext(studies = obj.get('studies', []), recordings = obj.get('recordings', []))
+    return context
+
+def _make_obj_from_dir(path):
+    studies = []
+    recordings = []
+    study_name = os.path.basename(path)
+    studies.append(dict(
+        name=study_name,
+        description='Loaded from '+path
+    ))
+    dd = mt.readDir(path)
+    for dname, dd0 in dd['dirs'].items():
+        recordings.append(dict(
+            study=study_name,
+            name=dname,
+            directory=path+'/'+dname
+        ))
+    return dict(
+        studies=studies,
+        recordings=recordings
+    )
 
 if __name__ == "__main__":
     main()

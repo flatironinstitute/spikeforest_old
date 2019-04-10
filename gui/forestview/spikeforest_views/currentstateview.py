@@ -2,7 +2,7 @@ import vdomr as vd
 import json
 
 class CurrentStateView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, context, opts=None):
         vd.Component.__init__(self)
         self._context = context
         self._context.onAnyStateChanged(self.refresh)

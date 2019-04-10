@@ -7,7 +7,7 @@ import json
 from .tablewidget import TableWidget
 
 class RecordingTableView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, context, opts=None):
         vd.Component.__init__(self)
         self._context = context
         self._size=(100, 100)

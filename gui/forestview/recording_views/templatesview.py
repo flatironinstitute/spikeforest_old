@@ -15,19 +15,11 @@ import mlprocessors as mlpr
 import uuid
 
 class TemplatesView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, *, context, opts=None, prepare_result):
         vd.Component.__init__(self)
         self._context = context
         self._size = (100, 100)
-        self._templates_widget = None
-
-        self._connection_to_init, connection_to_parent = multiprocessing.Pipe()
-        self._init_process = multiprocessing.Process(target=_initialize, args=(context, connection_to_parent))
-        self._init_process.start()
-
-        self._init_log_text = ''
-        vd.set_timeout(self._check_init, 0.5)
-    def _on_init_completed(self, units):
+        units = prepare_result['units']
         self._templates_widget = TemplatesWidget(units=units)
         self._update_selected()
         self._templates_widget.onSelectedUnitIdsChanged(lambda: self._context.setSelectedUnitIds(self._templates_widget.selectedUnitIds()))
@@ -36,6 +28,23 @@ class TemplatesView(vd.Component):
         self._context.onCurrentUnitIdChanged(lambda: self._templates_widget.setCurrentUnitId(self._context.currentUnitId()))
         #self._templates_widget.setSize(self._size)
         self.refresh()
+    @staticmethod
+    def prepareView(context, opts):
+        context.initialize()
+        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
+        sorting = context.sortingExtractor()
+        unit_ids = sorting.getUnitIds()
+        print('***** Computing unit templates...')
+        #templates = compute_unit_templates(recording=earx, sorting=sorting, unit_ids=unit_ids)
+        templates = ComputeUnitTemplates.execute(recording=earx, sorting=sorting, unit_ids=unit_ids, templates_out=True).outputs['templates_out']
+        print('*****')
+        return dict(units=[
+            dict(
+                template=templates[:,:,i],
+                unit_id=unit_id
+            )
+            for i, unit_id in enumerate(unit_ids)
+        ])
     def setSize(self, size):
         if self._size != size:
             self._size=size
@@ -47,53 +56,11 @@ class TemplatesView(vd.Component):
     def tabLabel(self):
         return 'Templates'
     def render(self):
-        if self._templates_widget:
-            return vd.div(
-                self._templates_widget
-            )
-        else:
-            return vd.div(
-                vd.h3('Initializing...'),
-                vd.pre(self._init_log_text)
-            )
+        return self._templates_widget
 
     def _update_selected(self):
         self._templates_widget.setSelectedUnitIds(self._context.selectedUnitIds())
         self._templates_widget.setCurrentUnitId(self._context.currentUnitId())
-    def _check_init(self):
-        if not self._templates_widget:
-            if self._connection_to_init.poll():
-                msg = self._connection_to_init.recv()
-                if msg['name'] == 'log':
-                    self._init_log_text = self._init_log_text + msg['text']
-                    self.refresh()
-                elif msg['name'] == 'result':
-                    self._on_init_completed(msg['result'])
-                    return
-            vd.set_timeout(self._check_init, 1)
-
-# Initialization in a worker thread
-mtlogging.log(root=True)
-def _initialize(context, connection_to_parent):
-    with StdoutSender(connection=connection_to_parent):
-        print('***** Preparing efficient access recording extractor...')
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
-        sorting = context.sortingExtractor()
-        unit_ids = sorting.getUnitIds()
-        print('***** Computing unit templates...')
-        #templates = compute_unit_templates(recording=earx, sorting=sorting, unit_ids=unit_ids)
-        templates = ComputeUnitTemplates.execute(recording=earx, sorting=sorting, unit_ids=unit_ids, templates_out=True).outputs['templates_out']
-        print('*****')
-    connection_to_parent.send(dict(
-        name='result',
-        result=[
-            dict(
-                template=templates[:,:,i],
-                unit_id=unit_id
-            )
-            for i, unit_id in enumerate(unit_ids)
-        ]
-    ))
 
 def get_random_spike_waveforms(*,recording,sorting,unit,snippet_len,max_num,channels=None):
     st=sorting.getUnitSpikeTrain(unit_id=unit)

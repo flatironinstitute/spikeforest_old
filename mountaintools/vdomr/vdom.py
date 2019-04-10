@@ -62,7 +62,8 @@ class VDOM(object):
                     else:
                         out.write(c._repr_html_())
                 else:
-                    print('Warning: child of VDOM object is None (tag={}).'.format(self.tag_name), c)
+                    pass
+                    # print('Warning: child of VDOM object is None (tag={}).'.format(self.tag_name), c)
 
             out.write('</{tag}>'.format(tag=escape(self.tag_name)))
 

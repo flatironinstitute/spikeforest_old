@@ -9,7 +9,7 @@ import uuid
 source_path=os.path.dirname(os.path.realpath(__file__))
 
 class ElectrodeGeometryView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
         self._context = context
         self._size=None
@@ -18,6 +18,9 @@ class ElectrodeGeometryView(vd.Component):
         self._update_state()
         self._widget.onStateChanged(self._handle_state_changed)
         self._context.onCurrentChannelChanged(self._update_state)
+    @staticmethod
+    def prepareView(context, opts):
+        context.initialize()
     def setSize(self, size):
         if self._size == size:
             return

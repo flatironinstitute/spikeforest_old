@@ -1,10 +1,13 @@
 import vdomr as vd
 
 class RecordingSummaryView(vd.Component):
-    def __init__(self, context):
+    def __init__(self, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
         self._context = context
         self._size=(100, 100)
+    @staticmethod
+    def prepare(context, opts):
+        context.initialize()
     def setSize(self, size):
         self._size = size
     def size(self):

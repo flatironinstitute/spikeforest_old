@@ -2,16 +2,20 @@ from copy import deepcopy
 from mountaintools import client as mt
 from spikeforest import SFMdaRecordingExtractor
 from mountaintools import MountainClient
+from spikeforest_view_launchers import get_spikeforest_view_launchers
+from recordingcontext import RecordingContext
 
 local_client = MountainClient()
 
 class SpikeForestContext():
     def __init__(self, studies=[], recordings=[]):
         self._signal_handlers = dict()
+        self._any_state_change_handlers = []
         
         print('******** FORESTVIEW: Initializing study context')
         self._studies = studies
         self._recordings = recordings
+        self._recording_contexts = dict()
 
         self._studies_by_name = dict()
         for stu in self._studies:
@@ -19,13 +23,20 @@ class SpikeForestContext():
 
         self._recordings_by_id = dict()
         for rec in self._recordings:
-            self._recordings_by_id[rec['study']+'/'+rec['name']] = rec
+            id0 = rec['study']+'/'+rec['name']
+            self._recordings_by_id[id0] = rec
+            c0 = RecordingContext(rec)
+            c0.onAnyStateChanged(self._trigger_any_state_change_handlers)
+            self._recording_contexts[id0] = c0
 
         print('******** FORESTVIEW: Done initializing study context')
         self._state = dict(
             current_recording_id = None,
             selected_recording_ids = []
         )
+
+    def viewLaunchers(self):
+        return get_spikeforest_view_launchers(self)
 
     def studyNames(self):
         return sorted(list())
@@ -36,6 +47,11 @@ class SpikeForestContext():
     def recordingObject(self, recid):
         return deepcopy(self._recordings_by_id[recid])
 
+    def recordingContext(self, recid):
+        if not recid:
+            return None
+        return self._recording_contexts[recid]
+
     # def recordingExtractor(self, recording_name, *, download):
     #     print('loading recording extractor....', recording_name, download)
     #     return SFMdaRecordingExtractor(self._study_dir + '/' + recording_name, download=download)
@@ -43,9 +59,16 @@ class SpikeForestContext():
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():
             self._register_state_change_handler(key, handler)
+        self._any_state_change_handlers.append(handler)
 
     def stateObject(self):
-        return deepcopy(self._state)
+        ret = deepcopy(self._state)
+        rc = self.recordingContext(self.currentRecordingId())
+        if rc:
+            ret['current_recording'] = rc.stateObject()
+        else:
+            ret['current_recording'] = None
+        return ret
 
     # current recording
     def currentRecordingId(self):
@@ -91,3 +114,7 @@ class SpikeForestContext():
         if signal_name in self._signal_handlers:
             for handler in self._signal_handlers[signal_name]:
                 handler()
+
+    def _trigger_any_state_change_handlers(self):
+        for handler in self._any_state_change_handlers:
+            handler()
