@@ -54,7 +54,7 @@ _default_spikeforest_file = 'sha1://cee430a1dde64f3ef730997ced77842cfd6831e4/mea
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest studies, recordings, and results')
     parser.add_argument(
-        '--mode', help="Possible modes: recording, spikeforest", required=False, default='recording'
+        '--mode', help="Possible modes: recording, spikeforest", required=False, default='spikeforest'
     )
     parser.add_argument(
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None
