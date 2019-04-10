@@ -133,13 +133,25 @@ def kilosort_helper(*,
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
     print('Running kilosort...')
-    cmd_path = "addpath('{}'); ".format(source_dir)
-    cmd_call = "p_kilosort('{}', '{}', '{}', '{}', '{}', '{}', '{}');"\
-        .format(KILOSORT_PATH, IRONCLUST_PATH, tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-        cmd_path, cmd_call)
-    print(cmd)
-    retcode = _run_command_and_print_output(cmd)
+    cmd = '''
+        addpath('{source_dir}');
+        p_kilosort('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
+        quit;
+        '''
+    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT_PATH, iclust=IRONCLUST_PATH, \
+            tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
+            firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
+    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'run_kilosort.m')
+    matlab_cmd.write();
+    shell_cmd = '''
+        #!/bin/bash
+        cd {tmpdir}
+        matlab -nosplash -nodisplay -r run_kilosort.m
+    '''.format(tmpdir=tmpdir)
+    shell_cmd = mlpr.ShellScript(shell_cmd)
+    shell_cmd.write(tmpdir+'run_kilosort.sh')
+    shell_cmd.start()
+    retcode = shell_cmd.wait()
 
     if retcode != 0:
         raise Exception('kilosort returned a non-zero exit code')
