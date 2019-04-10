@@ -18,8 +18,6 @@ def main():
     args = parser.parse_args()
     path = args.path
 
-    print('-------------------------------', args)
-
     if args.login:
         mt.login(interactive=True)
 

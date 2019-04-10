@@ -557,7 +557,7 @@ class MountainClient():
         return list(self._get_sub_keys(key=key))
 
     @mtlogging.log(name='MountainClient:realizeFile')
-    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, share_id=None, local_first=False, show_progress=False):
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, share_id=None):
         """
         Return a local path to the specified file, downloading the file from a
         remote server to the local SHA-1 cache if needed. In other words,
@@ -762,6 +762,7 @@ class MountainClient():
         elif path.startswith('sha1dir://'):
             list0 = path.split('/')
             sha1 = list0[2]
+            if '.' in sha1: sha1=sha1.split('.')[0]
             dd = self.loadObject(path='sha1://'+sha1)
             if not dd:
                 return None
@@ -1400,6 +1401,7 @@ class MountainClientLocal():
         elif path.startswith('sha1dir://'):
             list0 = path.split('/')
             sha1 = list0[2]
+            if '.' in sha1: sha1=sha1.split('.')[0]
             dd = self._parent.loadObject(path='sha1://'+sha1)
             if not dd:
                 return None
