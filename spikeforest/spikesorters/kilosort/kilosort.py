@@ -47,6 +47,7 @@ class KiloSort(mlpr.Processor):
         optional=True, default=3, description='TODO')
 
     def run(self):
+        keep_temp_files = False
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/kilosort-tmp-'+code
@@ -73,9 +74,11 @@ class KiloSort(mlpr.Processor):
                 sorting=sorting, save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
-                shutil.rmtree(tmpdir)
+                if not keep_temp_files:
+                    shutil.rmtree(tmpdir)
             raise
-        shutil.rmtree(tmpdir)
+        if not keep_temp_files:
+            shutil.rmtree(tmpdir)
 
 
 def kilosort_helper(*,
@@ -132,24 +135,28 @@ def kilosort_helper(*,
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
-    print('Running kilosort...')
+    print('Running kilosort in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
-        addpath('{source_dir}');
-        p_kilosort('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
-        quit;
+addpath('{source_dir}');
+try
+    p_kilosort('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
+catch
+    quit(1);
+end
+quit(0);
         '''
     cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT_PATH, iclust=IRONCLUST_PATH, \
             tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
             firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
-    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'run_kilosort.m')
+    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort.m',keep_temp_files=True)
     matlab_cmd.write();
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        matlab -nosplash -nodisplay -r run_kilosort.m
+        matlab -nosplash -nodisplay -r run_kilosort
     '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd)
-    shell_cmd.write(tmpdir+'run_kilosort.sh')
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir+'/run_kilosort.sh')
     shell_cmd.start()
     retcode = shell_cmd.wait()
 
@@ -176,17 +183,3 @@ def _write_text_file(fname, str):
     with open(fname, 'w') as f:
         f.write(str)
 
-
-def _run_command_and_print_output(command):
-    with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
-        while True:
-            output_stdout = process.stdout.readline()
-            output_stderr = process.stderr.readline()
-            if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
-                break
-            if output_stdout:
-                print(output_stdout.decode())
-            if output_stderr:
-                print(output_stderr.decode())
-        rc = process.poll()
-        return rc
