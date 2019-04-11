@@ -136,7 +136,9 @@ class DiskReadMda:
             return None
 
 def is_url(path):
-    return path.startswith('http://') or path.startswith('https://')
+    path = path or ''
+    return path.startswith('http://') or path.startswith('https://') or path.startswith(
+        'kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 
 def _download_bytes_to_tmpfile(url,start,end):
     headers = {"Range": "bytes={}-{}".format(start,end-1)}

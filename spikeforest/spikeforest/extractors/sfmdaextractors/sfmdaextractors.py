@@ -136,6 +136,9 @@ class SFMdaSortingExtractor(SortingExtractor):
             print('Done.')
         else:
             self._firings_path = ca.realizeFile(path=firings_file)
+        if not self._firings_path:
+            raise Exception('Unable to realize firings file: '+firings_file)
+        
         self._firings = readmda(self._firings_path)
         self._times = self._firings[1, :]
         self._labels = self._firings[2, :]
@@ -190,10 +193,12 @@ def _concatenate(list):
 
 
 def is_kbucket_url(path):
+    path = path or ''
     return path.startswith('kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 
 
 def is_url(path):
+    path = path or ''
     return path.startswith('http://') or path.startswith('https://') or path.startswith(
         'kbucket://') or path.startswith('sha1://') or path.startswith('sha1dir://')
 

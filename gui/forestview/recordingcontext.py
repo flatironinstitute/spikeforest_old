@@ -77,6 +77,7 @@ class RecordingContext():
     def addSortingResult(self, sorting_result_object):
         from sortingresultcontext import SortingResultContext # avoid cyclic dependency
         sc = SortingResultContext(sorting_result_object=sorting_result_object, recording_context=self)
+        sc.onAnyStateChanged(self._trigger_any_state_change_handlers)
         self._sorting_result_contexts[sorting_result_object['sorter']['name']]=sc
 
     def recordingObject(self):

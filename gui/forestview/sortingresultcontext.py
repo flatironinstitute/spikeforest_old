@@ -2,6 +2,7 @@ from spikeforest import SFMdaSortingExtractor
 from copy import deepcopy
 from mountaintools import client as mt
 from recordingcontext import RecordingContext
+import mtlogging
 
 class SortingResultContext():
     def __init__(self, *, sorting_result_object, recording_context):
@@ -16,6 +17,7 @@ class SortingResultContext():
 
         self._initialized = False
 
+    @mtlogging.log(name='SortingResultContext:initialize', root=True)
     def initialize(self):
         if self._initialized:
             return
@@ -25,11 +27,15 @@ class SortingResultContext():
 
         print('******** FORESTVIEW: Initializing sorting result context')
         
-        self._sorting_extractor = SFMdaSortingExtractor(firings_file =self._sorting_result_object['firings'])
+        if self._sorting_result_object['firings']:
+            self._sorting_extractor = SFMdaSortingExtractor(firings_file =self._sorting_result_object['firings'])
+        else:
+            print(self._sorting_result_object)
+            raise Exception('No firings field in sorting result object.')
 
         print('******** FORESTVIEW: Done initializing sorting result context')
 
-    def sortingObject(self):
+    def sortingResultObject(self):
         return deepcopy(self._sorting_result_object)
 
     def recordingContext(self):

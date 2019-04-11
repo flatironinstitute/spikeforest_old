@@ -89,14 +89,27 @@ class ForestViewMainWindow(vd.Component):
     def render(self):
         return self._container_main
 
+class TextComponent(vd.Component):
+    def __init__(self):
+        vd.Component.__init__(self)
+        self._text = ''
+    def setText(self, txt):
+        if self._text == txt:
+            return
+        self._text = txt
+        self.refresh()
+    def render(self):
+        return vd.span(self._text)
+
 class ViewFrame(vd.Component):
     def __init__(self, *, view_launcher):
         vd.Component.__init__(self)
         self._view_launcher = view_launcher
         self._connection_to_prepare = None
         self._prepare_log_text = ''
+        self._prepare_log_text_view = TextComponent()
         self._view = None
-        self._size = None
+        self._size = (100, 100)
     def setSize(self, size):
         self._size=size
         if self._view:
@@ -121,7 +134,8 @@ class ViewFrame(vd.Component):
             )
             self._init_process.start()
 
-            vd.set_timeout(self._check_prepare, 0.5)
+            self._check_prepare_count = 0
+            vd.set_timeout(self._check_prepare, 0.1)
         else:
             if hasattr(context, 'initialize'):
                 context.initialize()
@@ -132,10 +146,12 @@ class ViewFrame(vd.Component):
         if self._view:
             return self._view
         else:
-            return vd.div(
-                vd.h3('Preparing...'),
-                vd.pre(self._prepare_log_text),
-                style=dict(overflow='auto')
+            return vd.components.ScrollArea(
+                vd.div(
+                    vd.h3('Preparing...'),
+                    vd.pre(self._prepare_log_text_view)
+                ),
+                height=self._size[1]
             )
     def _check_prepare(self):
         if not self._view:
@@ -143,11 +159,20 @@ class ViewFrame(vd.Component):
                 msg = self._connection_to_prepare.recv()
                 if msg['name'] == 'log':
                     self._prepare_log_text = self._prepare_log_text + msg['text']
-                    self.refresh()
+                    self._prepare_log_text_view.setText(self._prepare_log_text)
                 elif msg['name'] == 'result':
                     self._on_prepare_completed(msg['result'])
                     return
-            vd.set_timeout(self._check_prepare, 1)
+            self._check_prepare_count = self._check_prepare_count + 1
+            if self._check_prepare_count < 3:
+                timeout = 0.2
+            elif self._check_prepare_count < 5:
+                timeout = 0.5
+            elif self._check_prepare_count < 10:
+                timeout = 1
+            else:
+                timeout = 5
+            vd.set_timeout(self._check_prepare, timeout)
     def _on_prepare_completed(self, result):
         view_launcher = self._view_launcher
         context = view_launcher['context']

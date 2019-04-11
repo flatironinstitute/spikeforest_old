@@ -17,25 +17,37 @@ class ForestViewControlPanel(vd.Component):
         elements = []
         for group in groups:
             view_launcher_buttons = []
+            view_launcher_components = []
             for VL in view_launchers['launchers']:
                 if VL['group'] == group['name']:
                     attrs=dict()
-                    style0=dict(width='130px', height='50px', margin='5px')
+                    style0=dict(width='130px', height='30px', margin='5px')
                     style0['font-size']='12px'
                     if not VL['enabled']:
                         attrs['disabled'] = 'disabled'
                         style0['color'] = 'lightgray'
-                    button0 = vd.components.Button(
-                        label=VL['label'],
-                        onclick=lambda VL=VL: self._trigger_launch_view(VL),
-                        style=style0,
-                        **attrs
-                    )
-                    view_launcher_buttons.append(button0)
+                    if 'view_class' in VL:
+                        button0 = vd.components.Button(
+                            label=VL['label'],
+                            onclick=lambda VL=VL: self._trigger_launch_view(VL),
+                            style=style0,
+                            **attrs
+                        )
+                        view_launcher_buttons.append(button0)
+                    elif 'component_class' in VL:
+                        component = VL['component_class'](context=VL['context'], opts=VL['opts'])
+                        view_launcher_components.append(component)
+                    else:
+                        print(VL)
+                        raise Exception('Problem with view launcher.')
             table = _make_button_table(view_launcher_buttons, num_columns=2)
             if group['label'] is not '':
                 elements.append(vd.h3(group['label']))
+            if 'sublabel' in group:
+                elements.append(vd.span(group['sublabel'], style={'overflow-wrap':'break-word'}))
             elements.append(table)
+            for component in view_launcher_components:
+                elements.append(component)
 
         return vd.div(
             *elements

@@ -94,6 +94,44 @@ class RecordingTableWidget(vd.Component):
     def render(self):
         return self._table_widget
 
+class RecordingSelectComponent(vd.Component):
+    def __init__(self, context, opts=None):
+        vd.Component.__init__(self)
+        self._context = context
+        self._size=(100, 100)
+        self._recording_select_widget = RecordingSelectWidget(context=context)
+    def render(self):
+        return self._recording_select_widget
+
+class RecordingSelectWidget(vd.Component):
+    def __init__(self, *, context):
+        vd.Component.__init__(self)
+        self._context = context
+        self._select_box = vd.components.SelectBox(style={'width':'100%'})
+        self._select_box.onChange(self._on_selection_changed)
+        self._context.onCurrentRecordingChanged(self._on_context_selection_changed)
+        self._update_options()
+    def _update_options(self):
+        self._recording_ids = self._context.recordingIds()
+        self._select_box.setOptions(['[Select recording]'] + self._recording_ids)
+        recid = self._context.currentRecordingId()
+        if recid is not None:
+            self._select_box.setValue(recid)
+        
+        self._on_context_selection_changed()
+        self.refresh()
+    def _on_selection_changed(self, value):
+        index0 = self._select_box.index()
+        if index0 > 0:
+            recid = self._recording_ids[index0-1]
+            self._context.setCurrentRecordingId(recid)
+    def _on_context_selection_changed(self):
+        recid = self._context.currentRecordingId()
+        self._select_box.setValue(recid)
+
+    def render(self):
+        return self._select_box
+
 def _get_computed_info(recobj, name):
     summary = recobj.get('summary', dict())
     computed_info = summary.get('computed_info', dict())

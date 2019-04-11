@@ -5,10 +5,11 @@ import uuid
 import json
 
 class SelectBox(vd.Component):
-    def __init__(self, options=[]):
+    def __init__(self, options=[], **kwargs):
         vd.Component.__init__(self)
         self._on_change_handlers = []
         self._value = None
+        self._kwargs = kwargs
         self.setOptions(options)
 
     def setOptions(self, options):
@@ -42,7 +43,7 @@ class SelectBox(vd.Component):
                 opts.append(vd.option(option, selected='selected'))
             else:
                 opts.append(vd.option(option))
-        X = vd.select(opts, onchange=self._on_change)
+        X = vd.select(opts, onchange=self._on_change, **self._kwargs)
         return X
 
 

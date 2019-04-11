@@ -62,10 +62,16 @@ def main():
     #     '--share_id', help='The remote kbucket share_id', required=False, default=None
     # )
     parser.add_argument(
-        '--download-from', required=False, default='spikeforest.spikeforest2'
+        #'--download-from', required=False, default='spikeforest.spikeforest2'
+        '--download-from', required=False, default=None
     )
 
     args = parser.parse_args()
+
+    if args.path is None:
+        args.path = _default_spikeforest_file
+        if args.download_from is None:
+            args.download_from = 'spikeforest.spikeforest2'
 
     if args.download_from:
         try:
@@ -113,8 +119,6 @@ def _make_full_browser(W):
     vd.devel.loadJavascript(js=js, delay=1)
 
 def _load_spikeforest_context(path):
-    if path is None:
-        path = _default_spikeforest_file
     if mt.isFile(path):
         obj = mt.loadObject(path=path)
         if not obj:
