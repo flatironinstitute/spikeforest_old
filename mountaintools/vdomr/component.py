@@ -2,7 +2,7 @@ import base64
 import uuid
 import abc
 
-from .vdomr import exec_javascript, _queue_javascript, _exec_queued_javascript
+from .vdomr import exec_javascript, _queue_javascript, _exec_queued_javascript, set_timeout, mode
 
 
 class Component(object):
@@ -33,6 +33,8 @@ class Component(object):
 
     def _repr_html_(self):
         html=self._render_and_get_html()
+        if mode()=='jp_proxy_widget' or mode()=='colab':
+            set_timeout(self.refresh, 0) # this is needed in the notebook to trigger refresh so that the queued js can be executed.
         return '<div id={}>'.format(self._div_id)+html+'</div>'
 
     def _render_and_get_html(self):
