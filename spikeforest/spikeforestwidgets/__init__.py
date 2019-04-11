@@ -1,6 +1,6 @@
 from .timeserieswidget import TimeseriesWidget, precomputeMultiscaleRecordings
 from .templatewidget import TemplateWidget
-from .featurespacewidget import FeatureSpaceWidget
+from .featurespacewidget import FeatureSpaceWidget, FeatureSpaceWidgetPlotly
 from .electrodegeometrywidget import ElectrodeGeometryWidget
 from .unitwaveformswidget import UnitWaveformWidget, UnitWaveformsWidget
 from .correlogramswidget import CorrelogramsWidget

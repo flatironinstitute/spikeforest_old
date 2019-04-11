@@ -15,7 +15,7 @@ class FeatureSpaceView(vd.Component):
         self._size = (100, 100)
         self._rx = EfficientAccessRecordingExtractor(path=prepare_result['earx_path'])
         unit_ids = self._sorting_context.selectedUnitIds()
-        self._widget = SFW.FeatureSpaceWidget(recording=self._rx, sorting=self._sorting_context.sortingExtractor(), unit_ids=unit_ids)
+        self._widget = SFW.FeatureSpaceWidgetPlotly(recording=self._rx, sorting=self._sorting_context.sortingExtractor(), unit_ids=unit_ids)
         self._widget.setSize(self._size)
         self.refresh()
     @staticmethod

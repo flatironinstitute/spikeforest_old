@@ -120,7 +120,6 @@ def get_spikeforest_view_launchers(context):
             enabled=(len(recording_context.sortingResultNames()) > 0)
         ))
 
-
     # Sorting result
     if recording_context and recording_context.currentSortingResult():
         srname = recording_context.currentSortingResult()
@@ -144,6 +143,12 @@ def get_spikeforest_view_launchers(context):
             view_class=UnitsTableView,
             context=sorting_result_context, opts=dict(),
             enabled=(sorting_result_context is not None)
+        ))
+        launchers.append(dict(
+            group='sorting-result', name='feature-space', label='Feature space',
+            view_class=FeatureSpaceView,
+            context=sorting_result_context, opts=dict(),
+            enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
         ))
     
         dict(name='unit',label='Unit')

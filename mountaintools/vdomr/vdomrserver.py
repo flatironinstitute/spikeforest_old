@@ -15,10 +15,13 @@ class VDOMRServer():
         self._vdomr_app = vdomr_app
         self._sessions = dict()
         self._port = None
-        pass
+        self._token = os.environ.get('VDOMR_TOKEN', _random_string(10))
 
     def setPort(self, port):
         self._port = port
+
+    def setToken(self, token):
+        self._token = token
 
     def start(self):
         try:
@@ -48,100 +51,104 @@ class VDOMRServer():
                 server_self._sessions[session_id]['root'] = root
 
                 html = '''
-            <head>
-            <script>
-                function post_json(url,obj,callback) {
-                xhr = new XMLHttpRequest();
-                xhr.open("POST", url, true);
-                xhr.setRequestHeader("Content-type", "application/json");
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState == 4 && xhr.status == 200) {
-                        var resp;
-                        try {
-                            resp=JSON.parse(xhr.responseText);
-                        }
-                        catch(err) {
-                            callback('Problem parsing json response.');
-                            return;
-                        }
-                        if (resp.success) {
-                            callback(null,resp);
-                        }
-                        else {
-                            callback('Error: '+resp.error);
+                <head>
+                <script>
+                    function post_json(url,obj,callback) {
+                    xhr = new XMLHttpRequest();
+                    xhr.open("POST", url, true);
+                    xhr.setRequestHeader("Content-type", "application/json");
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            var resp;
+                            try {
+                                resp=JSON.parse(xhr.responseText);
+                            }
+                            catch(err) {
+                                callback('Problem parsing json response.');
+                                return;
+                            }
+                            if (resp.success) {
+                                callback(null,resp);
+                            }
+                            else {
+                                callback('Error: '+resp.error);
+                            }
                         }
                     }
-                }
-                var data = JSON.stringify(obj);
-                xhr.send(data);
-                }
-                function inject_script(url,callback) {
-                    var head = document.getElementsByTagName('head')[0];
-                    var script = document.createElement('script');
-                    script.type = 'text/javascript';
-                    script.onload = function() {
-                        callback();
+                    var data = JSON.stringify(obj);
+                    xhr.send(data);
                     }
-                    script.src = url;
-                    head.appendChild(script);
-                }
-            </script>
+                    function inject_script(url,callback) {
+                        var head = document.getElementsByTagName('head')[0];
+                        var script = document.createElement('script');
+                        script.type = 'text/javascript';
+                        script.onload = function() {
+                            callback();
+                        }
+                        script.src = url;
+                        head.appendChild(script);
+                    }
+                </script>
 
-            <script>
-            window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
-                console.log('vdomr_invokeFunction',callback_id,args,kwargs);
-                document.getElementById('overlay').style.visibility='visible'
-                post_json('/invoke/?session_id={session_id}',{callback_id:callback_id,args:args,kwargs:kwargs},function(err,resp) {
-                document.getElementById('overlay').style.visibility='hidden'
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                console.log('ok',resp);
-                inject_script('/script_immediate.js?session_id={session_id}',function() {
+                <script>
+                window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
+                    console.log('vdomr_invokeFunction',callback_id,args,kwargs);
+                    document.getElementById('overlay').style.visibility='visible'
+                    post_json('/{vdomr_token_str}invoke/?session_id={session_id}',{callback_id:callback_id,args:args,kwargs:kwargs},function(err,resp) {
+                    document.getElementById('overlay').style.visibility='hidden'
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                    console.log('ok',resp);
+                    inject_script('/{vdomr_token_str}script_immediate.js?session_id={session_id}',function() {
 
-                });
-                });
-            }
-            </script>
-
-            <script>
-                function get_script() {
-                    console.log('get_script');
-                    inject_script('/script.js?session_id={session_id}',function() {
-                        setTimeout(function() {
-                            get_script();
-                        },100);
+                    });
                     });
                 }
-                setTimeout(function() {
-                    get_script();
-                },1000);
-            </script>
+                </script>
 
-            <style>
-            .overlay {
-                background-color: rgba(1, 1, 1, 0.2);
-                color:white;
-                font-size:24px;
-                bottom: 0;
-                left: 0;
-                position: fixed;
-                right: 0;
-                top: 0;
-                text-align: center;
-                padding: 40px;
-            }
-            </style>
+                <script>
+                    function get_script() {
+                        console.log('get_script');
+                        inject_script('/{vdomr_token_str}script.js?session_id={session_id}',function() {
+                            setTimeout(function() {
+                                get_script();
+                            },100);
+                        });
+                    }
+                    setTimeout(function() {
+                        get_script();
+                    },1000);
+                </script>
 
-            </head>
-            <html>
-            <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
-            {content}
-            </html>
-            '''
+                <style>
+                .overlay {
+                    background-color: rgba(1, 1, 1, 0.2);
+                    color:white;
+                    font-size:24px;
+                    bottom: 0;
+                    left: 0;
+                    position: fixed;
+                    right: 0;
+                    top: 0;
+                    text-align: center;
+                    padding: 40px;
+                }
+                </style>
+
+                </head>
+                <html>
+                <div id=overlay class=overlay style="visibility:hidden">Please wait...</div>
+                {content}
+                </html>
+                '''
                 html = root._repr_html_().join(html.split('{content}'))
                 html = session_id.join(html.split('{session_id}'))
+                if server_self._token:
+                    html = html.replace('{vdomr_token_str}', server_self._token+'/')
+                else:
+                    html = html.replace('{vdomr_token_str}', '')
                 self.write(html)
 
         class InvokeHandler(tornado.web.RequestHandler):
@@ -205,7 +212,7 @@ class VDOMRServer():
                         self.write('\n\n'.join(js_list))
                         break
                     yield async_sleep(delay)
-                self.write("//nothing to do")
+                self.write("(function() {/*nothing to do*/})")
 
         class ScriptImmediateHandler(tornado.web.RequestHandler):
             @gen.coroutine
@@ -224,20 +231,40 @@ class VDOMRServer():
                 if len(js_list) > 0:
                     self.write('\n\n'.join(js_list))
                 else:
-                    self.write('//nothing to do---')
+                    self.write('(function() {/*nothing to do --*/})')
 
         if self._port is not None:
             port = self._port
         else:
             port = os.environ.get('PORT', 3005)
 
+
+        _root_path='/'
+        _invoke_path='/invoke/'
+        _script_path='/script.js'
+        _script_immediate_path='/script_immediate.js'
+
+        if self._token:
+            _root_path='/{}{}'.format(self._token, _root_path)
+            _invoke_path='/{}{}'.format(self._token, _invoke_path)
+            _script_path='/{}{}'.format(self._token, _script_path)
+            _script_immediate_path='/{}{}'.format(self._token, _script_immediate_path)
+
         application = tornado.web.Application([
-            (r"/", RootHandler),
-            (r"/invoke/", InvokeHandler),
-            (r"/script.js", ScriptHandler),
-            (r"/script_immediate.js", ScriptImmediateHandler)
+            (_root_path, RootHandler),
+            (_invoke_path, InvokeHandler),
+            (_script_path, ScriptHandler),
+            (_script_immediate_path, ScriptImmediateHandler)
         ])
         http_server = tornado.httpserver.HTTPServer(application)
         http_server.listen(port)
-        print('VDOMR server is listening on port {}'.format(port))
+        if self._token:
+            print('VDOMR server is listening on port {} with token {}'.format(port, self._token))
+            print('http://localhost:{}/{}/'.format(port, self._token))
+        else:
+            print('VDOMR server is listening on port {}'.format(port))
+            print('http://localhost:{}'.format(port))
         tornado.ioloop.IOLoop.current().start()
+
+def _random_string(num):
+    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
