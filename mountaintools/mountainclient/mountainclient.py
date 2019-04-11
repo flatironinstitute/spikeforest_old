@@ -2,6 +2,7 @@ import json
 import urllib.request as request
 import hashlib
 import os
+import sys
 import pathlib
 import random
 import base64
@@ -706,6 +707,53 @@ class MountainClient():
             return None
         return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, share_id=share_id)
 
+    def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False):
+        client = MountainClient() # local client
+        if client.isFile(path):
+            address = client.saveFile(path=path)
+            if not address:
+                print('Unable to read or save file', file=sys.stderr)
+                return None
+            if upload_to:
+                if not client.saveFile(path=path, share_id=upload_to):
+                    print('Unable to upload file', file=sys.stderr)
+                    return None
+            return address
+        else:
+            dd = client.readDir(path=path, recursive=True, include_sha1=True)
+            if not dd:
+                print('Unable to read file or directory', file=sys.stderr)
+                return None
+            if client.isLocalPath(path) or download_recursive:
+                if not self._create_snapshot_helper_save_dd(client=client, basepath=path, dd=dd, share_id=None):
+                    print('Problem saving files to local cache.')
+                    return None
+                if upload_to and upload_recursive:
+                    if not self._create_snapshot_helper_save_dd(client=client, basepath=path, dd=dd, share_id=upload_to):
+                        print('Problem saving files to local cache.')
+                        return None
+
+            address = client.saveObject(dd, basename='')
+            address = address.replace('sha1://', 'sha1dir://')
+            if upload_to:
+                client.saveObject(dd, share_id=upload_to)
+            return address
+
+    def _create_snapshot_helper_save_dd(self, *, client, basepath, dd, share_id):
+        for fname in dd['files'].keys():
+            fpath = os.path.join(basepath, fname)
+            if not client.saveFile(path=fpath, share_id=share_id):
+                if not share_id:
+                    print('Unable to copy file to local cache: '+fpath, file=sys.stderr)
+                else:
+                    print('Unable to upload file: '+fpath, file=sys.stderr)
+                return False
+        for dname, dd0 in dd['dirs'].items():
+            dpath = os.path.join(basepath, dname)
+            if not self._create_snapshot_helper_save_dd(client=client, basepath=dpath, dd=dd0, share_id=share_id):
+                return False
+        return True
+
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
     def loadText(self, *, key=None, path=None, subkey=None, local_first=False):
@@ -1011,11 +1059,12 @@ class MountainClient():
             return None
         if share_id is None:
             share_id = self._remote_config['share_id']
-            upload_token = self._remote_config['upload_token']
         if share_id in self._kacheries.keys():
             upload_token=self._kacheries[share_id].get('upload_token', None)
         else:
             upload_token=None
+        if share_id == self._remote_config['share_id']:
+            upload_token = self._remote_config['upload_token']
         if (share_id) and (upload_token) and (not prevent_upload):
             sha1 = self.computeFileSha1(path=path)
             if sha1:
