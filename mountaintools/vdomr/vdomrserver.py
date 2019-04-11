@@ -93,9 +93,9 @@ class VDOMRServer():
                 <script>
                 window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
                     console.log('vdomr_invokeFunction',callback_id,args,kwargs);
-                    document.getElementById('overlay').style.visibility='visible'
+                    // document.getElementById('overlay').style.visibility='visible'
                     post_json('/{vdomr_token_str}invoke/?session_id={session_id}',{callback_id:callback_id,args:args,kwargs:kwargs},function(err,resp) {
-                    document.getElementById('overlay').style.visibility='hidden'
+                    // document.getElementById('overlay').style.visibility='hidden'
                     if (err) {
                         console.error(err);
                         return;
@@ -110,16 +110,15 @@ class VDOMRServer():
 
                 <script>
                     function get_script() {
-                        console.log('get_script');
                         inject_script('/{vdomr_token_str}script.js?session_id={session_id}',function() {
                             setTimeout(function() {
                                 get_script();
-                            },100);
+                            },0);
                         });
                     }
                     setTimeout(function() {
                         get_script();
-                    },1000);
+                    },100);
                 </script>
 
                 <style>

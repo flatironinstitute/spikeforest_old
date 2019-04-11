@@ -190,8 +190,11 @@ class TemplatesWidget(vd.Component):
       js="""
       for (let i=0; i<{num_widgets}; i++) {
           (function(index) {
-            document.getElementById('{uuid}-'+index).onclick=function(evt) {
-                window.vdomr_invokeFunction('{box_clicked_callback_id}', [], {index:index, ctrlKey:evt.ctrlKey});
+            let elmt = document.getElementById('{uuid}-'+index);
+            if (elmt) {
+                elmt.onclick=function(evt) {
+                    window.vdomr_invokeFunction('{box_clicked_callback_id}', [], {index:index, ctrlKey:evt.ctrlKey});
+                }
             }
           })(i);
       }

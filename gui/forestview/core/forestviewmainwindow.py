@@ -145,6 +145,7 @@ class ViewFrame(vd.Component):
         self.refresh()
     def render(self):
         if self._view:
+            print('rendering view')
             return self._view
         else:
             return vd.components.ScrollArea(

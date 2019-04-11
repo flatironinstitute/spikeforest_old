@@ -24,7 +24,7 @@ class Component(object):
         html=self._render_and_get_html()
         html_encoded = base64.b64encode(html.encode('utf-8')).decode('utf-8')
         js = "{{var elmt=document.getElementById('{}'); if (elmt) elmt.innerHTML=atob('{}');}}".format(
-            self._div_id, html_encoded)
+            self._div_id, html_encoded, self._div_id)
         exec_javascript(js)
         _exec_queued_javascript()
 
@@ -33,8 +33,6 @@ class Component(object):
 
     def _repr_html_(self):
         html=self._render_and_get_html()
-        if mode()=='jp_proxy_widget' or mode()=='colab':
-            set_timeout(_exec_queued_javascript, 0) # this is needed in the notebook to trigger the queued js to be executed.
         return '<div id={}>'.format(self._div_id)+html+'</div>'
 
     def _render_and_get_html(self):
@@ -44,9 +42,16 @@ class Component(object):
             # Note the following has a terrible race condition
             js2 = """
             (function() {
-                {js}
-            })()
+                var elmt=document.getElementById('{div_id}');
+                if (elmt) {
+                    // important to only run the javascript if we find the element on the page!!
+                    {js}
+                }
+            })();
             """
+            js2=js2.replace('{div_id}', self._div_id)
             js2=js2.replace('{js}', js)
             _queue_javascript(js2)
+            if mode()=='jp_proxy_widget' or mode()=='colab' or mode()=='server':
+                set_timeout(_exec_queued_javascript, 0) # this is needed in some situations to trigger the queued js to be executed.
         return html
