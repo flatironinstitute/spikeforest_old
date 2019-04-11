@@ -18,6 +18,7 @@ class ForestViewControlPanel(vd.Component):
         for group in groups:
             view_launcher_buttons = []
             view_launcher_components = []
+            group_elements = []
             for VL in view_launchers['launchers']:
                 if VL['group'] == group['name']:
                     attrs=dict()
@@ -42,12 +43,13 @@ class ForestViewControlPanel(vd.Component):
                         raise Exception('Problem with view launcher.')
             table = _make_button_table(view_launcher_buttons, num_columns=2)
             if group['label'] is not '':
-                elements.append(vd.h3(group['label']))
+                group_elements.append(vd.h4(group['label']))
             if 'sublabel' in group:
-                elements.append(vd.span(group['sublabel'], style={'overflow-wrap':'break-word'}))
-            elements.append(table)
+                group_elements.append(vd.span(group['sublabel'], style={'overflow-wrap':'break-word','font-size':'11px'}))
+            group_elements.append(table)
             for component in view_launcher_components:
-                elements.append(component)
+                group_elements.append(component)
+            elements.append(vd.div(group_elements, style={'border':'solid 1px lightgray', 'padding':'5px', 'margin':'5px'}))
 
         return vd.div(
             *elements
@@ -69,4 +71,4 @@ def _make_button_table(buttons, num_columns):
             for button in row_buttons
         ]))
         i = i+num_columns
-    return vd.table(*rows)
+    return vd.div(vd.table(*rows), style={'background-color':'lightgray'})
