@@ -16,21 +16,24 @@ from .tablewidget import TableWidget
 class UnitsTableView(vd.Component):
     def __init__(self, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
-        self._context = context
+        self._sorting_context = context
+        self._recording_context = context.recordingContext()
         self._size=(100, 100)
         self._unit_table_widget = UnitTableWidget(
-            context=self._context,
+            context=self._sorting_context,
             units_info=prepare_result['units_info']
         )
         self._unit_table_widget.setSize(self._size)
     @staticmethod
     def prepareView(context, opts):
+        sorting_context = context
+        recording_context = context.recordingContext()
         try:
-            context.initialize()
+            sorting_context.initialize()
             print('***** Preparing efficient access recording extractor...')
-            earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
+            earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
             print('***** computing units info...')
-            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=earx, sorting=context.sortingExtractor(), json_out=True).outputs['json_out'])
+            info0 = mt.loadObject(path=ComputeUnitsInfo.execute(recording=earx, sorting=sorting_context.sortingExtractor(), json_out=True).outputs['json_out'])
             print('*****')
         except:
             traceback.print_exc()
@@ -61,6 +64,8 @@ class UnitsTableView(vd.Component):
 class UnitTableWidget(vd.Component):
     def __init__(self, *, context, units_info):
         vd.Component.__init__(self)
+        self._sorting_context = context
+        self._recording_context = context.recordingContext()
         self._size = (100,100)
         self._units_info = units_info
         self._update_table()

@@ -8,13 +8,14 @@ from recordingcontext import RecordingContext
 local_client = MountainClient()
 
 class SpikeForestContext():
-    def __init__(self, studies=[], recordings=[]):
+    def __init__(self, studies=[], recordings=[], sorting_results=[]):
         self._signal_handlers = dict()
         self._any_state_change_handlers = []
         
         print('******** FORESTVIEW: Initializing study context')
         self._studies = studies
         self._recordings = recordings
+        self._sorting_results = sorting_results
         self._recording_contexts = dict()
 
         self._studies_by_name = dict()
@@ -28,6 +29,13 @@ class SpikeForestContext():
             c0 = RecordingContext(rec)
             c0.onAnyStateChanged(self._trigger_any_state_change_handlers)
             self._recording_contexts[id0] = c0
+
+        for sr in self._sorting_results:
+            rec = sr['recording']
+            id0 = rec['study']+'/'+rec['name']
+            if id0 in self._recording_contexts:
+                rc = self._recording_contexts[id0]
+                rc.addSortingResult(sr)
 
         print('******** FORESTVIEW: Done initializing study context')
         self._state = dict(

@@ -121,7 +121,7 @@ def _initialize(context, unit_id, connection_to_parent):
             print('***** Preparing efficient access recording extractor...')
             earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
             print('***** Computing unit detail...')
-            path0 = mt.realizeFile(path=ComputeUnitDetail.execute(recording=earx, sorting=context.sortingExtractor(), unit_id=unit_id, output=True).outputs['output'])
+            path0 = mt.realizeFile(path=ComputeUnitDetail.execute(recording=earx, sorting=context.trueSortingExtractor(), unit_id=unit_id, output=True).outputs['output'])
             with open(path0, 'rb') as f:
                 result0 = pickle.load(f)
             print('*****')

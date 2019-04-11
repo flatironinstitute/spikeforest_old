@@ -17,22 +17,25 @@ import uuid
 class TemplatesView(vd.Component):
     def __init__(self, *, context, opts=None, prepare_result):
         vd.Component.__init__(self)
-        self._context = context
+        self._sorting_context = context
+        self._recording_context = context.recordingContext()
         self._size = (100, 100)
         units = prepare_result['units']
         self._templates_widget = TemplatesWidget(units=units)
         self._update_selected()
-        self._templates_widget.onSelectedUnitIdsChanged(lambda: self._context.setSelectedUnitIds(self._templates_widget.selectedUnitIds()))
-        self._context.onSelectedUnitIdsChanged(lambda: self._templates_widget.setSelectedUnitIds(self._context.selectedUnitIds()))
-        self._templates_widget.onCurrentUnitIdChanged(lambda: self._context.setCurrentUnitId(self._templates_widget.currentUnitId()))
-        self._context.onCurrentUnitIdChanged(lambda: self._templates_widget.setCurrentUnitId(self._context.currentUnitId()))
+        self._templates_widget.onSelectedUnitIdsChanged(lambda: self._sorting_context.setSelectedUnitIds(self._templates_widget.selectedUnitIds()))
+        self._sorting_context.onSelectedUnitIdsChanged(lambda: self._templates_widget.setSelectedUnitIds(self._sorting_context.selectedUnitIds()))
+        self._templates_widget.onCurrentUnitIdChanged(lambda: self._sorting_context.setCurrentUnitId(self._templates_widget.currentUnitId()))
+        self._sorting_context.onCurrentUnitIdChanged(lambda: self._templates_widget.setCurrentUnitId(self._sorting_context.currentUnitId()))
         #self._templates_widget.setSize(self._size)
         self.refresh()
     @staticmethod
     def prepareView(context, opts):
-        context.initialize()
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
-        sorting = context.sortingExtractor()
+        sorting_context = context
+        recording_context = context.recordingContext()
+        sorting_context.initialize()
+        earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
+        sorting = sorting_context.sortingExtractor()
         unit_ids = sorting.getUnitIds()
         print('***** Computing unit templates...')
         #templates = compute_unit_templates(recording=earx, sorting=sorting, unit_ids=unit_ids)
@@ -59,8 +62,8 @@ class TemplatesView(vd.Component):
         return self._templates_widget
 
     def _update_selected(self):
-        self._templates_widget.setSelectedUnitIds(self._context.selectedUnitIds())
-        self._templates_widget.setCurrentUnitId(self._context.currentUnitId())
+        self._templates_widget.setSelectedUnitIds(self._sorting_context.selectedUnitIds())
+        self._templates_widget.setCurrentUnitId(self._sorting_context.currentUnitId())
 
 def get_random_spike_waveforms(*,recording,sorting,unit,snippet_len,max_num,channels=None):
     st=sorting.getUnitSpikeTrain(unit_id=unit)

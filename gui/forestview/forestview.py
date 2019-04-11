@@ -32,6 +32,8 @@ class TheApp():
         mode = self._mode
         if mode == 'spikeforest':
             context = _load_spikeforest_context(self._path)
+            if not context:
+                raise Exception('Unable to create context.')
         else:
             raise Exception('Invalid mode: '+mode)
 
@@ -120,7 +122,14 @@ def _load_spikeforest_context(path):
             return None
     else:
         obj = _make_obj_from_dir(path)
-    context = SpikeForestContext(studies = obj.get('studies', []), recordings = obj.get('recordings', []))
+        if not obj:
+            print('Unable to make object from path: '+path)
+            return None
+    context = SpikeForestContext(
+        studies = obj.get('studies', []),
+        recordings = obj.get('recordings', []),
+        sorting_results = obj.get('sorting_results', [])
+    )
     return context
 
 def _make_obj_from_dir(path):
@@ -132,23 +141,43 @@ def _make_obj_from_dir(path):
         description='Loaded from '+path
     ))
     dd = mt.readDir(path)
+    if not dd:
+        print('Unable to read directory: '+path)
+        return None
     if 'raw.mda' in dd['files']:
-        recordings.append(dict(
-            study=study_name,
-            name='recording',
-            directory=path
+        recordings.append(_make_recording_obj_from_dir(
+            path=path,
+            study_name=study_name,
+            name='recording'
         ))
     else:
         for dname, dd0 in dd['dirs'].items():
-            recordings.append(dict(
-                study=study_name,
-                name=dname,
-                directory=path+'/'+dname
+            recordings.append(_make_recording_obj_from_dir(
+                path=path+'/'+dname,
+                study_name=study_name,
+                name=dname
             ))
     return dict(
         studies=studies,
         recordings=recordings
     )
+
+def _make_recording_obj_from_dir(*, path, study_name, name):
+    ret = dict(
+        study=study_name,
+        name=name,
+        directory=path
+    )
+    intra_raw_fname = path+'/raw_true.mda'
+    if mt.computeFileSha1(intra_raw_fname):
+        ret['intra_recording']=dict(
+            study=study_name,
+            name=name+'--intra',
+            directory=path,
+            raw_fname='raw_true.mda',
+            params_fname='params_true.json'
+        )
+    return ret
 
 if __name__ == "__main__":
     main()

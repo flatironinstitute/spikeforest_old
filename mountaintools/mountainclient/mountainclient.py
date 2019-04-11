@@ -1016,6 +1016,8 @@ class MountainClient():
             upload_token = self._remote_config['upload_token']
         if share_id in self._kacheries.keys():
             upload_token=self._kacheries[share_id].get('upload_token', None)
+        else:
+            upload_token=None
         if (share_id) and (upload_token) and (not prevent_upload):
             sha1 = self.computeFileSha1(path=path)
             if sha1:

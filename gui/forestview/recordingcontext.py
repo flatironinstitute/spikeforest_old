@@ -6,16 +6,32 @@ from bandpass_filter import bandpass_filter
 
 class RecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
+        from sortingresultcontext import SortingResultContext # avoid cyclic dependency
+
         self._signal_handlers = dict()
+        self._any_state_change_handlers = []
         self._recording_object = recording_object
         self._download = download
+
+        self._sorting_result_contexts = dict()
+        
+        if 'firings_true' in recording_object:
+            sc_true = SortingResultContext(sorting_result_object=dict(firings=recording_object['firings_true']), recording_context=self)
+            self._true_sorting_context = sc_true
+            sc_true.onAnyStateChanged(self._trigger_any_state_change_handlers)
+        else:
+            self._true_sorting_context = None
+
+        if self._recording_object.get('intra_recording', None):
+            self._intra_recording_context = RecordingContext(recording_object=self._recording_object['intra_recording'], download=download, create_earx=create_earx, precompute_multiscale=precompute_multiscale)
+        else:
+            self._intra_recording_context = None
 
         self._state = dict(
             current_timepoint = None,
             selected_time_range = None,
             current_channel = None,
-            current_unit_id = None,
-            selected_unit_ids = []
+            current_sorting_result = None
         )
 
         self._initialized = False
@@ -23,36 +39,45 @@ class RecordingContext():
     def initialize(self):
         if self._initialized:
             return
+        self._initialized = True
         
         print('******** FORESTVIEW: Initializing recording context')
         self._recording_object = self._recording_object
         if self._download:
             print('******** FORESTVIEW: Downloading recording file if needed...')
         recdir = self._recording_object['directory']
-        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download)
+        raw_fname=self._recording_object.get('raw_fname', 'raw.mda')
+        params_fname=self._recording_object.get('params_fname', 'params.json')
+        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
         self._rx = bandpass_filter(self._rx)
 
-        firings_true_path = recdir + '/firings_true.mda'
-        self._sx = None
-        if mt.findFile(path=firings_true_path):
-            print('******** FORESTVIEW: Downloading true firings file if needed...')
-            if not mt.realizeFile(firings_true_path):
-                print('Warning: unable to realize true firings file: '+firings_true_path)
-            else:
-                self._sx = SFMdaSortingExtractor(firings_file = firings_true_path)
+        if self._true_sorting_context:
+            self._true_sorting_context.initialize()
 
-        intra_raw_fname = recdir+'/raw_true.mda'
-        if mt.computeFileSha1(intra_raw_fname):
-            self._rx_intra = SFMdaRecordingExtractor(
-                dataset_directory = recdir,
-                raw_fname='raw_true.mda',
-                params_fname='params_true.json',
-                download=self._download
-            )
-        else:
-            self._rx_intra = None
+        # firings_true_path = recdir + '/firings_true.mda'
+        # self._sx_true = None
+        # if mt.computeFileSha1(path=firings_true_path):
+        #     print('******** FORESTVIEW: Downloading true firings file if needed...')
+        #     if not mt.realizeFile(firings_true_path):
+        #         print('Warning: unable to realize true firings file: '+firings_true_path)
+        #     else:
+        #         self._sx_true = SFMdaSortingExtractor(firings_file = firings_true_path)
+
+        if self._intra_recording_context:
+            self._intra_recording_context.initialize()
 
         print('******** FORESTVIEW: Done initializing recording context')
+
+    def sortingResultNames(self):
+        return sorted(list(self._sorting_result_contexts.keys()))
+
+    def sortingResultContext(self, name):
+        return self._sorting_result_contexts[name]
+
+    def addSortingResult(self, sorting_result_object):
+        from sortingresultcontext import SortingResultContext # avoid cyclic dependency
+        sc = SortingResultContext(sorting_result_object=sorting_result_object, recording_context=self)
+        self._sorting_result_contexts[sorting_result_object['sorter']['name']]=sc
 
     def recordingObject(self):
         return deepcopy(self._recording_object)
@@ -69,26 +94,28 @@ class RecordingContext():
     def recordingExtractor(self):
         return self._rx
 
-    def sortingExtractor(self):
-        return self._sx
+    def trueSortingContext(self):
+        return self._true_sorting_context
 
-    def intraRecordingExtractor(self):
-        return self._rx_intra
+    def intraRecordingContext(self):
+        return self._intra_recording_context
 
     def hasIntraRecording(self):
-        recdir = self._recording_object['directory']
-        intra_raw_fname = recdir+'/raw_true.mda'
-        if mt.computeFileSha1(intra_raw_fname):
-            return True
-        else:
-            return False
+        return self._intra_recording_context is not None
 
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():
             self._register_state_change_handler(key, handler)
+        self._any_state_change_handlers.append(handler)
 
     def stateObject(self):
-        return deepcopy(self._state)
+        ret = deepcopy(self._state)
+        sc = self.trueSortingContext()
+        if sc:
+            ret['true_sorting'] = sc.stateObject(include_recording=False)
+        else:
+            ret['true_sorting'] = None
+        return ret
 
     # current channel
     def currentChannel(self):
@@ -123,29 +150,17 @@ class RecordingContext():
     def onCurrentTimeRangeChanged(self, handler):
         self._register_state_change_handler('current_time_range', handler)
 
-    # current unit ID
-    def setCurrentUnitId(self, unit_id):
-        unit_id = int(unit_id)
-        self._set_state_value('current_unit_id', unit_id)
+    # current sorting result
+    def currentSortingResult(self):
+        return self._get_state_value('current_sorting_result')
 
-    def currentUnitId(self):
-        return self._get_state_value('current_unit_id')
+    def setCurrentSortingResult(self, srname):
+        self._set_state_value('current_sorting_result', srname)
 
-    def onCurrentUnitIdChanged(self, handler):
-        self._register_state_change_handler('current_unit_id', handler)
+    def onCurrentSortingResultChanged(self, handler):
+        self._register_state_change_handler('current_sorting_result', handler)
 
-    # selected unit IDs
-    def setSelectedUnitIds(self, unit_ids):
-        if unit_ids is None:
-            unit_ids=[]
-        unit_ids = sorted([int(id) for id in unit_ids])
-        self._set_state_value('selected_unit_ids', sorted(unit_ids))
-
-    def selectedUnitIds(self):
-        return self._get_state_value('selected_unit_ids')
-
-    def onSelectedUnitIdsChanged(self, handler):
-        self._register_state_change_handler('selected_unit_ids', handler)
+    ###############################################
 
     def _set_state_value(self, name, val):
         if self._state[name] == val:
@@ -168,3 +183,7 @@ class RecordingContext():
         if signal_name in self._signal_handlers:
             for handler in self._signal_handlers[signal_name]:
                 handler()
+
+    def _trigger_any_state_change_handlers(self):
+        for handler in self._any_state_change_handlers:
+            handler()

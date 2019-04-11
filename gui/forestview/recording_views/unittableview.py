@@ -74,7 +74,7 @@ def _initialize(context, connection_to_parent):
         print('***** Preparing efficient access recording extractor...')
         earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
         print('***** computing units info...')
-        info0 = sa.compute_units_info(recording=context.recordingExtractor(), sorting=context.sortingExtractor())
+        info0 = sa.compute_units_info(recording=context.recordingExtractor(), sorting=context.trueSortingExtractor())
         print('*****')
     connection_to_parent.send(dict(
         name='result',

@@ -37,9 +37,15 @@ class RecordingSummaryView(vd.Component):
             vd.th('Duration (s)'), vd.td('{}'.format(a))
         ))
 
-        SX = self._context.sortingExtractor()
-        if SX:
-            true_unit_ids = SX.getUnitIds()
+        a = ', '.join(self._context.sortingResultNames())
+        rows.append(vd.tr(            
+            vd.th('Sorting results'), vd.td('{}'.format(a))
+        ))
+
+        sc_true = self._context.trueSortingContext()
+        if sc_true:
+            SX_true = sc_true.sortingExtractor()
+            true_unit_ids = SX_true.getUnitIds()
             rows.append(vd.tr(
                 vd.th('Num. true units'), vd.td('{}'.format(len(true_unit_ids)))
             ))
