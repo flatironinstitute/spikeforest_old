@@ -94,7 +94,7 @@ class SortingResultSelectWidget(vd.Component):
     def __init__(self, *, context):
         vd.Component.__init__(self)
         self._context = context
-        self._select_box = vd.components.SelectBox(style={'width':'100%'})
+        self._select_box = vd.components.SelectBox(style={'width':'100%', 'font-size':'12px'})
         self._select_box.onChange(self._on_selection_changed)
         self._context.onCurrentSortingResultChanged(self._on_context_selection_changed)
         self._update_options()

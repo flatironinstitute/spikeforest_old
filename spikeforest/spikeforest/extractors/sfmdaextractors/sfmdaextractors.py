@@ -27,7 +27,11 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         self._dataset_params = read_dataset_params(dataset_directory, params_fname)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if download:
-            self._timeseries_path = ca.realizeFile(path=self._timeseries_path)
+            path0 = ca.realizeFile(path=self._timeseries_path)
+            if not path0:
+                raise Exception('Unable to realize file: ' + self._timeseries_path)
+            self._timeseries_path = path0
+
         
         geom0 = dataset_directory + '/geom.csv'
         self._geom_fname = ca.realizeFile(path=geom0)

@@ -49,7 +49,7 @@ class ForestViewControlPanel(vd.Component):
             group_elements.append(table)
             for component in view_launcher_components:
                 group_elements.append(component)
-            elements.append(vd.div(group_elements, style={'border':'solid 1px lightgray', 'padding':'5px', 'margin':'5px'}))
+            elements.append(vd.div(group_elements, style={'border':'solid 2px lightgray', 'padding':'5px', 'margin':'5px'}))
 
         return vd.div(
             *elements

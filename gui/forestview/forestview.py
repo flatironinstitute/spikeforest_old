@@ -74,8 +74,9 @@ def main():
             args.download_from = 'spikeforest.spikeforest2'
 
     if args.download_from:
+        share_ids = args.download_from.split(',')
         try:
-            mt.configRemoteReadonly(share_id=args.download_from)
+            mt.configRemoteReadonly(share_id=share_ids[0], alternate_share_ids=share_ids[1:])
         except:
             print('WARNING: unable to configure to download from {}. Perhaps you are offline.'.format(args.download_from))
 
@@ -172,6 +173,8 @@ def _make_recording_obj_from_dir(*, path, study_name, name):
         name=name,
         directory=path
     )
+    if mt.computeFileSha1(path+'/firings_true.mda'):
+        ret['firings_true']=path+'/firings_true.mda'
     intra_raw_fname = path+'/raw_true.mda'
     if mt.computeFileSha1(intra_raw_fname):
         ret['intra_recording']=dict(

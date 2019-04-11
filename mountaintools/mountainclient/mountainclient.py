@@ -277,7 +277,7 @@ class MountainClient():
             upload_token=''
         )
     
-    def configRemoteReadonly(self, *, collection=None, share_id=''):
+    def configRemoteReadonly(self, *, collection=None, share_id='', alternate_share_ids=[]):
         """
         Configure to connect to a remote collection and optionally also to a
         remote kbucket share with readonly access.
@@ -290,15 +290,13 @@ class MountainClient():
             ID of the share, or an alias to the id (TODO: describe aliases to
             shares) (the default is '', which means that it will just read from
             the local sha1-cache database)
-        
-        """
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
+        """ 
         self.setRemoteConfig(
             collection=collection,
             token='',
             share_id=share_id,
-            upload_token=''
+            upload_token='',
+            alternate_share_ids=alternate_share_ids
         )
 
     def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
