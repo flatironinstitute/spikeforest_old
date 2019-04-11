@@ -17,7 +17,14 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
             self._path = path
         elif recording is not None:
             if not hasattr(recording, 'hash'):
-                raise Exception('Recording does not have required attribute: hash')
+                try:
+                    if not hasattr(recording, 'hash'):
+                        print('''
+                        Warning: Recording does not have the hash attribute.
+                        Using sampling method to compute a hash.''')
+                        setattr(recording, 'hash', _hash(recording))
+                except:
+                    raise Exception('Recording class does not support the sampling hash.')
             path0 = CreateEfficientAccessRecordingFile.execute(
                 recording=recording,
                 hdf5_out=dict(ext='.hdf5', dest_path=_dest_path)
@@ -137,3 +144,23 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
 
                 for ii, ch in enumerate(channel_ids):
                     f.create_dataset('part-{}-{}'.format(ch, j), data=segment[ii,:].ravel())
+
+def _hash(self):
+    from mountaintools import client as mt
+    obj = {
+        'channels': tuple(self.getChannelIds()),
+        'frames': self.getNumFrames(),
+        'data': samplehash(self)
+    }
+    return mt.sha1OfObject(obj)
+    
+def samplehash(self):
+    rng = np.random.RandomState(37)
+    n_samples = min(self.getNumFrames()//1000, 100)
+    inds = rng.randint(low=0, high=self.getNumFrames(), size=n_samples)
+    h = 0
+    for i in inds:
+        t = self.getTraces(start_frame=i, end_frame=i+100)
+        h = hash((hash(bytes(t)),hash(h)))
+    return h
+
