@@ -19,7 +19,8 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
             if not hasattr(recording, 'hash'):
                 try:
                     if not hasattr(recording, 'hash'):
-                        print('''Warning: Recording does not have the hash attribute.
+                        print('''
+                        Warning: Recording does not have the hash attribute.
                         Using sampling method to compute a hash.''')
                         setattr(recording, 'hash', _hash(recording))
                 except:
