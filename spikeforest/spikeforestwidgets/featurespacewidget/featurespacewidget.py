@@ -29,6 +29,7 @@ class FeatureSpaceWidget(vd.Component):
         self._snippet_len = snippet_len
         self._title = title
         self._max_num_spikes_per_unit = max_num_spikes_per_unit
+        self._size=(100,100)
 
     def _init_js(self):
         vd.Component.__init__(self)

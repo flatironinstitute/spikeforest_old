@@ -7,6 +7,7 @@ from recording_views.recordingsummaryview import RecordingSummaryView
 from recording_views.unitstableview import UnitsTableView
 from recording_views.sortingresultstableview import SortingResultsTableView, SortingResultSelectComponent
 from recording_views.sortingresultdetailview import SortingResultDetailView
+from recording_views.featurespaceview import FeatureSpaceView
 
 def get_spikeforest_view_launchers(context):
     launchers=[]
@@ -87,6 +88,12 @@ def get_spikeforest_view_launchers(context):
             view_class=UnitsTableView,
             context=true_sorting_context, opts=dict(),
             enabled=(true_sorting_context is not None)
+        ))
+        launchers.append(dict(
+            group='true-sorting', name='feature-space', label='Feature space',
+            view_class=FeatureSpaceView,
+            context=true_sorting_context, opts=dict(),
+            enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
         ))
     
         dict(name='unit',label='Unit')

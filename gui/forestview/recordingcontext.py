@@ -46,8 +46,8 @@ class RecordingContext():
         if self._download:
             print('******** FORESTVIEW: Downloading recording file if needed...')
         recdir = self._recording_object['directory']
-        raw_fname=self._recording_object.get('raw_fname', 'raw.mda')
-        params_fname=self._recording_object.get('params_fname', 'params.json')
+        raw_fname = self._recording_object.get('raw_fname', 'raw.mda')
+        params_fname = self._recording_object.get('params_fname', 'params.json')
         self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
         self._rx = bandpass_filter(self._rx)
 

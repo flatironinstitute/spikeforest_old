@@ -25,14 +25,7 @@ class TimeseriesView(vd.Component):
         print('***** Initializing context...')
         context.initialize()
 
-        use_intra = False
-        if opts and opts['use_intra']:
-            use_intra = True
-
-        if not use_intra:
-            rx = context.recordingExtractor()
-        else:
-            rx = context.intraRecordingExtractor()
+        rx = context.recordingExtractor()
 
         print('***** Preparing efficient access recording extractor...')
         earx = EfficientAccessRecordingExtractor(recording=rx)
