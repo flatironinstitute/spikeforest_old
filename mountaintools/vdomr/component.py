@@ -34,7 +34,7 @@ class Component(object):
     def _repr_html_(self):
         html=self._render_and_get_html()
         if mode()=='jp_proxy_widget' or mode()=='colab':
-            set_timeout(_exec_queued_javascript, 0) # this is needed in the notebook to trigger refresh so that the queued js can be executed.
+            set_timeout(_exec_queued_javascript, 0) # this is needed in the notebook to trigger the queued js to be executed.
         return '<div id={}>'.format(self._div_id)+html+'</div>'
 
     def _render_and_get_html(self):
