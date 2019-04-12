@@ -28,6 +28,7 @@ class ComputeResourceClient():
             job_object = job.getObject()
             if not job_object['processor_code']:
                 raise Exception('Job is missing processor code.', job_object.get('processor_name', None))
+            self._cairio_client.saveObject(object=job_object['processor_code'])
             job_objects.append(job.getObject())
         
         key=dict(
