@@ -22,10 +22,11 @@ class ForestViewMainWindow(vd.Component):
         self._view_container_south.onClick(self._on_click_south)
 
         #style0 = dict(border='solid 1px gray')
-        self._container_CP = Container(self._control_panel)
+        self._container_CP = Container(self._control_panel, scroll=True)
         self._container_VCN = Container(self._view_container_north)
         self._container_VCS = Container(self._view_container_south)
         self._container_main = Container(self._container_CP, self._container_VCN, self._container_VCS, position_mode='relative')
+
 
         self._highlight_view_containers()
 
@@ -34,6 +35,7 @@ class ForestViewMainWindow(vd.Component):
         vd.devel.loadBootstrap()
 
         self._update_sizes()
+
 
     def setSize(self, size):
         self._size = size
@@ -244,7 +246,7 @@ def _prepare_in_worker(view_class, context, opts, connection_to_parent):
     )) 
 
 class Container(vd.Component):
-  def __init__(self,*args,position=(0,0),size=(0,0),position_mode='absolute',style=dict()):
+  def __init__(self,*args,position=(0,0),size=(0,0),position_mode='absolute',style=dict(), scroll=False):
     vd.Component.__init__(self)
     self._elmt_id = 'Container-'+str(uuid.uuid4())
     self._children=list(args)
@@ -252,6 +254,7 @@ class Container(vd.Component):
     self._size=size
     self._position_mode=position_mode
     self._style=style
+    self._scroll=scroll
   def setSize(self, size):
     js="""
     document.getElementById('{elmt_id}').style.width='{width}px';
@@ -277,9 +280,13 @@ class Container(vd.Component):
     style['height']='{}px'.format(self._size[1])
     style['left']='{}px'.format(self._position[0])
     style['top']='{}px'.format(self._position[1])
-    style['overflow']='hidden'
-    return vd.div(
+    if not self._scroll:
+        style['overflow']='hidden'
+    ret = vd.div(
         self._children,
         style=style,
         id=self._elmt_id
     )
+    if self._scroll:
+        ret = vd.components.ScrollArea(ret, height=self._size[1])
+    return ret

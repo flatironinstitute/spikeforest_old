@@ -22,8 +22,7 @@ class ForestViewControlPanel(vd.Component):
             for VL in view_launchers['launchers']:
                 if VL['group'] == group['name']:
                     attrs=dict()
-                    style0=dict(width='130px', height='30px', margin='5px')
-                    style0['font-size']='12px'
+                    style0={'width':'130px', 'height':'28px', 'margin':'5px', 'font-size':'10px'}
                     if not VL['enabled']:
                         attrs['disabled'] = 'disabled'
                         style0['color'] = 'lightgray'

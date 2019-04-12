@@ -20,7 +20,8 @@ class VDOM(object):
             raise ValueError('Style must be a dict with string keys & values')
 
     def to_html(self):
-        return self._repr_html_()
+        html = self._repr_html_()
+        return html
 
     def _to_inline_css(self, style):
         """
@@ -66,7 +67,6 @@ class VDOM(object):
                     # print('Warning: child of VDOM object is None (tag={}).'.format(self.tag_name), c)
 
             out.write('</{tag}>'.format(tag=escape(self.tag_name)))
-
             return out.getvalue()
 
 

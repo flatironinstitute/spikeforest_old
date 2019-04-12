@@ -10,6 +10,10 @@ from .recording_views.sortingresultdetailview import SortingResultDetailView
 from .recording_views.featurespaceview import FeatureSpaceView
 from .recording_views.clusterview import ClusterView
 
+import vdomr as vd
+from mountaintools import client as mt
+import json
+
 def get_spikeforest_view_launchers(context):
     launchers=[]
     groups=[]
@@ -163,6 +167,24 @@ def get_spikeforest_view_launchers(context):
             context=sorting_result_context, opts=dict(),
             enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
         ))
+        launchers.append(dict(
+            group='sorting-result', name='console-out', label='Console output',
+            view_class=ConsoleOutView,
+            context=sorting_result_context, opts=dict(),
+            enabled=(sorting_result_context.consoleOutputPath() is not None)
+        ))
+        launchers.append(dict(
+            group='sorting-result', name='exec-stats', label='Execution stats',
+            view_class=ExecutionStatsView,
+            context=sorting_result_context, opts=dict(),
+            enabled=(sorting_result_context.executionStats() is not None)
+        ))
+        launchers.append(dict(
+            group='sorting-result', name='comparison-with-truth', label='Comparison with truth',
+            view_class=ComparisonWithTruthView,
+            context=sorting_result_context, opts=dict(),
+            enabled=(sorting_result_context.comparisonWithTruthPath() is not None)
+        ))
     
         dict(name='unit',label='Unit')
         launchers.append(dict(
@@ -174,3 +196,65 @@ def get_spikeforest_view_launchers(context):
     
     
     return ret
+
+class ConsoleOutView(vd.Component):
+    def __init__(self, *, context, opts=None):
+        vd.Component.__init__(self)
+        self._context = context
+        self._size = (100, 100)
+        if not context.consoleOutputPath():
+            self._text = 'no console output found'
+        else:
+            self._text = mt.loadText(path=context.consoleOutputPath()) or 'unable to load console output'
+
+    def setSize(self, size):
+        if self._size != size:
+            self._size=size
+    def size(self):
+        return self._size
+    def tabLabel(self):
+        return 'Console out'
+    def render(self):
+        return vd.components.ScrollArea(vd.pre(self._text), height=self._size[1])
+
+class ExecutionStatsView(vd.Component):
+    def __init__(self, *, context, opts=None):
+        vd.Component.__init__(self)
+        self._context = context
+        self._size = (100, 100)
+        self._stats = context.executionStats()
+
+    def setSize(self, size):
+        if self._size != size:
+            self._size=size
+    def size(self):
+        return self._size
+    def tabLabel(self):
+        return 'Exec stats'
+    def render(self):
+        if not self._stats:
+            return vd.div('No stats found')
+        return vd.div(vd.pre(json.dumps(self._stats, indent=4)))
+
+
+class ComparisonWithTruthView(vd.Component):
+    def __init__(self, *, context, opts=None):
+        vd.Component.__init__(self)
+        self._context = context
+        self._size = (100, 100)
+        if not context.comparisonWithTruthPath():
+            self._object = None
+        else:
+            self._object = mt.loadObject(path=context.comparisonWithTruthPath())
+
+    def setSize(self, size):
+        if self._size != size:
+            self._size=size
+    def size(self):
+        return self._size
+    def tabLabel(self):
+        return 'Comparison with truth'
+    def render(self):
+        if not self._object:
+            return vd.div('Unable to load comparison data.')
+        return vd.components.ScrollArea(vd.pre(json.dumps(self._object,indent=4)), height=self._size[1])

@@ -39,6 +39,7 @@ def prepare_visapy_mea_studies(*, basedir):
                 name=dsname,
                 study=study_name,
                 directory=dsdir,
+                firings_true=dsdir+'/firings_true.mda',
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))

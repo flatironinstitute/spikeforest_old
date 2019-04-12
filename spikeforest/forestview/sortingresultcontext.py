@@ -54,6 +54,15 @@ class SortingResultContext():
             ret['recording'] = self.recordingContext().stateObject()
         return ret
 
+    def consoleOutputPath(self):
+        return self._sorting_result_object.get('console_out', None)
+
+    def executionStats(self):
+        return self._sorting_result_object.get('execution_stats', None)
+
+    def comparisonWithTruthPath(self):
+        return self._sorting_result_object.get('comparison_with_truth', {}).get('json', None)
+
     # current unit ID
     def setCurrentUnitId(self, unit_id):
         unit_id = int(unit_id)
