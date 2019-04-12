@@ -20,12 +20,20 @@ function TableWidget(elmt) {
     rows.each(function(index) {
         let row = $(this);
         row.click(function(evt) {
-            console.log('----', evt)
-            elmt.find('.tablewidget_row').removeClass('current');
-            elmt.find('.tablewidget_row').removeClass('selected');
-            row.addClass('current');
-            row.addClass('selected');
-            _call_selection_changed_handlers();
+            if (evt.ctrlKey) {
+                if (row.hasClass('selected'))
+                    row.removeClass('selected');
+                else
+                    row.addClass('selected');
+                _call_selection_changed_handlers();
+            }
+            else {
+                elmt.find('.tablewidget_row').removeClass('current');
+                elmt.find('.tablewidget_row').removeClass('selected');
+                row.addClass('current');
+                row.addClass('selected');
+                _call_selection_changed_handlers();
+            }
         });
     });
 

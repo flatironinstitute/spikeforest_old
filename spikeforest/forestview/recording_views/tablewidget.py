@@ -52,6 +52,7 @@ class TableWidget(vd.Component):
         else:
             return table
     def _on_selection_changed(self, current_id, selected_ids):
+        console
         if type(current_id)==str:
             current_id=int(current_id)
         self._current_row_index = current_id

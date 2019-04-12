@@ -8,7 +8,7 @@ import shlex
 import random
 import string
 import shutil
-from spikeforest.spikeextractors import mdaio
+from spikeforest import mdaio
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from mountaintools import client as mt

@@ -1,7 +1,7 @@
 import spikeextractors as si
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
-from spikeforest.spikeextractors import mdaio
+from spikeforest import mdaio
 import subprocess, shlex
 
 def ironclust(*,

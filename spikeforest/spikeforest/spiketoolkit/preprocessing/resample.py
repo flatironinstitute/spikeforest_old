@@ -1,4 +1,4 @@
-from spikeforest.spikeextractors import RecordingExtractor
+from spikeextractors import RecordingExtractor
 import numpy as np
 from scipy import special, signal
 

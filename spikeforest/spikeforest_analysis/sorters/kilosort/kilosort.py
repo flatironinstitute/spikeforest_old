@@ -7,7 +7,7 @@ import os
 from shutil import copyfile
 import subprocess, shlex
 import h5py
-from spikeforest.spikeextractors import mdaio
+from spikeforest import mdaio
 import numpy as np
 
 def kilosort(*,
