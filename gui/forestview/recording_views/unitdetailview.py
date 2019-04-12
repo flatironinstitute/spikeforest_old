@@ -102,9 +102,10 @@ class SnippetsPlot(vd.Component):
             ))
         self._plot = vd.components.PlotlyPlot(
             data=data,
-            opts=dict(
+            layout=dict(
                 showlegend=False
             ),
+            config=dict(),
             size=size
         )
     def render(self):

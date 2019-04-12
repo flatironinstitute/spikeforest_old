@@ -67,7 +67,8 @@ class TestPlotlyWidget(vd.Component):
         yy = np.cos((10*xx)**2)
         self._plot = vd.components.PlotlyPlot(
             data = dict(x=xx, y=yy),
-            opts=dict(margin=dict(t=5)),
+            layout=dict(margin=dict(t=5)),
+            config=dict(),
             size=self._size
         )
         self.refresh()

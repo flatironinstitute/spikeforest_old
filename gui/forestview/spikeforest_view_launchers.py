@@ -8,6 +8,7 @@ from recording_views.unitstableview import UnitsTableView
 from recording_views.sortingresultstableview import SortingResultsTableView, SortingResultSelectComponent
 from recording_views.sortingresultdetailview import SortingResultDetailView
 from recording_views.featurespaceview import FeatureSpaceView
+from recording_views.clusterview import ClusterView
 
 def get_spikeforest_view_launchers(context):
     launchers=[]
@@ -95,6 +96,12 @@ def get_spikeforest_view_launchers(context):
             context=true_sorting_context, opts=dict(),
             enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
         ))
+        launchers.append(dict(
+            group='true-sorting', name='clusters', label='Clusters',
+            view_class=ClusterView,
+            context=true_sorting_context, opts=dict(),
+            enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
+        ))
     
         dict(name='unit',label='Unit')
         launchers.append(dict(
@@ -147,6 +154,12 @@ def get_spikeforest_view_launchers(context):
         launchers.append(dict(
             group='sorting-result', name='feature-space', label='Feature space',
             view_class=FeatureSpaceView,
+            context=sorting_result_context, opts=dict(),
+            enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
+        ))
+        launchers.append(dict(
+            group='sorting-result', name='clusters', label='Clusters',
+            view_class=ClusterView,
             context=sorting_result_context, opts=dict(),
             enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
         ))

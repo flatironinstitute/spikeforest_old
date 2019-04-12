@@ -150,11 +150,12 @@ class Pyplot(vd.Component):
         return elmt
 
 class PlotlyPlot(vd.Component):
-    def __init__(self, data, opts=None, size=None):
+    def __init__(self, data, layout=dict(), config=dict(), size=None):
         vd.Component.__init__(self)
         self._elmt_id = 'PlotlyPlot-'+str(uuid.uuid4())
         self._data = data
-        self._opts = opts
+        self._layout = layout
+        self._config = config
         self._size = size
         vd.devel.loadJavascript(url='https://cdn.plot.ly/plotly-latest.min.js')
 
@@ -194,13 +195,14 @@ class PlotlyPlot(vd.Component):
             let div=document.getElementById('{elmt_id}');
             if (({width}) && ({height}) && (div)) {
                 div.style="width:{width}px; height:{height}px";
-                Plotly.newPlot(div, {data}, {opts});
+                Plotly.newPlot(div, {data}, {layout}, {config});
             }
         },100);
         """
         js = js.replace('{elmt_id}', self._elmt_id)
         js = js.replace('{data}', json.dumps(data))
-        js = js.replace('{opts}', json.dumps(self._opts or {}))
+        js = js.replace('{layout}', json.dumps(self._layout or {}))
+        js = js.replace('{config}', json.dumps(self._config or {}))
         if self._size:
             width0 = self._size[0]
             height0 = self._size[1]

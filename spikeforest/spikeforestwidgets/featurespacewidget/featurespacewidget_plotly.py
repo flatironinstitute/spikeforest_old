@@ -44,7 +44,8 @@ class FeatureSpaceWidgetPlotly(vd.Component):
             ))
         plot=vd.components.PlotlyPlot(
             data = data,
-            opts = dict(margin=dict(t=5)),
+            layout = dict(margin=dict(t=5)),
+            config = dict(),
             size = self._size
         )
         return plot
