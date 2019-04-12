@@ -69,6 +69,8 @@ class UnitTableWidget(vd.Component):
         self._size = (100,100)
         self._units_info = units_info
         self._update_table()
+        self._sorting_context.onCurrentUnitIdChanged(self._on_context_selection_changed)
+        self._sorting_context.onSelectedUnitIdsChanged(self._on_context_selection_changed)
     def setSize(self, size):
         self._size = size
         self._update_table()
@@ -84,7 +86,31 @@ class UnitTableWidget(vd.Component):
             records = self._units_info,
             height=self._size[1]
         )
+        self._table_widget.onSelectionChanged(self._on_widget_selection_changed)
+        self._on_context_selection_changed()
         self.refresh()
+    def _on_widget_selection_changed(self):
+        current_row_index = self._table_widget.currentRowIndex()
+        if current_row_index is not None:
+            unit_id = self._units_info[current_row_index]['unit_id']
+            self._sorting_context.setCurrentUnitId(unit_id)
+            if unit_id is not None:
+                self._sorting_context.setSelectedUnitIds([unit_id])
+            else:
+                self._sorting_context.setSelectedUnitIds([])
+        else:
+            self._sorting_context.setCurrentUnitId(None)
+    def _on_context_selection_changed(self):
+        unit_id = self._sorting_context.currentUnitId()
+        unit_ids = [info['unit_id'] for info in self._units_info]
+        if unit_id is not None:
+            try:
+                index0 = unit_ids.index(unit_id)
+            except:
+                index0 = None
+        else:
+            index0 = None
+        self._table_widget.setCurrentRowIndex(index0)
     def render(self):
         return self._table_widget
 
