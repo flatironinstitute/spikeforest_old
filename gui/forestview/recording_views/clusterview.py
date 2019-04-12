@@ -76,6 +76,8 @@ class ClusterWidget(vd.Component):
         self._labels = labels
         self._feature_names = feature_names
         self._size=(800,500)
+        self._marker_size=14
+        self._hover_marker_size=18
 
     def setSize(self,size):
         if self._size==size:
@@ -93,15 +95,95 @@ class ClusterWidget(vd.Component):
                 x=ff[0,:].ravel(),
                 y=ff[1,:].ravel(),
                 mode = 'markers',
-                name = 'Unit {}'.format(unit_id)
+                name = 'Unit {}'.format(int(unit_id)),
+                text = 'Unit {}'.format(int(unit_id)),
+                hoverinfo='text',
+                marker=dict(
+                    size=self._marker_size,
+                    line=dict(
+                        color='white',
+                        width=1
+                    )
+                )
             ))
-        plot=vd.components.PlotlyPlot(
+        layout=dict(
+            hovermode='closest'
+        )
+        config=dict(
+            showTips=False,
+            displayModeBar=True,
+            displaylogo=False,
+            modeBarButtonsToRemove=['hoverClosestCartesian','hoverCompareCartesian','resetScale2d']
+        )
+        self._plot=vd.components.PlotlyPlot(
             data = data,
-            layout = dict(margin=dict(t=5)),
-            config = dict(),
+            layout = layout,
+            config = config,
             size = self._size
         )
-        return plot
+        return self._plot
+    def postRenderScript(self):
+        js = """
+        wait_for(function() {return {plotobj};}, 8, function() {
+            {plotobj}.on('plotly_click', function(data){
+                console.log('point clicked...', data);
+            });
+        });
+
+        function wait_for(func, num_retries, cb) {
+            if (func()) {
+                cb();
+                return;
+            }
+            if (num_retries<=0) return;
+            setTimeout(function() {
+                wait_for(func, num_retries-1, cb);
+            },200);
+        }
+        """
+        js=js.replace('{plotobj}', self._plot.javascriptPlotObject())
+        #js=js.replace('{marker_size}', str(self._marker_size))
+        #js=js.replace('{hover_marker_size}', str(self._hover_marker_size))
+        return js
+    def postRenderScript_struggling_with_hover(self):
+        js = """
+        setTimeout(function() {
+            if ({plotobj}) {
+                {plotobj}.on('plotly_hover', function(data){
+                    try {
+                        handle_hover(data, {hover_marker_size});
+                    }
+                    catch(err) {
+                        console.error(err);
+                        console.log('Warning: problem handling hover');
+                    }
+                });
+                {plotobj}.on('plotly_unhover', function(data){
+                    try {
+                        handle_hover(data, {marker_size});
+                    }
+                    catch(err) {
+                        console.error(err);
+                        console.log('Warning: problem handling hover');
+                    }
+                });
+                function handle_hover(data, marker_size) {
+                    pt=data.points[0]
+                    // color = pt.data.marker.color;
+                    line = pt.data.marker.line;
+                    let sizes=[];
+                    for (let i=0; i<pt.data.x.length; i++)
+                        sizes.push({marker_size});
+                    sizes[pt.pointNumber]=marker_size;
+                    Plotly.restyle({plotobj}, {marker:{size:sizes, line:line}}, [pt.curveNumber]);
+                }
+            }
+        },100);
+        """
+        js=js.replace('{plotobj}', self._plot.javascriptPlotObject())
+        js=js.replace('{marker_size}', str(self._marker_size))
+        js=js.replace('{hover_marker_size}', str(self._hover_marker_size))
+        return js
 
 def _get_random_spike_waveforms(*, sorting, recording, unit, max_num, channels, snippet_len):
     st = sorting.getUnitSpikeTrain(unit_id=unit)

@@ -182,6 +182,11 @@ class PlotlyPlot(vd.Component):
             else:
                 raise Exception('Unable to JSON serialize data of type {}'.format(str(type(data))))
 
+    def javascriptPlotObject(self):
+        ret = "((window.plotly_plots||{})['{component_id}'])"
+        ret = ret.replace('{component_id}', self.componentId())
+        return ret
+
     def render(self):
         div = vd.div(id=self._elmt_id)
         return div
@@ -195,7 +200,9 @@ class PlotlyPlot(vd.Component):
             let div=document.getElementById('{elmt_id}');
             if (({width}) && ({height}) && (div)) {
                 div.style="width:{width}px; height:{height}px";
+                window.plotly_plots=window.plotly_plots||{};
                 Plotly.newPlot(div, {data}, {layout}, {config});
+                window.plotly_plots['{component_id}']=div;
             }
         },100);
         """
@@ -203,6 +210,7 @@ class PlotlyPlot(vd.Component):
         js = js.replace('{data}', json.dumps(data))
         js = js.replace('{layout}', json.dumps(self._layout or {}))
         js = js.replace('{config}', json.dumps(self._config or {}))
+        js = js.replace('{component_id}', self.componentId())
         if self._size:
             width0 = self._size[0]
             height0 = self._size[1]
