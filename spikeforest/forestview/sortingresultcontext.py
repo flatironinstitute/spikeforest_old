@@ -30,8 +30,7 @@ class SortingResultContext():
         if self._sorting_result_object['firings']:
             self._sorting_extractor = SFMdaSortingExtractor(firings_file =self._sorting_result_object['firings'])
         else:
-            print(self._sorting_result_object)
-            raise Exception('No firings field in sorting result object.')
+            self._sorting_extractor = None
 
         print('******** FORESTVIEW: Done initializing sorting result context')
 
@@ -61,7 +60,7 @@ class SortingResultContext():
         return self._sorting_result_object.get('execution_stats', None)
 
     def comparisonWithTruthPath(self):
-        return self._sorting_result_object.get('comparison_with_truth', {}).get('json', None)
+        return (self._sorting_result_object.get('comparison_with_truth', {}) or {}).get('json', None)
 
     # current unit ID
     def setCurrentUnitId(self, unit_id):

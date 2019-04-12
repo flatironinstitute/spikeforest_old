@@ -47,7 +47,7 @@ class ForestViewMainWindow(vd.Component):
     def _update_sizes(self):
         width = self._size[0]
         #width1 = int(min(300, width*0.3))
-        width1 = 300
+        width1 = 320
         width2 = width-width1-30
         height = self._size[1]
         height1 = int(height/2)-5
@@ -280,13 +280,15 @@ class Container(vd.Component):
     style['height']='{}px'.format(self._size[1])
     style['left']='{}px'.format(self._position[0])
     style['top']='{}px'.format(self._position[1])
-    if not self._scroll:
+    if self._scroll:
+        style['overflow']='auto'
+    else:
         style['overflow']='hidden'
     ret = vd.div(
         self._children,
         style=style,
         id=self._elmt_id
     )
-    if self._scroll:
-        ret = vd.components.ScrollArea(ret, height=self._size[1])
+    #if self._scroll:
+    #    ret = vd.components.ScrollArea(ret, height=self._size[1])
     return ret

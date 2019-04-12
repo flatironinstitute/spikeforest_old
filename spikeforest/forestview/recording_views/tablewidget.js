@@ -19,7 +19,8 @@ function TableWidget(elmt) {
     let rows = elmt.find('.tablewidget_row');
     rows.each(function(index) {
         let row = $(this);
-        row.click(function() {
+        row.click(function(evt) {
+            console.log('----', evt)
             elmt.find('.tablewidget_row').removeClass('current');
             elmt.find('.tablewidget_row').removeClass('selected');
             row.addClass('current');
