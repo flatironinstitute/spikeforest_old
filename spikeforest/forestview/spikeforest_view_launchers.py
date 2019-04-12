@@ -1,14 +1,14 @@
-from spikeforest_views.currentstateview import CurrentStateView
-from spikeforest_views.recordingtableview import RecordingTableView, RecordingSelectComponent
-from recording_views.electrodegeometryview import ElectrodeGeometryView
-from recording_views.timeseriesview import TimeseriesView
-from recording_views.templatesview import TemplatesView
-from recording_views.recordingsummaryview import RecordingSummaryView
-from recording_views.unitstableview import UnitsTableView
-from recording_views.sortingresultstableview import SortingResultsTableView, SortingResultSelectComponent
-from recording_views.sortingresultdetailview import SortingResultDetailView
-from recording_views.featurespaceview import FeatureSpaceView
-from recording_views.clusterview import ClusterView
+from .spikeforest_views.currentstateview import CurrentStateView
+from .spikeforest_views.recordingtableview import RecordingTableView, RecordingSelectComponent
+from .recording_views.electrodegeometryview import ElectrodeGeometryView
+from .recording_views.timeseriesview import TimeseriesView
+from .recording_views.templatesview import TemplatesView
+from .recording_views.recordingsummaryview import RecordingSummaryView
+from .recording_views.unitstableview import UnitsTableView
+from .recording_views.sortingresultstableview import SortingResultsTableView, SortingResultSelectComponent
+from .recording_views.sortingresultdetailview import SortingResultDetailView
+from .recording_views.featurespaceview import FeatureSpaceView
+from .recording_views.clusterview import ClusterView
 
 def get_spikeforest_view_launchers(context):
     launchers=[]

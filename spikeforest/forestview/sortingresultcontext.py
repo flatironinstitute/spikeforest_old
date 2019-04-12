@@ -1,7 +1,7 @@
 from spikeforest import SFMdaSortingExtractor
 from copy import deepcopy
 from mountaintools import client as mt
-from recordingcontext import RecordingContext
+from .recordingcontext import RecordingContext
 import mtlogging
 
 class SortingResultContext():

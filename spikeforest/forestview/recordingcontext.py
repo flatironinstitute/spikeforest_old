@@ -2,11 +2,11 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, Efficien
 from copy import deepcopy
 import spikeforestwidgets as SFW
 from mountaintools import client as mt
-from bandpass_filter import bandpass_filter
+from .bandpass_filter import bandpass_filter
 
 class RecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
-        from sortingresultcontext import SortingResultContext # avoid cyclic dependency
+        from .sortingresultcontext import SortingResultContext # avoid cyclic dependency
 
         self._signal_handlers = dict()
         self._any_state_change_handlers = []
@@ -75,7 +75,7 @@ class RecordingContext():
         return self._sorting_result_contexts[name]
 
     def addSortingResult(self, sorting_result_object):
-        from sortingresultcontext import SortingResultContext # avoid cyclic dependency
+        from .sortingresultcontext import SortingResultContext # avoid cyclic dependency
         sc = SortingResultContext(sorting_result_object=sorting_result_object, recording_context=self)
         sc.onAnyStateChanged(self._trigger_any_state_change_handlers)
         self._sorting_result_contexts[sorting_result_object['sorter']['name']]=sc

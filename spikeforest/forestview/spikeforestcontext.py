@@ -2,8 +2,8 @@ from copy import deepcopy
 from mountaintools import client as mt
 from spikeforest import SFMdaRecordingExtractor
 from mountaintools import MountainClient
-from spikeforest_view_launchers import get_spikeforest_view_launchers
-from recordingcontext import RecordingContext
+from .spikeforest_view_launchers import get_spikeforest_view_launchers
+from .recordingcontext import RecordingContext
 
 local_client = MountainClient()
 
