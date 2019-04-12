@@ -778,7 +778,7 @@ class MountainClient():
                 if not use_client.setValue(key=key, subkey=subkey, value=address, collection=collection):
                     raise Exception('Unable to store address in path', dest_path)
             else:
-                mt.realizeFile(path=address, dest_path=dest_path)
+                self.realizeFile(path=address, dest_path=dest_path)
 
         return address
 
