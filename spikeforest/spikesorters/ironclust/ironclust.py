@@ -17,7 +17,7 @@ import json
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.2.1'
+    VERSION = '0.2.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.m']
@@ -32,7 +32,7 @@ class IronClust(mlpr.Processor):
     detect_sign = mlpr.IntegerParameter(
         'Use -1, 0, or 1, depending on the sign of the spikes in the recording')
     adjacency_radius = mlpr.FloatParameter(
-        'Use -1 to include all channels in every neighborhood')
+        optional=True, default=75, description='Use -1 to include all channels in every neighborhood')
     detect_threshold = mlpr.FloatParameter(
         optional=True, default=5, description='detection threshold')
     prm_template_name = mlpr.StringParameter(

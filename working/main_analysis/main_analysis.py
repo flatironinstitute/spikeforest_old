@@ -82,24 +82,23 @@ def _define_sorters():
         compute_resource='default'
     )
 
-    def sorter_irc_template(prm_template_name, detect_threshold=5):
+    def sorter_irc_template(prm_template_name, code, detect_threshold=4.5):
         sorter_irc = dict(
-            code='irc',
+            code=code,
             name='IronClust-{}'.format(prm_template_name),
             processor_name='IronClust',
             params=dict(
                 detect_sign=-1,
-                adjacency_radius=50,
                 prm_template_name="{}_template.prm".format(prm_template_name),
-                detect_threshold=detect_threshold
             ),
-            compute_resource='default'
+            compute_resource='gpu'
         )
         return sorter_irc
 
     #sorter_irc_tetrode = sorter_irc_template('tetrode')
     #sorter_irc_drift = sorter_irc_template('drift')
-    sorter_irc_static = sorter_irc_template('static')
+    sorter_irc_static = sorter_irc_template('static', 'irc')
+    sorter_irc_drift2 = sorter_irc_template('drift2', 'irc-d2')
 
     sorter_sc = dict(
         code='sc',
@@ -145,7 +144,7 @@ def _define_sorters():
         compute_resource='default'
     )
 
-    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_ks, sorter_ks2]
+    return [sorter_ms4_thr3, sorter_sc, sorter_yass, sorter_irc_static, sorter_irc_drift2, sorter_ks, sorter_ks2]
 
 
 if __name__ == "__main__":
