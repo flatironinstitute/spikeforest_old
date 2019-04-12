@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+from mountaintools import client as mt
+import os, sys
+import mlprocessors as mlpr
+import mtlogging
+import argparse
+
+from apply_sorters_to_recordings import apply_sorters_to_recordings
+
+
+@mtlogging.log(root=True)
+def main():
+
+    parser = argparse.ArgumentParser(description = 'Run a SpikeForest analysis')
+    parser.add_argument('analysis_file',help='Path to the analysis specification file.')
+    parser.add_argument('--login', help='Whether to log in.', action='store_true')
+    parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
+
+    args = parser.parse_args()
+
+    print(args)
+
+    if args.login:
+        mt.login(ask_password=True)
+
+    print('Configuring the compute resources...')
+    analysis_obj = mt.loadObject(path=args.analysis_file)
+
+    analysis_name = analysis_obj['analysis_name']
+    print('ANALYSIS: {}'.format(analysis_name))
+
+    compute_resources = analysis_obj['compute_resources']
+    for key, cr in compute_resources.items():
+        mlpr.configComputeResource(key, resource_name=cr['resource_name'], collection=cr['collection'], share_id=cr['share_id'])
+
+    download_from = analysis_obj['download_from']
+    if len(download_from) > 0:
+        mt.setRemoteConfig(share_id = download_from[0], alternate_share_ids=download_from[1:])
+
+    # Grab the recordings
+    print('Loading the recordings...')
+    recordings = []
+    studies = []
+    for recordings_path in analysis_obj['recordings']:
+        obj = mt.loadObject(path=recordings_path)
+        recordings = recordings + obj['recordings']
+        studies = studies + obj['studies']
+    print('Found {} recordings in {} studies'.format(len(recordings), len(studies)))
+
+    output_path = analysis_obj['output']
+    print('Using output path: {}'.format(output_path))
+
+    job_timeout = analysis_obj['job_timeout']
+    print('Using job timeout (sec): {}'.format(job_timeout))
+
+    if args.test:
+        print('Test mode... so only retaining a couple recordings and one study and not storing output.')
+        recordings=recordings[0:2]
+        studies=studies[0:1]
+        output_path=None    
+
+    sorter_definitions = analysis_obj['sorters']
+    sorter_codes = analysis_obj['sorter_keys']
+    sorters = [sorter_definitions[sorter_code] for sorter_code in sorter_codes]
+    print('Using sorters: ',[sorter['name'] for sorter in sorters])
+
+    apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, output_path=output_path, job_timeout=float(job_timeout))
+
+if __name__ == "__main__":
+    main()

@@ -626,7 +626,7 @@ class MountainClient():
             The local file path to the "realized" file, or None if the file was
             not found.
         """
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -685,7 +685,7 @@ class MountainClient():
             A SHA-1 URL for the saved or uploaded file, or None if the file was
             unable to be saved.
         """
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -705,7 +705,7 @@ class MountainClient():
     # load object / save object
     @mtlogging.log(name='MountainClient:loadObject')
     def loadObject(self, *, key=None, path=None, subkey=None, local_first=False):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -723,8 +723,8 @@ class MountainClient():
             return None
         return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, share_id=share_id)
 
-    def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_key_path=None):
-        if path.startswith('key://'):
+    def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 print('Unable to resolve key path.', file=sys.stderr)
@@ -758,24 +758,27 @@ class MountainClient():
             address = address.replace('sha1://', 'sha1dir://')
             if upload_to:
                 client.saveObject(dd, share_id=upload_to)
-        if address and dest_key_path:
-            location, collection, key, subkey, extra_path = self._parse_key_path(dest_key_path)
-            if not location:
-                raise Exception('Error parsing key path', dest_key_path)
-            if extra_path:
-                raise Exception('Invalid key path for storage', dest_key_path)
-            if location == 'local':
-                if collection != 'default':
-                    raise Exception('Collection must be default for local key path.', collection)
-                collection = None
-                use_client = MountainClient()
-            elif location == 'pairio':
-                use_client = self
-            else:
-                raise Exception('Invalid location for key path', location)
+        if address and dest_path:
+            if dest_path.startswith('key://'):
+                location, collection, key, subkey, extra_path = self._parse_key_path(dest_path)
+                if not location:
+                    raise Exception('Error parsing key path', dest_path)
+                if extra_path:
+                    raise Exception('Invalid key path for storage', dest_path)
+                if location == 'local':
+                    if collection != 'default':
+                        raise Exception('Collection must be default for local key path.', collection)
+                    collection = None
+                    use_client = MountainClient()
+                elif location == 'pairio':
+                    use_client = self
+                else:
+                    raise Exception('Invalid location for key path', location)
 
-            if not use_client.setValue(key=key, subkey=subkey, value=address, collection=collection):
-                raise Exception('Unable to store address in key path', dest_key_path)
+                if not use_client.setValue(key=key, subkey=subkey, value=address, collection=collection):
+                    raise Exception('Unable to store address in path', dest_path)
+            else:
+                mt.realizeFile(path=address, dest_path=dest_path)
 
         return address
 
@@ -840,7 +843,7 @@ class MountainClient():
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
     def loadText(self, *, key=None, path=None, subkey=None, local_first=False):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -881,7 +884,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:readDir')
     def readDir(self, path, recursive=False, include_sha1=True):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -921,7 +924,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeDirHash')
     def computeDirHash(self, path):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             # todo
             raise Exception('This case not handled yet')
 
@@ -935,7 +938,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -947,7 +950,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeFileOrDirHash')
     def computeFileOrDirHash(self, path):
-        if path.startswith('kbucket://') or path.startswith('sha1dir://') or path.startswith('key://'):
+        if path and (path.startswith('kbucket://') or path.startswith('sha1dir://') or path.startswith('key://')):
             if self.findFile(path):
                 return self.computeFileSha1(path)
             else:
@@ -1002,7 +1005,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:findFile')
     def findFile(self, path, local_only=False, share_id=None):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
@@ -1012,7 +1015,7 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:copyToLocalCache')
     def copyToLocalCache(self, path, basename=None):
-        if path.startswith('key://'):
+        if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None

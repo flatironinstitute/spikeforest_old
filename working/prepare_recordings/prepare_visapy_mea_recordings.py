@@ -48,11 +48,18 @@ def prepare_visapy_mea_studies(*, basedir):
 # Prepare the studies
 studies, recordings = prepare_visapy_mea_studies(basedir=basedir)
 print('Saving object...')
-mt.saveObject(
+address = mt.saveObject(
     object=dict(
         studies=studies,
         recordings=recordings
     ),
     key=dict(name='spikeforest_recording_group', group_name=group_name)
 )
+if not address:
+    raise Exception('Problem saving object.')
+
+output_fname = 'key://pairio/spikeforest/spikeforest_recording_group.{}.json'.format(group_name)
+print('Saving output to {}'.format(output_fname))
+mt.createSnapshot(path=address, dest_path=output_fname)
+
 print('Done.')

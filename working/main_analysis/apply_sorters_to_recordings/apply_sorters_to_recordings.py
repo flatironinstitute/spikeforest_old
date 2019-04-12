@@ -6,13 +6,13 @@ import mtlogging
 
 
 @mtlogging.log()
-def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_timeout=60*20):
+def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_id=None, output_path=None, job_timeout=60*20):
     # Summarize the recordings
     mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
         recordings=recordings,
         compute_resource='default',
-        label='Summarize recordings ({})'.format(output_id)
+        label='Summarize recordings ({})'.format(label)
     )
 
     # We will be assembling the sorting results here
@@ -22,7 +22,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_
         sorting_results0 = _run_sorter(
             sorter=sorter,
             recordings=recordings, 
-            label='{} ({})'.format(sorter['name'], output_id),
+            label='{} ({})'.format(sorter['name'], label),
             job_timeout=job_timeout
         )
         sorting_results = sorting_results + sorting_results0
@@ -32,7 +32,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_
     sorting_results = sa.summarize_sortings(
         sortings=sorting_results,
         compute_resource='default',
-        label='Summarize sortings ({})'.format(output_id)
+        label='Summarize sortings ({})'.format(label)
     )
 
     # Compare with ground truth
@@ -40,7 +40,7 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
         compute_resource='default',
-        label='Compare with truth ({})'.format(output_id)
+        label='Compare with truth ({})'.format(label)
     )
 
     # Aggregate the results
@@ -48,22 +48,34 @@ def apply_sorters_to_recordings(*, sorters, recordings, studies, output_id, job_
     aggregated_sorting_results = sa.aggregate_sorting_results(
          studies, recordings, sorting_results)
 
-    # Save the output
-    print('Saving the output')
-    mtlogging.sublog('save-output')
-    mt.saveObject(
-        key=dict(
-            name='spikeforest_results'
-        ),
-        subkey=output_id,
-        object=dict(
-            studies=studies,
-            recordings=recordings,
-            sorting_results=sorting_results,
-            aggregated_sorting_results=mt.saveObject(
-                object=aggregated_sorting_results)
-        )
+    output_object = dict(
+        studies=studies,
+        recordings=recordings,
+        sorting_results=sorting_results,
+        aggregated_sorting_results=mt.saveObject(
+            object=aggregated_sorting_results)
     )
+
+    # Save the output
+    if output_id:
+        print('Saving the output')
+        mtlogging.sublog('save-output')
+        mt.saveObject(
+            key=dict(
+                name='spikeforest_results'
+            ),
+            subkey=output_id,
+            object=output_object
+        )
+    
+    if output_path:
+        print('Saving the output to {}'.format(output_path))
+        mtlogging.sublog('save-output-path')
+        address = mt.saveObject(output_object)
+        if not address:
+            raise Exception('Problem saving output object.')
+        if not mt.createSnapshot(path=address, dest_path=output_path):
+            raise Exception('Problem saving output to {}'.format(output_path))
 
     mtlogging.sublog('show-output-summary')
     for sr in aggregated_sorting_results['study_sorting_results']:

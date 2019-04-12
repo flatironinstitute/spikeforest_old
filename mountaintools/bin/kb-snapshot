@@ -51,7 +51,7 @@ def main():
     #             exit(-1)
     #     print(address)
 
-    address = mt.createSnapshot(path=path, upload_to=args.upload_to, download_recursive=args.download_recursive, upload_recursive=args.upload_recursive, dest_key_path=args.dest_path)
+    address = mt.createSnapshot(path=path, upload_to=args.upload_to, download_recursive=args.download_recursive, upload_recursive=args.upload_recursive, dest_path=args.dest_path)
     if not address:
         print('Error creating snapshot.', file=sys.stderr)
         exit(-1)
