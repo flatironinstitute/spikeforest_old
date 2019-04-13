@@ -6,7 +6,7 @@ class RecordingSummaryView(vd.Component):
         self._context = context
         self._size=(100, 100)
     @staticmethod
-    def prepare(context, opts):
+    def prepareView(context, opts):
         context.initialize()
     def setSize(self, size):
         self._size = size

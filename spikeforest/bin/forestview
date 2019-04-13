@@ -34,11 +34,13 @@ class TheApp():
         _make_full_browser(W)
         return W
 
-# snapshot of kbucket://15734439d8cf/groundtruth/mearec_synth/neuronexus/datasets_noise10_K10_C32
-_default_spikeforest_file = 'sha1://cee430a1dde64f3ef730997ced77842cfd6831e4/mearec_neuronexus_04_09_2019.json'
+_default_spikeforest_file = 'sha1dir://03e12d2f1af3e038886f25a94871f3723a66502a.toy_recordings'
 
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest studies, recordings, and results')
+    parser.add_argument(
+        'file', help='Path to the recording directory, a directory of recordings, or a spikeforest file', nargs='?', default=None
+    )
     parser.add_argument(
         '--mode', help="Possible modes: spikeforest, analysis", required=False, default='spikeforest'
     )
@@ -46,17 +48,22 @@ def main():
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None
     )
     parser.add_argument(
-        '--path', help='Path to the recording directory, a directory of recordings, or a spikeforest file', required=False, default=None
+        '--path', help='Deprecated -- use the positional argument instead.', required=False, default=None
     )
     parser.add_argument(
-        #'--download-from', required=False, default='spikeforest.spikeforest2'
         '--download-from', required=False, default=None
     )
 
     args = parser.parse_args()
 
-    if args.path is None:
-        args.path = _default_spikeforest_file
+    if args.path is not None:
+        print('NOTE: --path argument is deprecated. Use the positional argument instead.')
+        if args.file is not None:
+            raise Exception('Cannot use --path together with positional argument.')
+        args.file = args.path
+
+    if args.file is None:
+        args.file = _default_spikeforest_file
         if args.download_from is None:
             args.download_from = 'spikeforest.spikeforest2'
 
@@ -67,7 +74,7 @@ def main():
         except:
             print('WARNING: unable to configure to download from {}. Perhaps you are offline.'.format(args.download_from))
 
-    APP = TheApp(mode=args.mode, path=args.path)
+    APP = TheApp(mode=args.mode, path=args.file)
 
     if args.port is not None:
         vd.config_server()
@@ -126,7 +133,7 @@ def _load_analysis_context(path):
         print('Unable to load file: '+path, file=sys.stderr)
         return None
     context = AnalysisContext(
-        object = obj
+        obj = obj
     )
     return context
 

@@ -1,12 +1,14 @@
 from copy import deepcopy
 from mountaintools import client as mt
 from mountaintools import MountainClient
+from .analysis_view_launchers import get_analysis_view_launchers
 
 local_client = MountainClient()
 
 class AnalysisContext():
-    def __init__(self, object):
-        self._object = object
+    def __init__(self, obj):
+        self._object = obj
+        self._o = self._object # for convenience
         self._any_state_change_handlers = []
         self._signal_handlers = dict()
 
@@ -15,12 +17,38 @@ class AnalysisContext():
             current_sorter = None
         )
 
+    def initialize(self):
+        pass
+
+    def analysisName(self):
+        return self._o.get('analysis_name', None)
+
+    def outputPath(self):
+        return self._o.get('output', None)
+
+    def recordingGroups(self):
+        return self._o.get('recordings', [])
+
+    def sorterKeys(self):
+        return self._o.get('sorter_keys', [])
+
+    def downloadFrom(self):
+        return self._o.get('download_from', [])
+
+    def jobTimeout(self):
+        return self._o.get('job_timeout', None)
+
+    def computeResourceKeys(self):
+        return self._o.get('compute_resources', dict()).keys()
+
+    def sorterDefinitionKeys(self):
+        return self._o.get('sorters', dict()).keys()
+    
+    def sorterDefinition(self, key):
+        return self._o.get('sorters', dict()).get(key)
+
     def viewLaunchers(self):
-        # return get_spikeforest_view_launchers(self)
-        return dict(
-            groups=[],
-            launchers=[]
-        )
+        return get_analysis_view_launchers(self)
 
     def onAnyStateChanged(self, handler):
         for key in self._state.keys():

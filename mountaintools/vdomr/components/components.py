@@ -230,12 +230,14 @@ class ScrollArea(vd.Component):
         self._height = height
 
     def render(self):
-        style = dict(overflow='auto')
+        style = dict(overflow='auto', position='absolute')
         if self._width:
             style['width'] = '{}px'.format(self._width)
         if self._height:
+            print('--------------------------------- height', self._height)
             style['height'] = '{}px'.format(self._height)
-        return vd.div(self._child, style=style)
+            print('---------------- style', style)
+        return vd.div(self._child, style=style, id='test_id', class_='test_class')
 
 
 def _save_plot(fig, fname, quality=40):
