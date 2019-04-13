@@ -153,7 +153,8 @@ quit(0);
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        matlab -nosplash -nodisplay -r run_kilosort
+        echo '=====================' `date` '=====================' >> run_kilosort.log 
+        matlab -nosplash -nodisplay -r run_kilosort &>> run_kilosort.log
     '''.format(tmpdir=tmpdir)
     shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort.sh', keep_temp_files=True)
     shell_cmd.write(tmpdir+'/run_kilosort.sh')
