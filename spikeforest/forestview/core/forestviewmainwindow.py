@@ -7,7 +7,8 @@ import traceback
 import sys
 import time
 
-# HIGH close-able tabs
+# HIGH TODO move tabs between north/south containers
+# HIGH TODO cross-correlograms widget
 
 class ForestViewMainWindow(vd.Component):
     def __init__(self, context):

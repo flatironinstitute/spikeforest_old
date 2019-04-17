@@ -63,30 +63,6 @@ class TimeseriesWidget(vd.Component):
         # js = ";".join(js_lines)
         # vd.devel.loadJavascript(js=js)
 
-        request_data_segment_callback_id = 'request-data-segment-' + str(uuid.uuid4())
-        vd.register_callback(request_data_segment_callback_id, lambda ds_factor, segment_num: self._set_data_segment(ds_factor=ds_factor, segment_num=segment_num, blocking=False))
-
-        js = """
-        let TS=new window.TimeseriesModel({samplerate:{samplerate}, num_channels:{num_channels}, num_timepoints:{num_timepoints}, segment_size:{segment_size}});
-        TS.onRequestDataSegment(request_data_segment);
-        if (!window.timeseries_models) window.timeseries_models={};
-        window.timeseries_models['{div_id}'] = TS;
-        if (!window.spike_times) window.spike_times={};
-        //window.spike_times['{div_id}']={spike_trains}";
-
-        function request_data_segment(ds_factor, num) {
-            window.vdomr_invokeFunction('{request_data_segment_callback_id}', [ds_factor, num], {});
-        }
-        """
-        js = js.replace('{div_id}', self._div_id)
-        # js = js.replace('{spike_trains}', spike_trains_str)
-        js = js.replace('{samplerate}', str(recording.getSamplingFrequency()))
-        js = js.replace('{num_channels}', str(recording.getNumChannels()))
-        js = js.replace('{num_timepoints}', str(recording.getNumFrames()))
-        js = js.replace('{segment_size}', str(self._segment_size))
-        js = js.replace('{request_data_segment_callback_id}', request_data_segment_callback_id)
-        vd.devel.loadJavascript(js=js)
-
         # important to set some data here so that the auto-scaling can take place
         self._set_data_segment(ds_factor=1, segment_num=0, blocking=True)
 
@@ -121,13 +97,14 @@ class TimeseriesWidget(vd.Component):
         let TS = window.timeseries_models['{div_id}'];
         let X=new window.Mda();
         X.setFromBase64('{X_b64}');
+        console.log('setDataSegment',X.N1(), X.N2());
         TS.setDataSegment({ds_factor}, {segment_num}, X);
         """
         js = js.replace('{div_id}', self._div_id)
         js = js.replace('{X_b64}', X_b64)
         js = js.replace('{ds_factor}', str(ds_factor))
         js = js.replace('{segment_num}', str(segment_num))
-        vd.devel.loadJavascript(js=js)
+        self.executeJavascript(js=js)
     def setSize(self,size):
         if self._size==size:
             return
@@ -140,9 +117,24 @@ class TimeseriesWidget(vd.Component):
         return div
     def postRenderScript(self):
         js="""
+        if (!window.timeseries_models) window.timeseries_models={};
+        if (!window.timeseries_models['{div_id}']) {
+            let TS0=new window.TimeseriesModel({samplerate:{samplerate}, num_channels:{num_channels}, num_timepoints:{num_timepoints}, segment_size:{segment_size}});
+            window.timeseries_models['{div_id}'] = TS0;
+        }
+        let TS = window.timeseries_models['{div_id}'];
+
+        TS.onRequestDataSegment(request_data_segment);
+        
+        if (!window.spike_times) window.spike_times={};
+        //window.spike_times['{div_id}']={spike_trains}";
+
+        function request_data_segment(ds_factor, num) {
+            window.vdomr_invokeFunction('{request_data_segment_callback_id}', [ds_factor, num], {});
+        }
+
         let W=new window.TimeseriesWidget();
         W.setSyncGroup('test');
-        let TS=window.timeseries_models['{div_id}'];
         W.setTimeseriesModel(TS);
         //W.setMarkers(window.spike_times['{div_id}']);
         W.setSize({width},{height})
@@ -150,9 +142,19 @@ class TimeseriesWidget(vd.Component):
         $('#{div_id}').css({width:'{width}px',height:'{height}px'})
         $('#{div_id}').append(W.element());
         """
+
+        request_data_segment_callback_id = 'request-data-segment-' + str(uuid.uuid4())
+        vd.register_callback(request_data_segment_callback_id, lambda ds_factor, segment_num: self._set_data_segment(ds_factor=ds_factor, segment_num=segment_num, blocking=False))
+
         js = js.replace('{div_id}', self._div_id)
         js = js.replace('{width}', str(self._size[0]))
         js = js.replace('{height}', str(self._size[1]))
+        # js = js.replace('{spike_trains}', spike_trains_str)
+        js = js.replace('{samplerate}', str(self._recording.getSamplingFrequency()))
+        js = js.replace('{num_channels}', str(self._recording.getNumChannels()))
+        js = js.replace('{num_timepoints}', str(self._recording.getNumFrames()))
+        js = js.replace('{segment_size}', str(self._segment_size))
+        js = js.replace('{request_data_segment_callback_id}', request_data_segment_callback_id)
         return js
 
 def _do_downsample(X, ds_factor):
