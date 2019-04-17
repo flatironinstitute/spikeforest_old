@@ -1,0 +1,8 @@
+chrome-tabs/.gitignore
+chrome-tabs/*.json
+chrome-tabs/*.html
+chrome-tabs/*.gif
+chrome-tabs/*.mov
+chrome-tabs/*.md
+chrome-tabs/demo
+chrome-tabs/svg
