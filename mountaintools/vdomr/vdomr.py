@@ -183,6 +183,7 @@ def config_jupyter():
     // you can find it from anywhere:
     window.vdomr_invokeFunction = invokeFunction;
     """, invokeFunction=invoke_callback)
+    jp_widget.js_init(_get_init_javascript()) # thx, A. Morley
     vdomr_global['jp_widget'] = jp_widget
     display(jp_widget) # pylint: disable=undefined-variable
 
