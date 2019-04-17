@@ -1,5 +1,5 @@
 import vdomr as vd
-from .tabbar import TabBar
+from .tabbar2 import TabBar
 
 class HighlightBox(vd.Component):
   def __init__(self):
@@ -18,9 +18,12 @@ class HighlightBox(vd.Component):
     return vd.div(style=style0)
 
 class ViewFrame(vd.Component):
-  def __init__(self,child):
+  def __init__(self,child, *, name=''):
     vd.Component.__init__(self)
     self._child=child
+    self._name=name
+  def name(self):
+    return self._name
   def child(self):
     return self._child
   def render(self):
@@ -46,31 +49,60 @@ class Container(vd.Component):
         style=style
     )
 
+class ViewContainerContent(vd.Component):
+  def __init__(self):
+    vd.Component.__init__(self)
+    self._child = None
+  def setChild(self, child):
+    self._child = child
+    self.refresh()
+  def render(self):
+    if not self._child:
+      return vd.div('No content')
+    return self._child
+
 class ViewContainer(vd.Component):
   def __init__(self):
     vd.Component.__init__(self)
-    self._views=[]
-    self._view_frames=[]
-    self._current_frame=None
+    self._views=dict()
+    self._view_frames=dict()
+    self._content=ViewContainerContent()
+    self._last_id_num=0
     self._size=(0,0)
     self._tab_bar=TabBar()
     self._tab_bar.onCurrentTabChanged(self._on_current_tab_changed)
+    self._tab_bar.onTabRemoved(self._on_tab_removed)
     self._click_handlers=[]
     self._highlight_box=HighlightBox()
   def onClick(self,handler):
     self._click_handlers.append(handler)
   def setSize(self,size):
     self._size=size
-    for view in self._views:
+    for view in self._views.values():
       self._update_view_size(view)
-  def addView(self,view):
+  def addView(self,view, *, name=''):
+    id_num = self._last_id_num+1
+    self._last_id_num = self._last_id_num + 1
+    view_id = 'view_{}'.format(id_num)
+
     self._update_view_size(view)
-    frame=ViewFrame(view)
-    self._views.append(view)
-    self._view_frames.append(frame)
-    self._tab_bar.addTab(view,view.tabLabel())
-    self._current_frame=frame
-    self.refresh()
+    frame=ViewFrame(view, name=name)
+    self._views[view_id]=view
+    self._view_frames[view_id] = frame
+    self._tab_bar.addTab(view_id, view.tabLabel())
+
+    # self.refresh()
+  def findView(self, *, name):
+    for vf in self._view_frames.values():
+      if vf.name() == name:
+        return vf.child()
+    return None
+  def setCurrentView(self, view):
+    for id, v in self._views.items():
+      if v == view:
+        self._tab_bar.setCurrentTab(id=id)
+        return
+
   def setHighlight(self,val):
     self._highlight_box.setHighlight(val)
 
@@ -78,22 +110,33 @@ class ViewContainer(vd.Component):
     view.setSize((self._size[0]-self._tab_bar.height()-10,self._size[1]-self._tab_bar.height()-10))
 
   def _on_current_tab_changed(self):
-    self._current_frame=self._tab_bar.currentTabKey()
-    self.refresh()
+    id = self._tab_bar.currentTabId()
+    if id:
+      frame = self._view_frames[id]
+      self._content.setChild(frame)
+    else:
+      self._content.setChild(None)
+
+  def _on_tab_removed(self, id):
+    if id in self._views:
+      view = self._views[id]
+      del self._views[id]
+      del self._view_frames[id]
+      if hasattr(view, 'cleanup'):
+        (getattr(view, 'cleanup'))()
+
   def currentView(self):
-    f=self._current_frame
-    if not f:
+    id = self._tab_bar.currentTabId()
+    if id is None:
       return None
-    return f.child()
+    if id not in self._views:
+      return None
+    return self._views[id]
   def _on_click(self):
     for handler in self._click_handlers:
       handler()
   def render(self):
-    f=self._current_frame
-    style0=dict(width='100%',height='100%',position='absolute')
-    style1=dict(left='5px',right='5px',top='5px',bottom='{}px'.format(5+self._tab_bar.height()),position='absolute')
+    style_outer=dict(width='100%',height='100%',position='absolute')
+    style_content=dict(left='5px',right='5px',top='{}px'.format(5+self._tab_bar.height()),bottom='5px',position='absolute')
     onclick=self._on_click
-    if not f:
-      style1['background-color']='lightgray'
-      f=''
-    return vd.div(self._highlight_box,vd.div(f,style=style1),self._tab_bar,style=style0,onclick=onclick)
+    return vd.div(self._highlight_box,vd.div(self._content, id='content-'+self.componentId(),style=style_content),self._tab_bar,style=style_outer,onclick=onclick)

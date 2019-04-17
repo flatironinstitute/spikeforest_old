@@ -29,7 +29,6 @@ class SorterDefinitionsView(vd.Component):
         table = vd.table(rows, style={
                          'text-align': 'left', 'width': 'auto', 'font-size': '13px'}, class_='table')
 
-        print('---------size is', self._size)
         return vd.components.ScrollArea(vd.div(
             vd.h2('Sorter definitions for analysis: {}'.format(self._context.analysisName())),
             table, height=self._size[1]

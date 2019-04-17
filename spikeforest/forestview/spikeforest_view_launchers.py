@@ -37,6 +37,7 @@ def get_spikeforest_view_launchers(context):
         context=context, opts=dict(),
         enabled=True
     ))
+    # MEDIUM TODO: this should be a component rather than a launcher
     launchers.append(dict(
         group='general', name='recording-select',
         component_class=RecordingSelectComponent,
@@ -54,6 +55,7 @@ def get_spikeforest_view_launchers(context):
             group='recording', name='recording-summary', label='Recording summary',
             view_class=RecordingSummaryView,
             context=recording_context, opts=dict(),
+            always_open_new=True,
             enabled=(recording_context is not None)
         ))
         launchers.append(dict(
@@ -66,6 +68,7 @@ def get_spikeforest_view_launchers(context):
             group='recording', name='timeseries', label='Timeseries',
             view_class=TimeseriesView,
             context=recording_context, opts=dict(),
+            always_open_new=True,
             enabled=(recording_context is not None)
         ))
         if recording_context.hasIntraRecording():
@@ -73,7 +76,7 @@ def get_spikeforest_view_launchers(context):
                 group='recording', name='intra-timeseries', label='Intra-timeseries',
                 view_class=TimeseriesView,
                 context=recording_context.intraRecordingContext(),
-                opts=dict(),
+                always_open_new=True,
                 enabled=(recording_context is not None)
             ))
 
@@ -86,24 +89,28 @@ def get_spikeforest_view_launchers(context):
             group='true-sorting', name='true-templates', label='Templates',
             view_class=TemplatesView,
             context=true_sorting_context, opts=dict(),
+            always_open_new=True,
             enabled=(true_sorting_context is not None)
         ))
         launchers.append(dict(
             group='true-sorting', name='true-units-info', label='Units info',
             view_class=UnitsTableView,
             context=true_sorting_context, opts=dict(),
+            always_open_new=True,
             enabled=(true_sorting_context is not None)
         ))
         launchers.append(dict(
             group='true-sorting', name='feature-space', label='Feature space',
             view_class=FeatureSpaceView,
             context=true_sorting_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
         ))
         launchers.append(dict(
             group='true-sorting', name='clusters', label='Clusters',
             view_class=ClusterView,
             context=true_sorting_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
         ))
     
@@ -112,6 +119,7 @@ def get_spikeforest_view_launchers(context):
             group='true-sorting', name='test', label='Test',
             view_class=TemplatesView,
             context=true_sorting_context, opts=dict(),
+            always_open_new=True,
             enabled=(true_sorting_context.currentUnitId() is not None)
         ))
 
@@ -122,12 +130,14 @@ def get_spikeforest_view_launchers(context):
             group='sorting-results', name='sorting-results-table', label='Sorting results table',
             view_class=SortingResultsTableView,
             context=recording_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(recording_context.sortingResultNames()) > 0)
         ))
         launchers.append(dict(
             group='sorting-results', name='sorting-result-select',
             component_class=SortingResultSelectComponent,
             context=recording_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(recording_context.sortingResultNames()) > 0)
         ))
 
@@ -141,48 +151,56 @@ def get_spikeforest_view_launchers(context):
             group='sorting-result', name='sorting-result-details', label='Details',
             view_class=SortingResultDetailView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context is not None)
         ))
         launchers.append(dict(
             group='sorting-result', name='templates', label='Templates',
             view_class=TemplatesView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context is not None)
         ))
         launchers.append(dict(
             group='sorting-result', name='units-info', label='Units info',
             view_class=UnitsTableView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context is not None)
         ))
         launchers.append(dict(
             group='sorting-result', name='feature-space', label='Feature space',
             view_class=FeatureSpaceView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
         ))
         launchers.append(dict(
             group='sorting-result', name='clusters', label='Clusters',
             view_class=ClusterView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(len(sorting_result_context.selectedUnitIds()) > 0)
         ))
         launchers.append(dict(
             group='sorting-result', name='console-out', label='Console output',
             view_class=ConsoleOutView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context.consoleOutputPath() is not None)
         ))
         launchers.append(dict(
             group='sorting-result', name='exec-stats', label='Execution stats',
             view_class=ExecutionStatsView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context.executionStats() is not None)
         ))
         launchers.append(dict(
             group='sorting-result', name='comparison-with-truth', label='Comparison with truth',
             view_class=ComparisonWithTruthView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context.comparisonWithTruthPath() is not None)
         ))
     
@@ -191,6 +209,7 @@ def get_spikeforest_view_launchers(context):
             group='sorting-result', name='test', label='Test',
             view_class=TemplatesView,
             context=sorting_result_context, opts=dict(),
+            always_open_new=True,
             enabled=(sorting_result_context.currentUnitId() is not None)
         ))
     

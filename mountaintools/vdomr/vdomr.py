@@ -81,11 +81,13 @@ def _queue_javascript(js):
     vdomr_global['queued_javascript'].append(js)
 
 def _exec_queued_javascript():
-    for js in vdomr_global['queued_javascript']:
-        exec_javascript(js)
+    queued_javascript = vdomr_global['queued_javascript']
     vdomr_global['queued_javascript']=[]
+    for js in queued_javascript:
+        exec_javascript(js)
 
 def exec_javascript(js):
+    _exec_queued_javascript()
     if vdomr_global['mode'] == 'colab':
         from IPython.display import Javascript
         display(Javascript(js)) # pylint: disable=undefined-variable
@@ -277,8 +279,17 @@ def pyqt5_start(*, APP, title):
                 </style>
                 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
                 <script>
-                // we do the following so we can get all console.log messages on the python console
-                {script}
+                window.show_overlay=function() {
+                    document.getElementById('overlay').style.display='block'
+                }
+                window.hide_overlay=function() {
+                    document.getElementById('overlay').style.display='none'
+                }
+                window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
+                    // window.show_overlay();
+                    pyqt5_api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
+                }
+                {init_js}
                 </script>
                 </head>
                 <body>
@@ -298,19 +309,7 @@ def pyqt5_start(*, APP, title):
             """
             html = html.replace('{content}', root_html)
 
-            script = """
-                window.show_overlay=function() {
-                    document.getElementById('overlay').style.display='block'
-                }
-                window.hide_overlay=function() {
-                    document.getElementById('overlay').style.display='none'
-                }
-                window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
-                    // window.show_overlay();
-                    pyqt5_api.invokeFunction({callback_id:callback_id,args:args,kwargs:kwargs});
-                }
-            """
-            html = html.replace('{script}', script)
+            html = html.replace('{init_js}', _get_init_javascript())
 
             self.page().setHtml(html)
     if title is not None:
@@ -380,6 +379,54 @@ def _pyqt5_worker_process(APP, connection_to_gui):
                     pass
                 connection_to_gui.send(dict(message='ok'))
         time.sleep(0.001)
+
+def _get_init_javascript():
+    return """
+    function create_vdomr_component_if_needed(component_id) {
+        if (!window.vdomr_components) window.vdomr_components={};
+        if (!window.vdomr_components[component_id]) {
+            window.vdomr_components[component_id]={ready:false, on_ready_handlers:[]};
+        }
+    }
+    window.vdomr_on_component_ready=function(component_id, callback) {
+        create_vdomr_component_if_needed(component_id);
+        if (window.vdomr_components[component_id].ready) {
+            callback();
+            return;
+        }
+        window.vdomr_components[component_id].on_ready_handlers.push(callback);
+    }
+    window.vdomr_on_element_ready=function(element_id, callback) {
+        let num_tries=0;
+        function do_check() {
+            let elmt0=document.getElementById(element_id);
+            if (elmt0) {
+                callback();
+                return;
+            }
+            let timeout_msec=1;
+            if (num_tries<1) timeout_msec=1;
+            else if (num_tries<5) timeout_msec=100;
+            else if (num_tries<10) timeout_msec=500;
+            else {
+                console.warning('VDOMR WARNING: timeout out while waiting for element to be ready.');
+            }
+        }
+        do_check();
+    }
+    window.vdomr_set_component_ready=function(component_id, val) {
+        create_vdomr_component_if_needed(component_id);
+        window.vdomr_components[component_id].ready=val;
+    }
+    window.vdomr_trigger_on_ready_handlers=function(component_id, val) {
+        create_vdomr_component_if_needed(component_id);
+        let handlers=window.vdomr_components[component_id].on_ready_handlers;
+        window.vdomr_components[component_id].on_ready_handlers=[];
+        handlers.forEach(function(handler) {
+            handler();
+        });
+    }
+    """
 
 def mode():
     return vdomr_global['mode']

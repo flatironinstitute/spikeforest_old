@@ -33,7 +33,7 @@ class TableWidget(vd.Component):
         else:
             js = js.replace('{current_row_index}', str(self._current_row_index))
 
-        vd.devel.loadJavascript(js=js)
+        self.executeJavascript(js=js)
     def onSelectionChanged(self, handler):
         self._selection_changed_handlers.append(handler)
     def render(self):
@@ -52,7 +52,6 @@ class TableWidget(vd.Component):
         else:
             return table
     def _on_selection_changed(self, current_id, selected_ids):
-        console
         if type(current_id)==str:
             current_id=int(current_id)
         self._current_row_index = current_id

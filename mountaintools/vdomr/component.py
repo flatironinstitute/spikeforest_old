@@ -23,10 +23,42 @@ class Component(object):
     def refresh(self):
         html=self._render_and_get_html()
         html_encoded = base64.b64encode(html.encode('utf-8')).decode('utf-8')
-        js = "{{var elmt=document.getElementById('{}'); if (elmt) elmt.innerHTML=atob('{}');}}".format(
-            self._div_id, html_encoded, self._div_id)
+        
+        # note that this will execute before any of the code below in executeJavascript or _render_and_get_html()
+        # because it is not wrapped in setTimeout() calls.
+        js = """
+        (function() {
+            ((window.vdomr_components||{})['{component_id}']||{}).ready=false;
+            let elmt = document.getElementById('{div_id}');
+            if (elmt) {
+                elmt.innerHTML=atob('{html_encoded}');
+            }
+        })();
+        """
+        js = js.replace('{div_id}', self._div_id)
+        js = js.replace('{component_id}', self.componentId())
+        js = js.replace('{html_encoded}', html_encoded)
         exec_javascript(js)
-        _exec_queued_javascript()
+
+    def executeJavascript(self, js, **kwargs):
+        # important to wrap this in setTimeout call so that the refresh replace gets executed first
+        js2 = """
+        setTimeout(function() {
+            window.vdomr_on_component_ready('{component_id}', function() {
+                let elmt=document.getElementById('{div_id}');
+                if (elmt) {
+                    {js}
+                }
+                else {
+                    console.warn('WARNING: unable to execute javascript for component because element was not found.');
+                }
+            });
+        },0);
+        """
+        js2=js2.replace('{div_id}', self._div_id)
+        js2=js2.replace('{component_id}', self.componentId())
+        js2=js2.replace('{js}', js)
+        exec_javascript(js2)
 
     def to_html(self):
         return self._repr_html_()
@@ -38,20 +70,28 @@ class Component(object):
     def _render_and_get_html(self):
         html = self.render().to_html()
         js = self.postRenderScript() # pylint: disable=assignment-from-none
-        if js:
-            # Note the following has a terrible race condition
-            js2 = """
-            (function() {
+        if not js:
+            js='// no post-render javascript'
+        # important to wrap this in setTimeout call so that the refresh gets executed first
+        js2 = """
+        setTimeout(function() {
+            window.vdomr_set_component_ready('{component_id}', false);
+            window.vdomr_on_element_ready('{div_id}', function() {
                 var elmt=document.getElementById('{div_id}');
                 if (elmt) {
                     // important to only run the javascript if we find the element on the page!!
                     {js}
+                    window.vdomr_trigger_on_ready_handlers('{component_id}');
+                    window.vdomr_set_component_ready('{component_id}', true);
                 }
-            })();
-            """
-            js2=js2.replace('{div_id}', self._div_id)
-            js2=js2.replace('{js}', js)
-            _queue_javascript(js2)
-            if mode()=='jp_proxy_widget' or mode()=='colab' or mode()=='server':
-                set_timeout(_exec_queued_javascript, 0) # this is needed in some situations to trigger the queued js to be executed.
+                else {
+                    console.warn('WARNING: unable to execute post-render javascript for component because element was not found.');
+                }
+            });
+        }, 0);
+        """
+        js2=js2.replace('{js}', js)
+        js2=js2.replace('{div_id}', self._div_id)
+        js2=js2.replace('{component_id}', self.componentId())
+        exec_javascript(js2)
         return html

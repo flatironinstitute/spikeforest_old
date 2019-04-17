@@ -234,9 +234,7 @@ class ScrollArea(vd.Component):
         if self._width:
             style['width'] = '{}px'.format(self._width)
         if self._height:
-            print('--------------------------------- height', self._height)
             style['height'] = '{}px'.format(self._height)
-            print('---------------- style', style)
         return vd.div(self._child, style=style, id='test_id', class_='test_class')
 
 

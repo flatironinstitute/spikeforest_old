@@ -7,6 +7,8 @@ import traceback
 import sys
 import time
 
+# HIGH close-able tabs
+
 class ForestViewMainWindow(vd.Component):
     def __init__(self, context):
         vd.Component.__init__(self)
@@ -15,18 +17,19 @@ class ForestViewMainWindow(vd.Component):
         self._control_panel = ForestViewControlPanel(self._context)
         self._view_container_north = ViewContainer()
         self._view_container_south = ViewContainer()
+        self._view_containers = [self._view_container_north, self._view_container_south]
         self._control_panel.onLaunchView(self._trigger_launch_view)
 
         self._current_view_container = self._view_container_north
         self._view_container_north.onClick(self._on_click_north)
         self._view_container_south.onClick(self._on_click_south)
 
+
         #style0 = dict(border='solid 1px gray')
         self._container_CP = Container(self._control_panel, scroll=True)
         self._container_VCN = Container(self._view_container_north)
         self._container_VCS = Container(self._view_container_south)
         self._container_main = Container(self._container_CP, self._container_VCN, self._container_VCS, position_mode='relative')
-
 
         self._highlight_view_containers()
 
@@ -82,8 +85,14 @@ class ForestViewMainWindow(vd.Component):
         self._highlight_view_containers()
 
     def _trigger_launch_view(self, view_launcher):
+        if not view_launcher.get('always_open_new', False):
+            for VC in self._view_containers:
+                v = VC.findView(name=view_launcher.get('name', ''))
+                if v:
+                    VC.setCurrentView(v)
+                    return
         frame = ViewFrame(view_launcher=view_launcher)
-        self._current_view_container.addView(frame)
+        self._current_view_container.addView(frame, name=view_launcher.get('name', ''))
         frame.initialize()
 
     def context(self):
@@ -113,6 +122,7 @@ class ViewFrame(vd.Component):
         self._prepare_log_text_view = TextComponent()
         self._view = None
         self._size = (100, 100)
+        self._init_process = None
     def setSize(self, size):
         self._size=size
         if self._view:
@@ -145,9 +155,15 @@ class ViewFrame(vd.Component):
             self._view = view_class(context=context, opts=opts)
             self._view.setSize(self._size)
         self.refresh()
+    def cleanup(self):
+        if self._init_process:
+            print('# terminating init process')
+            self._init_process.terminate()
+        if self._view:
+            if hasattr(self._view, 'cleanup'):
+                (getattr(self._view, 'cleanup'))()
     def render(self):
         if self._view:
-            print('rendering view')
             return self._view
         else:
             return vd.components.ScrollArea(
@@ -178,6 +194,7 @@ class ViewFrame(vd.Component):
                 timeout = 5
             vd.set_timeout(self._check_prepare, timeout)
     def _on_prepare_completed(self, result):
+        self._init_process = None
         view_launcher = self._view_launcher
         context = view_launcher['context']
         opts = view_launcher['opts']
@@ -263,7 +280,7 @@ class Container(vd.Component):
     js=js.replace('{elmt_id}',self._elmt_id)
     js=js.replace('{width}',str(size[0]))
     js=js.replace('{height}',str(size[1]))
-    vd.devel.loadJavascript(js=js)
+    self.executeJavascript(js)
   def setPosition(self, position):
     js="""
     document.getElementById('{elmt_id}').style.left='{left}px';
@@ -272,7 +289,7 @@ class Container(vd.Component):
     js=js.replace('{elmt_id}',self._elmt_id)
     js=js.replace('{left}',str(position[0]))
     js=js.replace('{top}',str(position[1]))
-    vd.devel.loadJavascript(js=js)
+    self.executeJavascript(js)
   def render(self):
     style=self._style
     style['position']=self._position_mode

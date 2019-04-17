@@ -21,7 +21,7 @@ class TableWidget(vd.Component):
             return
         self._current_row_index = index
         js = """
-        let W = window.widgets['{component_id}'];
+        let W = (window.widgets||{})['{component_id}'];
         if (W) {
             W.setCurrentRowIndex({current_row_index});
         }
@@ -33,7 +33,7 @@ class TableWidget(vd.Component):
         else:
             js = js.replace('{current_row_index}', str(self._current_row_index))
 
-        vd.devel.loadJavascript(js=js)
+        self.executeJavascript(js=js)
     def onSelectionChanged(self, handler):
         self._selection_changed_handlers.append(handler)
     def render(self):

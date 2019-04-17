@@ -8,6 +8,7 @@ import json
 
 import os
 import vdomr as vd
+from .vdomr import _get_init_javascript
 
 
 class VDOMRServer():
@@ -92,7 +93,7 @@ class VDOMRServer():
 
                 <script>
                 window.vdomr_invokeFunction=function(callback_id,args,kwargs) {
-                    console.log('vdomr_invokeFunction',callback_id,args,kwargs);
+                    // console.log('vdomr_invokeFunction',callback_id,args,kwargs);
                     // document.getElementById('overlay').style.visibility='visible'
                     post_json('/{vdomr_token_str}invoke/?session_id={session_id}',{callback_id:callback_id,args:args,kwargs:kwargs},function(err,resp) {
                     // document.getElementById('overlay').style.visibility='hidden'
@@ -100,12 +101,13 @@ class VDOMRServer():
                         console.error(err);
                         return;
                     }
-                    console.log('ok',resp);
+                    // console.log('ok',resp);
                     inject_script('/{vdomr_token_str}script_immediate.js?session_id={session_id}',function() {
 
                     });
                     });
                 }
+                {init_js}
                 </script>
 
                 <script>
@@ -144,6 +146,7 @@ class VDOMRServer():
                 '''
                 html = root._repr_html_().join(html.split('{content}'))
                 html = session_id.join(html.split('{session_id}'))
+                html = html.replace('{init_js}', _get_init_javascript())
                 if server_self._token:
                     html = html.replace('{vdomr_token_str}', server_self._token+'/')
                 else:
