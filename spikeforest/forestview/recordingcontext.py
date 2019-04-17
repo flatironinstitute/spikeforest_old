@@ -89,6 +89,9 @@ class RecordingContext():
     def recordingName(self):
         return self._recording_object.get('name', '')
 
+    def recordingLabel(self):
+        return '{}/{}'.format(self.studyName(), self.recordingName())
+
     def recordingDirectory(self):
         return self._recording_object.get('directory', '')
 

@@ -37,6 +37,10 @@ class SortingResultContext():
     def sortingResultObject(self):
         return deepcopy(self._sorting_result_object)
 
+    def sortingLabel(self):
+        # MEDIUM TODO fill in details of sorting label here
+        return 'Sorting'
+
     def recordingContext(self):
         return self._recording_context
 

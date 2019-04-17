@@ -30,6 +30,8 @@ class ElectrodeGeometryView(vd.Component):
         return self._size
     def tabLabel(self):
         return 'Electrode geometry'
+    def title(self):
+        return 'Electrode geometry for {}'.format(self._context.recordingLabel())
     def render(self):
         return vd.div(self._widget)
     def _handle_state_changed(self):

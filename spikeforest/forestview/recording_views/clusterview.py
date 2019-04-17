@@ -10,6 +10,7 @@ from numpy.linalg import svd
 class ClusterView(vd.Component):
     def __init__(self, *, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
+        self._context = context
         self._size = (100, 100)
         self._features = prepare_result['features']
         self._labels = prepare_result['labels']
@@ -66,6 +67,8 @@ class ClusterView(vd.Component):
         return self._size
     def tabLabel(self):
         return 'Clusters'
+    def title(self):
+        return 'Clusters for {}'.format(self._context.sortingLabel())
     def render(self):
         return self._widget
 
@@ -86,7 +89,6 @@ class ClusterWidget(vd.Component):
         self.refresh()
 
     def render(self):
-        print('rendering clusterwidget...')
         unit_ids = sorted(list(set(self._labels.tolist())))
         data = []
         for unit_id in unit_ids:

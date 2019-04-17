@@ -3,7 +3,7 @@ import os
 
 source_path = os.path.dirname(os.path.realpath(__file__))
 
-
+# MEDIUM TODO rename tabbar2 to tabbar.
 class TabBar(vd.Component):
     def __init__(self):
         vd.Component.__init__(self)
@@ -11,6 +11,7 @@ class TabBar(vd.Component):
         self._current_tab_id = None
         self._current_tab_changed_handlers = []
         self._tab_removed_handlers = []
+        self._tab_labels = dict()
 
         vd.devel.loadJavascript(path=source_path+'/draggabilly.js')
         vd.devel.loadCss(path=source_path+'/chrome-tabs/css/chrome-tabs.css')
@@ -28,13 +29,6 @@ class TabBar(vd.Component):
         self._tab_removed_handlers.append(handler)
 
     def setCurrentTab(self, id):
-        # if self._current_tab_id == id:
-        #     return
-        # self._current_tab_id = id
-        # # TODO: finish
-        # for handler in self._current_tab_changed_handlers:
-        #     handler()
-
         js = """
         let chromeTabs = window.chrome_tab_widgets['{component_id}'];
         let el = document.querySelector('#div-{component_id}');
@@ -50,20 +44,11 @@ class TabBar(vd.Component):
         return self._current_tab_id
 
     def addTab(self, id, label):
-        # TODO: finish
-        # tab=TabBarTab(height=self._height,label=label,key=key)
-        # def set_current_tab():
-        #   self.setCurrentTab(tab)
-        #   self.refresh()
-        # tab.onClick(set_current_tab)
-        # self._tabs.append(tab)
-        # self.setCurrentTab(tab)
-        # self.refresh()
         js = """
         let chromeTabs = window.chrome_tab_widgets['{component_id}'];
         chromeTabs.addTab({
             id: '{id}',
-            title: '{label}',
+            title: 'initializing...',
             favicon: false
         });
         """
@@ -72,7 +57,23 @@ class TabBar(vd.Component):
         js=js.replace('{label}', label)
         self.executeJavascript(js=js)
         self._on_active_tab_changed(id)
+        self.setTabLabel(id, label)
         pass
+
+    def setTabLabel(self, id, label):
+        if id in self._tab_labels:
+            if label == self._tab_labels[id]:
+                return
+        self._tab_labels[id] = label
+        js = """
+        let el = document.querySelector('#div-{component_id}');
+        let tabEl = $(el).find('[data-tab-id={tab_id}]');
+        $(tabEl).find('.chrome-tab-title').html('{label}');
+        """
+        js = js.replace('{tab_id}', id)
+        js=js.replace('{component_id}', self.componentId())
+        js=js.replace('{label}', label)
+        self.executeJavascript(js)
 
     def render(self):
         div=vd.div(vd.div(class_="chrome-tabs-content"), vd.div(class_="chrome-tabs-bottom-bar"), class_='chrome-tabs', id='div-'+self.componentId())

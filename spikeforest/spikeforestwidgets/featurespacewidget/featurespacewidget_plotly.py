@@ -33,7 +33,6 @@ class FeatureSpaceWidgetPlotly(vd.Component):
         self.refresh()
 
     def render(self):
-        print('rendering featurespacewidget......')
         data = []
         for ii, ff in enumerate(self._features):
             data.append(dict(

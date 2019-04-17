@@ -44,6 +44,8 @@ class TimeseriesView(vd.Component):
         return self._size
     def tabLabel(self):
         return 'Timeseries'
+    def title(self):
+        return 'Timeseries for {}'.format(self._context.recordingLabel())
     def render(self):
         return vd.div(
             self._timeseries_widget

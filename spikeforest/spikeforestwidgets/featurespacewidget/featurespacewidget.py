@@ -64,7 +64,6 @@ class FeatureSpaceWidget(vd.Component):
     def render(self):
         self._do_compute()
         self._init_js()
-        print('rendering featurespacewidget...')
         div=vd.div(id=self._div_id)
         js="""
         let W=new window.FeatureSpaceWidget();

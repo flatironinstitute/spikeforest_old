@@ -114,6 +114,21 @@ class TextComponent(vd.Component):
     def render(self):
         return vd.span(self._text)
 
+class TitleBar(vd.Component):
+    def __init__(self):
+        vd.Component.__init__(self)
+        self._title = 'TitleBar'
+        self._height = 20
+    def setTitle(self, title0):
+        if title0 == self._title:
+            return
+        self._title=title0
+        self.refresh()
+    def height(self):
+        return self._height
+    def render(self):
+        return vd.div(self._title, style={'height':'{}px'.format(self._height), 'font-size':'14px'})
+
 class ViewFrame(vd.Component):
     def __init__(self, *, view_launcher):
         vd.Component.__init__(self)
@@ -121,13 +136,14 @@ class ViewFrame(vd.Component):
         self._connection_to_prepare = None
         self._prepare_log_text = ''
         self._prepare_log_text_view = TextComponent()
+        self._title_bar = TitleBar()
         self._view = None
         self._size = (100, 100)
         self._init_process = None
+        self.updateTitle()
     def setSize(self, size):
         self._size=size
-        if self._view:
-            self._view.setSize(size)
+        self._update_view_size()
     def size(self):
         return self._size
     def tabLabel(self):
@@ -135,6 +151,15 @@ class ViewFrame(vd.Component):
             return self._view.tabLabel()
         else:
             return self._view_launcher['label']+'...'
+    def updateTitle(self):
+        if self._view:
+            if hasattr(self._view, 'title'):
+                title0 = self._view.title()
+            else:
+                title0 = ''
+        else:
+            title0='Preparing: {} ...'.format(self._view_launcher['label'])
+        self._title_bar.setTitle(title0)
     def initialize(self):
         view_launcher = self._view_launcher
         context = view_launcher['context']
@@ -154,7 +179,8 @@ class ViewFrame(vd.Component):
             if hasattr(context, 'initialize'):
                 context.initialize()
             self._view = view_class(context=context, opts=opts)
-            self._view.setSize(self._size)
+            self._update_view_size()
+            self.updateTitle()
         self.refresh()
     def cleanup(self):
         if self._init_process:
@@ -165,15 +191,20 @@ class ViewFrame(vd.Component):
                 (getattr(self._view, 'cleanup'))()
     def render(self):
         if self._view:
-            return self._view
+            X = self._view
         else:
-            return vd.components.ScrollArea(
+            X = vd.components.ScrollArea(
                 vd.div(
                     vd.h3('Preparing...'),
                     vd.pre(self._prepare_log_text_view)
                 ),
-                height=self._size[1]
+                height=self._size[1] - self._title_bar.height()
             )
+        return vd.div(self._title_bar, X)
+    def _update_view_size(self):
+        size = self._size
+        if self._view:
+            self._view.setSize((size[0], size[1]-self._title_bar.height()))
     def _check_prepare(self):
         if not self._view:
             if self._connection_to_prepare.poll():
@@ -203,7 +234,7 @@ class ViewFrame(vd.Component):
         if hasattr(context, 'initialize'):
             context.initialize()
         self._view = view_class(context=context, opts=opts, prepare_result=result)
-        self._view.setSize(self._size)
+        self._update_view_size()
         self.refresh()
 
 class StdoutSender():

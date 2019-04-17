@@ -17,7 +17,7 @@ class HighlightBox(vd.Component):
         style0['border']='solid 2px black'
     return vd.div(style=style0)
 
-class ViewFrame(vd.Component):
+class ViewHolder(vd.Component):
   def __init__(self,child, *, name=''):
     vd.Component.__init__(self)
     self._child=child
@@ -65,7 +65,7 @@ class ViewContainer(vd.Component):
   def __init__(self):
     vd.Component.__init__(self)
     self._views=dict()
-    self._view_frames=dict()
+    self._fiew_holders=dict()
     self._content=ViewContainerContent()
     self._last_id_num=0
     self._size=(0,0)
@@ -74,6 +74,7 @@ class ViewContainer(vd.Component):
     self._tab_bar.onTabRemoved(self._on_tab_removed)
     self._click_handlers=[]
     self._highlight_box=HighlightBox()
+    self._poll()
   def onClick(self,handler):
     self._click_handlers.append(handler)
   def setSize(self,size):
@@ -86,14 +87,14 @@ class ViewContainer(vd.Component):
     view_id = 'view_{}'.format(id_num)
 
     self._update_view_size(view)
-    frame=ViewFrame(view, name=name)
+    holder=ViewHolder(view, name=name)
     self._views[view_id]=view
-    self._view_frames[view_id] = frame
+    self._fiew_holders[view_id] = holder
     self._tab_bar.addTab(view_id, view.tabLabel())
 
     # self.refresh()
   def findView(self, *, name):
-    for vf in self._view_frames.values():
+    for vf in self._fiew_holders.values():
       if vf.name() == name:
         return vf.child()
     return None
@@ -112,8 +113,8 @@ class ViewContainer(vd.Component):
   def _on_current_tab_changed(self):
     id = self._tab_bar.currentTabId()
     if id:
-      frame = self._view_frames[id]
-      self._content.setChild(frame)
+      holder = self._fiew_holders[id]
+      self._content.setChild(holder)
     else:
       self._content.setChild(None)
 
@@ -121,7 +122,7 @@ class ViewContainer(vd.Component):
     if id in self._views:
       view = self._views[id]
       del self._views[id]
-      del self._view_frames[id]
+      del self._fiew_holders[id]
       if hasattr(view, 'cleanup'):
         (getattr(view, 'cleanup'))()
 
@@ -135,6 +136,13 @@ class ViewContainer(vd.Component):
   def _on_click(self):
     for handler in self._click_handlers:
       handler()
+  def _poll(self):
+    for id, v in self._views.items():
+      label = v.tabLabel()
+      self._tab_bar.setTabLabel(id, label)
+      if hasattr(v, 'updateTitle'):
+        v.updateTitle()
+    vd.set_timeout(self._poll, 2)
   def render(self):
     style_outer=dict(width='100%',height='100%',position='absolute')
     style_content=dict(left='5px',right='5px',top='{}px'.format(5+self._tab_bar.height()),bottom='5px',position='absolute')
