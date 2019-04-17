@@ -39,7 +39,7 @@ class ElectrodeGeometryWidget(vd.Component):
         div=vd.div(id=self._div_id)
         js="""
         let W=new window.GeomWidget();
-        let X=window.sfdata['electrode_geometry_{div_id}']
+        let X=window.sfdata['electrode_geometry_{z_id}']
         console.log(X);
         W.setGeometry(X);
         //W.setSize(300,300)

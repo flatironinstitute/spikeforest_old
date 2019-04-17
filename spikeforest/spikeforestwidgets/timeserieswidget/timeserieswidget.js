@@ -24,6 +24,7 @@ function TimeseriesWidget() {
     this.setYScaleFactor=function(factor) {m_y_scale_factor=factor; update_plot();};
     this.setMarkers=function(markers) { m_markers=markers;};
     this.setSyncGroup=function(sync_group_name) {setSyncGroup(sync_group_name);};
+    this.autoScale=function() {auto_scale();};
     this._triggerOff=function() {m_do_trigger=false;};
     this._triggerOn=function() {m_do_trigger=true;};
 
@@ -272,13 +273,17 @@ function TimeseriesWidget() {
 
     function setTimeseriesModel(M) {
         m_model=M;
-        auto_compute_y_offsets();
-        auto_compute_y_scale_factor();
+        auto_scale();
         m_model.onDataSegmentSet(function(ds_factor, t1, t2) {
             if ((t1<=m_trange[1]) && (t2>=m_trange[0])) {
                 update_plot();
             }
         });
+    }
+
+    function auto_scale() {
+        auto_compute_y_offsets();
+        auto_compute_y_scale_factor();
     }
 
     function setSyncGroup(sync_group_name) {

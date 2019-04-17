@@ -411,7 +411,9 @@ def _get_init_javascript():
             else if (num_tries<10) timeout_msec=500;
             else {
                 console.warning('VDOMR WARNING: timeout out while waiting for element to be ready.');
+                return;
             }
+            setTimeout(do_check, timeout_msec);
         }
         do_check();
     }
