@@ -121,7 +121,6 @@ class TimeseriesWidget(vd.Component):
         return self._size
     def _update_size(self):
         js = """
-        console.log('updating size {width} {height}');
         let W=window.timeseries_widgets['{component_id}'];
         W.setSize({width},{height});
         $('#{div_id}').css({width:'{width}px',height:'{height}px'});

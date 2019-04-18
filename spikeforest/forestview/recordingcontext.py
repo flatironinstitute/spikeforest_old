@@ -126,7 +126,8 @@ class RecordingContext():
         return self._get_state_value('current_channel')
 
     def setCurrentChannel(self, ch):
-        ch=int(ch)
+        if ch is not None:
+            ch=int(ch)
         self._set_state_value('current_channel', ch)
 
     def onCurrentChannelChanged(self, handler):
