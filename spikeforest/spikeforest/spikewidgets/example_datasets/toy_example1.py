@@ -1,4 +1,4 @@
-import spikeforest.spikeextractors as se
+import spikeextractors as se
 import numpy as np
 from .synthesize_random_waveforms import synthesize_random_waveforms
 from .synthesize_random_firings import synthesize_random_firings

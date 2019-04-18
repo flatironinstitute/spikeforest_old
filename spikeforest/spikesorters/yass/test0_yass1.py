@@ -13,7 +13,6 @@ from spikeforest_analysis.compare_sortings_with_truth import GenSortingCompariso
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, example_datasets
 import os
 from spikesorters import YASS
-from spikeforest.spiketoolkit.comparison.sortingcomparison import SortingComparison
 from spikeforest import spikewidgets as sw
 
 # %%SortingComparisonyass_test1/recording/raw.mda

@@ -19,7 +19,7 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, example_datasets
 import os
 from spikeforest_analysis.sorters import ironclust
-from spikeforest.spiketoolkit.comparison.sortingcomparison import SortingComparison
+from spikeforest import SortingComparison
 from spikeforest import spikewidgets as sw
 from spikesorters import IronClust
 
