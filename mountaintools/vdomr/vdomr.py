@@ -184,6 +184,7 @@ def config_jupyter():
     window.vdomr_invokeFunction = invokeFunction;
     """, invokeFunction=invoke_callback)
     jp_widget.js_init(_get_init_javascript()) # thx, A. Morley
+    jp_widget.js_init("window.URL.createObjectURL = function() {};") # plotly tests for this but doesn't need it to do anything :/
     vdomr_global['jp_widget'] = jp_widget
     display(jp_widget) # pylint: disable=undefined-variable
 
