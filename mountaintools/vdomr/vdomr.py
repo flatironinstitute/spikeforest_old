@@ -7,6 +7,10 @@ import multiprocessing
 import mtlogging
 import uuid
 
+# BOOKMARK VDOMR
+
+# MEDIUM TODO make vdomr readme and release vdomr 1.0
+
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
 vdomr_global = dict(
     mode='server',  # colab, jp_proxy_widget, server, or pyqt5 -- by default we are in server mode
