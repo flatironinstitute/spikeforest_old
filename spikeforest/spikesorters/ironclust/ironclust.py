@@ -139,20 +139,53 @@ def ironclust_helper(*,
         txt += 'scale_factor={}\n'.format(params["scale_factor"])
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
-    print('Running IronClust...')
-    cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
-        ironclust_path, ironclust_path, ironclust_path)
-    # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
-    cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
-        .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-        cmd_path, cmd_call)
-    print(cmd)
-    #retcode = _run_command_and_print_output(cmd)
-    retcode = os.system(cmd)
+
+    print('Running ironclust in {tmpdir}...'.format(tmpdir=tmpdir))
+    cmd = '''
+        addpath('{ironclust_path}, '{ironclust_path}/matlab', '{ironclust_path}/matlab/mdaio');
+        try
+            p_ironclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '', '', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
+        catch
+            quit(1);
+        end
+        quit(0);
+    '''
+    cmd = cmd.format(ironclust_path=ironclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
+
+    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir+'/run_ironclust.m',keep_temp_files=True)
+    matlab_cmd.write()
+
+    shell_cmd = '''
+        #!/bin/bash
+        cd {tmpdir}
+        echo '=====================' `date` '=====================' >> run_ironclust.log 
+        matlab -nosplash -nodisplay -r run_ironclust &>> run_ironclust.log
+    '''.format(tmpdir=tmpdir)
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_ironclust.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir+'/run_ironclust.sh')
+    shell_cmd.start()
+    
+    retcode = shell_cmd.wait()
 
     if retcode != 0:
-        raise Exception('IronClust returned a non-zero exit code')
+        raise Exception('ironclust returned a non-zero exit code')
+
+
+    # old method
+    # print('Running IronClust...')
+    # cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
+    #     ironclust_path, ironclust_path, ironclust_path)
+    # # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
+    # cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
+    #     .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
+    # cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
+    #     cmd_path, cmd_call)
+    # print(cmd)
+    # #retcode = _run_command_and_print_output(cmd)
+    # retcode = os.system(cmd)
+
+    # if retcode != 0:
+    #     raise Exception('IronClust returned a non-zero exit code')
 
     # parse output
     result_fname = tmpdir+'/firings.mda'
