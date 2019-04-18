@@ -33,7 +33,7 @@ def _run_local_compute_resource(resource_name, num_parallel, exit_event, srun_op
     server=mlpr.ComputeResourceServer(
         resource_name=resource_name,
         collection=None,
-        share_id=None
+        kachery_name=None
     )
     server.setNumParallel(num_parallel)
     if srun_opts is not None:

@@ -5,6 +5,7 @@ import sys
 import subprocess
 import random
 import multiprocessing
+import mlprocessors as mlpr
 from mlprocessors import ShellScript
 import mtlogging
 import signal

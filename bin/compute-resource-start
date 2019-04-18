@@ -36,7 +36,7 @@ def main():
   server=mlpr.ComputeResourceServer(
       resource_name=args.compute_resource_name,
       collection=args.collection,
-      share_id=args.share_id#,
+      kachery_name=args.share_id#,
       #allow_uncontainerized=args.allow_uncontainerized
   )
   if args.srun_opts is not None:

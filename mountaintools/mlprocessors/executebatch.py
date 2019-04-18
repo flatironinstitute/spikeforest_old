@@ -11,6 +11,7 @@ from .temporarydirectory import TemporaryDirectory
 from .mountainjob import MountainJob
 from .mountainjob import MountainJobResult
 import mtlogging
+from copy import deepcopy
 
 # module global
 _realized_files = set()
@@ -116,7 +117,13 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 mt.saveFile(path=fname)
 
         mtlogging.sublog('initializing-batch')
-        CRC=ComputeResourceClient(**compute_resource)
+
+        args = deepcopy(compute_resource)
+        if 'share_id' in args:
+            args['kachery_name'] = args['share_id']
+            del args['share_id']
+        CRC=ComputeResourceClient(**args)
+
         batch_id = CRC.initializeBatch(jobs=jobs2, label=label)
         CRC.startBatch(batch_id=batch_id)
         mtlogging.sublog('running-batch')
