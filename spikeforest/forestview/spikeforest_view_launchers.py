@@ -1,4 +1,5 @@
 from .spikeforest_views.currentstateview import CurrentStateView
+from .spikeforest_views.settingsview import SettingsView
 from .spikeforest_views.recordingtableview import RecordingTableView, RecordingSelectComponent
 from .recording_views.electrodegeometryview import ElectrodeGeometryView
 from .recording_views.timeseriesview import TimeseriesView
@@ -38,6 +39,12 @@ def get_spikeforest_view_launchers(context):
         enabled=True
     ))
     # MEDIUM TODO: this should be a component rather than a launcher
+    launchers.append(dict(
+        group='general', name='settings', label='Settings',
+        view_class=SettingsView,
+        context=context, opts=dict(),
+        enabled=True
+    ))
     launchers.append(dict(
         group='general', name='recording-select',
         component_class=RecordingSelectComponent,

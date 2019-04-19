@@ -31,6 +31,7 @@ class RecordingContext():
             current_timepoint = None,
             selected_time_range = None,
             current_channel = None,
+            bandpass_filter = False,
             current_sorting_result = None
         )
 
@@ -42,15 +43,11 @@ class RecordingContext():
         self._initialized = True
         
         print('******** FORESTVIEW: Initializing recording context')
-        self._recording_object = self._recording_object
         if self._download:
             print('******** FORESTVIEW: Downloading recording file if needed...')
-        recdir = self._recording_object['directory']
-        raw_fname = self._recording_object.get('raw_fname', 'raw.mda')
-        params_fname = self._recording_object.get('params_fname', 'params.json')
-        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
-        self._rx = bandpass_filter(self._rx)
-
+        self._recording_object = self._recording_object
+        self._init_recording()
+        
         if self._true_sorting_context:
             self._true_sorting_context.initialize()
 
@@ -67,6 +64,14 @@ class RecordingContext():
             self._intra_recording_context.initialize()
 
         print('******** FORESTVIEW: Done initializing recording context')
+
+    def _init_recording(self):
+        recdir = self._recording_object['directory']
+        raw_fname = self._recording_object.get('raw_fname', 'raw.mda')
+        params_fname = self._recording_object.get('params_fname', 'params.json')
+        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
+        if self._state['bandpass_filter']:
+            self._rx = bandpass_filter(self._rx)
 
     def sortingResultNames(self):
         return sorted(list(self._sorting_result_contexts.keys()))
