@@ -15,7 +15,7 @@ class TimeseriesView(vd.Component):
         self._opts=opts
         
         earx = EfficientAccessRecordingExtractor(path=prepare_result['earx_file'])
-        self._timeseries_widget = SFW.TimeseriesWidget(recording=earx)
+        self._timeseries_widget = SFW.TimeseriesWidget(recording=earx, context=self._context)
         self._timeseries_widget.setSize(self._size)
 
 

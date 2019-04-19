@@ -26,9 +26,13 @@ class SortingResultContext():
         self._recording_context.initialize()
 
         print('******** FORESTVIEW: Initializing sorting result context')
-        
-        if self._sorting_result_object['firings']:
+
+        print(self._sorting_result_object)
+
+        if self._sorting_result_object.get('firings', False):
             self._sorting_extractor = SFMdaSortingExtractor(firings_file =self._sorting_result_object['firings'])
+        elif self._sorting_result_object['sorter']['sorting_extractor']:
+            self._sorting_extractor = self._sorting_result_object['sorter']['sorting_extractor']
         else:
             self._sorting_extractor = None
 
