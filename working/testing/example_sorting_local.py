@@ -70,8 +70,6 @@ def main():
     for sorter in sorters:
         # Sort the recordings
         compute_resource0 = compute_resource
-        if sorter['name'] == 'KiloSort':
-            compute_resource0 = compute_resource_ks
         sortings = sa.sort_recordings(
             sorter=sorter,
             recordings=recordings,

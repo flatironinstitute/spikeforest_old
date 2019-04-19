@@ -101,7 +101,7 @@ def spyking_circus(
 ):
     if not singularity_container:
         try:
-            import circus
+            import circus # pylint: disable=import-error
         except ModuleNotFoundError:
             raise ModuleNotFoundError("\nTo use Spyking-Circus, install spyking-circus: \n\n"
                                       "\npip install spyking-circus"

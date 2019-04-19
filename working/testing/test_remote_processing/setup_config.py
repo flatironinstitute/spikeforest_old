@@ -9,7 +9,6 @@ collection_name = 'collection1'
 collection_token = 'token1'
 admin_token = 'test_admin_token'
 share_id = '946631a0304e'
-password = 'test_password'
 
 mt.setRemoteConfig(url=cairio_url)
 
@@ -29,7 +28,7 @@ config = dict(
 
 mt.setRemoteConfig(**config)
 
-mt.setValue(key='test-readwrite', value=json.dumps(config), password=password)
+mt.setValue(key='test-readwrite', value=json.dumps(config))
 
 config = dict(
     url=cairio_url,
@@ -51,4 +50,4 @@ config = dict(
 )
 
 mt.setRemoteConfig(**config)
-mt.setValue(key='test-readwrite-remote-cairio', value=json.dumps(config), password=password)
+mt.setValue(key='test-readwrite-remote-cairio', value=json.dumps(config))
