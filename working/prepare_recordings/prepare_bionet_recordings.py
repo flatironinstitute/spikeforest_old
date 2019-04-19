@@ -2,7 +2,7 @@ import sfdata as sf
 from mountaintools import client as mt
 
 mt.login()
-mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
+upload_to = 'spikeforest.spikeforest2'
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
@@ -46,5 +46,6 @@ mt.saveObject(
         studies=studies,
         recordings=recordings
     ),
-    key=dict(name='spikeforest_recording_group', group_name=group_name)
+    key=dict(name='spikeforest_recording_group', group_name=group_name),
+    upload_to=upload_to
 )

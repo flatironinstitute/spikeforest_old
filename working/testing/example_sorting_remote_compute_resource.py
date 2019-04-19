@@ -18,20 +18,19 @@ def main():
     # You can store credentials in ~/.mountaintools/.env
     # (see example_login.py for more info)
     mt.login(interactive=True)
-    mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
 
     # specify the compute resource
     compute_resource=dict(
         resource_name='ccmlin008-test',
         collection='spikeforest',
-        share_id='69432e9201d0'
+        kachery_name='spikeforest.spikeforest2'
     )
 
     # location of recordings on kbucket
     recordings_dir='kbucket://15734439d8cf/testing/toy_recordings'
 
     # for downloading containers if needed
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
     # Use this to control whether we force the processing to re-run (by default it uses cached results)
     os.environ['MLPROCESSORS_FORCE_RUN'] = 'FALSE'  # FALSE or TRUE

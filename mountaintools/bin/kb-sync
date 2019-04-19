@@ -20,7 +20,7 @@ def main():
     path = args.src_path
 
     if args.download_from:
-        mt.configRemoteReadonly(share_id=args.download_from)
+        mt.configDownloadFrom([args.download_from])
 
     if mt.isFile(path):
         path2 = mt.realizeFile(path=path, dest_path=args.dst_path)

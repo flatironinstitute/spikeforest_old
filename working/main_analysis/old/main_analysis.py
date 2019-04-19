@@ -18,23 +18,23 @@ def main():
     parser.add_argument('--compute_resource_default',help='Name of default compute resource', required=False, default=None)
     parser.add_argument('--compute_resource_gpu',help='Name of compute resource for gpu', required=False, default=None)
     parser.add_argument('--collection',help='Name of collection to connect to', required=False, default=None)
-    parser.add_argument('--share_id',help='Name of kbucket share id to connect to', required=False, default=None)
+    parser.add_argument('--kachery_name',help='Name of kachery to connect to', required=False, default=None)
     parser.add_argument('--sorter_codes',help='Comma-separated codes of sorters to run', required=False, default='ms4,irc,sc,yass')
     parser.add_argument('--job_timeout',help='Number of seconds before timeing out a sorting job', required=False, default=60*20)
+    parser.add_argument('--login', help='Whether to log in', action='store_true')
     parser.add_argument('--test', help='Only run a few, and prepend test_ to the output', action='store_true')
 
     args = parser.parse_args()
 
     print(args)
 
-    if args.collection:
+    if args.login:
         mt.login(ask_password=True)
-        mt.configRemoteReadWrite(collection=args.collection,share_id=args.share_id)
 
-    # mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
-    mlpr.configComputeResource('default', resource_name=args.compute_resource_default, collection=args.collection, share_id=args.share_id)
-    mlpr.configComputeResource('gpu', resource_name=args.compute_resource_gpu, collection=args.collection, share_id=args.share_id)
+    mlpr.configComputeResource('default', resource_name=args.compute_resource_default, collection=args.collection, kachery_name=args.kachery_name)
+    mlpr.configComputeResource('gpu', resource_name=args.compute_resource_gpu, collection=args.kachery_name, share_id=args.kachery_name)
 
     # This is the id of the output -- for later retrieval by GUI's, etc
     output_id = args.output_id
@@ -67,7 +67,7 @@ def main():
     sorters = [sorter for sorter in sorters if sorter['code'] in sorter_codes]
     print('Using sorters: ',[sorter['name'] for sorter in sorters])
 
-    apply_sorters_to_recordings(sorters=sorters, recordings=recordings, studies=studies, output_id=output_id, job_timeout=float(args.job_timeout))
+    apply_sorters_to_recordings(label='', sorters=sorters, recordings=recordings, studies=studies, output_id=output_id, job_timeout=float(args.job_timeout))
 
 def _define_sorters():
     sorter_ms4_thr3 = dict(

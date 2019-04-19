@@ -2,7 +2,7 @@ from mountaintools import client as mt
 import os
 
 mt.login()
-mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
+upload_to = 'spikeforest.spikeforest2'
 
 
 # The base directory used below
@@ -57,5 +57,6 @@ mt.saveObject(
         recordings=recordings[0:3]
     ),
     key=dict(name='spikeforest_recording_group',
-             group_name='magland_synth_test')
+             group_name='magland_synth_test'),
+    upload_to=upload_to
 )

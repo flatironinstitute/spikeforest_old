@@ -3,7 +3,6 @@ import multiprocessing
 import traceback
 from .mountainjob import MountainJob
 from .executebatch import executeBatch
-from .internal_run_batch_job import run_batch_job
 from mountaintools import client as mt
 import mtlogging
 

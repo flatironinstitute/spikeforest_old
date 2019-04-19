@@ -17,12 +17,16 @@ from copy import deepcopy
 _realized_files = set()
 _compute_resources_config = dict()
 
-def configComputeResource(name, *, resource_name, collection=None, share_id=None):
+def configComputeResource(name, *, resource_name, collection=None, kachery_name=None, share_id=None):
+    if share_id is not None:
+        print('WARNING: use kachery_name in configComputeResource (share_id) is deprecated)')
+        assert kachery_name is None
+        kachery_name = share_id
     if resource_name is not None:
         _compute_resources_config[name]=dict(
             resource_name=resource_name,
             collection=collection,
-            share_id=share_id
+            kachery_name=kachery_name
         )
     else:
         _compute_resources_config[name] = None

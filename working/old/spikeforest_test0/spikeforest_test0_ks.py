@@ -41,7 +41,7 @@ def main():
     # Use this to optionally connect to a kbucket share:
     # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
     # for downloading containers if needed
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
     # Specify the compute resource (see the note above)
     compute_resource = None

@@ -22,7 +22,7 @@ def main():
     print('  resource_name2 (Local GPU): ', resource_name2)    
     mt.login(ask_password=True)
     mt.configRemoteReadWrite(collection='spikeforest',share_id='spikeforest.spikeforest2')
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
     mlpr.configComputeResource('default', resource_name=resource_name1,collection='spikeforest',share_id='spikeforest.spikeforest2')
     mlpr.configComputeResource('gpu', resource_name=resource_name2,collection='spikeforest',share_id='spikeforest.spikeforest2')
     #mlpr.configComputeResource('default', resource_name='fractal-computer')

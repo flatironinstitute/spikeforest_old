@@ -23,63 +23,12 @@ def main():
     if args.login:
         mt.login(interactive=True)
 
-    # if mt.isFile(path):
-    #     address = mt.saveFile(path=path)
-    #     if not address:
-    #         print('Unable to read or save file', file=sys.stderr)
-    #         exit(-1)
-    #     if args.upload_to:
-    #         if not mt.saveFile(path=path, share_id=args.upload_to):
-    #             print('Unable to upload file', file=sys.stderr)
-    #             exit(-1)
-    #     print(address)
-    # else:
-    #     dd = mt.readDir(path=path, recursive=True, include_sha1=True)
-    #     if not dd:
-    #         print('Unable to read file or directory', file=sys.stderr)
-    #         exit(-1)
-    #     if mt.isLocalPath(path) or args.download:
-    #         if not _copy_files_to_local_cache(basepath=path, dd=dd):
-    #             print('Problem copying files to local cache.')
-    #             exit(-1)
-    #     address = mt.saveObject(dd, basename='')
-    #     address = address.replace('sha1://', 'sha1dir://')
-    #     if args.upload_to:
-    #         mt.saveObject(dd, basename='', share_id=args.upload_to)
-    #         if not _upload_files_to_share(refdir='', dd=dd,share_id=args.upload_to):
-    #             print('Unable to upload files to share', file=sys.stderr)
-    #             exit(-1)
-    #     print(address)
-
     address = mt.createSnapshot(path=path, upload_to=args.upload_to, download_recursive=args.download_recursive, upload_recursive=args.upload_recursive, dest_path=args.dest_path)
     if not address:
         print('Error creating snapshot.', file=sys.stderr)
         exit(-1)
 
     print(address)
-
-# def _copy_files_to_local_cache(basepath, dd):
-#     for fname in dd['files'].keys():
-#         fpath = os.path.join(basepath, fname)
-#         if not mt.copyToLocalCache(path=fpath):
-#             print('Unable to copy file to local cache: '+fpath, file=sys.stderr)
-#             return False
-#     for dname, dd0 in dd['dirs'].items():
-#         dpath = os.path.join(basepath, dname)
-#         if not _copy_files_to_local_cache(basepath=dpath, dd=dd0):
-#             return False
-#     return True
-
-def _upload_files_to_share(refdir, dd, share_id):
-    for fname, file0 in dd['files'].items():
-        path2 = 'sha1://'+file0['sha1']+'/'+fname
-        if not mt.saveFile(path=path2, share_id=share_id):
-            print('Unable upload file: '+os.path.join(refdir, fname), file=sys.stderr)
-            return False
-    for dname, dd0 in dd['dirs'].items():
-        if not _upload_files_to_share(os.path.join(refdir, dname), dd0, share_id=share_id):
-            return False
-    return True
 
 if __name__== "__main__":
     main()

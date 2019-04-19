@@ -2,7 +2,6 @@ from mountaintools import client as mt
 import os
 
 mt.login()
-mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
 
 
 # The base directory used below

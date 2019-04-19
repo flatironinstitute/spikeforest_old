@@ -15,7 +15,7 @@ class LocalComputeResource():
         self._process=multiprocessing.Process(target=_run_local_compute_resource, args=(resource_name,self._num_parallel, self._exit_event, self._srun_opts))
         self._process.start()
         
-        return dict(resource_name=resource_name,collection=None,share_id=None)
+        return dict(resource_name=resource_name,collection=None,kachery_name=None)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._exit_event.set()

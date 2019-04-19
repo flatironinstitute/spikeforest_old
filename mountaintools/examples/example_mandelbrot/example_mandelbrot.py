@@ -77,10 +77,6 @@ show_mandelbrot(X)
 
 # Run in parallel on remote compute resource
 
-#mt.login()
-#mt.configRemoteReadWrite(
-#    collection='fractal', share_id='fractal.share1'
-#)
 import mlprocessors as mlpr
 mlpr.configComputeResource('default', resource_name='fractal-computer')
 

@@ -26,13 +26,15 @@ def main():
 
     print('Configuring the compute resources...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
+    if not analysis_obj:
+        raise Exception('Unable to load analysis file: {}'.format(args.analysis_file))
 
     analysis_name = analysis_obj['analysis_name']
     print('ANALYSIS: {}'.format(analysis_name))
 
     compute_resources = analysis_obj['compute_resources']
     for key, cr in compute_resources.items():
-        mlpr.configComputeResource(key, resource_name=cr['resource_name'], collection=cr['collection'], share_id=cr['share_id'])
+        mlpr.configComputeResource(key, resource_name=cr.get('resource_name', None), collection=cr.get('collection', None), share_id=cr.get('share_id', None))
 
     download_from = analysis_obj['download_from']
     if len(download_from) > 0:

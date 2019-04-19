@@ -29,7 +29,7 @@ def main():
             sorting=sx_true, save_path=recpath+'/firings_true.mda')
 
     # for downloading containers if needed
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
     # Specify the compute resource
     compute_resource = None
