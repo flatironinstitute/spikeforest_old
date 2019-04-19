@@ -1,5 +1,4 @@
 import spikeextractors as se
-from spikeforest import spiketoolkit as st
 import vdomr as vd
 from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
@@ -11,7 +10,7 @@ import uuid
 from mountaintools import client as mt
 import spikeforestwidgets as SFW
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-
+from spikeforest_analysis import bandpass_filter
 
 class ScrollArea(vd.Component):
     def __init__(self, child, *, height):
@@ -192,7 +191,7 @@ class SFRecordingWidget(vd.Component):
         else:
             rx = se.SubRecordingExtractor(
                 parent_recording=rx, start_frame=int(sf*0), end_frame=int(sf*1))
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         self._view = SFW.TimeseriesWidget(recording=rx)
         self.refresh()
@@ -210,7 +209,7 @@ class SFRecordingWidget(vd.Component):
 
     def _on_view_true_unit_waveforms(self):
         rx = self._recording.recordingExtractor()
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx = self._recording.sortingTrue()
         self._view = SFW.UnitWaveformsWidget(recording=rx, sorting=sx)
@@ -244,7 +243,7 @@ class SFRecordingWidget(vd.Component):
 
     def _on_view_sorted_unit_waveforms(self):
         rx = self._recording.recordingExtractor()
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         res = self._recording.sortingResult(self._sorting_result_name)
         sx = res.sorting()

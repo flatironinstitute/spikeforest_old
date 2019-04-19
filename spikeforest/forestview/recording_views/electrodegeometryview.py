@@ -56,14 +56,14 @@ class ElectrodeGeometryWidget(vd.Component):
         if self._size == size:
             return
         self._size = size
-        self.refresh()
+        self._update_widget()
     def currentChannel(self):
         return self._current_channel
     def setCurrentChannel(self, ch):
         if self._current_channel == ch:
             return
         self._current_channel = ch
-        self.refresh()
+        self._update_widget()
         for handler in self._state_changed_handlers:
             handler()
     def onStateChanged(self, handler):
@@ -76,13 +76,7 @@ class ElectrodeGeometryWidget(vd.Component):
         else:
             ch=None
         self.setCurrentChannel(ch)
-    def render(self):
-        div=vd.div(id=self._div_id)
-        return div
-    def postRenderScript(self):
-        state_change_callback_id = 'state-change-callback-' + str(uuid.uuid4())
-        vd.register_callback(state_change_callback_id, lambda current_electrode_index: self._on_state_change(current_electrode_index=current_electrode_index))
-
+    def _update_widget(self):
         channel_ids = self._recording.getChannelIds()
         locations = self._recording.getChannelLocations(channel_ids = channel_ids)
         locations = [[loc[0], loc[1]] for loc in locations]
@@ -90,29 +84,45 @@ class ElectrodeGeometryWidget(vd.Component):
             current_electrode_index = channel_ids.index(self._current_channel)
         except:
             current_electrode_index = -1
-        js="""
-        let W=new window.ElectrodeGeometryWidget();
+
+        js = """
+        let W = (window.geom_widgets||{})['{component_id}'];
+        W.setSize({width},{height});
         W.setElectrodeLocations({locations});
         W.setElectrodeLabels({labels});
         W.setCurrentElectrodeIndex({current_electrode_index});
-        W.onCurrentElectrodeIndexChanged(function() {
-            window.vdomr_invokeFunction('{state_change_callback_id}', [Number(W.currentElectrodeIndex())], {})
-        });
-        W.setSize({width},{height});
-        let elmt=$('#{div_id}');
-        if (!elmt) {
-            console.error('Error getting element in ElectrodeGeometryWidget');
-            return;
-        }
-        elmt.empty();
+
+        let elmt = $('#{div_id}');
         elmt.css({width:'{width}px',height:'{height}px'})
-        elmt.append(W.element());
         """
         js = js.replace('{div_id}', self._div_id)
-        js = js.replace('{width}', str(self._size[0]))
-        js = js.replace('{height}', str(self._size[1]))
+        js = js.replace('{component_id}', self.componentId())
         js = js.replace('{locations}', json.dumps(locations))
         js = js.replace('{labels}', json.dumps([ch for ch in channel_ids]))
         js = js.replace('{current_electrode_index}', str(current_electrode_index))
+        js = js.replace('{width}', str(self._size[0]))
+        js = js.replace('{height}', str(self._size[1]))
+        self.executeJavascript(js)
+    def render(self):
+        div=vd.div(id=self._div_id)
+        return div
+    def postRenderScript(self):
+        state_change_callback_id = 'state-change-callback-' + str(uuid.uuid4())
+        vd.register_callback(state_change_callback_id, lambda current_electrode_index: self._on_state_change(current_electrode_index=current_electrode_index))
+
+        js="""
+        let W=new window.ElectrodeGeometryWidget();
+        if (!window.geom_widgets) window.geom_widgets={};
+        window.geom_widgets['{component_id}']=W;
+        W.onCurrentElectrodeIndexChanged(function() {
+            window.vdomr_invokeFunction('{state_change_callback_id}', [Number(W.currentElectrodeIndex())], {})
+        });
+        let elmt = $('#{div_id}');
+        elmt.append(W.element());
+        """
+        js = js.replace('{div_id}', self._div_id)
+        js = js.replace('{component_id}', self.componentId())
+        
         js = js.replace('{state_change_callback_id}', str(state_change_callback_id))
+        self._update_widget()
         return js

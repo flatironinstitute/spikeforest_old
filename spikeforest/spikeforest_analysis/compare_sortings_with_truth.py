@@ -9,7 +9,7 @@ import mtlogging
 
 import spikeextractors as si
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-from spikeforest import spiketoolkit as st
+from .sortingcomparison import SortingComparison
 
 def _create_job_for_sorting_helper(kwargs):
     return _create_job_for_sorting(**kwargs)
@@ -95,7 +95,7 @@ class GenSortingComparisonTable(mlpr.Processor):
         sorting_true=SFMdaSortingExtractor(firings_file=self.firings_true)
         if (self.units_true is not None) and (len(self.units_true)>0):
             sorting_true=si.SubSortingExtractor(parent_sorting=sorting_true,unit_ids=self.units_true)
-        SC=st.comparison.SortingComparison(sorting_true,sorting)
+        SC=SortingComparison(sorting_true,sorting)
         df=get_comparison_data_frame(comparison=SC)
         #sw.SortingComparisonTable(comparison=SC).getDataframe()
         json=df.transpose().to_dict()

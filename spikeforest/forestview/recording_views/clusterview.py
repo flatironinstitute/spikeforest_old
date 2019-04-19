@@ -81,12 +81,14 @@ class ClusterWidget(vd.Component):
         self._size=(800,500)
         self._marker_size=14
         self._hover_marker_size=18
+        self._plot=None
 
     def setSize(self,size):
         if self._size==size:
             return
         self._size=size
-        self.refresh()
+        if self._plot:
+            self._plot.updateSize(size)
 
     def render(self):
         unit_ids = sorted(list(set(self._labels.tolist())))

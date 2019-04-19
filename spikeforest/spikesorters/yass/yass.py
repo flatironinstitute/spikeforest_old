@@ -10,6 +10,7 @@ import random
 import string
 import shutil
 from .yasssortingextractor import yassSortingExtractor
+from .tools import saveProbeFile
 
 # yass uses negative polarity by default
 
@@ -91,7 +92,6 @@ def yass_helper(
         adjacency_radius=100):
 
     from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-    from spikeforest import spikeextractors as sfse
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -107,7 +107,7 @@ def yass_helper(
     # save prb file:
     if probe_file is None:
         probe_file = join_abspath_(output_folder, 'probe.npy')
-    sfse.saveProbeFile(recording, probe_file, format='yass')
+    saveProbeFile(recording, probe_file, format='yass')
 
     # save binary file
     if file_name is None:

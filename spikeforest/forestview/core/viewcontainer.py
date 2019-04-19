@@ -1,5 +1,5 @@
 import vdomr as vd
-from .tabbar2 import TabBar
+from .tabbar import TabBar
 
 class HighlightBox(vd.Component):
   def __init__(self):

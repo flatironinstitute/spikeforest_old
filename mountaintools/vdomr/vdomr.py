@@ -398,22 +398,33 @@ def _get_init_javascript():
         }
         window.vdomr_components[component_id].on_ready_handlers.push(callback);
     }
-    window.vdomr_on_element_ready=function(element_id, callback) {
+    window.vdomr_on_element_ready=function(element_id, render_code, callback) {
         let num_tries=0;
         function do_check() {
             let elmt0=document.getElementById(element_id);
             if (elmt0) {
-                callback();
-                return;
+                let elmt_render_code = elmt0.getAttribute('data-vdomr-render-code');
+                if (elmt_render_code == render_code) {
+                    callback();
+                    return;
+                }
+                else {
+                    if (Number(elmt_render_code) > render_code) {
+                        // never going to be ready -- has already been rendered
+                        return;
+                    }
+                    // console.log('Render codes do not match', elmt_render_code, render_code);
+                }
             }
             let timeout_msec=1;
             if (num_tries<1) timeout_msec=1;
             else if (num_tries<5) timeout_msec=100;
             else if (num_tries<10) timeout_msec=500;
             else {
-                console.warning('VDOMR WARNING: timeout out while waiting for element to be ready.');
+                // console.warn('VDOMR WARNING: timeout out while waiting for element to be ready.');
                 return;
             }
+            num_tries=num_tries+1;
             setTimeout(do_check, timeout_msec);
         }
         do_check();

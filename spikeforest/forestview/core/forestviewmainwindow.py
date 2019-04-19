@@ -25,7 +25,6 @@ class ForestViewMainWindow(vd.Component):
         self._view_container_north.onClick(self._on_click_north)
         self._view_container_south.onClick(self._on_click_south)
 
-
         #style0 = dict(border='solid 1px gray')
         self._container_CP = Container(self._control_panel, scroll=True)
         self._container_VCN = Container(self._view_container_north)
@@ -39,7 +38,6 @@ class ForestViewMainWindow(vd.Component):
         vd.devel.loadBootstrap()
 
         self._update_sizes()
-
 
     def setSize(self, size):
         self._size = size

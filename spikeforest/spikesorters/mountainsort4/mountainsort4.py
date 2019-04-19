@@ -36,7 +36,8 @@ class MountainSort4(mlpr.Processor):
     def run(self):
         from spikeforest import SFMdaRecordingExtractor
         from spikeforest import SFMdaSortingExtractor
-        from spikeforest import spiketoolkit as st
+        from .bandpass_filter import bandpass_filter
+        from .whiten import whiten
         
         import ml_ms4alg
 
@@ -48,12 +49,12 @@ class MountainSort4(mlpr.Processor):
 
         # Bandpass filter
         if self.freq_min or self.freq_max:
-            recording = st.preprocessing.bandpass_filter(
+            recording = bandpass_filter(
                 recording=recording, freq_min=self.freq_min, freq_max=self.freq_max)
 
         # Whiten
         if self.whiten:
-            recording = st.preprocessing.whiten(recording=recording)
+            recording = whiten(recording=recording)
 
         # Sort
         sorting = ml_ms4alg.mountainsort4(
@@ -118,7 +119,6 @@ class MountainSort4TestError(mlpr.Processor):
 
         from spikeforest import SFMdaRecordingExtractor
         from spikeforest import SFMdaSortingExtractor
-        from spikeforest import spiketoolkit as st
         
         import ml_ms4alg
 
@@ -130,12 +130,12 @@ class MountainSort4TestError(mlpr.Processor):
 
         # Bandpass filter
         if self.freq_min or self.freq_max:
-            recording = st.preprocessing.bandpass_filter(
+            recording = bandpass_filter(
                 recording=recording, freq_min=self.freq_min, freq_max=self.freq_max)
 
         # Whiten
         if self.whiten:
-            recording = st.preprocessing.whiten(recording=recording)
+            recording = whiten(recording=recording)
 
         # Sort
         sorting = ml_ms4alg.mountainsort4(

@@ -180,6 +180,26 @@ class IntegerListParameter(StringParameter):
         return [int(x) for x in vals]
 
 
+class FloatListParameter(StringParameter):
+    def __init__(self, description='', **kwargs):
+        super().__init__(description, **kwargs)
+        self.datatype = (list, float)
+
+        def validate(value):
+            vals = value.split(',')
+            try:
+                floatvals = [float(x) for x in vals]
+            except:
+                raise ValidationError("Input data incorrect")
+        self.validators.append(validate)
+
+    def clean(self, value):
+        vals = value.split(',')
+        if not vals:
+            return []
+        return [float(x) for x in vals]
+
+
 class ProcMeta(type):
     """
         The metaclass is responsible for processing a class definition.

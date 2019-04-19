@@ -182,29 +182,75 @@ class PlotlyPlot(vd.Component):
             else:
                 raise Exception('Unable to JSON serialize data of type {}'.format(str(type(data))))
 
+    def updateSize(self, size):
+        if self._size == size:
+            return
+        self._size = size
+        js = """
+            function on_plotly_ready(cb) {
+                if (window.Plotly) {
+                    cb();
+                    return;
+                }
+                setTimeout(function() {
+                    on_plotly_ready(cb);
+                },100);
+            }
+            on_plotly_ready(function() { // wait until plotly has loaded
+                let div=document.getElementById('{elmt_id}');                
+                if (({width}) && ({height}) && (div)) {
+                    Plotly.relayout(div, {width:{width}, height:{height}})
+                }
+            })
+        """
+        js = js.replace('{elmt_id}', self._elmt_id)
+        if self._size:
+            width0 = self._size[0]
+            height0 = self._size[1]
+        else:
+            width0 = 'null'
+            height0 = 'null'
+        js = js.replace('{width}', str(width0))
+        js = js.replace('{height}', str(height0))
+        self.executeJavascript(js)
+
     def javascriptPlotObject(self):
         ret = "((window.plotly_plots||{})['{component_id}'])"
         ret = ret.replace('{component_id}', self.componentId())
         return ret
 
     def render(self):
-        div = vd.div(id=self._elmt_id)
+        div = vd.div('Loading plot...', id=self._elmt_id)
         return div
 
+    # MEDIUM TODO make on_plot_ready more robust... report error after x tries
     def postRenderScript(self):
         data = self._filter_data(self._data)
         if type(data)!=list:
             data=[data]
+        if self._size:
+            self._layout['width']=self._size[0]
+            self._layout['height']=self._size[1]
         js = """
-        setTimeout(function() { // wait until plotly has loaded
+        function on_plotly_ready(cb) {
+            if (window.Plotly) {
+                cb();
+                return;
+            }
+            setTimeout(function() {
+                on_plotly_ready(cb);
+            },100);
+        }
+        on_plotly_ready(function() { // wait until plotly has loaded
             let div=document.getElementById('{elmt_id}');
+            div.textContent='';
             if (({width}) && ({height}) && (div)) {
-                div.style="width:{width}px; height:{height}px";
+                // div.style="width:{width}px; height:{height}px";
                 window.plotly_plots=window.plotly_plots||{};
                 Plotly.newPlot(div, {data}, {layout}, {config});
                 window.plotly_plots['{component_id}']=div;
             }
-        },100);
+        });
         """
         js = js.replace('{elmt_id}', self._elmt_id)
         js = js.replace('{data}', json.dumps(data))

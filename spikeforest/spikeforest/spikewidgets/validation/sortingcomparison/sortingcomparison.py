@@ -1,5 +1,5 @@
 import numpy as np
-import spikeforest.spikeextractors as se
+import spikeextractors as se
 from scipy.optimize import linear_sum_assignment
 
 

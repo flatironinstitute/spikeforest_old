@@ -3,10 +3,10 @@ import json
 from matplotlib import pyplot as plt
 import numpy as np
 import spikeextractors as se
-from spikeforest import spiketoolkit as st
 import spikeforestwidgets as SFW
 import vdomr as vd
 import os
+from spikeforest_analysis import bandpass_filter
 
 ButtonList = SFW.sortingresultexplorer.ButtonList
 ScrollArea = SFW.sortingresultexplorer.ScrollArea
@@ -138,7 +138,7 @@ class VIEW_SelectedTrueUnitComparison(vd.Component):
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
         sf = rx.getSamplingFrequency()
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()
         sx_sorted = self._context.sorting_result.sorting()
@@ -239,7 +239,7 @@ class VIEW_SelectedTrueUnitComparison2(vd.Component):
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
         sf = rx.getSamplingFrequency()
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()
         sx_sorted = self._context.sorting_result.sorting()
@@ -583,7 +583,7 @@ class VIEW_SelectedTrueUnitComparison3(vd.Component):
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
         sf = rx.getSamplingFrequency()
-        rx = st.preprocessing.bandpass_filter(
+        rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()
         sx_sorted = self._context.sorting_result.sorting()
