@@ -25,6 +25,7 @@ function TimeseriesWidget() {
     this.setMarkers=function(markers) { m_markers=markers;};
     this.setSyncGroup=function(sync_group_name) {setSyncGroup(sync_group_name);};
     this.autoScale=function() {auto_scale();};
+    this.repaintCursor=function() {update_cursor();};
     this._triggerOff=function() {m_do_trigger=false;};
     this._triggerOn=function() {m_do_trigger=true;};
 
@@ -41,7 +42,6 @@ function TimeseriesWidget() {
     let m_margins={top:15,bottom:15,left:15,right:15};
     let m_mouse_handler=new MouseHandler(m_div);
     let m_mouse_press_anchor=null;
-    // let m_markers=[[100,1000],[150,1050]];
     let m_markers=[];
     let m_do_trigger=true;
 
@@ -139,13 +139,34 @@ function TimeseriesWidget() {
         }
     }
 
+    /*function MarkerModel() {
+        let loadedRange = [0,0];
+        let currentTimeRange = [0,0];
+        let currentMarkers = [[]];
+        let currentLoadedMarkers = [[]];
+
+        function getMarkers(timeRange) {
+            // if in current loaded range
+            // filter spikes & return
+            // elif not in current loaded range
+            // increase (or move) loaded range
+            // filter spikes and return
+        }
+    }*/
+
+
     function paint_cursor_canvas(painter) {
         painter.clear();
         let M=m_model.numChannels();
         let pt1=val2pix(M-1,m_current_time,-m_y_offsets[M-1]);
         let pt2=val2pix(0,m_current_time,-m_y_offsets[0]);
         painter.drawLine(pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2);
+        get_markers()
         add_markers(painter)
+    }
+
+    function get_markers() {
+        m_markers = window.sfdata['spike_times'];
     }
 
     function add_markers(painter) {
@@ -153,10 +174,10 @@ function TimeseriesWidget() {
 
         let M=m_model.numChannels();
         let i = 0
-        for (m_marker_group of m_markers) {
+        for (key in m_markers) {
+          let m_marker_group = m_markers[key];
           i = i + 1;
-          // col = colorArray[i % colorArray.length]
-          col = 'red'
+          col = colorArray[i % colorArray.length]
           painter.setPen({'color':col});
           painter.setBrush({'color':col});
           for(m of m_marker_group) {
@@ -165,7 +186,7 @@ function TimeseriesWidget() {
             let rect = [pt1[0],pt1[1]-m_channel_spacing/2,pt2[0],pt2[1]+m_channel_spacing/2]
             painter.drawLine(...rect);
             rect[0] = rect[0] + 5;
-            painter.drawText(rect, {AlignLeft: true, AlignTop: true}, ""+i);
+            painter.drawText(rect, {AlignLeft: true, AlignTop: true}, ""+key);
           }
         }
     }
