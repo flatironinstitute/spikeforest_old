@@ -511,7 +511,7 @@ class MountainClient():
             raise Exception('Missing key or path in realizeFile().')
 
     @mtlogging.log(name='MountainClient:saveFile')
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False, upload_to=None):
+    def saveFile(self, path=None, *, key=None, subkey=None, collection=None, basename=None, local_also=False, upload_to=None):
         """
         Save a file to the local SHA-1 cache and/or upload to a remote KBucket
         share, and return a SHA-1 URL referring to the file.
@@ -557,13 +557,13 @@ class MountainClient():
                 return None
 
         if path is None:
-            self.setValue(key=key, subkey=subkey,
+            self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None, local_also=local_also)
             return None
         sha1_path = self._save_file(
             path=path, basename=basename, upload_to=upload_to)
         if key is not None:
-            self.setValue(key=key, subkey=subkey,
+            self.setValue(key=key, subkey=subkey, collection=collection,
                           value=sha1_path, local_also=local_also)
 
         return sha1_path
@@ -591,7 +591,7 @@ class MountainClient():
             self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None),
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
+        return self.saveText(text=json.dumps(object), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
 
     def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
         if path and path.startswith('key://'):
@@ -728,10 +728,10 @@ class MountainClient():
             return None
 
     @mtlogging.log(name='MountainClient:saveText')
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None, upload_to=None):
+    def saveText(self, text, *, key=None, subkey=None, collection=None, basename='file.txt', local_also=False, dest_path=None, upload_to=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, local_also=local_also)
+                          value=None, local_also=local_also, collection=collection)
             return None
         if dest_path is None:
             tmp_fname = _create_temporary_file_for_text(text=text)
@@ -740,7 +740,7 @@ class MountainClient():
                 f.write(text)
             tmp_fname=dest_path
         try:
-            ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
+            ret = self.saveFile(tmp_fname, key=key, subkey=subkey, collection=collection,
                                 basename=basename, local_also=local_also, upload_to=upload_to)
         except:
             if dest_path is None:
