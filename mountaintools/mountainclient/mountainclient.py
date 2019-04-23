@@ -962,7 +962,7 @@ class MountainClient():
             raise Exception('Unable to set value... no token found for collection {}'.format(collection)) # should we throw an exception here?
         if local_also or (not collection):
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
-                raise Exception('Unable to set value locally.')
+                return False
         if collection:
             if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._pairio_url, token=token):
                 raise Exception('Error setting value to remote collection {}'.format(collection))
