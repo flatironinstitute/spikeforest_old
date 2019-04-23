@@ -15,6 +15,7 @@ group_name = 'magland_synth'
 def prepare_magland_synth_studies(*, basedir):
     study_set_name = 'magland_synth'
     study_set_dir0 = basedir+'/magland_synth'
+    print('Creating snapshot of study set directory...')
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     studies = []
     recordings = []
