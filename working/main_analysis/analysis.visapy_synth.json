@@ -1,7 +1,7 @@
 {
-    "analysis_name": "visapy_mea",
-    "output":"key://pairio/spikeforest/spikeforest_analysis_results.visapy_mea.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.visapy_mea.json"],
+    "analysis_name": "visapy_synth",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.visapy_synth.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.visapy_synth.json"],
     "sorter_keys": ["ms4", "ks", "ks2", "yass", "sc"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
     "download_from": ["kbucket", "spikeforest.spikeforest2"],
