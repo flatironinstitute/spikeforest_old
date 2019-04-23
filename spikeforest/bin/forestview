@@ -82,7 +82,7 @@ def main():
         server.setPort(int(args.port))
         server.start()
     else:
-        vd.pyqt5_start(APP=APP, title='ForestView')
+        vd.pyqt5_start(app=APP, title='ForestView')
 
 def _make_full_browser(W):
     resize_callback_id = 'resize-callback-' + str(uuid.uuid4())

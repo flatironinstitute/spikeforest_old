@@ -108,17 +108,19 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
     local_client = MountainClient()
 
     if compute_resource:
-        print('Ensuring files are available on remote server...')
-        mtlogging.sublog('ensuring-files-remote')
-        for fname in files_to_realize:
-            if fname.startswith('sha1://'):
-                if local_client.findFile(path=fname):
-                    mt.saveFile(path=fname)
-            elif fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
-                # todo: in case of sha1dir, save the dir
-                pass
-            else:
-                mt.saveFile(path=fname)
+        # print('Ensuring files are available on remote server...')
+        # mtlogging.sublog('ensuring-files-remote')
+        # collection=compute_resource.get('collection', None)
+        # upload_to=compute_resource.get('kachery_name', None)
+        # for fname in files_to_realize:
+        #     if fname.startswith('sha1://'):
+        #         if local_client.findFile(path=fname):
+        #             mt.saveFile(path=fname, collection=collection, upload_to=upload_to)
+        #     elif fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
+        #         # todo: in case of sha1dir, save the dir
+        #         pass
+        #     else:
+        #         mt.saveFile(path=fname, collection=collection, upload_to=upload_to)
 
         mtlogging.sublog('initializing-batch')
 
@@ -150,17 +152,18 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
         mtlogging.sublog('realizing-outputs')
         # Download outputs to local computer
+        download_from=compute_resource.get('kachery_name', None)
         for ii, result in enumerate(results):
             if result and (result.retcode == 0):
                 for output_name, output_path in result.outputs.items():
                     if not local_client.realizeFile(path=output_path):
                         print('Downloading output {} {} ...'.format(output_name, output_path))
-                        local_path = mt.realizeFile(path=output_path)
+                        local_path = mt.realizeFile(path=output_path, download_from=download_from)
                         if not local_path:
                             raise Exception('Unable to realize output {} from {}'.format(output_name, output_path))
                 if not local_client.realizeFile(path=result.console_out):
                     print('Downloading console output {}...'.format(result.console_out))
-                    local_path = mt.realizeFile(path=result.console_out)
+                    local_path = mt.realizeFile(path=result.console_out, download_from=download_from)
                     if not local_path:
                         raise Exception('Unable to realize console output from {}'.format(output_name))
                 

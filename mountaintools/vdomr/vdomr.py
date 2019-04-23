@@ -326,9 +326,9 @@ def pyqt5_start(*, app, title):
 
             self.page().setHtml(html)
     if title is not None:
-        app = QApplication([title])
+        qapp = QApplication([title])
     else:
-        app = QApplication([])
+        qapp = QApplication([])
 
     connection_to_worker, connection_to_gui = multiprocessing.Pipe()
     process = multiprocessing.Process(
@@ -347,7 +347,7 @@ def pyqt5_start(*, app, title):
         timer = time.time()
         while True:
             # running in the gui process
-            app.processEvents()
+            qapp.processEvents()
             if time.time() - timer > 0.5:  # need to wait a bit before executing javascript on the view
                 if connection_to_worker.poll():
                     x = connection_to_worker.recv()
@@ -361,7 +361,7 @@ def pyqt5_start(*, app, title):
     except: # pylint: disable=bare-except
         traceback.print_exc()
     process.terminate()
-    # app.exec_()
+    # qapp.exec_()
 
 
 def _pyqt5_worker_process(app, connection_to_gui):
