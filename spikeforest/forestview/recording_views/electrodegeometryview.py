@@ -48,9 +48,10 @@ class ElectrodeGeometryWidget(vd.Component):
         self._current_channel=None
         self._state_changed_handlers=[]
 
-        vd.devel.loadJavascript(path=source_path+'/../../../spikeforest/spikeforestwidgets/templatewidget/canvaswidget.js')
+        # HIGH TODO clean up these rel .js reference paths throughout
+        vd.devel.loadJavascript(path=source_path+'/../../spikeforestwidgets/templatewidget/canvaswidget.js')
         vd.devel.loadJavascript(path=source_path+'/electrodegeometrywidget.js')
-        vd.devel.loadJavascript(path=source_path+'/../../../spikeforest/spikeforestwidgets/dist/jquery-3.3.1.min.js')
+        vd.devel.loadJavascript(path=source_path+'/../..//spikeforestwidgets/dist/jquery-3.3.1.min.js')
 
     def setSize(self, size):
         if self._size == size:

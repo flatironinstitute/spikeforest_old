@@ -7,7 +7,7 @@ pkg_name = "spikeforest"
 
 setuptools.setup(
     name=pkg_name,
-    version="0.2.4",
+    version="0.5.3",
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",
@@ -15,12 +15,9 @@ setuptools.setup(
     package_dir={
         'spikesorters': 'spikesorters',
         'spikeforestwidgets': 'spikeforestwidgets',
-        'forestview': 'forestview'},
-    package_data={
-        'spikesorters': ['spyking_circus/*.params', 'yass/config*'],
-        'spikeforestwidgets': ['*.js','timeserieswidget/*.js', 'dist/*.js'],
-        'forestview': ['*.js','*/*.js']
-        },
+        'forestview': 'forestview'
+    },
+    include_package_data=True,
     install_requires=[
         'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git','scikit-learn',
         'spikeextractors>=0.3,<0.4'
