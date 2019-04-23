@@ -36,7 +36,7 @@ def main():
 
     print('compute resource name: {}'.format(args.compute_resource_name))
     print('collection = {}'.format(args.collection))
-    print('kachery_name = {}'.format(args.share_id))
+    print('kachery_name = {}'.format(args.kachery_name))
     print('srun opts = {}'.format(args.srun_opts))
     print('num parallel = {}'.format(args.parallel))
     print('allow uncontainerized = {}'.format(args.allow_uncontainerized))
