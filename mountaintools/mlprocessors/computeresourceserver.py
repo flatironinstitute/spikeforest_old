@@ -79,8 +79,10 @@ class ComputeResourceServer():
             name='compute_resource_batch',
             batch_id=batch_id
         )
-        batch = mt.loadObject(key = key, collection=self._collection, download_from=self._kachery_name)
-        mt.saveObject(key = key, object=batch)
+        batch = mt.loadObject(key = key, collection=self._collection, download_from=self._kachery_name) # remote
+        if not batch:
+            raise Exception('Unable to load batch object.')
+        mt.saveObject(key = key, object=batch) # local
 
         try:
             self._run_batch(batch_id)
@@ -139,6 +141,8 @@ class ComputeResourceServer():
             batch_id=batch_id
         )
         batch = mt.loadObject(key = key) # local
+        if not batch:
+            raise Exception('Unable to load batch object locally for batch id: {}'.format(batch_id))
 
         batch_status_key = dict(
             name='compute_resource_batch_statuses',
