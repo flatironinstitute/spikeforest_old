@@ -95,6 +95,7 @@ def test_mandelbrot_compute_resource(container=None):
 
 @pytest.mark.compute_resource
 @pytest.mark.container
+@pytest.mark.exclude
 def test_mandelbrot_compute_resource_container():
     test_mandelbrot_compute_resource(container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg')
 
