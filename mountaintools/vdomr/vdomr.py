@@ -6,6 +6,7 @@ import traceback
 import time
 import multiprocessing
 import uuid
+import sys
 
 # BOOKMARK VDOMR
 
@@ -200,9 +201,16 @@ def config_jupyter():
     display(jp_widget)  # pylint: disable=undefined-variable
 
 
-def config_colab():
+def config_colab(local_runtime=False):
     VDOMR_GLOBAL['mode'] = 'colab'
+    if local_runtime:
+        # this is needed so that dummy "google" may be imported, and thus callbacks may be registered
+        source_path=os.path.dirname(os.path.realpath(__file__))
+        sys.path.append(source_path)
 
+def init_colab():
+    config_colab()
+    exec_javascript(_get_init_javascript())
 
 def config_server():
     VDOMR_GLOBAL['mode'] = 'server'

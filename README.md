@@ -7,21 +7,20 @@
 
 This software supports the SpikeForest web site (in progress) for public validation and comparison of spike sorting algorithms applied to an expanding collection of hosted  electrophysiology recordings with ground-truth spiking information. But you can also use this project for your own spike sorting, using MountainSort, IronClust, and other algorithms. 
 
-The framework that supports the requirements of the website, including wrapping of spike sorters in singularity containers and python classes, job batching, comparison with ground truth, and processing using remote compute resources, is all open source and may be of benefit to neuroscience labs.
+The repository is split into three main directories: `spikeforest`, `mountaintools`, and `working`. MountainTools is not spike-sorting specific and can be used for other applications or downstream analyses. It provides modules for batch processing, automatic caching of results, sharing data between labs (from a python interface), and processing on remote compute resources. The `spikeforest` directory (SpikeForest package) contains wrappers to the spike sorters, analysis routines, GUI components. The `working` directory contains the actual scripts used to prepare the data hosted on the website.
 
 We make use of the [SpikeInterface](https://github.com/SpikeInterface/) project, also in alpha development stage, that provides tools for extracting, converting between, and curating raw or spike sorted extracellular data from any file format.
 
-This repository is split into two pieces: MountainTools and SpikeForest. The former is not spike-sorting specific and can be used for other applications or downstream analyses. It provides modules for batch processing, automatic caching of results, sharing data between labs (from a python interface), and processing on remote compute resources. The latter contains wrappers to the spike sorters, analysis routines, GUI components, and the actual scripts used to prepare the data hosted on the website.
-
 The code for the front-end website is also open source, but is hosted in a separate repository.
 
-## Installation
+## Installation of the development version
 
 It is recommended that you start from a fresh conda environment with python (>= 3.6) installed.
 
 ```
-pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=spikeforest
-pip install git+https://github.com/flatironinstitute/spikeforest#subdirectory=mountaintools
+git clone [this-repo]
+pip install -e ./spikeforest
+pip install -e ./mountaintools
 ```
 
 If you want to use the containerized versions of the spike sorters, you should install singularity. [link to instructions](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) Otherwise you will need to install the sorters individually. You can install MountainSort4 via
@@ -97,6 +96,10 @@ SpykingCircus.execute(
 As described above, by using `_container='default'` you do not need to install spyking circus, although if you do have spyking circus on your machine, you could simply use `_container=None`.
 
 Other spike sorters in progress include YASS, KiloSort, and IronClust.
+
+## Running the full analysis (for the website)
+
+Instructions for running the full analysis for the website can be found at [full_analysis.md](docs/full_analysis.md).
 
 ## Sorting batches of multiple recordings
 

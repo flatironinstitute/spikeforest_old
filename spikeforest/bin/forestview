@@ -64,15 +64,13 @@ def main():
 
     if args.file is None:
         args.file = _default_spikeforest_file
-        if args.download_from is None:
-            args.download_from = 'spikeforest.spikeforest2'
+
+    if args.download_from is None:
+        args.download_from = 'kbucket,public'
 
     if args.download_from:
-        share_ids = args.download_from.split(',')
-        try:
-            mt.configRemoteReadonly(share_id=share_ids[0], alternate_share_ids=share_ids[1:])
-        except:
-            print('WARNING: unable to configure to download from {}. Perhaps you are offline.'.format(args.download_from))
+        list0 = args.download_from.split(',')
+        mt.configDownloadFrom(list0)
 
     APP = TheApp(mode=args.mode, path=args.file)
 
