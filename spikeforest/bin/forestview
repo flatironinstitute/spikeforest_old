@@ -23,6 +23,9 @@ class TheApp():
         _make_full_browser(W)
         return W
 
+    def title(self):
+        return 'ForestView ({}) - {}'.format(self._mode, self._path)
+
 _default_spikeforest_file = 'sha1dir://03e12d2f1af3e038886f25a94871f3723a66502a.toy_recordings'
 
 def main():
@@ -69,7 +72,8 @@ def main():
         server.setPort(int(args.port))
         server.start()
     else:
-        vd.pyqt5_start(app=APP, title='ForestView')
+        print(APP.title())
+        vd.pyqt5_start(app=APP, title=APP.title())
 
 def _make_full_browser(W):
     resize_callback_id = 'resize-callback-' + str(uuid.uuid4())

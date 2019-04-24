@@ -333,10 +333,7 @@ def pyqt5_start(*, app, title):
             html = html.replace('{init_js}', _get_init_javascript())
 
             self.page().setHtml(html)
-    if title is not None:
-        qapp = QApplication([title])
-    else:
-        qapp = QApplication([])
+    qapp = QApplication([])
 
     connection_to_worker, connection_to_gui = multiprocessing.Pipe()
     process = multiprocessing.Process(
@@ -348,6 +345,8 @@ def pyqt5_start(*, app, title):
 
         view = VdomrWebView(root_html=root_html, title=title,
                             connection_to_worker=connection_to_worker)
+        if title is not None:
+            view.setWindowTitle(title)
         VDOMR_GLOBAL['pyqt5_view'] = view
         if size:
             view.resize(size[0], size[1])

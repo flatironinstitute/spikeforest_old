@@ -68,7 +68,7 @@ def _make_obj_from_dir(path):
             name='recording'
         ))
     else:
-        for dname, dd0 in dd['dirs'].items():
+        for dname in dd['dirs'].keys():
             recordings.append(_make_recording_obj_from_dir(
                 path=path+'/'+dname,
                 study_name=study_name,
