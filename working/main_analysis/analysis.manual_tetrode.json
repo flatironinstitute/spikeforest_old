@@ -1,0 +1,85 @@
+{
+    "analysis_name": "manual_tetrode",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_tetrode.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_tetrode.json"],
+    "sorter_keys": ["irc", "ms4", "ks", "yass", "sc"],
+    "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
+    "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
+    "upload_to": "spikeforest.kbucket",
+    "job_timeout":1200,
+    "compute_resources": {
+        "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
+        "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
+        "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
+    },
+    "sorters":{
+        "ms4": {
+            "name": "MountainSort4",
+            "processor_name": "MountainSort4",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50,
+                "detect_threshold": 3
+            },
+            "compute_resource":"cpu"
+        },
+        "irc": {
+            "name":"IronClust-s",
+            "processor_name":"IronClust",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50,
+                "prm_template_name": "static_template.prm",
+                "detect_threshold": 4.5
+            },
+            "compute_resource": "cpu"
+        },
+        "irc-d2": {
+            "name":"IronClust-drift2",
+            "processor_name":"IronClust",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50,
+                "prm_template_name": "drift2_template.prm",
+                "detect_threshold": 4.5
+            },
+            "compute_resource": "cpu"
+        },
+        "sc": {
+            "name": "SpykingCircus",
+            "processor_name": "SpykingCircus",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50
+            },
+            "compute_resource": "cpu"
+        },
+        "ks": {
+            "name": "KiloSort",
+            "processor_name": "KiloSort",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50
+            },
+            "compute_resource": "gpu"
+        },
+        "ks2": {
+            "name": "KiloSort2",
+            "processor_name": "KiloSort2",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50
+            },
+            "compute_resource": "gpu"
+        },
+        "yass": {
+            "name": "Yass",
+            "processor_name": "Yass",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50
+            },
+            "compute_resource": "cpu"
+        }
+    }
+}
