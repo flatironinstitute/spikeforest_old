@@ -6,7 +6,7 @@ import mtlogging
 
 
 @mtlogging.log()
-def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_id=None, output_path=None, job_timeout=60*20):
+def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_id=None, output_path=None, job_timeout=60*20, upload_to=None):
     # Summarize the recordings
     mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
@@ -53,7 +53,7 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
         recordings=recordings,
         sorting_results=sorting_results,
         aggregated_sorting_results=mt.saveObject(
-            object=aggregated_sorting_results)
+            object=aggregated_sorting_results, upload_to=upload_to)
     )
 
     # Save the output
@@ -65,13 +65,14 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
                 name='spikeforest_results'
             ),
             subkey=output_id,
-            object=output_object
+            object=output_object,
+            upload_to=upload_to
         )
     
     if output_path:
         print('Saving the output to {}'.format(output_path))
         mtlogging.sublog('save-output-path')
-        address = mt.saveObject(output_object)
+        address = mt.saveObject(output_object, upload_to=upload_to)
         if not address:
             raise Exception('Problem saving output object.')
         if not mt.createSnapshot(path=address, dest_path=output_path):

@@ -69,12 +69,8 @@ def main():
     sorters = [sorter_definitions[sorter_code] for sorter_code in sorter_codes]
     print('Using sorters: ',[sorter['name'] for sorter in sorters])
 
-    apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, output_path=output_path, job_timeout=float(job_timeout))
-
     upload_to = analysis_obj.get('upload_to', None)
-    if upload_to:
-        print('Uploading output object to {}'.format(upload_to))
-        mt.saveFile(path=output_path, upload_to=upload_to)
+    apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, output_path=output_path, job_timeout=float(job_timeout), upload_to=upload_to)
 
 if __name__ == "__main__":
     main()
