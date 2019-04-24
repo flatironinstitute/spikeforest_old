@@ -14,7 +14,7 @@
     },
     "sorters":{
         "ms4": {
-            "name": "MountainSort4-thr3",
+            "name": "MountainSort4",
             "processor_name": "MountainSort4",
             "params": {
                 "detect_sign": -1,
@@ -24,7 +24,7 @@
             "compute_resource":"cpu"
         },
         "irc": {
-            "name":"IronClust-static",
+            "name":"IronClust-s",
             "processor_name":"IronClust",
             "params": {
                 "detect_sign": -1,
