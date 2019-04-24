@@ -121,7 +121,8 @@ def _load_spikeforest_context(path):
     context = SpikeForestContext(
         studies = obj.get('studies', []),
         recordings = obj.get('recordings', []),
-        sorting_results = obj.get('sorting_results', [])
+        sorting_results = obj.get('sorting_results', []),
+        aggregated_sorting_results = obj.get('aggregated_sorting_results', None)
     )
     return context
 

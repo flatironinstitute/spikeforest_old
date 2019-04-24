@@ -6,6 +6,7 @@ import multiprocessing
 import traceback
 import sys
 import time
+from mountaintools import client as mt
 
 # HIGH TODO move tabs between north/south containers
 # HIGH TODO cross-correlograms widget
@@ -167,7 +168,7 @@ class ViewFrame(vd.Component):
             self._connection_to_prepare, connection_to_parent = multiprocessing.Pipe()
             self._init_process = multiprocessing.Process(
                 target=_prepare_in_worker,
-                args=(view_class, context, opts, connection_to_parent)
+                args=(view_class, context, opts, connection_to_parent, mt.getDownloadFromConfig())
             )
             self._init_process.start()
 
@@ -279,7 +280,8 @@ class _StdoutHandler(object):
             self._connection.send(dict(name="log", text=self._text))
             self._text=''
 
-def _prepare_in_worker(view_class, context, opts, connection_to_parent):
+def _prepare_in_worker(view_class, context, opts, connection_to_parent, download_from_config):
+    mt.setDownloadFromConfig(download_from_config)
     with StdoutSender(connection=connection_to_parent):
         try:
             print('***** Preparing...')

@@ -324,6 +324,14 @@ class MountainClient():
         for kname in kachery_names:
             if kname not in self._config_download_from:
                 self._config_download_from.append(kname)
+    
+    def getDownloadFromConfig(self):
+        return deepcopy(dict(
+            download_from=self._config_download_from
+        ))
+
+    def setDownloadFromConfig(self, obj):
+        self._config_download_from = obj.get('download_from', [])
 
     @mtlogging.log(name='MountainClient:getValue')
     def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False, check_alt=False):
