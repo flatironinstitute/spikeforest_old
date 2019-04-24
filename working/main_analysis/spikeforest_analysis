@@ -5,6 +5,7 @@ import os, sys
 import mlprocessors as mlpr
 import mtlogging
 import argparse
+from copy import deepcopy
 
 from apply_sorters_to_recordings import apply_sorters_to_recordings
 
@@ -15,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description = 'Run a SpikeForest analysis')
     parser.add_argument('analysis_file',help='Path to the analysis specification file.')
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
+    parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
 
     args = parser.parse_args()
@@ -42,6 +44,15 @@ def main():
     if len(download_from) > 0:
         mt.setRemoteConfig(share_id = download_from[0], alternate_share_ids=download_from[1:])
 
+    sorter_definitions = analysis_obj['sorters']
+    sorter_codes = analysis_obj['sorter_keys']
+    sorters = [sorter_definitions[sorter_code] for sorter_code in sorter_codes]
+    sorters = _expand_sorters(sorters)
+    print('Using sorters: ',[sorter['name'] for sorter in sorters])
+    if args.verbose:
+        for sorter in sorters:
+            print(sorter)
+
     # Grab the recordings
     print('Loading the recordings...')
     recordings = []
@@ -64,13 +75,35 @@ def main():
         studies=studies[0:1]
         output_path=None    
 
-    sorter_definitions = analysis_obj['sorters']
-    sorter_codes = analysis_obj['sorter_keys']
-    sorters = [sorter_definitions[sorter_code] for sorter_code in sorter_codes]
-    print('Using sorters: ',[sorter['name'] for sorter in sorters])
-
     upload_to = analysis_obj.get('upload_to', None)
     apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, output_path=output_path, job_timeout=float(job_timeout), upload_to=upload_to)
+
+def _expand_sorters(sorters):
+    ret = []
+    for sorter in sorters:
+        a = _expand_sorter(sorter)
+        ret = ret + a
+    return ret
+
+def _expand_sorter(sorter):
+    params = sorter['params']
+    for pname, pval in params.items():
+        if type(pval)==dict:
+            if '_list' in pval:
+                plist = pval['_list']
+            elif '_range' in pval:
+                plist = list(range(pval['_range'][0], pval['_range'][1], pval['_range'][2]))
+            else:
+                plist = None
+            if plist:
+                ret = []
+                for ii, lval in enumerate(plist):
+                    sorter2 = deepcopy(sorter)
+                    sorter2['params'][pname] = lval
+                    sorter2['name']=sorter2['name']+'-{}'.format(ii)
+                    ret = ret + _expand_sorter(sorter2)
+                return ret
+    return [sorter]
 
 if __name__ == "__main__":
     main()
