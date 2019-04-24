@@ -1,8 +1,8 @@
 {
-    "analysis_name": "visapy_mea",
+    "analysis_name": "magland_synth",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.magland_synth.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.magland_synth.json"],
-    "sorter_keys": ["ms4", "yass", "sc"],
+    "sorter_keys": ["ms4", "yass", "ks", "ks2", "sc"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
     "download_from": ["kbucket", "spikeforest.spikeforest2"],
     "job_timeout":1200,
