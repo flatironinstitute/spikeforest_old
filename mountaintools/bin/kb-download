@@ -34,8 +34,6 @@ def main():
             print('Problem realizing file or directory.', file=sys.stderr)
             exit(-1)
 
-    args = parser.parse_args()
-
 def _realize_dir(path, *, dest_path, verbose=False):
     dd = mt.readDir(path, recursive=False, include_sha1=False)
     if not dd:

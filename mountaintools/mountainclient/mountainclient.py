@@ -162,7 +162,7 @@ class MountainClient():
         self._pairio_tokens = dict()
         self._verbose = False
         self._remote_client = MountainRemoteClient()
-        self._kbucket_share_ids_by_alias = dict()
+        self._values_by_alias = dict()
         self._config_download_from = []
         self._local_db = MountainClientLocal(parent=self)
         self._initialize_kacheries()
@@ -774,7 +774,11 @@ class MountainClient():
             kbucket_share_id = list0[2]
             path0 = '/'.join(list0[3:])
             if kbucket_share_id and ('.' in kbucket_share_id):
-                kbucket_share_id=self._get_kbucket_share_id_from_alias(kbucket_share_id)
+                tmp0 = kbucket_share_id
+                kbucket_share_id=self._get_value_from_alias(kbucket_share_id)
+                if kbucket_share_id is None:
+                    print('Warning: unable to resolve kbucket alias: ' + tmp0)
+                    return None
             ret = self._read_kbucket_dir(
                 share_id=kbucket_share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
         elif path.startswith('sha1dir://'):
@@ -949,16 +953,16 @@ class MountainClient():
                 return ret
         return None
 
-    def _get_kbucket_share_id_from_alias(self, kbucket_share_id_alias):
-        if kbucket_share_id_alias in self._kbucket_share_ids_by_alias:
-            return self._kbucket_share_ids_by_alias[kbucket_share_id_alias]
-        vals=kbucket_share_id_alias.split('.')
+    def _get_value_from_alias(self, alias):
+        if alias in self._values_by_alias:
+            return self._values_by_alias[alias]
+        vals=alias.split('.')
         if len(vals)!=2:
-            raise Exception('Invalid kbucket share id alias: '+kbucket_share_id_alias)
+            raise Exception('Invalid alias: ' + alias)
         ret=self.getValue(key=vals[1], collection=vals[0])
         if ret is None:
-            raise Exception('Unable to resolve kbucket share id from alias: '+kbucket_share_id_alias)
-        self._kbucket_share_ids_by_alias[kbucket_share_id_alias]=ret
+            return None
+        self._values_by_alias[alias]=ret
         return ret
 
     def _set_value(self, *, key, subkey, value, overwrite, local_also=False, collection=None):
@@ -1017,14 +1021,23 @@ class MountainClient():
             return None
         if upload_to:
             sha1 = self.computeFileSha1(path=ret)
-            if upload_to not in self._kachery_urls.keys():
-                raise Exception('Kachery not found: {}'.format(upload_to))
-            kachery_url=self._kachery_urls[upload_to]
+            kachery_url = self._resolve_kachery_url(upload_to)
+            if not kachery_url:
+                raise Exception('Unable to resolve kachery url for: {}'.format(upload_to))
             if upload_to not in self._kachery_upload_tokens.keys():
-                raise Exception('Kachery upload token not found: {}'.format(upload_to))
+                raise Exception('Kachery upload token not found for: {}'.format(upload_to))
             kachery_upload_token=self._kachery_upload_tokens[upload_to]
             self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=kachery_upload_token)
         return ret
+    
+    def _resolve_kachery_url(self, name):
+        if name.startswith('http://') or name.startswith('https://'):
+            return name
+        if '.' in name:
+            return self._get_value_from_alias(name)
+        if name not in self._kachery_urls.keys():
+            return None
+        return self._kachery_urls[name]
 
     def _upload_to_kachery(self, *, path, sha1, kachery_url, upload_token):
         url_check_path0 = '/check/sha1/'+sha1
@@ -1062,12 +1075,7 @@ class MountainClient():
     def _find_on_kachery_or_kbucket(self, *, download_from, sha1):
         assert download_from
 
-        if _is_http_url(download_from):
-            kachery_url = download_from
-        elif download_from in self._kachery_urls:
-            kachery_url = self._kachery_urls[download_from]
-        else:
-            kachery_url = None
+        kachery_url = self._resolve_kachery_url(download_from)
 
         if kachery_url:
             check_url = kachery_url + '/check/sha1/' + sha1
@@ -1163,6 +1171,8 @@ class MountainClient():
             dirs={}
         )
         list0 = _safe_list_dir(path)
+        if list0 is None:
+            return None
         for name0 in list0:
             path0 = path+'/'+name0
             if os.path.isfile(path0):
@@ -1196,6 +1206,8 @@ class MountainClientLocal():
         ret = []
         with FileLock(subkey_db_path+'.lock'):
             list0 = _safe_list_dir(subkey_db_path)
+            if list0 is None:
+                return None
             for name0 in list0:
                 if name0.endswith('.txt'):
                     ret.append(name0[0:-4])
@@ -1778,8 +1790,7 @@ def _safe_list_dir(path):
         ret = os.listdir(path)
         return ret
     except:
-        print('Warning: unable to listdir: '+path)
-        return []
+        return None
 
 # The global module client
 _global_client = MountainClient()
