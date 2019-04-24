@@ -99,7 +99,7 @@ def main():
     if os.path.exists(output_dir):
         raise Exception('Output directory already exists: {}'.format(output_dir))
     
-    mt.configDownloadFrom(['kbucket'])
+    mt.configDownloadFrom(['spikeforest.kbucket'])
     #output_ids=[
     # 'mearec_neuronexus', 
     # 'visapy_mea', 

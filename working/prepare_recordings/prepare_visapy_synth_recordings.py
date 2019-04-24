@@ -3,7 +3,7 @@
 from mountaintools import client as mt
 
 mt.login()
-upload_to = 'kbucket'
+upload_to = 'spikeforest.kbucket'
 
 
 # The base directory used below
