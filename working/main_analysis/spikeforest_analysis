@@ -24,6 +24,8 @@ def main():
     if args.login:
         mt.login(ask_password=True)
 
+    mt.configDownloadFrom(['kbucket'])
+
     print('Configuring the compute resources...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
     if not analysis_obj:
