@@ -17,7 +17,7 @@ If you have proper authorization, this will save the information to:
 
 `key://pairio/spikeforest/spikeforest_recording_group.visapy_synth.json`
 
-You can then view these recordings from (from any computer) using ForestView
+You can then view these recordings (from any computer) using ForestView
 
 ```
 forestview key://pairio/spikeforest/spikeforest_recording_group.visapy_synth.json
