@@ -86,7 +86,7 @@ Sorter
 def main():
     parser = argparse.ArgumentParser(description = help_txt, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('output_dir',help='The output directory for saving the files.')
-    parser.add_argument('--output_ids',help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=True)
+    parser.add_argument('--output_ids',help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
     args = parser.parse_args()
@@ -100,16 +100,22 @@ def main():
         raise Exception('Output directory already exists: {}'.format(output_dir))
     
     mt.configDownloadFrom(['spikeforest.kbucket'])
-    #output_ids=[
-    # 'mearec_neuronexus', 
-    # 'visapy_mea', 
-    # 'magland_synth', 
-    # 'paired', 
-    # 'mearec_tetrode', 
-    # 'manual_tetrode', 
-    # 'bionet']
 
-    output_ids = args.output_ids.split(',')
+    if args.output_ids is not None:
+        output_ids = args.output_ids.split(',')
+    else:
+        output_ids=[
+            'paired_boyden32c',
+            'paired_crcns',
+            #'paired_mea64c',
+            'paired_neuropix32c',
+            'bionet',
+            'magland_synth',
+            'manual_tetrode',
+            'mearec_neuronexus',
+            'mearec_tetrode',
+            'visapy_synth'
+        ]
     print('Using output ids: ', output_ids)
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
@@ -187,6 +193,9 @@ def main():
                 cpuTimeSec=sr['execution_stats'].get('elapsed_sec',None)
             ))
             comparison_with_truth=mt.loadObject(path=sr['comparison_with_truth']['json'])
+            if comparison_with_truth is None:
+                print(sr)
+                raise Exception('Comparison with not present in sorting result')
             for unit_result in comparison_with_truth.values():
                 study_name=sr['recording']['study']
                 sorter_name=sr['sorter']['name']
