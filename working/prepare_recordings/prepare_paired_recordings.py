@@ -11,20 +11,19 @@ basedir = 'kbucket://15734439d8cf/groundtruth'
 # HIGH TODO load study set descriptions for website
 
 def prepare_paired_studies(*, basedir, name):
-    paired_dir0 = basedir+'/paired_recordings'
-    paired_dir = mt.createSnapshot(paired_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
-    if not paired_dir:
-        raise Exception('Failed to create snapshot of directory: '+paired_dir0)
-    paired_dir=paired_dir+'.paired'
+    study_dir0 = basedir+'/paired_recordings/'+name
+    study_dir = mt.createSnapshot(study_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
+    if not study_dir:
+        raise Exception('Failed to create snapshot of directory: '+study_dir0)
+    study_dir=study_dir+'.paired_'+name
 
     studies = []
     recordings = []
-    study_set_dir = paired_dir + '/' +name
+    study_set_dir = study_dir
     print('Using study set dir: '+study_set_dir)
 
     print('PREPARING: '+name)
     study_name = 'paired_' + name
-    study_dir = study_set_dir
     study0 = dict(
         name=study_name,
         study_set=study_name,
