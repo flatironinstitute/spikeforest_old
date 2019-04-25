@@ -1,15 +1,19 @@
 ---
 # This is YAML front matter
-label: SPF_PAIRED_CRCNS_FIX
-electrode_type: needed
-doi: needed
-ground_truth: needed
-organism: needed
-source: needed
+label: SPF_PAIRED_CRCNS_HC1
+electrode_type:
+  - tetrode
+  - silicon-probe
+doi: TODO
+ground_truth: intracellular
+organism: rat
+source: Buzsaki lab
 labels:
-  - needed e.g., in-vivo
+  - in-vivo
 ---
 
-# SPF_PAIRED_CRCNS_FIX
+# SPF_PAIRED_CRCNS_HC1
 
-Description needed
+TODO: copy from CRCNS website
+
+TODO: document how stimulus artifacts were excluded.
