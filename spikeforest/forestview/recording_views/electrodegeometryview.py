@@ -48,7 +48,7 @@ class ElectrodeGeometryWidget(vd.Component):
         self._current_channel=None
         self._state_changed_handlers=[]
 
-        # HIGH TODO clean up these rel .js reference paths throughout
+        # MEDIUM TODO clean up these rel .js reference paths throughout
         vd.devel.loadJavascript(path=source_path+'/../../spikeforestwidgets/templatewidget/canvaswidget.js')
         vd.devel.loadJavascript(path=source_path+'/electrodegeometrywidget.js')
         vd.devel.loadJavascript(path=source_path+'/../..//spikeforestwidgets/dist/jquery-3.3.1.min.js')

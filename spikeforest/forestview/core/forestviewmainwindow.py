@@ -8,8 +8,8 @@ import sys
 import time
 from mountaintools import client as mt
 
-# HIGH TODO move tabs between north/south containers
-# HIGH TODO cross-correlograms widget
+# MEDIUM TODO move tabs between north/south containers
+# MEDIUM TODO cross-correlograms widget
 
 class ForestViewMainWindow(vd.Component):
     def __init__(self, context):
