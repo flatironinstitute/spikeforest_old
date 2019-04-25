@@ -168,7 +168,7 @@ class ViewFrame(vd.Component):
             self._connection_to_prepare, connection_to_parent = multiprocessing.Pipe()
             self._init_process = multiprocessing.Process(
                 target=_prepare_in_worker,
-                args=(view_class, context, opts, connection_to_parent, mt.getDownloadFromConfig())
+                args=(view_class, context, opts, connection_to_parent)
             )
             self._init_process.start()
 
@@ -280,8 +280,8 @@ class _StdoutHandler(object):
             self._connection.send(dict(name="log", text=self._text))
             self._text=''
 
-def _prepare_in_worker(view_class, context, opts, connection_to_parent, download_from_config):
-    mt.setDownloadFromConfig(download_from_config)
+def _prepare_in_worker(view_class, context, opts, connection_to_parent):
+    # mt.setDownloadFromConfig(download_from_config)
     with StdoutSender(connection=connection_to_parent):
         try:
             print('***** Preparing...')

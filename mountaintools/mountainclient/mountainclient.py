@@ -168,6 +168,10 @@ class MountainClient():
         self._initialize_kacheries()
         self._read_pairio_tokens()
 
+        if '_MT_CONFIG_DOWNLOAD_FROM' in os.environ:
+            df = json.loads(os.environ['_MT_CONFIG_DOWNLOAD_FROM'])
+            self.configDownloadFrom(df)
+
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         """
         Deprecated
@@ -324,14 +328,17 @@ class MountainClient():
         for kname in kachery_names:
             if kname not in self._config_download_from:
                 self._config_download_from.append(kname)
+        # set the following environment variable so that the download-from config
+        # is shared by child processes (e.g., when doing multiprocessing)
+        os.environ['_MT_CONFIG_DOWNLOAD_FROM']=json.dumps(self._config_download_from)
     
-    def getDownloadFromConfig(self):
-        return deepcopy(dict(
-            download_from=self._config_download_from
-        ))
+    # def getDownloadFromConfig(self):
+    #     return deepcopy(dict(
+    #         download_from=self._config_download_from
+    #     ))
 
-    def setDownloadFromConfig(self, obj):
-        self._config_download_from = obj.get('download_from', [])
+    # def setDownloadFromConfig(self, obj):
+    #     self._config_download_from = obj.get('download_from', [])
 
     @mtlogging.log(name='MountainClient:getValue')
     def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False, check_alt=False):
