@@ -4,10 +4,11 @@ import time
 import random
 
 class FileLock():
-    def __init__(self, path, _disable_lock=False):
+    def __init__(self, path, _disable_lock=False, exclusive=True):
         self._path = path
         self._file = None
         self._disable_lock = _disable_lock
+        self._exclusive=exclusive
     def __enter__(self):
         if self._disable_lock:
             return
@@ -15,9 +16,12 @@ class FileLock():
         num_tries = 0
         while True:
             try:
-                fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                if self._exclusive:
+                    fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:
+                    fcntl.flock(self._file, fcntl.LOCK_SH | fcntl.LOCK_NB)
                 if num_tries>10:
-                    print('Locked file {} after {} tries...'.format(self._path, num_tries))
+                    print('Locked file {} after {} tries (exclusive={})...'.format(self._path, num_tries, self._exclusive))
                 break
             except IOError as e:
                 if e.errno != errno.EAGAIN:
