@@ -1,8 +1,7 @@
 ---
 # This is YAML front matter
-label: SPF_SYNTH_MEAREC_TETRODE
+label: SPF_SYNTH_MEAREC_NEURONEXUS
 electrode_type: silicon_probe
-channel_count: 32
 doi: 10.1152/jn.00210.2018
 ground_truth_type: simulation
 recording_type: in-silico

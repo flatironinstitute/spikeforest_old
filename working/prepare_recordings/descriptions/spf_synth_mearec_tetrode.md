@@ -1,9 +1,7 @@
-
 ---
 # This is YAML front matter
 label: SPF_SYNTH_MEAREC_TETRODE
 electrode_type: tetrode
-channel_count: 4
 doi: 10.1016/j.neuron.2017.08.030
 ground_truth: simulation
 recording_type: in-silico

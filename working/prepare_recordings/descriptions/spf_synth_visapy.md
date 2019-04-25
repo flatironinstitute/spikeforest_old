@@ -1,11 +1,11 @@
 ---
 # This is YAML front matter
 label: SPF_SYNTH_VISAPY
-electrode_type: needed
-doi: needed
+electrode_type: silicon-probe
+doi: 10.1016/j.jneumeth.2015.01.029
 ground_truth: simulation
 recording_type: in-silico
-organism: needed
+organism:
 ---
 
 # SPF_SYNTH_VISAPY
@@ -24,3 +24,9 @@ organism: needed
 - Data is stored in float32 format
 - Unit is in millivolts, and spikes have negative polarity
 - Each recording contains 16 ground truth units
+
+## References
+
+Hagen, Espen, et al. "ViSAPy: a Python tool for biophysics-based generation of virtual spiking activity for evaluation of spike-sorting algorithms." Journal of neuroscience methods 245 (2015): 182-204.
+
+Lee, Jin Hyung, et al. "Yass: Yet another spike sorter." Advances in Neural Information Processing Systems. 2017.

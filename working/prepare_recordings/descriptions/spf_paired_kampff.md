@@ -17,5 +17,5 @@ Dataset from Adam Kampff lab
 
 Extracted subarray of 32 channels centered around the activity peak.
 
-TODO: james: describe this in more detail. Describe how you decided which recordings to use (based on SNR threshold).
+TODO: describe this in more detail. Describe how you decided which recordings to use (based on SNR threshold).
 
