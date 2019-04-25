@@ -26,6 +26,16 @@
             "name": "MountainSort4",
             "processor_name": "MountainSort4",
             "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50,
+                "detect_threshold": {"_list": [3,10]}
+            },
+            "compute_resource":"cpu"
+        },
+        "ms4-rng2": {
+            "name": "MountainSort4",
+            "processor_name": "MountainSort4",
+            "params": {
                 "detect_sign": {"_list": [-1, 0, 1]},
                 "adjacency_radius": {"_range": [45, 56, 5]},
                 "detect_threshold": 3
