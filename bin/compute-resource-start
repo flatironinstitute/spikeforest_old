@@ -3,7 +3,7 @@
 import os
 import argparse
 import mlprocessors as mlpr
-from mountaintools import client as ca
+from mountaintools import client as mt
 import mtlogging
 
 # This can be important for some of the jobs in certain situations
@@ -42,7 +42,10 @@ def main():
     print('allow uncontainerized = {}'.format(args.allow_uncontainerized))
 
     if args.login:
-        ca.login()
+        mt.login()
+
+    if args.kachery_name:
+        mt.configDownloadFrom(args.kachery_name)
 
     server = mlpr.ComputeResourceServer(
         resource_name=args.compute_resource_name,
