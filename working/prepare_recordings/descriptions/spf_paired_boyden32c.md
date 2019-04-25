@@ -12,11 +12,6 @@ labels:
 
 # SPF_PAIRED_BOYDEN
 
-QUESTION: James, I found this description in the boyden/ directory... does it apply to the boyden32c directory?
-
-More description needed.
-
-
 This dataset was collected by Brian D. Allen from Ed Boyden's lab. The intracellular and extracellular voltages were recorded simultaneously.
 Extracellular voltages were recorded using 128 or 256 site silicon probes custom made at Boyden lab (9x9 um site dimension, 11x11 um site pitch).
 128-channel probe has 64x2 site grid pattern and 256-channel probe has 64x4 site grid pattern.
@@ -30,6 +25,8 @@ Brian D. Allen, Caroline Moore-Kochlacs, Jacob Gold Bernstein, Justin Kinney, Jo
 
 The raw data (.h5 format) was converted to .mda using ironclust v4.0.6 using `irc convert-h5-mda` command.
 https://github.com/jamesjun/ironclust
+
+A subset of the data was extracted -- 32 channels near the center of the activity, excluding the bad channels, as documented by the experimenters' annotation.
 
 The recording conditions for each cell are listed below.
 
