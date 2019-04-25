@@ -195,7 +195,7 @@ def main():
             comparison_with_truth=mt.loadObject(path=sr['comparison_with_truth']['json'])
             if comparison_with_truth is None:
                 print(sr)
-                raise Exception('Comparison with not present in sorting result')
+                raise Exception('Unable to retrieve comparison with truth object for sorting result.')
             for unit_result in comparison_with_truth.values():
                 study_name=sr['recording']['study']
                 sorter_name=sr['sorter']['name']
@@ -220,7 +220,7 @@ def main():
                     bestSortedUnitId=unit_result['best_unit']
                 ))
         else:
-            print('Warning: comparison with truth not found for sorting result: {} {}/{}', sr['sorter']['name'], sr['recording']['study'], sr['recording']['name'])
+            print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
     for study in sorter_names_by_study.keys():
         sorter_names_by_study[study]=list(sorter_names_by_study[study])
         sorter_names_by_study[study].sort()

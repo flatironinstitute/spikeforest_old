@@ -16,37 +16,33 @@ def prepare_paired_studies(*, basedir, name):
     if not paired_dir:
         raise Exception('Failed to create snapshot of directory: '+paired_dir0)
     paired_dir=paired_dir+'.paired'
-    
-    names = ['boyden32c','crcns','mea64c','neuropix32c'] # exclude neuro
 
     studies = []
     recordings = []
     study_set_dir = paired_dir + '/' +name
     print('Using study set dir: '+study_set_dir)
 
-    #names = ['boyden32c','crcns','mea64c','neuronexus32c','neuropix32c']    
-    for name in names:
-        print('PREPARING: '+name)
-        study_name = 'paired_' + name
-        study_dir = study_set_dir
-        study0 = dict(
-            name=study_name,
-            study_set=study_name,
-            directory=study_dir,
-            description=''
-        )
-        studies.append(study0)
-        dd = mt.readDir(study_dir)
-        for dsname in dd['dirs']:
-            dsdir = '{}/{}'.format(study_dir, dsname)
-            recordings.append(dict(
-                name=dsname,
-                study=study_name,
-                directory=dsdir,
-                firings_true=dsdir+'/firings_true.mda',
-                description='One of the recordings in the {} study'.format(
-                    study_name)
-            ))
+    print('PREPARING: '+name)
+    study_name = 'paired_' + name
+    study_dir = study_set_dir
+    study0 = dict(
+        name=study_name,
+        study_set=study_name,
+        directory=study_dir,
+        description=''
+    )
+    studies.append(study0)
+    dd = mt.readDir(study_dir)
+    for dsname in dd['dirs']:
+        dsdir = '{}/{}'.format(study_dir, dsname)
+        recordings.append(dict(
+            name=dsname,
+            study=study_name,
+            directory=dsdir,
+            firings_true=dsdir+'/firings_true.mda',
+            description='One of the recordings in the {} study'.format(
+                study_name)
+        ))
     return studies, recordings
 
 
