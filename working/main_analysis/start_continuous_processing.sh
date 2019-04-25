@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-declare -a list=("visapy_synth" "magland_synth" "mearec_tetrode" "manual_tetrode")
+declare -a list=("paired" "visapy_synth" "magland_synth" "mearec_tetrode" "manual_tetrode" "bionet" "mearec_neuronexus")
 
 while true
 do
