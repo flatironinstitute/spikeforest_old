@@ -15,17 +15,14 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
         label='Summarize recordings ({})'.format(label)
     )
 
-    # We will be assembling the sorting results here
+    # Run the spike sorting
     mtlogging.sublog('sorting')
-    sorting_results = []
-    for sorter in sorters:
-        sorting_results0 = _run_sorter(
-            sorter=sorter,
-            recordings=recordings, 
-            label='{} ({})'.format(sorter['name'], label),
-            job_timeout=job_timeout
-        )
-        sorting_results = sorting_results + sorting_results0
+    sorting_results = sa.multi_sort_recordings(
+        sorters=sorters,
+        recordings=recordings,
+        label='Sort recordings ({})'.format(label),
+        job_timeout=job_timeout
+    )
 
     # Summarize the sortings
     mtlogging.sublog('summarize-sortings')
@@ -90,17 +87,3 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
         txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
             study_name, sorter_name, avg_accuracy)
         print(txt)
-
-@mtlogging.log()
-def _run_sorter(sorter, recordings, label, job_timeout):
-    # Sort the recordings
-    compute_resource0 = sorter['compute_resource']
-    sortings = sa.sort_recordings(
-        sorter=sorter,
-        recordings=recordings,
-        compute_resource=compute_resource0,
-        label=label,
-        job_timeout=job_timeout
-    )
-
-    return sortings

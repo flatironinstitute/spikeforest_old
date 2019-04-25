@@ -319,7 +319,7 @@ class MountainJob():
             raise Exception('Processor code is missing for job', self._job_object.get('processor_name'))
         code = mt.loadObject(path = self._job_object['processor_code'])
         if code is None:
-            raise Exception('Unable to load processor code for job.')
+            raise Exception('Unable to load processor code for job: {}'.format(self._job_object['processor_code']))
         _write_python_code_to_directory(temp_path+'/processor_source', code)
         
         processor_class_name = self._job_object['processor_class_name']
