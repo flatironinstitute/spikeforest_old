@@ -33,15 +33,15 @@ def prepare_magland_synth_studies(*, basedir):
     studies = []
     recordings = []
     names = []
-    names = names+['datasets_noise10_K10_C4', 'datasets_noise10_K10_C8']
-    names = names+['datasets_noise10_K20_C4', 'datasets_noise10_K20_C8']
-    names = names+['datasets_noise20_K10_C4', 'datasets_noise20_K10_C8']
-    names = names+['datasets_noise20_K20_C4', 'datasets_noise20_K20_C8']
+    names = names+['noise10_K10_C4', 'noise10_K10_C8']
+    names = names+['noise10_K20_C4', 'noise10_K20_C8']
+    names = names+['noise20_K10_C4', 'noise20_K10_C8']
+    names = names+['noise20_K20_C4', 'noise20_K20_C8']
     description = mt.loadText(path=study_set_dir+'/readme.txt')
     for name in names:
         print('PREPARING: '+name)
-        study_name = 'magland_synth_'+name[9:]
-        study_dir = study_set_dir+'/'+name
+        study_name = study_set_name+'_'+name
+        study_dir = study_set_dir+'/datasets_'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
