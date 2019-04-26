@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from spikeforest import example_datasets
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
@@ -20,18 +22,7 @@ def prepare_toy_recordings():
 def main():
     # Prepare the study and recordings
     print('Preparing toy recordings...')
-    studies, recordings = prepare_toy_recordings()
-
-    print('Saving recording group locally...')
-    mt.saveObject(
-        object=dict(
-            studies=studies,
-            recordings=recordings
-        ),
-        #key=dict(name='spikeforest_recording_group', group_name='toy_recordings')
-        key=dict(name='spikeforest_recording_groups'),
-        subkey='toy_recordings'
-    )
+    prepare_toy_recordings()
 
 
 def _generate_toy_recordings():

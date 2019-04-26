@@ -1,24 +1,29 @@
 #!/usr/bin/env python
 
 from mountaintools import client as mt
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
+# mt.login()
 upload_to = 'spikeforest.kbucket'
 
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'manual_tetrode'
+group_name = 'manual_franklab'
 
 
-def prepare_manual_tetrode_studies(*, basedir):
-    study_set_name = 'manual_tetrode'
+def prepare_manual_franklab_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_manual_franklab.md')
+    ]
+    study_set_name = study_sets[0]['name']
+    
     study_set_dir0 = basedir+'/manual_sortings'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.manual_tetrode'
+    study_set_dir=study_set_dir+'.manual_franklab'
     print('Using study set dir: '+study_set_dir)
     studies = []
     recordings = []
@@ -45,16 +50,17 @@ def prepare_manual_tetrode_studies(*, basedir):
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))
-    return studies, recordings
+    return studies, recordings, study_sets
 
 
 # Prepare the studies
-studies, recordings = prepare_manual_tetrode_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_manual_franklab_studies(basedir=basedir)
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
         studies=studies,
-        recordings=recordings
+        recordings=recordings,
+        study_sets=study_sets
     ),
     key=dict(name='spikeforest_recording_group', group_name=group_name),
     upload_to=upload_to

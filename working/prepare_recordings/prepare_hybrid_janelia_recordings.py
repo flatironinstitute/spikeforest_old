@@ -1,22 +1,27 @@
 import sfdata as sf
 from mountaintools import client as mt
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
+# mt.login()
 upload_to = 'spikeforest.spikeforest2'
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'hybrid_drift'
+group_name = 'hybrid_janelia'
 
 
-def prepare_hybrid_drift_studies(*, basedir):
-    study_set_name = 'hybrid_drift'
+def prepare_hybrid_janelia_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_hybrid_janelia.md')
+    ]
+    study_set_name = study_sets[0]['name']
+    study_set_name = 'hybrid_janelia'
     studies = []
     recordings = []
     names = ['16c_600s', '16c_1200s', '32c_600s', '32c_1200s', '64c_600s', '64c_1200s']
     for name in names:
-        study_name = 'hybrid_drift_' + name
+        study_name = 'hybrid_janelia_' + name
         print('PREPARING: '+study_name)
         study_dir = basedir+'/hybrid_drift'
         study0 = dict(
@@ -41,7 +46,7 @@ def prepare_hybrid_drift_studies(*, basedir):
 
 
 # Prepare the studies
-studies, recordings = prepare_hybrid_drift_studies(basedir=basedir)
+studies, recordings = prepare_hybrid_janelia_studies(basedir=basedir)
 mt.saveObject(
     object=dict(
         studies=studies,
