@@ -47,6 +47,12 @@ class SpikeForestContext():
     def viewLaunchers(self):
         return get_spikeforest_view_launchers(self)
 
+    def studyObject(self, name):
+        return deepcopy(self._studies_by_name.get(name, {}))
+
+    def studySetNameForStudy(self, name):
+        return self.studyObject(name).get('study_set')
+
     def studyNames(self):
         return sorted(list())
 

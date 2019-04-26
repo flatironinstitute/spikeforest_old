@@ -1,33 +1,37 @@
 #!/usr/bin/env python
 
 from mountaintools import client as mt
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
+# mt.login()
 upload_to = 'spikeforest.kbucket'
 
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'mearec_neuronexus'
+group_name = 'synth_bionet'
 
-def prepare_mearec_neuronexus_studies(*, basedir):
-    study_set_name = 'mearec_neuronexus'
-    study_set_dir0 = basedir+'/mearec_synth/neuronexus'
+
+def prepare_synth_bionet_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_synth_bionet.md')
+    ]
+    study_set_name = study_sets[0]['name']
+    
+    study_set_dir0 = basedir+'/bionet'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.mearec_neuronexus'
+    study_set_dir=study_set_dir+'.synth_bionet'
     print('Using study set dir: '+study_set_dir)
     studies = []
     recordings = []
-    names = []
-    names=names+['noise10_K10_C32','noise10_K20_C32','noise10_K40_C32']
-    names=names+['noise20_K10_C32','noise20_K20_C32','noise20_K40_C32']
+    names = ['static', 'drift', 'shuffle']
     for name in names:
-        study_name = 'mearec_neuronexus_'+name
+        study_name = 'synth_bionet_' + name
         print('PREPARING: '+study_name)
-        study_dir = study_set_dir0+'/datasets_'+name
+        study_dir = study_set_dir+'/bionet_' + name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -46,16 +50,17 @@ def prepare_mearec_neuronexus_studies(*, basedir):
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))
-    return studies, recordings
+    return studies, recordings, study_sets
 
 
 # Prepare the studies
-studies, recordings = prepare_mearec_neuronexus_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_synth_bionet_studies(basedir=basedir)
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
         studies=studies,
-        recordings=recordings
+        recordings=recordings,
+        study_sets=study_sets
     ),
     key=dict(name='spikeforest_recording_group', group_name=group_name),
     upload_to=upload_to

@@ -1,16 +1,21 @@
 #!/usr/bin/env python
-from mountaintools import client as mt
 
-mt.login()
+from mountaintools import client as mt
+from load_study_set_from_md import load_study_set_from_md
+
+# mt.login()
 upload_to = 'spikeforest.kbucket'
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-# HIGH TODO separate out the paired recordings into different study sets
-# HIGH TODO load study set descriptions for website
 
 def prepare_paired_studies(*, basedir, name):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_paired_'+name)
+    ]
+    study_set_name = study_sets[0]['name']
+
     study_dir0 = basedir+'/paired_recordings/'+name
     study_dir = mt.createSnapshot(study_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_dir:
@@ -26,7 +31,7 @@ def prepare_paired_studies(*, basedir, name):
     study_name = 'paired_' + name
     study0 = dict(
         name=study_name,
-        study_set=study_name,
+        study_set=study_set_name,
         directory=study_dir,
         description=''
     )
@@ -42,20 +47,22 @@ def prepare_paired_studies(*, basedir, name):
             description='One of the recordings in the {} study'.format(
                 study_name)
         ))
-    return studies, recordings
+    return studies, recordings, study_sets
 
 
 # Prepare the studies
 names = ['boyden32c','crcns','mea64c','neuropix32c']
+study_sets = []
 for name in names:
     group_name = 'paired_'+name
     print('PREPARING {}'.format(name))
-    studies, recordings = prepare_paired_studies(basedir=basedir, name=name)
+    studies, recordings, study_sets = prepare_paired_studies(basedir=basedir, name=name)
     print('Saving object...')
     address = mt.saveObject(
         object=dict(
             studies=studies,
-            recordings=recordings
+            recordings=recordings,
+            study_sets=study_sets
         ),
         key=dict(name='spikeforest_recording_group', group_name=group_name),
         upload_to=upload_to

@@ -2,34 +2,43 @@
 
 from mountaintools import client as mt
 import os
+import frontmatter
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
+# mt.login()
 upload_to = 'spikeforest.kbucket'
 
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'magland_synth_subset'
+group_name = ''
 
-def prepare_magland_synth_subset_studies(*, basedir):
-    study_set_name = 'magland_synth_subset'
+def prepare_synth_magland_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_synth_magland.md')
+    ]
+    study_set_name = study_sets[0]['name']
+    
     study_set_dir0 = basedir+'/magland_synth'
     print('Creating snapshot of study set directory...')
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
+    if not study_set_dir:
+        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
+    study_set_dir=study_set_dir+'.synth_magland'
+    print('Using study set dir: '+study_set_dir)
     studies = []
     recordings = []
     names = []
-    # names = names+['datasets_noise10_K10_C4', 'datasets_noise10_K10_C8']
-    # names = names+['datasets_noise10_K20_C4', 'datasets_noise10_K20_C8']
-    # names = names+['datasets_noise20_K10_C4', 'datasets_noise20_K10_C8']
-    # names = names+['datasets_noise20_K20_C4', 'datasets_noise20_K20_C8']
-    names = names+['datasets_noise10_K10_C4']
+    names = names+['noise10_K10_C4', 'noise10_K10_C8']
+    names = names+['noise10_K20_C4', 'noise10_K20_C8']
+    names = names+['noise20_K10_C4', 'noise20_K10_C8']
+    names = names+['noise20_K20_C4', 'noise20_K20_C8']
     description = mt.loadText(path=study_set_dir+'/readme.txt')
     for name in names:
         print('PREPARING: '+name)
-        study_name = 'magland_synth_'+name[9:]
-        study_dir = study_set_dir+'/'+name
+        study_name = 'synth_magland_'+name
+        study_dir = study_set_dir+'/datasets_'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -48,16 +57,17 @@ def prepare_magland_synth_subset_studies(*, basedir):
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))
-    return studies, recordings
+    return studies, recordings, study_sets
 
 
 # Prepare the studies
-studies, recordings = prepare_magland_synth_subset_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_synth_magland_studies(basedir=basedir)
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
         studies=studies,
-        recordings=recordings
+        recordings=recordings,
+        study_sets=study_sets
     ),
     key=dict(name='spikeforest_recording_group', group_name=group_name),
     upload_to=upload_to

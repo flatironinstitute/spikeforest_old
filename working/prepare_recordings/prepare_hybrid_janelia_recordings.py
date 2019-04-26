@@ -1,32 +1,37 @@
 #!/usr/bin/env python
 
+import sfdata as sf
 from mountaintools import client as mt
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
-upload_to = 'spikeforest.kbucket'
-
+# mt.login()
+upload_to = 'spikeforest.spikeforest2'
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'mearec_tetrode'
+group_name = 'hybrid_janelia'
 
-def prepare_mearec_tetrode_studies(*, basedir):
-    study_set_name = 'mearec_tetrode'
-    study_set_dir0 = basedir+'/mearec_synth/tetrode'
+
+def prepare_hybrid_janelia_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_hybrid_janelia.md')
+    ]
+    study_set_name = study_sets[0]['name']
+
+    study_set_dir0 = basedir+'/hybrid_synth/drift'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.mearec_tetrode'
+    study_set_dir=study_set_dir+'.hybrid_janelia'
     print('Using study set dir: '+study_set_dir)
     studies = []
     recordings = []
-    names=['noise10_K10_C4','noise10_K20_C4','noise20_K10_C4', 'noise20_K20_C4']
+    names = ['16c_600s', '16c_1200s', '32c_600s', '32c_1200s', '64c_600s', '64c_1200s']
     for name in names:
-        print('PREPARING: '+name)
-        study_name = 'mearec_tetrode_'+name
-        study_dir = study_set_dir+'/datasets_'+name
-
+        study_name = 'hybrid_janelia_' + name
+        print('PREPARING: '+study_name)
+        study_dir = study_set_dir+'/hybrid_janelia_'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -45,15 +50,17 @@ def prepare_mearec_tetrode_studies(*, basedir):
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))
-    return studies, recordings
+    return studies, recordings, study_sets
+
 
 # Prepare the studies
-studies, recordings = prepare_mearec_tetrode_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_hybrid_janelia_studies(basedir=basedir)
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
         studies=studies,
-        recordings=recordings
+        recordings=recordings,
+        study_sets=study_sets
     ),
     key=dict(name='spikeforest_recording_group', group_name=group_name),
     upload_to=upload_to

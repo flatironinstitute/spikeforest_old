@@ -1,52 +1,43 @@
 #!/usr/bin/env python
 
 from mountaintools import client as mt
-import os
-import frontmatter
+from load_study_set_from_md import load_study_set_from_md
 
-mt.login()
+# mt.login()
 upload_to = 'spikeforest.kbucket'
 
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = 'magland_synth'
+group_name = 'synth_mearec_neuronexus'
 
-def prepare_magland_synth_studies(*, basedir):
-    fm = frontmatter.load('descriptions/spf_synth_magland.md').to_dict()
-    if 'content' in fm:
-        description = fm['content']
-        del fm['content']
-    else:
-        description = ''
-    study_set_name = fm['label']
-    study_sets=[dict(
-        name=study_set_name,
-        info=fm,
-        description=description
-    )]
+def prepare_synth_mearec_neuronexus_studies(*, basedir):
+    study_sets = [
+        load_study_set_from_md('descriptions/spf_synth_mearec_neuronexus.md')
+    ]
+    study_set_name = study_sets[0]['name']
     
-    study_set_dir0 = basedir+'/magland_synth'
-    print('Creating snapshot of study set directory...')
+    study_set_dir0 = basedir+'/mearec_synth/neuronexus'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
+    if not study_set_dir:
+        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
+    study_set_dir=study_set_dir+'.synth_mearec_neuronexus'
+    print('Using study set dir: '+study_set_dir)
     studies = []
     recordings = []
     names = []
-    names = names+['datasets_noise10_K10_C4', 'datasets_noise10_K10_C8']
-    names = names+['datasets_noise10_K20_C4', 'datasets_noise10_K20_C8']
-    names = names+['datasets_noise20_K10_C4', 'datasets_noise20_K10_C8']
-    names = names+['datasets_noise20_K20_C4', 'datasets_noise20_K20_C8']
-    description = mt.loadText(path=study_set_dir+'/readme.txt')
+    names=names+['noise10_K10_C32','noise10_K20_C32','noise10_K40_C32']
+    names=names+['noise20_K10_C32','noise20_K20_C32','noise20_K40_C32']
     for name in names:
-        print('PREPARING: '+name)
-        study_name = 'magland_synth_'+name[9:]
-        study_dir = study_set_dir+'/'+name
+        study_name = 'synth_mearec_neuronexus_'+name
+        print('PREPARING: '+study_name)
+        study_dir = study_set_dir0+'/datasets_'+name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
             directory=study_dir,
-            description=description
+            description=''
         )
         studies.append(study0)
         dd = mt.readDir(study_dir)
@@ -64,7 +55,7 @@ def prepare_magland_synth_studies(*, basedir):
 
 
 # Prepare the studies
-studies, recordings, study_sets = prepare_magland_synth_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_synth_mearec_neuronexus_studies(basedir=basedir)
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
