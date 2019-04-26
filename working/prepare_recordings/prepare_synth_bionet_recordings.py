@@ -18,6 +18,7 @@ def prepare_synth_bionet_studies(*, basedir):
         load_study_set_from_md('descriptions/spf_synth_bionet.md')
     ]
     study_set_name = study_sets[0]['name']
+    
     study_set_dir0 = basedir+'/bionet'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:

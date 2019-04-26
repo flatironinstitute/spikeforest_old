@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from mountaintools import client as mt
 from load_study_set_from_md import load_study_set_from_md
 
@@ -8,8 +9,6 @@ upload_to = 'spikeforest.kbucket'
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-# HIGH TODO separate out the paired recordings into different study sets
-# HIGH TODO load study set descriptions for website
 
 def prepare_paired_studies(*, basedir, name):
     study_sets = [
