@@ -5,7 +5,7 @@ from mountaintools import client as mt
 from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
-upload_to = 'spikeforest.spikeforest2'
+upload_to = 'spikeforest.kbucket'
 
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'

@@ -107,14 +107,14 @@ def main():
         output_ids=[
             'paired_boyden32c',
             'paired_crcns',
-            #'paired_mea64c',
+            'paired_mea64c',
             'paired_neuropix32c',
-            'bionet',
-            'magland_synth',
-            'manual_tetrode',
-            'mearec_neuronexus',
-            'mearec_tetrode',
-            'visapy_synth'
+            'synth_bionet',
+            'synth_magland',
+            'manual_franklab',
+            'synth_mearec_neuronexus',
+            'synth_mearec_tetrode',
+            'synth_visapy'
         ]
     print('Using output ids: ', output_ids)
 
