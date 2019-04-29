@@ -5,9 +5,9 @@ import json
 import numpy as np
 import pytest
 
-magland_synth_c4_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
-magland_synth_c8_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C8/001_synth'
-kampff1 = 'sha1dir://c86202ca09f303b6c6d761b94975054c29c85d2b.paired_kampff/kampff1'
+synth_magland_c4_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
+synth_magland_c8_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C8/001_synth'
+kampff1_recdir = 'sha1dir://c86202ca09f303b6c6d761b94975054c29c85d2b.paired_kampff/kampff1'
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4
@@ -19,9 +19,9 @@ def test_ms4():
         adjacency_radius=50
     )
 
-    # do_sorting_test(sorter, params, magland_synth_c4_recdir, assert_avg_accuracy=0.8)
-    # do_sorting_test(sorter, params, magland_synth_c8_recdir, assert_avg_accuracy=0.8)
-    # do_sorting_test(sorter, params, kampff1, assert_avg_accuracy=0.8) # jfm laptop: ~220 seconds
+    # do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+    # do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8) # jfm laptop: ~220 seconds
 
 @pytest.mark.spikeforest
 @pytest.mark.sc
@@ -33,9 +33,42 @@ def test_sc():
         adjacency_radius=50
     )
 
-    # do_sorting_test(sorter, params, magland_synth_c4_recdir, assert_avg_accuracy=0.8)
-    # do_sorting_test(sorter, params, magland_synth_c8_recdir, assert_avg_accuracy=0.8)
-    do_sorting_test(sorter, params, kampff1, assert_avg_accuracy=0.8)
+    # do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+    # do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_magland_c4
+@pytest.mark.exclude
+def test_ks2_magland_c4():
+    sorter = SpykingCircus
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_magland_c8
+@pytest.mark.exclude
+def test_ks2_magland_c8():
+    sorter = SpykingCircus
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_kampff
+@pytest.mark.exclude
+def test_ks2_kampff():
+    sorter = SpykingCircus
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
 
 def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy):
     mt.configDownloadFrom('spikeforest.kbucket')
