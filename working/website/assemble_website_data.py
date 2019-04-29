@@ -108,7 +108,7 @@ def main():
             'paired_boyden32c',
             'paired_crcns',
             'paired_mea64c',
-            'paired_neuropix32c',
+            'paired_kampff',
             'synth_bionet',
             'synth_magland',
             'manual_franklab',

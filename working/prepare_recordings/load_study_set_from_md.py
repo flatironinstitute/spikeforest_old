@@ -1,7 +1,7 @@
 import frontmatter
 
 def load_study_set_from_md(fname):
-    fm = frontmatter.load('descriptions/spf_synth_magland.md').to_dict()
+    fm = frontmatter.load(fname).to_dict()
     if 'content' in fm:
         description = fm['content']
         del fm['content']

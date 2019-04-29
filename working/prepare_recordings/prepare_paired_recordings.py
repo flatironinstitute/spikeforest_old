@@ -12,7 +12,7 @@ basedir = 'kbucket://15734439d8cf/groundtruth'
 
 def prepare_paired_studies(*, basedir, name):
     study_sets = [
-        load_study_set_from_md('descriptions/spf_paired_'+name)
+        load_study_set_from_md('descriptions/spf_paired_'+name+'.md')
     ]
     study_set_name = study_sets[0]['name']
 
@@ -51,7 +51,7 @@ def prepare_paired_studies(*, basedir, name):
 
 
 # Prepare the studies
-names = ['boyden32c','crcns','mea64c','neuropix32c']
+names = ['boyden32c','crcns','mea64c','kampff']
 study_sets = []
 for name in names:
     group_name = 'paired_'+name
