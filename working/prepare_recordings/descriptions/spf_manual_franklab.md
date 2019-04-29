@@ -2,7 +2,7 @@
 # This is YAML front matter
 label: SPF_MANUAL_FRANKLAB
 electrode_type: tetrode
-doi: [TODO: mountainsort paper]
+doi: 10.1016/j.neuron.2017.08.030
 ground_truth: manual
 recording_type: in-vivo
 organism: rat
