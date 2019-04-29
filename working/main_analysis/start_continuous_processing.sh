@@ -17,5 +17,5 @@ do
 
     done
     echo "Sleeping..."
-    sleep 60
+    sleep 600
 done
