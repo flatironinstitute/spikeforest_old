@@ -2,7 +2,7 @@
     "analysis_name": "paired_kampff",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.paired_kampff.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.paired_kampff.json"],
-    "sorter_keys": ["irc", "ms4", "ks", "ks2", "sc", "yass"],
+    "sorter_keys": ["irc", "ms4", "ks", "yass"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc-hangs-on-2"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",

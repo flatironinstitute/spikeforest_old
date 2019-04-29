@@ -2,7 +2,7 @@
     "analysis_name": "synth_visapy",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.synth_visapy.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.synth_visapy.json"],
-    "sorter_keys": ["irc", "ms4", "ks", "ks2", "yass", "sc"],
+    "sorter_keys": ["irc", "ms4", "ks", "yass"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
