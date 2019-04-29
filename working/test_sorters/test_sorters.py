@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from spikesorters import MountainSort4, SpykingCircus
 from mountaintools import client as mt
 import spikeforest_analysis as sa
@@ -69,6 +67,3 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
     print('Average accuracy: {}'.format(avg_accuracy))
 
     assert(avg_accuracy>=assert_avg_accuracy)
-
-if __name__ == "__main__":
-    main()
