@@ -1,7 +1,7 @@
 {
     "analysis_name": "test_sc_synth_magland",
-    "output":"key://pairio/spikeforest/spikeforest_analysis_results.test_paired_mea64c.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_sc_paired_mea64c.json"],
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.test_sc_paired_mea64c.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_paired_mea64c.json"],
     "sorter_keys": ["sc"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
