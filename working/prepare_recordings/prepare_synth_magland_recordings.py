@@ -12,7 +12,7 @@ upload_to = 'spikeforest.kbucket'
 # The base directory used below
 basedir = 'kbucket://15734439d8cf/groundtruth'
 
-group_name = ''
+group_name = 'synth_magland'
 
 def prepare_synth_magland_studies(*, basedir):
     study_sets = [
