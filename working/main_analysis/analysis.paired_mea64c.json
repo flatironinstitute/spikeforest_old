@@ -10,7 +10,6 @@
     "compute_resources": {
         "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
         "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "cpu-sc":{"resource_name":"ccmlin008-sc", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
         "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
     },
     "sorters":{
@@ -53,7 +52,7 @@
                 "detect_sign": -1,
                 "adjacency_radius": 50
             },
-            "compute_resource": "cpu-sc"
+            "compute_resource": "cpu"
         },
         "ks": {
             "name": "KiloSort",
