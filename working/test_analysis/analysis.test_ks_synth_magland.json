@@ -1,7 +1,7 @@
 {
     "analysis_name": "test_ks_synth_magland",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.test_synth_magland.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_synth_magland.json"],
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_ks_synth_magland.json"],
     "sorter_keys": ["ms4"],
     "sorter_keys_disable": ["ks"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
