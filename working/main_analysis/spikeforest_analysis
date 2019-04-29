@@ -45,7 +45,7 @@ def main():
 
     download_from = analysis_obj['download_from']
     if len(download_from) > 0:
-        mt.setRemoteConfig(share_id = download_from[0], alternate_share_ids=download_from[1:])
+        mt.configDownloadFrom(download_from)
 
     sorter_definitions = analysis_obj['sorters']
     sorter_codes = analysis_obj['sorter_keys']
