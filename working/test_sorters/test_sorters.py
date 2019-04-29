@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -41,7 +41,7 @@ def test_sc():
 @pytest.mark.ks2_magland_c4
 @pytest.mark.exclude
 def test_ks2_magland_c4():
-    sorter = SpykingCircus
+    sorter = KiloSort2
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
@@ -52,7 +52,7 @@ def test_ks2_magland_c4():
 @pytest.mark.ks2_magland_c8
 @pytest.mark.exclude
 def test_ks2_magland_c8():
-    sorter = SpykingCircus
+    sorter = KiloSort2
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
@@ -63,7 +63,7 @@ def test_ks2_magland_c8():
 @pytest.mark.ks2_kampff
 @pytest.mark.exclude
 def test_ks2_kampff():
-    sorter = SpykingCircus
+    sorter = KiloSort2
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
@@ -75,7 +75,7 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
     
     recdir = recording_dir
     mt.createSnapshot(path=recdir, download_recursive=True)
-    sorting = sorter.execute(
+    sorting =sorting_processor.execute(
         recording_dir = recdir,
         firings_out = {'ext': '.mda'},
         **params,

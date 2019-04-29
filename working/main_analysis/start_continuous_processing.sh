@@ -10,7 +10,7 @@ do
         echo "=============================================================================" | tee ${item}.0.log
         echo "$(date): Processing ${item} -- see ${item}.0.log" | tee -a ${item}.0.log
         echo "=============================================================================" | tee -a ${item}.0.log
-        ./spikeforest_analysis analysis.${item}.json >> ${item}.0.log
+        ./spikeforest_analysis analysis.${item}.json "$@" >> ${item}.0.log
         cat ${item}.0.log >> ${item}.log
         cat ${item}.0.log >> continuous.processing.log
         echo ""
