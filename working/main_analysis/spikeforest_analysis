@@ -15,6 +15,7 @@ def main():
 
     parser = argparse.ArgumentParser(description = 'Run a SpikeForest analysis')
     parser.add_argument('analysis_file',help='Path to the analysis specification file.')
+    parser.add_argument('job_timeout',help='Job timeout in seconds. Overrides the parameter in the analysis file.', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
@@ -32,6 +33,9 @@ def main():
     analysis_obj = mt.loadObject(path=args.analysis_file)
     if not analysis_obj:
         raise Exception('Unable to load analysis file: {}'.format(args.analysis_file))
+
+    if args.job_timeout is not None:
+        analysis_obj['job_timeout'] = float(args.job_timeout)
 
     analysis_name = analysis_obj['analysis_name']
     print('ANALYSIS: {}'.format(analysis_name))
