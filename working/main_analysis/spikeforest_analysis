@@ -38,7 +38,10 @@ def main():
 
     compute_resources = analysis_obj['compute_resources']
     for key, cr in compute_resources.items():
-        mlpr.configComputeResource(key, resource_name=cr.get('resource_name', None), collection=cr.get('collection', None), share_id=cr.get('share_id', None))
+        if cr is not None:
+            mlpr.configComputeResource(key, resource_name=cr.get('resource_name', None), collection=cr.get('collection', None), share_id=cr.get('share_id', None))
+        else:
+            mlpr.configComputeResource(key, resource_name=None)
 
     download_from = analysis_obj['download_from']
     if len(download_from) > 0:

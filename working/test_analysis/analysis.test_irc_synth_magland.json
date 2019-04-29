@@ -1,0 +1,27 @@
+{
+    "analysis_name": "test_irc_synth_magland",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.test_synth_magland.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_synth_magland.json"],
+    "sorter_keys": ["irc"],
+    "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
+    "upload_to": "spikeforest.kbucket",
+    "job_timeout":1200,
+    "compute_resources": {
+        "default":null,
+        "cpu":null,
+        "gpu":null
+    },
+    "sorters":{
+        "irc": {
+            "name":"IronClust-s",
+            "processor_name":"IronClust",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50,
+                "prm_template_name": "static_template.prm",
+                "detect_threshold": 4.5
+            },
+            "compute_resource": "cpu"
+        }
+    }
+}
