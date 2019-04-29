@@ -89,6 +89,7 @@ class GenSortingComparisonTable(mlpr.Processor):
     units_true=mlpr.IntegerListParameter('List of true units to consider')
     json_out=mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out=mlpr.Output('Table as .html file produced from pandas dataframe')
+    CONTAINER='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
     
     def run(self):
         sorting=SFMdaSortingExtractor(firings_file=self.firings)

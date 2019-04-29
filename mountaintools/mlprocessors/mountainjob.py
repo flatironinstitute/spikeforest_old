@@ -129,7 +129,7 @@ class MountainJob():
                 else:
                     ext = _get_file_ext(input_value) or '.in'
                     
-                    if input0.get('directory', False) and (input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://')):
+                    if input0.get('directory', False) and ((input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://'))):
                         infile_in_container = input0['path']
                     else:
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
