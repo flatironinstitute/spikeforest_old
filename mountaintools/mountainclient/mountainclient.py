@@ -1071,7 +1071,7 @@ class MountainClient():
                 return False
             return True
         else:
-            print('Already on server (***)')
+            # print('Already on server (***)')
             return True
 
     def _find_on_kachery_or_kbucket(self, *, download_from, sha1):

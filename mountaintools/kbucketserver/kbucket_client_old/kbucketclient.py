@@ -235,7 +235,7 @@ class KBucketClient():
 
         url00, size00 = self._find_in_share(sha1=sha1, share_id=share_id)
         if url00:
-            print('Already on server.')
+            # print('Already on server.')
             return ret_path
 
         server_url = self._get_cas_upload_url_for_share(share_id=share_id)
@@ -275,7 +275,8 @@ class KBucketClient():
                     raise Exception(
                         'Uploaded but unable to confirm after {} tries.'.format(num_tries))
         else:
-            print('Already on server (*)')
+            # print('Already on server (*)')
+            pass
 
         return ret_path
 
