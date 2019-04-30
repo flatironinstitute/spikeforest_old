@@ -1,5 +1,4 @@
 function p_kilosort2(kilosort_src, ironclust_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
-% cmdstr2 = sprintf("p_ironclust('$(tempdir)','$timeseries$','$geom$','$firings_out$','$(argfile)');");
 
 if exist(temp_path, 'dir') ~= 7
     mkdir(temp_path);
@@ -12,41 +11,53 @@ ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 
 % Run kilosort
 t1=tic;
+tic;
 fprintf('Running kilosort on %s\n', raw_fname);
-% preprocess data to create temp_wh.dat
-rez = preprocessDataSub(ops);
 
-% time-reordering as a function of drift
-rez = clusterSingleBatches(rez);
-% save(fullfile(rootZ, 'rez.mat'), 'rez', '-v7.3');
+try 
+    error('error')
+    load rez
+catch
+    % preprocess data to create temp_wh.dat
+    rez = preprocessDataSub(ops);
+
+    % time-reordering as a function of drift
+    rez = clusterSingleBatches(rez);
+    save('rez.mat', 'rez', '-v7.3');
+end
+
 
 % main tracking and template matching algorithm
 rez = learnAndSolve8b(rez);
+if rez.no_spk
+    mr_out = export_ksort_(rez, firings_out_fname);
+    fprintf('No Units Found. Clustering result wrote to %s\n', firings_out_fname);
+else
+    % final merges
+    rez = find_merges(rez, 1);
 
-% final merges
-rez = find_merges(rez, 1);
+    % final splits by SVD
+    rez = splitAllClusters(rez, 1);
 
-% final splits by SVD
-rez = splitAllClusters(rez, 1);
+    % final splits by amplitudes
+    rez = splitAllClusters(rez, 0);
 
-% final splits by amplitudes
-rez = splitAllClusters(rez, 0);
+    % decide on cutoff
+    rez = set_cutoff(rez);
 
-% decide on cutoff
-rez = set_cutoff(rez);
+    % discard features in final rez file (too slow to save)
+    rez.cProj = [];
+    rez.cProjPC = [];
 
-% discard features in final rez file (too slow to save)
-rez.cProj = [];
-rez.cProjPC = [];
+    fprintf('\n\tfound %d good units \n', sum(rez.good>0))
 
-fprintf('\n\tfound %d good units \n', sum(rez.good>0))
+    fprintf('\n\ttook %0.1fs\n', toc(t1));
 
-fprintf('\n\ttook %0.1fs\n', toc(t1));
+    % Export kilosort
+    mr_out = export_ksort_(rez, firings_out_fname);
 
-% Export kilosort
-mr_out = export_ksort_(rez, firings_out_fname);
-
-fprintf('Clustering result wrote to %s\n', firings_out_fname);
+    fprintf('Clustering result wrote to %s\n', firings_out_fname);
+end
 
 end %func
 
@@ -57,7 +68,7 @@ function mr_out = export_ksort_(rez, firings_out_fname)
 mr_out = zeros(size(rez.st3,1), 3, 'double'); 
 mr_out(:,2) = rez.st3(:,1); %time
 mr_out(:,3) = rez.st3(:,2); %cluster
-writemda(mr_out', firings_out_fname, 'float32');
+writemda(mr_out', firings_out_fname, 'int32');
 end %func
 
 
@@ -66,7 +77,8 @@ function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
 S_txt = irc('call', 'meta2struct', {arg_fname});
 useGPU = 1;
-[freq_min, pc_per_chan, sRateHz, spkTh] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold');
+[freq_min, pc_per_chan, sRateHz, spkTh, Th1, Th2, CAR, nfilt_factor, NT_fac] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold', 'Th1', 'Th2', 'CAR', 'nfilt_factor', 'NT_fac');
+ 
 spkTh = -abs(spkTh);
 
 % convert to binary file (int16)
@@ -79,7 +91,7 @@ vcFile_chanMap = fullfile(fpath, 'chanMap.mat');
 createChannelMapFile_(vcFile_chanMap, Nchannels, mrXY_site(:,1), mrXY_site(:,2));
 nChans = size(mrXY_site,1);
 
-S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min);
+S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min, Th1, Th2, CAR, nfilt_factor, NT_fac);
 ops = config_kilosort2_(S_ops); %obtain ops
 
 end %func
@@ -151,7 +163,9 @@ ops.chanMap = S_opt.vcFile_chanMap;
 % ops.chanMap = 1:ops.Nchan; % treated as linear probe if no chanMap file
 
 % sample rate
-ops.fs = S_opt.sRateHz;  
+ops.fs = S_opt.sRateHz;
+ops.CAR = S_opt.CAR;
+%opts.nt0 = 49;
 
 % frequency for high pass filtering (150)
 ops.fshigh = S_opt.freq_min;   
@@ -160,7 +174,7 @@ ops.fshigh = S_opt.freq_min;
 ops.minfr_goodchannels = 0.1; 
 
 % threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
-ops.Th = [10 4];  
+ops.Th = [S_opt.Th1 S_opt.Th2];  
 
 % how important is the amplitude penalty (like in Kilosort1, 0 means not used, 10 is average, 50 is a lot) 
 ops.lam = 10;  
@@ -179,7 +193,6 @@ ops.sigmaMask = 30;
 
 % threshold crossings for pre-clustering (in PCA projection space)
 ops.ThPre = 8;
-
 % danger, changing these settings can lead to fatal errors
 % options for determining PCs
 ops.spkTh           = S_opt.spkTh;      % spike threshold in standard deviations (-6)
@@ -187,11 +200,10 @@ ops.reorder         = 1;       % whether to reorder batches for drift correction
 ops.nskip           = 25;  % how many batches to skip for determining spike PCs
 
 ops.GPU                 = S_opt.useGPU; % has to be 1, no CPU version yet, sorry
-% ops.Nfilt               = 1024; % max number of clusters
-ops.nfilt_factor        = 4; % max number of clusters per good channel (even temporary ones)
+ops.nfilt_factor        = S_opt.nfilt_factor; % max number of clusters per good channel (even temporary ones)
 ops.ntbuff              = 64;    % samples of symmetrical buffer for whitening and spike detection
-ops.NT                  = 64*1024+ ops.ntbuff; % must be multiple of 32 + ntbuff. This is the batch size (try decreasing if out of memory). 
-ops.whiteningRange      = 32; % number of channels to use for whitening each channel
+ops.NT                  = 32*S_opt.NT_fac+ ops.ntbuff; % must be multiple of 32 + ntbuff. This is the batch size (try decreasing if out of memory). 
+ops.whiteningRange      = 4; % number of channels to use for whitening each channel
 ops.nSkipCov            = 25; % compute whitening matrix from every N-th batch
 ops.scaleproc           = 200;   % int16 scaling of whitened data
 ops.nPCs                = S_opt.pc_per_chan; % how many PCs to project the spikes into
