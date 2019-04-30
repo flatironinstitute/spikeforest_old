@@ -63,7 +63,7 @@ def test_ks2_magland_c8():
 @pytest.mark.spikeforest
 @pytest.mark.ks2_neuropix32c
 @pytest.mark.exclude
-def test_ks2_magland_c8():
+def test_ks2_neuropix32c():
     sorter = KiloSort2
     params = dict(
         detect_sign=-1,

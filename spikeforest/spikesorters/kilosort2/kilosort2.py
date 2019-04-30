@@ -18,7 +18,7 @@ import shlex
 
 class KiloSort2(mlpr.Processor):
     NAME = 'KiloSort2'
-    VERSION = '0.2.2'  # wrapper VERSION
+    VERSION = '0.2.3'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -132,17 +132,35 @@ def kilosort2_helper(*,
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
     _write_text_file(dataset_dir+'/argfile.txt', txt)
 
-    print('Running kilosort2...')
-    cmd_path = "addpath('{}'); ".format(source_dir)
-    cmd_call = "p_kilosort2('{}', '{}', '{}', '{}', '{}', '{}', '{}');"\
-        .format(KILOSORT2_PATH, IRONCLUST_PATH, tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-        cmd_path, cmd_call)
-    print(cmd)
-    retcode = _run_command_and_print_output(cmd)
+    print('Running Kilosort2 in {tmpdir}...'.format(tmpdir=tmpdir))
+    cmd = '''
+        addpath('{source_dir}');
+        try
+            p_kilosort2('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
+        catch
+            quit(1);
+        end
+        quit(0);
+        '''
+    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH, \
+            tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
+            firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
+    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort2.m',keep_temp_files=True)
+    matlab_cmd.write()
+    shell_cmd = '''
+        #!/bin/bash
+        cd {tmpdir}
+        echo '=====================' `date` '=====================' >> run_kilosort2.log 
+        matlab -nosplash -nodisplay -r run_kilosort2 &>> run_kilosort2.log
+    '''.format(tmpdir=tmpdir)
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort2.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir+'/run_kilosort2.sh')
+    shell_cmd.start()
+    retcode = shell_cmd.wait()
 
     if retcode != 0:
         raise Exception('kilosort2 returned a non-zero exit code')
+            
 
     # parse output
     result_fname = tmpdir+'/firings.mda'
