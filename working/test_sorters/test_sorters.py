@@ -8,6 +8,7 @@ import pytest
 synth_magland_c4_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
 synth_magland_c8_recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C8/001_synth'
 kampff1_recdir = 'sha1dir://c86202ca09f303b6c6d761b94975054c29c85d2b.paired_kampff/kampff1'
+neuropix32c_recdir = 'sha1dir://d446c8e74fc4ca3a0dab491fca6c10189b527709.neuropix32c.c14'
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4
@@ -58,6 +59,17 @@ def test_ks2_magland_c8():
         adjacency_radius=50
     )
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_neuropix32c
+@pytest.mark.exclude
+def test_ks2_magland_c8():
+    sorter = KiloSort2
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_kampff
