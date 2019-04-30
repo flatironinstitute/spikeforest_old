@@ -44,7 +44,7 @@ Scripts for preparing the data for the website are found in the `working/website
 
 ```
 cd working/website
-./assemble_website_data.py website_data --output_ids [comma-separated-list-of-output-ids]
+./assemble_website_data.py --output_dir website_data --output_ids [comma-separated-list-of-output-ids]
 ```
 
 For example, to only import the visapy_synth data, just use `visapy_synth` for the output IDs. This will save .json files into the `website_data/` directory.

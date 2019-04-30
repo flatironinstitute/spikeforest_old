@@ -92,7 +92,7 @@ def sort_recordings(*,sorter,recordings,num_workers=None,disable_container=False
     
 
 @mtlogging.log()
-def multi_sort_recordings(*,sorters,recordings,num_workers=None,disable_container=False, job_timeout=60*20, label=None):
+def multi_sort_recordings(*,sorters,recordings,num_workers=None,disable_container=False, job_timeout=60*20, label=None, upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'sort recordings'))
 
@@ -169,6 +169,9 @@ def multi_sort_recordings(*,sorters,recordings,num_workers=None,disable_containe
             sr['execution_stats'] = sorting_job_results0[ii].runtime_info
             sr['console_out'] = sorting_job_results0[ii].console_out
             sr['firings'] = (sorting_job_results0[ii].outputs or dict()).get('firings_out', None)
+            if upload_to:
+                mt.createSnapshot(path=sr['console_out'], upload_to=upload_to)
+                mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
         sorting_results.extend(sorting_results0)
 
     return sorting_results

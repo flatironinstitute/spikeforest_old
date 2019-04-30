@@ -85,8 +85,10 @@ Sorter
 
 def main():
     parser = argparse.ArgumentParser(description = help_txt, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('output_dir',help='The output directory for saving the files.')
+    parser.add_argument('--output_dir',help='The output directory for saving the files.', required=False, default=None)
     parser.add_argument('--output_ids',help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
+    parser.add_argument('--upload_to',help='Optional kachery to upload to', required=False, default=None)
+    parser.add_argument('--dest_key_path',help='Optional destination key path', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
     args = parser.parse_args()
@@ -96,8 +98,9 @@ def main():
 
     output_dir = args.output_dir
 
-    if os.path.exists(output_dir):
-        raise Exception('Output directory already exists: {}'.format(output_dir))
+    if output_dir is not None:
+        if os.path.exists(output_dir):
+            raise Exception('Output directory already exists: {}'.format(output_dir))
     
     mt.configDownloadFrom(['spikeforest.kbucket'])
 
@@ -130,7 +133,8 @@ def main():
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
-    os.mkdir(args.output_dir)
+    if output_dir is not None:
+        os.mkdir(output_dir)
 
     ### STUDY SETS
     print('******************************** ASSEMBLING STUDY SETS...')
@@ -142,7 +146,8 @@ def main():
         StudySets.append(dict(
             name=study_set['name']
         ))
-    mt.saveObject(object=StudySets, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySets.json')))
+    if output_dir is not None:
+        mt.saveObject(object=StudySets, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySets.json')))
     print(StudySets)
 
     ### RECORDINGS and TRUE UNITS
@@ -173,8 +178,9 @@ def main():
             numTrueUnits=len(true_units_info),
             spikeSign=-1
         ))
-    mt.saveObject(object=Recordings, dest_path=os.path.abspath(os.path.join(output_dir, 'Recordings.json')))
-    mt.saveObject(object=TrueUnits, dest_path=os.path.abspath(os.path.join(output_dir, 'TrueUnits.json')))
+    if output_dir is not None:
+        mt.saveObject(object=Recordings, dest_path=os.path.abspath(os.path.join(output_dir, 'Recordings.json')))
+        mt.saveObject(object=TrueUnits, dest_path=os.path.abspath(os.path.join(output_dir, 'TrueUnits.json')))
     print('Num recordings:',len(Recordings))
     print('Num true units:',len(TrueUnits))
     print('studies for recordings:',set([recording['study'] for recording in Recordings]))
@@ -224,8 +230,9 @@ def main():
     for study in sorter_names_by_study.keys():
         sorter_names_by_study[study]=list(sorter_names_by_study[study])
         sorter_names_by_study[study].sort()
-    mt.saveObject(object=UnitResults, dest_path=os.path.abspath(os.path.join(output_dir, 'UnitResults.json')))  
-    mt.saveObject(object=SortingResults, dest_path=os.path.abspath(os.path.join(output_dir, 'SortingResults.json')))  
+    if output_dir is not None:
+        mt.saveObject(object=UnitResults, dest_path=os.path.abspath(os.path.join(output_dir, 'UnitResults.json')))  
+        mt.saveObject(object=SortingResults, dest_path=os.path.abspath(os.path.join(output_dir, 'SortingResults.json')))  
     print('Num unit results:',len(UnitResults))
 
     ### SORTERS
@@ -242,7 +249,8 @@ def main():
             processorVersion='0', # jfm needs to provide this
             sorting_parameters=sorter['params'] # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
         ))
-    mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
+    if output_dir is not None:
+        mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] for S in Sorters])
 
     ### STUDIES
@@ -257,8 +265,21 @@ def main():
             # the following can be obtained from the other collections
             # numRecordings, sorters, etc...
         ))
-    mt.saveObject(object=Studies, dest_path=os.path.abspath(os.path.join(output_dir, 'Studies.json')))
+    if output_dir is not None:
+        mt.saveObject(object=Studies, dest_path=os.path.abspath(os.path.join(output_dir, 'Studies.json')))
     print([S['name'] for S in Studies])
+
+    obj = dict(
+        study_sets=StudySets,
+        recordings=Recordings,
+        true_units=TrueUnits,
+        unit_results=UnitResults,
+        sorting_results=SortingResults,
+        sorters=Sorters,
+        studies=Studies
+    )
+    address = mt.saveObject(object=obj)
+    mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
 
 if __name__ == "__main__":
     main()

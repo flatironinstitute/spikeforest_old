@@ -21,7 +21,8 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
         sorters=sorters,
         recordings=recordings,
         label='Sort recordings ({})'.format(label),
-        job_timeout=job_timeout
+        job_timeout=job_timeout,
+        upload_to=upload_to
     )
 
     # Summarize the sortings
@@ -37,7 +38,8 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, output_i
     sorting_results = sa.compare_sortings_with_truth(
         sortings=sorting_results,
         compute_resource='default',
-        label='Compare with truth ({})'.format(label)
+        label='Compare with truth ({})'.format(label),
+        upload_to=upload_to
     )
 
     # Aggregate the results
