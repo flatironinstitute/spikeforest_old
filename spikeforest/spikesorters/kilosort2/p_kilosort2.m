@@ -14,18 +14,12 @@ t1=tic;
 tic;
 fprintf('Running kilosort on %s\n', raw_fname);
 
-try 
-    error('error')
-    load rez
-catch
-    % preprocess data to create temp_wh.dat
-    rez = preprocessDataSub(ops);
+% preprocess data to create temp_wh.dat
+rez = preprocessDataSub(ops);
 
-    % time-reordering as a function of drift
-    rez = clusterSingleBatches(rez);
-    save('rez.mat', 'rez', '-v7.3');
-end
-
+% time-reordering as a function of drift
+rez = clusterSingleBatches(rez);
+save('rez.mat', 'rez', '-v7.3');
 
 % main tracking and template matching algorithm
 rez = learnAndSolve8b(rez);
@@ -68,7 +62,7 @@ function mr_out = export_ksort_(rez, firings_out_fname)
 mr_out = zeros(size(rez.st3,1), 3, 'double'); 
 mr_out(:,2) = rez.st3(:,1); %time
 mr_out(:,3) = rez.st3(:,2); %cluster
-writemda(mr_out', firings_out_fname, 'int32');
+writemda(mr_out', firings_out_fname, 'int32'); % this should be int64 probably
 end %func
 
 
@@ -165,7 +159,6 @@ ops.chanMap = S_opt.vcFile_chanMap;
 % sample rate
 ops.fs = S_opt.sRateHz;
 ops.CAR = S_opt.CAR;
-%opts.nt0 = 49;
 
 % frequency for high pass filtering (150)
 ops.fshigh = S_opt.freq_min;   
