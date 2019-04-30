@@ -64,12 +64,14 @@ def main():
     print('Loading the recordings...')
     recordings = []
     studies = []
+    study_sets = []
     for recordings_path in analysis_obj['recordings']:
         obj = mt.loadObject(path=recordings_path)
         if obj is None:
             raise Exception('Unable to load recordings from: '+recordings_path)
         recordings = recordings + obj['recordings']
         studies = studies + obj['studies']
+        study_sets = study_sets + obj['study_sets']
     print('Found {} recordings in {} studies'.format(len(recordings), len(studies)))
 
     output_path = analysis_obj['output']

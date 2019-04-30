@@ -123,6 +123,7 @@ def main():
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
     studies = []
+    study_sets = []
     recordings = []
     sorting_results = []
     for output_id in output_ids:
@@ -130,6 +131,7 @@ def main():
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
         studies = studies + obj['studies']
+        study_sets = study_sets + obj.get('study_sets', [])
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
@@ -138,14 +140,9 @@ def main():
 
     ### STUDY SETS
     print('******************************** ASSEMBLING STUDY SETS...')
-    study_sets_by_name=dict()
-    for study in studies:
-        study_sets_by_name[study['study_set']]=dict(name=study['study_set'])
     StudySets=[]
-    for study_set in study_sets_by_name.values():
-        StudySets.append(dict(
-            name=study_set['name']
-        ))
+    for study_set in study_sets:
+        StudySets.append(study_set)
     if output_dir is not None:
         mt.saveObject(object=StudySets, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySets.json')))
     print(StudySets)
