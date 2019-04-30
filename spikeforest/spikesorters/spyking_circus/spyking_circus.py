@@ -20,7 +20,7 @@ class SpykingCircus(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
     CONTAINER = 'sha1://8daaf751fc3f40dd6f86696e8fcb675bcf1ba212/03-29-2019/spyking_circus.simg'
-    CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
+    # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
@@ -101,7 +101,7 @@ def spyking_circus(
 ):
     if not singularity_container:
         try:
-            import circus
+            import circus # pylint: disable=import-error
         except ModuleNotFoundError:
             raise ModuleNotFoundError("\nTo use Spyking-Circus, install spyking-circus: \n\n"
                                       "\npip install spyking-circus"

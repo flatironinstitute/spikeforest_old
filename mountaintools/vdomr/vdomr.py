@@ -1,18 +1,23 @@
+"""vdomr main module
+"""
+
 import os
 import traceback
-import threading
 import time
-import sys
 import multiprocessing
-import mtlogging
 import uuid
+import sys
+
+# BOOKMARK VDOMR
+
+# MEDIUM TODO make vdomr readme and release vdomr 1.0
 
 # invokeFunction('{callback_id_string}', [arg1,arg2], {kwargs})
-vdomr_global = dict(
+VDOMR_GLOBAL = dict(
     mode='server',  # colab, jp_proxy_widget, server, or pyqt5 -- by default we are in server mode
     invokable_functions={},  # for mode=jp_proxy_widget, server, or pyqt5
     jp_widget=None,  # for mode=jp_proxy_widget
-    pyqt5_worker_process=False, # for mode=pyqt5 (in the worker process)
+    pyqt5_worker_process=False,  # for mode=pyqt5 (in the worker process)
     pyqt5_view=None,  # for mode=pyqt5
     pyqt5_connection_to_gui=None,  # for mode=pyqt5
     queued_javascript=[]
@@ -36,9 +41,9 @@ jp_proxy_widget_invokable_functions = {}
 
 
 def invoke_callback(callback_id, argument_list=[], kwargs={}):
-    if callback_id not in vdomr_global['invokable_functions']:
+    if callback_id not in VDOMR_GLOBAL['invokable_functions']:
         raise Exception('No callback with id: ' + callback_id)
-    f = vdomr_global['invokable_functions'][callback_id]
+    f = VDOMR_GLOBAL['invokable_functions'][callback_id]
     return f(*argument_list, **kwargs)
 
 
@@ -49,21 +54,24 @@ def register_callback(callback_id, callback):
         except Exception as err:
             traceback.print_exc()
             print('Error: ', err)
-    if vdomr_global['mode'] == 'colab':
-        from google.colab import output as colab_output # pylint: disable=import-error
+    if VDOMR_GLOBAL['mode'] == 'colab':
+        from google.colab import output as colab_output  # pylint: disable=import-error
         colab_output.register_callback(callback_id, the_callback)
         exec_javascript(
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
-    elif (vdomr_global['mode'] == 'jp_proxy_widget') or (vdomr_global['mode'] == 'server') or (vdomr_global['mode'] == 'pyqt5'):
-        vdomr_global['invokable_functions'][callback_id] = the_callback
+    elif ((VDOMR_GLOBAL['mode'] == 'jp_proxy_widget')
+          or (VDOMR_GLOBAL['mode'] == 'server') 
+          or (VDOMR_GLOBAL['mode'] == 'pyqt5')):
+        VDOMR_GLOBAL['invokable_functions'][callback_id] = the_callback
     ret = "(function(args, kwargs) {window.vdomr_invokeFunction('{callback_id}', args, kwargs);})"
     ret = ret.replace('{callback_id}', callback_id)
     return ret
 
+
 def create_callback(callback):
     callback_id = 'callback-'+str(uuid.uuid4())
     return register_callback(callback_id, callback)
-    
+
 
 def set_timeout(callback, timeout_sec):
     timeout_callback_id = 'timeout-callback-' + str(uuid.uuid4())
@@ -77,32 +85,35 @@ def set_timeout(callback, timeout_sec):
     js = js.replace('{timeout_msec}', str(timeout_sec*1000))
     exec_javascript(js)
 
+
 def _queue_javascript(js):
-    vdomr_global['queued_javascript'].append(js)
+    VDOMR_GLOBAL['queued_javascript'].append(js)
+
 
 def _exec_queued_javascript():
-    queued_javascript = vdomr_global['queued_javascript']
-    vdomr_global['queued_javascript']=[]
+    queued_javascript = VDOMR_GLOBAL['queued_javascript']
+    VDOMR_GLOBAL['queued_javascript'] = []
     for js in queued_javascript:
         exec_javascript(js)
 
+
 def exec_javascript(js):
     _exec_queued_javascript()
-    if vdomr_global['mode'] == 'colab':
+    if VDOMR_GLOBAL['mode'] == 'colab':
         from IPython.display import Javascript
-        display(Javascript(js)) # pylint: disable=undefined-variable
-    elif vdomr_global['mode'] == 'jp_proxy_widget':
-        vdomr_global['jp_widget'].js_init(js)
-    elif vdomr_global['mode'] == 'server':
+        display(Javascript(js))  # pylint: disable=undefined-variable
+    elif VDOMR_GLOBAL['mode'] == 'jp_proxy_widget':
+        VDOMR_GLOBAL['jp_widget'].js_init(js)
+    elif VDOMR_GLOBAL['mode'] == 'server':
         SS = vdomr_server_global['current_session']
         if SS:
             SS['javascript_to_execute'].append(js)
         else:
             print('Warning: current session is not set. Unable to execute javascript.')
-    elif vdomr_global['mode'] == 'pyqt5':
-        if vdomr_global['pyqt5_worker_process']:
-            if vdomr_global['pyqt5_connection_to_gui']:
-                vdomr_global['pyqt5_connection_to_gui'].send(dict(
+    elif VDOMR_GLOBAL['mode'] == 'pyqt5':
+        if VDOMR_GLOBAL['pyqt5_worker_process']:
+            if VDOMR_GLOBAL['pyqt5_connection_to_gui']:
+                VDOMR_GLOBAL['pyqt5_connection_to_gui'].send(dict(
                     message='exec_javascript',
                     js=js
                 ))
@@ -110,10 +121,10 @@ def exec_javascript(js):
                 SS = vdomr_server_global['current_session']
                 SS['javascript_to_execute'].append(js)
         else:
-            vdomr_global['pyqt5_view'].page().runJavaScript(js)
+            VDOMR_GLOBAL['pyqt5_view'].page().runJavaScript(js)
     else:
         from IPython.display import Javascript
-        display(Javascript(js)) # pylint: disable=undefined-variable
+        display(Javascript(js))  # pylint: disable=undefined-variable
 
 
 def _take_javascript_to_execute():
@@ -129,17 +140,17 @@ def _take_javascript_to_execute():
 
 def _found_colab():
     try:
-        from google.colab import output as colab_output
+        from google.colab import output as colab_output # pylint: disable=unused-import
         return True
-    except:
+    except ImportError:
         return False
 
 
 def _found_jp_proxy_widget():
     try:
-        import jp_proxy_widget
+        import jp_proxy_widget # pylint: disable=unused-import
         return True
-    except:
+    except ImportError:
         return False
 
 
@@ -173,7 +184,7 @@ def _determine_mode_from_env():
 
 
 def config_jupyter():
-    vdomr_global['mode'] = 'jp_proxy_widget'
+    VDOMR_GLOBAL['mode'] = 'jp_proxy_widget'
 
     import jp_proxy_widget
     jp_widget = jp_proxy_widget.JSProxyWidget()
@@ -183,22 +194,30 @@ def config_jupyter():
     // you can find it from anywhere:
     window.vdomr_invokeFunction = invokeFunction;
     """, invokeFunction=invoke_callback)
-    jp_widget.js_init(_get_init_javascript()) # thx, A. Morley
-    jp_widget.js_init("window.URL.createObjectURL = function() {};") # plotly tests for this but doesn't need it to do anything :/
-    vdomr_global['jp_widget'] = jp_widget
-    display(jp_widget) # pylint: disable=undefined-variable
+    jp_widget.js_init(_get_init_javascript())  # thx, A. Morley
+    # plotly tests for this but doesn't need it to do anything :/
+    jp_widget.js_init("window.URL.createObjectURL = function() {};")
+    VDOMR_GLOBAL['jp_widget'] = jp_widget
+    display(jp_widget)  # pylint: disable=undefined-variable
 
 
-def config_colab():
-    vdomr_global['mode'] = 'colab'
+def config_colab(local_runtime=False):
+    VDOMR_GLOBAL['mode'] = 'colab'
+    if local_runtime:
+        # this is needed so that dummy "google" may be imported, and thus callbacks may be registered
+        source_path=os.path.dirname(os.path.realpath(__file__))
+        sys.path.append(source_path)
 
+def init_colab():
+    config_colab()
+    exec_javascript(_get_init_javascript())
 
 def config_server():
-    vdomr_global['mode'] = 'server'
+    VDOMR_GLOBAL['mode'] = 'server'
 
 
 def config_pyqt5():
-    vdomr_global['mode'] = 'pyqt5'
+    VDOMR_GLOBAL['mode'] = 'pyqt5'
 
 
 # class PyWebViewApi():
@@ -218,7 +237,7 @@ def config_pyqt5():
 #             pass
 #         webview.evaluate_js('window.hide_overlay();')
 
-def pyqt5_start(*, APP, title):
+def pyqt5_start(*, app, title):
     try:
         # from PyQt5.QtCore import *
         from PyQt5.QtCore import QObject, QVariant, pyqtSlot
@@ -314,28 +333,29 @@ def pyqt5_start(*, APP, title):
             html = html.replace('{init_js}', _get_init_javascript())
 
             self.page().setHtml(html)
-    if title is not None:
-        app = QApplication([title])
-    else:
-        app = QApplication([])
+    qapp = QApplication([])
 
     connection_to_worker, connection_to_gui = multiprocessing.Pipe()
-    process = multiprocessing.Process(target=_pyqt5_worker_process, args=(APP, connection_to_gui))
+    process = multiprocessing.Process(
+        target=_pyqt5_worker_process, args=(app, connection_to_gui))
     process.start()
     try:
         root_html = connection_to_worker.recv()
         size = connection_to_worker.recv()
 
-        view = VdomrWebView(root_html=root_html, title=title, connection_to_worker=connection_to_worker)
-        vdomr_global['pyqt5_view'] = view
+        view = VdomrWebView(root_html=root_html, title=title,
+                            connection_to_worker=connection_to_worker)
+        if title is not None:
+            view.setWindowTitle(title)
+        VDOMR_GLOBAL['pyqt5_view'] = view
         if size:
             view.resize(size[0], size[1])
         view.show()
         timer = time.time()
         while True:
             # running in the gui process
-            app.processEvents()
-            if time.time() - timer > 0.5: # need to wait a bit before executing javascript on the view
+            qapp.processEvents()
+            if time.time() - timer > 0.5:  # need to wait a bit before executing javascript on the view
                 if connection_to_worker.poll():
                     x = connection_to_worker.recv()
                     if x['message'] == 'exec_javascript':
@@ -345,28 +365,29 @@ def pyqt5_start(*, APP, title):
             time.sleep(0.001)
             if not view.isVisible():
                 break
-    except:
+    except: # pylint: disable=bare-except
         traceback.print_exc()
     process.terminate()
-    # app.exec_()
+    # qapp.exec_()
 
-def _pyqt5_worker_process(APP, connection_to_gui):
+
+def _pyqt5_worker_process(app, connection_to_gui):
     config_pyqt5()
-    vdomr_global['pyqt5_worker_process'] = True
-    
-    W = APP.createSession()
+    VDOMR_GLOBAL['pyqt5_worker_process'] = True
+
+    W = app.createSession()
     root_html = W._repr_html_()
     connection_to_gui.send(root_html)
     connection_to_gui.send(W.size())
 
-    vdomr_global['pyqt5_connection_to_gui'] = connection_to_gui
+    VDOMR_GLOBAL['pyqt5_connection_to_gui'] = connection_to_gui
 
     while True:
-        js = _take_javascript_to_execute()
-        if js is None:
+        js0 = _take_javascript_to_execute()
+        if js0 is None:
             break
-        exec_javascript(js)
-    
+        exec_javascript(js0)
+
     while True:
         if connection_to_gui.poll():
             x = connection_to_gui.recv()
@@ -375,12 +396,13 @@ def _pyqt5_worker_process(APP, connection_to_gui):
                 args = x['args']
                 kwargs = x['kwargs']
                 try:
-                    invoke_callback(callback_id, argument_list=args, kwargs=kwargs)
-                except:
+                    invoke_callback(
+                        callback_id, argument_list=args, kwargs=kwargs)
+                except: # pylint: disable=bare-except
                     traceback.print_exc()
-                    pass
                 connection_to_gui.send(dict(message='ok'))
         time.sleep(0.001)
+
 
 def _get_init_javascript():
     return """
@@ -443,8 +465,10 @@ def _get_init_javascript():
     }
     """
 
+
 def mode():
-    return vdomr_global['mode']
+    return VDOMR_GLOBAL['mode']
+
 
 if os.environ.get('VDOMR_MODE', '') == 'JP_PROXY_WIDGET':
     print('vdomr: using jp_proxy_widget because of VDOMR_MODE environment variable')

@@ -1,5 +1,6 @@
 from .spikeforest_views.currentstateview import CurrentStateView
 from .spikeforest_views.recordingtableview import RecordingTableView, RecordingSelectComponent
+from .spikeforest_views.aggregatedsortingresultstableview import AggregatedSortingResultsTableView
 from .recording_views.electrodegeometryview import ElectrodeGeometryView
 from .recording_views.timeseriesview import TimeseriesView
 from .recording_views.templatesview import TemplatesView
@@ -46,6 +47,18 @@ def get_spikeforest_view_launchers(context):
     ))
     
     recording_context = context.recordingContext(context.currentRecordingId())
+
+    # Aggregated sorting results
+    if context.hasAggregatedSortingResults():
+        groups.append(dict(name='aggregated_sorting_results',label='Aggregated results'))
+
+        launchers.append(dict(
+            group='aggregated_sorting_results', name='aggregated-results-table', label='Results table',
+            view_class=AggregatedSortingResultsTableView,
+            context=context, opts=dict(),
+            always_open_new=False,
+            enabled=True
+        ))
 
     # Recording
     if recording_context:

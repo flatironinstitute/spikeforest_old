@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+import mtlogging
+import shutil
+from mountaintools import client as mt
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description = 'Copy or download a local or remote file to a destination path.')
+    parser.add_argument('src_path',help='KBucket or local path of source file')
+    parser.add_argument('dst_path',help='Local destination path')
+    parser.add_argument('--verbose', action='store_true', help='Turn on verbose output')
+    parser.add_argument('--download-from', required=False, default=None)
+
+    args = parser.parse_args()
+    path = args.src_path
+
+    if args.download_from:
+        mt.configDownloadFrom([args.download_from])
+
+    if mt.isFile(path):
+        path2 = mt.realizeFile(path=path, dest_path=args.dst_path)
+        if not path2:
+            print('Problem realizing file.', file=sys.stderr)
+            exit(-1)
+    else:
+        #path2 = mt.realizeDir(path=path, dest_path=args.dst_path)
+        path2 = _realize_dir(path=path, dest_path=args.dst_path, verbose=args.verbose)
+        if not path2:
+            print('Problem realizing file or directory.', file=sys.stderr)
+            exit(-1)
+
+def _realize_dir(path, *, dest_path, verbose=False):
+    dd = mt.readDir(path, recursive=False, include_sha1=False)
+    if not dd:
+        return None
+    if os.path.exists(dest_path):
+        print('File or directory already exists: '+dest_path)
+        return None
+    if not _realize_directory_from_dd(dd, dest_path, verbose=verbose):
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+        return None
+    return dest_path
+
+def _realize_directory_from_dd(dd, dst_path, verbose=False):
+    if os.path.exists(dst_path):
+        print('File or directory already exists: '+dst_path)
+        return False
+    os.makedirs(dst_path)
+    for fname, obj in dd['files'].items():
+        sha1 = obj['sha1']
+        if verbose:
+            print('Realizing file {} -> {}'.format('sha1://'+sha1, os.path.join(dst_path, fname)))
+        if not mt.realizeFile(path='sha1://'+sha1, dest_path=os.path.join(dst_path, fname)):
+            print('Unable to realize file: '+os.path.join(dst_path, fname))
+            return False
+    for dname, obj in dd['dirs'].items():
+        if not _realize_directory_from_dd(obj, os.path.join(dst_path, dname)):
+            return False
+    return True
+
+if __name__== "__main__":
+    main()

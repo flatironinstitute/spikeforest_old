@@ -4,18 +4,13 @@ import random
 from .mountainjob import MountainJobResult
 from .mountainjob import MountainJob
 import mtlogging
+from mountainclient import client as mt
 
 class ComputeResourceClient():
-    def __init__(self, resource_name, collection='', share_id='', token=None, upload_token=None, readonly=False):
+    def __init__(self, resource_name, collection=None, kachery_name=None):
         self._resource_name=resource_name
-        self._cairio_client=MountainClient()
-        if collection:
-            if readonly:
-                self._cairio_client.configRemoteReadonly(collection=collection,share_id=share_id)
-            else:
-                self._cairio_client.configRemoteReadWrite(collection=collection,share_id=share_id,token=token,upload_token=upload_token)
-        else:
-            self._cairio_client.configLocal()
+        self._collection = collection
+        self._kachery_name = kachery_name
         self._last_console_message=''
         self._next_delay=0.25
 
@@ -28,14 +23,16 @@ class ComputeResourceClient():
             job_object = job.getObject()
             if not job_object['processor_code']:
                 raise Exception('Job is missing processor code.', job_object.get('processor_name', None))
-            self._cairio_client.saveFile(path=job_object['processor_code'])
+            mt.saveFile(path=job_object['processor_code'], upload_to=self._kachery_name)
             job_objects.append(job.getObject())
         
         key=dict(
             name='compute_resource_batch',
             batch_id=batch_id
         )
-        self._cairio_client.saveObject(
+        mt.saveObject(
+            collection=self._collection,
+            upload_to=self._kachery_name,
             key=key,
             object=dict(
                 label=label,
@@ -48,35 +45,40 @@ class ComputeResourceClient():
             name='compute_resource_batch',
             batch_id=batch_id
         )
-        batch=self._cairio_client.loadObject(
-            key=key
+        batch = mt.loadObject(
+            key=key,
+            collection=self._collection,
+            download_from=self._kachery_name
         )
         return batch
     
     @mtlogging.log()
     def startBatch(self,*,batch_id):
-        self._cairio_client.setValue(
+        mt.setValue(
             key=dict(
                 name='compute_resource_batch_halt',
                 batch_id=batch_id
             ),
-            value=None
+            value=None,
+            collection=self._collection
         )
-        self._cairio_client.setValue(
+        mt.setValue(
             key=dict(
                 name='compute_resource_batch_statuses',
                 resource_name=self._resource_name
             ),
             subkey=batch_id,
-            value='pending'
+            value='pending',
+            collection=self._collection
         )
     def stopBatch(self,*,batch_id):
-        self._cairio_client.setValue(
+        mt.setValue(
             key=dict(
                 name='compute_resource_batch_halt',
                 batch_id=batch_id
             ),
-            value='halt'
+            value='halt',
+            collection=self._collection
         )
     @mtlogging.log()
     def monitorBatch(self,*,batch_id, jobs, label=''):
@@ -116,13 +118,14 @@ class ComputeResourceClient():
         
     @mtlogging.log()
     def getBatchStatuses(self):
-        batch_statuses = self._cairio_client.getValue(
+        batch_statuses = mt.getValue(
             key=dict(
                 name='compute_resource_batch_statuses',
                 resource_name=self._resource_name,
             ),
             subkey='-',
-            parse_json=True
+            parse_json=True,
+            collection = self._collection
         )
         return batch_statuses
 
@@ -130,22 +133,24 @@ class ComputeResourceClient():
         return self._get_batch_job_statuses(batch_id=batch_id)
 
     def _get_batch_job_statuses(self,*,batch_id):
-        return self._cairio_client.getValue(
+        return mt.getValue(
             key=dict(
                 name='compute_resource_batch_job_statuses',
                 batch_id=batch_id
             ),
             subkey='-',
-            parse_json=True
+            parse_json=True,
+            collection=self._collection
         )
 
     def getBatchStatus(self,*,batch_id):
-        return self._cairio_client.getValue(
+        return mt.getValue(
             key=dict(
                 name='compute_resource_batch_statuses',
                 resource_name=self._resource_name
             ),
-            subkey=batch_id
+            subkey=batch_id,
+            collection=self._collection
         )
 
     @mtlogging.log()
@@ -154,8 +159,10 @@ class ComputeResourceClient():
             name='compute_resource_batch_results',
             batch_id=batch_id
         )
-        obj = self._cairio_client.loadObject(
-            key=key
+        obj = mt.loadObject(
+            key=key,
+            collection=self._collection,
+            download_from=self._kachery_name
         )
         if obj is None:
             return None

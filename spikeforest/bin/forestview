@@ -4,12 +4,11 @@ import argparse
 import os
 import vdomr as vd
 from mountaintools import client as mt
-from forestview import ForestViewMainWindow
+# from forestview import ForestViewMainWindow
+from forestview import forestview
 import uuid
 import json
 import sys
-from forestview import SpikeForestContext
-from forestview import AnalysisContext
 import uuid
 import mtlogging
 
@@ -19,20 +18,13 @@ class TheApp():
         self._path = path
 
     def createSession(self):
-        mode = self._mode
-        if mode == 'spikeforest':
-            context = _load_spikeforest_context(self._path)
-        elif mode == 'analysis':
-            context = _load_analysis_context(self._path)
-        else:
-            raise Exception('Invalid mode: '+mode)
-
-        if not context:
-            raise Exception('Unable to create context.')
-
-        W = ForestViewMainWindow(context=context)
+        W = forestview(path=self._path, mode=self._mode)
+        
         _make_full_browser(W)
         return W
+
+    def title(self):
+        return 'ForestView ({}) - {}'.format(self._mode, self._path)
 
 _default_spikeforest_file = 'sha1dir://03e12d2f1af3e038886f25a94871f3723a66502a.toy_recordings'
 
@@ -64,15 +56,13 @@ def main():
 
     if args.file is None:
         args.file = _default_spikeforest_file
-        if args.download_from is None:
-            args.download_from = 'spikeforest.spikeforest2'
+
+    if args.download_from is None:
+        args.download_from = 'kbucket,public'
 
     if args.download_from:
-        share_ids = args.download_from.split(',')
-        try:
-            mt.configRemoteReadonly(share_id=share_ids[0], alternate_share_ids=share_ids[1:])
-        except:
-            print('WARNING: unable to configure to download from {}. Perhaps you are offline.'.format(args.download_from))
+        list0 = args.download_from.split(',')
+        mt.configDownloadFrom(list0)
 
     APP = TheApp(mode=args.mode, path=args.file)
 
@@ -82,7 +72,8 @@ def main():
         server.setPort(int(args.port))
         server.start()
     else:
-        vd.pyqt5_start(APP=APP, title='ForestView')
+        print(APP.title())
+        vd.pyqt5_start(app=APP, title=APP.title())
 
 def _make_full_browser(W):
     resize_callback_id = 'resize-callback-' + str(uuid.uuid4())
@@ -108,83 +99,6 @@ def _make_full_browser(W):
     """
     js = js.replace('{resize_callback_id}', resize_callback_id)
     vd.devel.loadJavascript(js=js, delay=1)
-
-def _load_spikeforest_context(path):
-    if mt.isFile(path):
-        obj = mt.loadObject(path=path)
-        if not obj:
-            print('Unable to load file: '+path, file=sys.stderr)
-            return None
-    else:
-        obj = _make_obj_from_dir(path)
-        if not obj:
-            print('Unable to make object from path: '+path)
-            return None
-    context = SpikeForestContext(
-        studies = obj.get('studies', []),
-        recordings = obj.get('recordings', []),
-        sorting_results = obj.get('sorting_results', [])
-    )
-    return context
-
-def _load_analysis_context(path):
-    obj = mt.loadObject(path=path)
-    if not obj:
-        print('Unable to load file: '+path, file=sys.stderr)
-        return None
-    context = AnalysisContext(
-        obj = obj
-    )
-    return context
-
-def _make_obj_from_dir(path):
-    studies = []
-    recordings = []
-    study_name = os.path.basename(path)
-    studies.append(dict(
-        name=study_name,
-        description='Loaded from '+path
-    ))
-    dd = mt.readDir(path)
-    if not dd:
-        print('Unable to read directory: '+path)
-        return None
-    if 'raw.mda' in dd['files']:
-        recordings.append(_make_recording_obj_from_dir(
-            path=path,
-            study_name=study_name,
-            name='recording'
-        ))
-    else:
-        for dname, dd0 in dd['dirs'].items():
-            recordings.append(_make_recording_obj_from_dir(
-                path=path+'/'+dname,
-                study_name=study_name,
-                name=dname
-            ))
-    return dict(
-        studies=studies,
-        recordings=recordings
-    )
-
-def _make_recording_obj_from_dir(*, path, study_name, name):
-    ret = dict(
-        study=study_name,
-        name=name,
-        directory=path
-    )
-    if mt.computeFileSha1(path+'/firings_true.mda'):
-        ret['firings_true']=path+'/firings_true.mda'
-    intra_raw_fname = path+'/raw_true.mda'
-    if mt.computeFileSha1(intra_raw_fname):
-        ret['intra_recording']=dict(
-            study=study_name,
-            name=name+'--intra',
-            directory=path,
-            raw_fname='raw_true.mda',
-            params_fname='params_true.json'
-        )
-    return ret
 
 if __name__ == "__main__":
     main()

@@ -145,7 +145,7 @@ class BatchMonitor(vd.Component):
         vd.Component.__init__(self)
 
         mt_config=mt.getRemoteConfig()
-        self._compute_resource_client=ComputeResourceClient(resource_name=resource_name, collection=mt_config['collection'], share_id=mt_config['share_id'], readonly=True)
+        self._compute_resource_client=ComputeResourceClient(resource_name=resource_name, collection=mt_config['collection'], kachery_name=mt_config['share_id'])
 
         self._resource_name = resource_name
         self._batch_statuses=dict()

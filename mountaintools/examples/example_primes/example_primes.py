@@ -1,13 +1,5 @@
 #%%
-# Import the MountainTools client and connect to a remote database
 from mountaintools import client as mt
-mt.configRemoteReadonly(collection='spikeforest', share_id='spikeforest.spikeforest2')
-
-# Optionally configure write access to database (authorization required)
-write_to_server=False
-if write_to_server:
-    mt.login()
-    mt.configRemoteReadWrite(collection='spikeforest', share_id='spikeforest.spikeforest2')
 
 #%%
 # Other imports
@@ -48,9 +40,6 @@ class ComputeNPrimes(mlpr.Processor):
 #%%
 # Execute the processor (retrieve from cache if already computed)
 ComputeNPrimes.execute(n=int(1e5), output='primes.npy')
-
-# save to database if logged in
-mt.saveFile('primes.npy')
 
 # Load the output into a numpy array and print
 primes=np.load('primes.npy')

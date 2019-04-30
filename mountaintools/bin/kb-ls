@@ -17,7 +17,7 @@ def main():
     path = args.path
 
     if args.download_from:
-        mt.configRemoteReadonly(share_id=args.download_from)
+        mt.configDownloadFrom([args.download_from])
 
     if mt.isFile(path):
         path2 = path2 = mt.realizeFile(path=path)
@@ -38,7 +38,6 @@ def main():
         fnames = sorted(dd['files'].keys())
         for fname in fnames:
             print(fname)
-        
         
 
 if __name__== "__main__":

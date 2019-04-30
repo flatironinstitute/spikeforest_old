@@ -13,14 +13,14 @@ RESOURCE_NAME=${1:-ccmlin008-parallel}
 NUM_THREADS=${2:-10} 
 
 COLLECTION=spikeforest
-SHARE_ID=69432e9201d0
+KACHERY_NAME=kbucket
 
 #../../../bin/compute-resource-start ccmlin000-80 \
 #	--allow_uncontainerized  \
-#	--collection $COLLECTION --share_id $SHARE_ID \
+#	--collection $COLLECTION --kachery_name $KACHERY_NAME \
 #        --srun_opts "-c 2 -n 80 -p ccm"
 
 ../../../bin/compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
-	--collection $COLLECTION --share_id $SHARE_ID \
+	--collection $COLLECTION --kachery_name $KACHERY_NAME \
         --parallel $NUM_THREADS

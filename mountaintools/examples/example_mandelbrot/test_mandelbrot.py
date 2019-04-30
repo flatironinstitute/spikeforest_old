@@ -95,6 +95,7 @@ def test_mandelbrot_compute_resource(container=None):
 
 @pytest.mark.compute_resource
 @pytest.mark.container
+@pytest.mark.exclude
 def test_mandelbrot_compute_resource_container():
     test_mandelbrot_compute_resource(container='sha1://87319c2856f312ccc3187927ae899d1d67b066f9/03-20-2019/mountaintools_basic.simg')
 
@@ -153,7 +154,7 @@ class LocalComputeResource():
         resource_name='local_resource_'+_random_string(6)
         self._process=multiprocessing.Process(target=_run_local_compute_resource, args=(resource_name,self._num_parallel))
         self._process.start()
-        return dict(resource_name=resource_name,collection=None,share_id=None)
+        return dict(resource_name=resource_name,collection=None,kachery_name=None)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._process.terminate()
@@ -178,7 +179,7 @@ def _run_local_compute_resource(resource_name, num_parallel):
     server=mlpr.ComputeResourceServer(
         resource_name=resource_name,
         collection=None,
-        share_id=None
+        kachery_name=None
     )
     server.setNumParallel(num_parallel)
     server.start()

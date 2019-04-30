@@ -46,6 +46,35 @@ class SelectBox(vd.Component):
         X = vd.select(opts, onchange=self._on_change, **self._kwargs)
         return X
 
+class RadioButton(vd.Component):
+    def __init__(self, checked=False, **kwargs):
+        vd.Component.__init__(self)
+        self._on_change_handlers = []
+        self._checked = checked
+        self._kwargs = kwargs
+
+    def setChecked(self, val):
+        self._checked = val
+        self.refresh()
+
+    def checked(self):
+        return self._checked
+
+    def onChange(self, handler):
+        self._on_change_handlers.append(handler)
+
+    def _on_click(self):
+        self._checked = True
+        for handler in self._on_change_handlers:
+            handler()
+
+    def render(self):
+        kwargs = dict()
+        if self._checked:
+            kwargs['checked'] = 'checked'
+        X = vd.input(type='radio', onclick=self._on_click, **self._kwargs, **kwargs)
+        return X
+
 
 class Button(vd.Component):
     def __init__(self, label, onclick=None, **kwargs):

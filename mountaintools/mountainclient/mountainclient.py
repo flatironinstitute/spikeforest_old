@@ -155,41 +155,25 @@ class MountainClient():
 
 
     def __init__(self):
-        self._default_url = os.environ.get(
-            'MOUNTAIN_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443'))
-        self._remote_config = dict(
-            # url='http://localhost:3010',
-            url=None,
-            collection=None,
-            token=None,
-            share_id=None,
-            alternate_share_ids=None,
-            upload_token=None
-        )
-        self._kacheries = dict()
+        self._pairio_url = os.environ.get(
+            'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443')))
+        self._kachery_urls = dict()
+        self._kachery_upload_tokens = dict()
         self._pairio_tokens = dict()
         self._verbose = False
         self._remote_client = MountainRemoteClient()
-        self._login_config=None
-        self._share_ids_by_alias=dict()
+        self._values_by_alias = dict()
+        self._config_download_from = []
         self._local_db = MountainClientLocal(parent=self)
+
         self._initialize_kacheries()
         self._read_pairio_tokens()
 
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
-        print('Warning: autoConfig is deprecated. Use login() and one of the following: configLocal(), configRemoteReadonly(), configRemoteReadWrite()')
-        if (ask_password) and (password is None):
-            password = getpass('Enter password: ')
-        config = self.getValue(collection=collection,
-                               key=key)
-        if not config:
-            raise Exception(
-                'Unable to find config ({}.{}). Perhaps a password is incorrect or missing?'.format(collection, key))
-        try:
-            config = json.loads(config)
-        except:
-            raise Exception('Error parsing config.')
-        self.setRemoteConfig(**config)
+        """
+        Deprecated
+        """
+        print('WARNING: autoConfig() is deprecated and will no longer have any effect.')
 
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
         '''
@@ -264,169 +248,50 @@ class MountainClient():
                 base64.b64decode(val.encode('utf-8'))
             )
         )
-        self._login_config=config
+        if 'pairio_tokens' in config:
+            for key0, val0 in config['pairio_tokens'].items():
+                self.setPairioToken(key0, val0)
+        if 'kachery_upload_tokens' in config:
+            for key0, val0 in config['kachery_upload_tokens'].items():
+                self.setKacheryUploadToken(key0, val0)
         print('Logged in as {}'.format(user))
+
+    def setPairioToken(self, collection, token):
+        self._pairio_tokens[collection] = token
+
+    def setKacheryUploadToken(self, kachery_name, token):
+        self._kachery_upload_tokens[kachery_name] = token
 
     def configLocal(self):
         """
-        Configure the client to operate locally (not connected to any remote
-        collections or kbucket shares)
+        Deprecated
         """
-
-        self.setRemoteConfig(
-            collection='',
-            token='',
-            share_id='',
-            upload_token=''
-        )
+        print('WARNING: configLocal() is deprecated and will no longer have any effect.')
     
     def configRemoteReadonly(self, *, collection=None, share_id='', alternate_share_ids=[]):
         """
-        Configure to connect to a remote collection and optionally also to a
-        remote kbucket share with readonly access.
-        
-        Parameters
-        ----------
-        collection : str
-            Name of the remote mountain collection
-        share_id : str, optional
-            ID of the share, or an alias to the id (TODO: describe aliases to
-            shares) (the default is '', which means that it will just read from
-            the local sha1-cache database)
-        """ 
-        self.setRemoteConfig(
-            collection=collection,
-            token='',
-            share_id=share_id,
-            upload_token='',
-            alternate_share_ids=alternate_share_ids
-        )
+        Deprecated
+        """
+        print('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect.')
 
     def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
         """
-        Configure to connect to a remote collection and optionally to a remote
-        kbucket share with read/write access. If you are logged in (see
-        login()), and have access to the remote resources, then the collection
-        token and the kbucket upload token will be automatically filled in.
-        
-        Parameters
-        ----------
-        collection : str
-            Name of the remote mountain collection
-        share_id : str
-            ID of the share, or an alias to the ID (the default is '', which
-            means that it will just read from and write to the local sha1-cache
-            database)
-        token : str, optional
-            Token for accessing the remote mountain collection. If you are
-            logged in via login() and have access then you do not need to
-            provide this (the default is None)
-        upload_token : str, optional
-            Token for uploading to the remote kbucket share. If you are logged
-            in via login() and have access then you do not need to provide this
-            (the default is None)
+        Deprecated
         """
-        if collection is not None:
-            if token is None:
-                token=self._find_collection_token_from_login(collection)
-                if not token:
-                    raise Exception('Cannot configure remote read-write. Missing collection token for {}, and not found in login config.'.format(collection))
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-        if share_id is not None:
-            if upload_token is None:
-                upload_token=self._find_upload_token_from_login(share_id=share_id)
-                if not upload_token:
-                    raise Exception('Cannot configure remote read-write. Missing upload token for {}, and not found in login config.'.format(share_id))
-        self.setRemoteConfig(
-            collection=collection,
-            token=token,
-            share_id=share_id,
-            upload_token=upload_token
-        )
-
-    def addKachery(self, *, name, url, upload_token=None):
-        self._kacheries[name]=dict(url=url, upload_token=upload_token)
+        print('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect.')
 
     def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
         """
-        Configure one or more remote configuration parameters. Normally you
-        would not call this directly but would instead use one of the following
-        convenience functions: configLocal(), configRemoteReadonly(),
-        configRemoteReadWrite().
-        
-        Parameters
-        ----------
-        url : str, optional
-            The URL to the remote mountain server (the default is [], which
-            means it is not set)
-        collection : str, optional
-            Name of the remote mountain collection (the default is [], which
-            means it is not set)
-        token : str, optional
-            Token for the remote mountain collection (the default is [], which
-            means it is not set)
-        share_id : str, optional
-            ID of the remote kbucket share (the default is [], which means it is
-            not set)
-        upload_token : str, optional
-            Upload token for the remote kbucket share (the default is [], which
-            means it is not set)
-        alternate_share_ids : list of str, optional
-            IDs of other kbucket shares to check for files (the default is [],
-            which means it is not set)
+        Deprecated
         """
-
-        if (share_id is not 0) and (share_id) and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-        if url is not 0:
-            self._remote_config['url'] = url
-        if collection is not 0:
-            self._remote_config['collection'] = collection
-        if token is not 0:
-            self._remote_config['token'] = token
-        if share_id is not 0:
-            self._remote_config['share_id'] = share_id
-        if alternate_share_ids is not 0:
-            for ii,asi in enumerate(alternate_share_ids):
-                if '.' in asi:
-                    alternate_share_ids[ii]=self._get_share_id_from_alias(asi)
-            self._remote_config['alternate_share_ids'] = alternate_share_ids
-        if upload_token is not 0:
-            self._remote_config['upload_token'] = upload_token
-
-        c = self._remote_config
-        if c['collection'] and c['token']:
-            config1 = 'remote database {} (readwrite)'.format(c['collection'])
-        elif c['collection'] and (not c['token']):
-            config1 = 'remote database {} (readonly)'.format(c['collection'])
-        else:
-            config1 = 'local database'
-
-        if c['share_id'] and c['upload_token']:
-            config2 = 'remote kb-share {} (readwrite)'.format(c['share_id'])
-        elif c['share_id'] and (not c['upload_token']):
-            config2 = 'remote kb-share {} (readonly)'.format(c['share_id'])
-        else:
-            config2 = 'local sha-1 cache'
-
-        print('MOUNTAIN CONFIG: {}; {}'.format(config1, config2))
-        if c['alternate_share_ids']:
-            print('Alternate share ids:', c['alternate_share_ids'])
+        print('WARNING: setRemoteConfig() is deprecated and will no longer have any effect.')
 
     def getRemoteConfig(self):
         """
-        Retrieves a copy of the remote configuration as a dict. It includes
-        secret tokens, so be careful not to print it.
-        
-        Returns
-        -------
-        dict
-            Copy of the remote configuration.
+        Deprecated
         """
-
-        ret = self._remote_config.copy()
-        return ret
+        print('WARNING: getRemoteConfig() is deprecated and only returns an empty dict.')
+        return dict()
 
     def addRemoteCollection(self, collection, token, admin_token):
         """
@@ -450,9 +315,24 @@ class MountainClient():
         return self._remote_client.addCollection(
             collection=collection,
             token=token,
-            url=self._remote_config.get('url') or self._default_url,
+            url=self._pairio_url,
             admin_token=admin_token
         )
+
+    def configDownloadFrom(self, kachery_names):
+        if type(kachery_names) == str:
+            kachery_names=[kachery_names]
+        for kname in kachery_names:
+            if kname not in self._config_download_from:
+                self._config_download_from.append(kname)
+    
+    # def getDownloadFromConfig(self):
+    #     return deepcopy(dict(
+    #         download_from=self._config_download_from
+    #     ))
+
+    # def setDownloadFromConfig(self, obj):
+    #     self._config_download_from = obj.get('download_from', [])
 
     @mtlogging.log(name='MountainClient:getValue')
     def getValue(self, *, key, subkey=None, parse_json=False, collection=None, local_first=False, check_alt=False):
@@ -541,7 +421,7 @@ class MountainClient():
         return self._set_value(key=key, subkey=subkey, value=value, overwrite=overwrite, local_also=local_also, collection=collection)
 
     @mtlogging.log(name='MountainClient:getSubKeys')
-    def getSubKeys(self, key):
+    def getSubKeys(self, key, collection=None):
         """
         Retrieve the list of subkeys associated with a key
         
@@ -555,10 +435,10 @@ class MountainClient():
         list of str
             The list of subkeys
         """
-        return list(self._get_sub_keys(key=key))
+        return list(self._get_sub_keys(key=key, collection=collection))
 
     @mtlogging.log(name='MountainClient:realizeFile')
-    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, share_id=None):
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, collection=None, download_from=None):
         """
         Return a local path to the specified file, downloading the file from a
         remote server to the local SHA-1 cache if needed. In other words,
@@ -610,10 +490,6 @@ class MountainClient():
             The destination path for the realized file on the local system, as
             described above. (The default is None, which means that a temporary
             file will be created as needed)
-        share_id : [type], optional
-            In the case where path is a SHA-1 URL, or key is used, the optional
-            share_id to search for the file, as described above (the default is
-            None, which means that the configured kbucket shares are used)
         local_first : bool, optional
             In the case where key is used (rather than path), specifies whether
             to consult the local database first, prior to requesting the SHA-1
@@ -631,21 +507,20 @@ class MountainClient():
             if not path:
                 return None
 
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-
         if path is not None:
-            return self._realize_file(path=path, share_id=share_id, dest_path=dest_path, show_progress=show_progress)
+            if key is not None:
+                raise Exception('Cannot specify both key and path in realizeFile.')
+            return self._realize_file(path=path, dest_path=dest_path, show_progress=show_progress, download_from=download_from)
         elif key is not None:
-            val = self.getValue(key=key, subkey=subkey, local_first=local_first)
+            val = self.getValue(key=key, subkey=subkey, local_first=local_first, collection=collection)
             if not val:
                 return None
-            return self.realizeFile(path=val, share_id=share_id, dest_path=dest_path, show_progress=show_progress)
+            return self.realizeFile(path=val, dest_path=dest_path, show_progress=show_progress, download_from=download_from)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
     @mtlogging.log(name='MountainClient:saveFile')
-    def saveFile(self, path=None, *, key=None, subkey=None, basename=None, local_also=False, share_id=None):
+    def saveFile(self, path=None, *, key=None, subkey=None, collection=None, basename=None, local_also=False, upload_to=None):
         """
         Save a file to the local SHA-1 cache and/or upload to a remote KBucket
         share, and return a SHA-1 URL referring to the file.
@@ -691,37 +566,41 @@ class MountainClient():
                 return None
 
         if path is None:
-            self.setValue(key=key, subkey=subkey,
+            self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None, local_also=local_also)
             return None
         sha1_path = self._save_file(
-            path=path, basename=basename, share_id=share_id)
+            path=path, basename=basename, upload_to=upload_to)
         if key is not None:
-            self.setValue(key=key, subkey=subkey,
+            self.setValue(key=key, subkey=subkey, collection=collection,
                           value=sha1_path, local_also=local_also)
 
         return sha1_path
 
     # load object / save object
     @mtlogging.log(name='MountainClient:loadObject')
-    def loadObject(self, *, key=None, path=None, subkey=None, local_first=False):
+    def loadObject(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
         
         txt = self.loadText(key=key, path=path,
-                            subkey=subkey, local_first=local_first)
+                            subkey=subkey, local_first=local_first, collection=collection, download_from=download_from)
         if txt is None:
             return None
-        return json.loads(txt)
+        try:
+            return json.loads(txt)
+        except:
+            print('WARNING: unable to parse json in loadObject.', path, key, subkey)
+            return None
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, share_id=None):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, collection=None, upload_to=None):
         if object is None:
-            self.setValue(key=key, subkey=subkey,
+            self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None),
             return None
-        return self.saveText(text=json.dumps(object), key=key, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, share_id=share_id)
+        return self.saveText(text=json.dumps(object), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
 
     def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
         if path and path.startswith('key://'):
@@ -730,34 +609,33 @@ class MountainClient():
                 print('Unable to resolve key path.', file=sys.stderr)
                 return None
 
-        client = MountainClient() # local client
-        if client.isFile(path):
+        if self.isFile(path):
             address = client.saveFile(path=path)
             if not address:
                 print('Unable to read or save file', file=sys.stderr)
                 return None
             if upload_to:
-                if not client.saveFile(path=path, share_id=upload_to):
+                if not self.saveFile(path=path, upload_to=upload_to):
                     print('Unable to upload file', file=sys.stderr)
                     return None
         else:
-            dd = client.readDir(path=path, recursive=True, include_sha1=True)
+            dd = self.readDir(path=path, recursive=True, include_sha1=True)
             if not dd:
                 print('Unable to read file or directory', file=sys.stderr)
                 return None
-            if client.isLocalPath(path) or download_recursive:
-                if not self._create_snapshot_helper_save_dd(client=client, basepath=path, dd=dd, share_id=None):
+            if self.isLocalPath(path) or download_recursive:
+                if not self._create_snapshot_helper_save_dd(basepath=path, dd=dd, upload_to=None):
                     print('Problem saving files to local cache.')
                     return None
                 if upload_to and upload_recursive:
-                    if not self._create_snapshot_helper_save_dd(client=client, basepath=path, dd=dd, share_id=upload_to):
+                    if not self._create_snapshot_helper_save_dd(basepath=path, dd=dd, upload_to=upload_to):
                         print('Problem saving files to local cache.')
                         return None
 
-            address = client.saveObject(dd, basename='')
+            address = self.saveObject(dd, basename='')
             address = address.replace('sha1://', 'sha1dir://')
             if upload_to:
-                client.saveObject(dd, share_id=upload_to)
+                self.saveObject(dd, upload_to=upload_to)
         if address and dest_path:
             if dest_path.startswith('key://'):
                 location, collection, key, subkey, extra_path = self._parse_key_path(dest_path)
@@ -769,19 +647,19 @@ class MountainClient():
                     if collection != 'default':
                         raise Exception('Collection must be default for local key path.', collection)
                     collection = None
-                    use_client = MountainClient()
                 elif location == 'pairio':
-                    use_client = self
+                    pass
                 else:
                     raise Exception('Invalid location for key path', location)
 
-                if not use_client.setValue(key=key, subkey=subkey, value=address, collection=collection):
+                if not self.setValue(key=key, subkey=subkey, value=address, collection=collection):
                     raise Exception('Unable to store address in path', dest_path)
             else:
                 self.realizeFile(path=address, dest_path=dest_path)
 
         return address
 
+    @mtlogging.log(name='MountainClient:loadObject')
     def resolveKeyPath(self, key_path):
         if not key_path.startswith('key://'):
             return key_path
@@ -825,31 +703,31 @@ class MountainClient():
         extra_path = '/'.join(list0[5:])
         return (location, collection ,key, subkey, extra_path)
 
-    def _create_snapshot_helper_save_dd(self, *, client, basepath, dd, share_id):
+    def _create_snapshot_helper_save_dd(self, *, basepath, dd, upload_to):
         for fname in dd['files'].keys():
             fpath = os.path.join(basepath, fname)
-            if not client.saveFile(path=fpath, share_id=share_id):
-                if not share_id:
+            if not self.saveFile(path=fpath, upload_to=upload_to):
+                if not upload_to:
                     print('Unable to copy file to local cache: '+fpath, file=sys.stderr)
                 else:
                     print('Unable to upload file: '+fpath, file=sys.stderr)
                 return False
         for dname, dd0 in dd['dirs'].items():
             dpath = os.path.join(basepath, dname)
-            if not self._create_snapshot_helper_save_dd(client=client, basepath=dpath, dd=dd0, share_id=share_id):
+            if not self._create_snapshot_helper_save_dd(basepath=dpath, dd=dd0, upload_to=upload_to):
                 return False
         return True
 
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
-    def loadText(self, *, key=None, path=None, subkey=None, local_first=False):
+    def loadText(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
 
         fname = self.realizeFile(
-            key=key, path=path, subkey=subkey, local_first=local_first)
+            key=key, path=path, subkey=subkey, local_first=local_first, collection=collection, download_from=download_from)
         if fname is None:
             return None
         try:
@@ -860,10 +738,10 @@ class MountainClient():
             return None
 
     @mtlogging.log(name='MountainClient:saveText')
-    def saveText(self, text, *, key=None, subkey=None, basename='file.txt', local_also=False, dest_path=None, share_id=None):
+    def saveText(self, text, *, key=None, subkey=None, collection=None, basename='file.txt', local_also=False, dest_path=None, upload_to=None):
         if text is None:
             self.setValue(key=key, subkey=subkey,
-                          value=None, local_also=local_also)
+                          value=None, local_also=local_also, collection=collection)
             return None
         if dest_path is None:
             tmp_fname = _create_temporary_file_for_text(text=text)
@@ -872,8 +750,8 @@ class MountainClient():
                 f.write(text)
             tmp_fname=dest_path
         try:
-            ret = self.saveFile(tmp_fname, key=key, subkey=subkey,
-                                basename=basename, local_also=local_also, share_id=share_id)
+            ret = self.saveFile(tmp_fname, key=key, subkey=subkey, collection=collection,
+                                basename=basename, local_also=local_also, upload_to=upload_to)
         except:
             if dest_path is None:
                 os.unlink(tmp_fname)
@@ -883,7 +761,7 @@ class MountainClient():
         return ret
 
     @mtlogging.log(name='MountainClient:readDir')
-    def readDir(self, path, recursive=False, include_sha1=True):
+    def readDir(self, path, recursive=False, include_sha1=True, download_from=None):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
@@ -895,17 +773,21 @@ class MountainClient():
                 return self.readDir(path=path_local, recursive=recursive, include_sha1=include_sha1)
 
             list0 = path.split('/')
-            share_id = list0[2]
+            kbucket_share_id = list0[2]
             path0 = '/'.join(list0[3:])
-            if share_id and ('.' in share_id):
-                share_id=self._get_share_id_from_alias(share_id)
+            if kbucket_share_id and ('.' in kbucket_share_id):
+                tmp0 = kbucket_share_id
+                kbucket_share_id=self._get_value_from_alias(kbucket_share_id)
+                if kbucket_share_id is None:
+                    print('Warning: unable to resolve kbucket alias: ' + tmp0)
+                    return None
             ret = self._read_kbucket_dir(
-                share_id=share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
+                share_id=kbucket_share_id, path=path0, recursive=recursive, include_sha1=include_sha1)
         elif path.startswith('sha1dir://'):
             list0 = path.split('/')
             sha1 = list0[2]
             if '.' in sha1: sha1=sha1.split('.')[0]
-            dd = self.loadObject(path='sha1://'+sha1)
+            dd = self.loadObject(path='sha1://'+sha1, download_from=download_from)
             if not dd:
                 return None
             ii = 3
@@ -986,10 +868,8 @@ class MountainClient():
         return self._local_db.alternateLocalCacheDirs()
 
     @mtlogging.log(name='MountainClient:findFileBySha1')
-    def findFileBySha1(self, *, sha1, share_id=None, local_only=False):
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-        return self._realize_file(path='sha1://'+sha1, resolve_locally=False, share_id=share_id, local_only=local_only)
+    def findFileBySha1(self, *, sha1, download_from=None, local_only=False):
+        return self._realize_file(path='sha1://'+sha1, resolve_locally=False, local_only=local_only, download_from=download_from)
 
     @mtlogging.log(name='MountainClient:getSha1Url')
     def getSha1Url(self, path, *, basename=None):
@@ -1004,14 +884,12 @@ class MountainClient():
         
 
     @mtlogging.log(name='MountainClient:findFile')
-    def findFile(self, path, local_only=False, share_id=None):
+    def findFile(self, path, local_only=False, download_from=None):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
-        if share_id and ('.' in share_id):
-            share_id=self._get_share_id_from_alias(share_id)
-        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, share_id=share_id)
+        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, download_from=download_from)
 
     @mtlogging.log(name='MountainClient:copyToLocalCache')
     def copyToLocalCache(self, path, basename=None):
@@ -1019,7 +897,7 @@ class MountainClient():
             path = self.resolveKeyPath(path)
             if not path:
                 return None
-        return self._save_file(path=path, prevent_upload=True, return_sha1_url=False, basename=basename)
+        return self._save_file(path=path, return_sha1_url=False, basename=basename)
 
     def _initialize_kacheries(self):
         kacheries_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'kacheries')
@@ -1047,8 +925,10 @@ class MountainClient():
                     else:
                         kachery_upload_tokens[vals[0]] = vals[1]
         for name, url in kachery_urls.items():
-            upload_token = kachery_upload_tokens.get(name, None)
-            self.addKachery(name=name, url=url, upload_token=upload_token)
+            self._kachery_urls[name] = url
+        for name, token in kachery_upload_tokens.items():
+            self._kachery_upload_tokens[name] = token
+            
 
     def _read_pairio_tokens(self):
         pairio_tokens_fname=os.path.join(os.environ.get('HOME',''),'.mountaintools', 'pairio_tokens')
@@ -1064,121 +944,67 @@ class MountainClient():
                         self._pairio_tokens[vals[0]] = vals[1]
 
     def _get_value(self, *, key, subkey, collection=None, local_first=False, check_alt=False):
-        if collection is None:
-            collection = self._remote_config['collection']
         if local_first or not collection:
             ret = self._local_db.getValue(key=key, subkey=subkey, check_alt=check_alt)
             if ret is not None:
                 return ret
         if collection:
             ret = self._remote_client.getValue(
-                key=key, subkey=subkey, collection=collection, url=self._remote_config.get('url') or self._default_url)
+                key=key, subkey=subkey, collection=collection, url=self._pairio_url)
             if ret is not None:
                 return ret
         return None
 
-    def _get_share_id_from_alias(self, share_id_alias):
-        if share_id_alias in self._share_ids_by_alias:
-            return self._share_ids_by_alias[share_id_alias]
-        vals=share_id_alias.split('.')
+    def _get_value_from_alias(self, alias):
+        if alias in self._values_by_alias:
+            return self._values_by_alias[alias]
+        vals=alias.split('.')
         if len(vals)!=2:
-            raise Exception('Invalid share_id alias: '+share_id_alias)
+            raise Exception('Invalid alias: ' + alias)
         ret=self.getValue(key=vals[1], collection=vals[0])
         if ret is None:
-            raise Exception('Unable to resolve share_id from alias: '+share_id_alias)
-        self._share_ids_by_alias[share_id_alias]=ret
+            return None
+        self._values_by_alias[alias]=ret
         return ret
 
-    def _find_collection_token_from_login(self, collection, try_global=True):
-        if collection in self._pairio_tokens:
-            return self._pairio_tokens[collection]
-        if try_global:
-            ret = self._find_collection_token_from_login(collection=collection,try_global=False)
-            if ret is not None:
-                return ret
-            else:
-                from mountaintools import client as global_client
-                return global_client._find_collection_token_from_login(collection=collection, try_global=False)
-        if not self._login_config:
-            return None
-        if not 'mountain_collections' in self._login_config:
-            if 'cairio_collections' in self._login_config:
-                self._login_config['mountain_collections'] = self._login_config['cairio_collections']
-        if not 'mountain_collections' in self._login_config:
-            return None
-        for cc in self._login_config['mountain_collections']:
-            if cc['name']==collection:
-                if 'token' in cc:
-                    return cc['token']
-        return None
-
-    def _find_upload_token_from_login(self, share_id, try_global=True):
-        if try_global:
-            ret = self._find_upload_token_from_login(share_id=share_id,try_global=False)
-            if ret is not None:
-                return ret
-            else:
-                from mountaintools import client as global_client
-                return global_client._find_upload_token_from_login(share_id=share_id, try_global=False)
-        if not self._login_config:
-            return None
-        if not 'kbucket_shares' in self._login_config:
-            return None
-        for ks in self._login_config['kbucket_shares']:
-            if ks['node_id']==share_id:
-                if 'upload_token' in ks:
-                    return ks['upload_token']
-        return None
-
     def _set_value(self, *, key, subkey, value, overwrite, local_also=False, collection=None):
-        if collection is None:
-            collection = self._remote_config['collection']
-        if collection == self._remote_config['collection']:
-            token = self._remote_config['token']
+        if collection:
+            token = self._pairio_tokens.get(collection, None)
         else:
             token = None
-        if not token:
-            token = self._find_collection_token_from_login(collection=collection)
         if collection and (not token):
             raise Exception('Unable to set value... no token found for collection {}'.format(collection)) # should we throw an exception here?
-        if local_also or (not (collection and token)):
+        if local_also or (not collection):
             if not self._local_db.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite):
                 return False
-        if (collection and token):
-            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._remote_config.get('url') or self._default_url, token=token):
+        if collection:
+            if not self._remote_client.setValue(key=key, subkey=subkey, value=value, overwrite=overwrite, collection=collection, url=self._pairio_url, token=token):
                 raise Exception('Error setting value to remote collection {}'.format(collection))
         return True
 
-    def _get_sub_keys(self, *, key):
-        collection = self._remote_config['collection']
+    def _get_sub_keys(self, *, key, collection):
         if collection:
-            return self._remote_client.getSubKeys(key=key, collection=collection, url=self._remote_config.get('url') or self._default_url)
-        return self._local_db.getSubKeys(key=key)
+            return self._remote_client.getSubKeys(key=key, collection=collection, url=self._pairio_url)
+        else:
+            return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True, local_only=False, share_id=None, dest_path=None, show_progress=False):
+    def _realize_file(self, *, path, resolve_locally=True, local_only=False, dest_path=None, show_progress=False, download_from=None):
         ret = self._local_db.realizeFile(
             path=path, local_only=local_only, resolve_locally=resolve_locally, dest_path=dest_path, show_progress=show_progress)
         if ret:
             return ret
         if local_only:
             return None
-        if share_id is not None:
-            assert share_id
-            share_ids = [share_id]
-        else:
-            if self._remote_config['share_id']:
-                share_ids = [self._remote_config['share_id']]
-            else:
-                share_ids = []
-            if self._remote_config['alternate_share_ids'] is not None:
-                share_ids = share_ids + \
-                    self._remote_config['alternate_share_ids']
-        for share_id0 in share_ids:
-            if path.startswith('sha1://'):
-                list0 = path.split('/')
-                sha1 = list0[2]
-                url, size = self._find_on_kbucket(
-                    share_id=share_id0, sha1=sha1)
+        download_froms = []
+        if download_from is not None:
+            download_froms.append(download_from)
+        for kname in self._config_download_from:
+            download_froms.append(kname)
+        if path.startswith('sha1://'):
+            list0 = path.split('/')
+            sha1 = list0[2]
+            for df0 in download_froms:
+                url, size = self._find_on_kachery_or_kbucket(download_from=df0, sha1=sha1)
                 if url:
                     if resolve_locally:
                         return self._local_db.realizeFileFromUrl(url=url, sha1=sha1, size=size, dest_path=dest_path, show_progress=show_progress)
@@ -1187,7 +1013,7 @@ class MountainClient():
         return None
 
     @mtlogging.log()
-    def _save_file(self, *, path, basename, prevent_upload=False, return_sha1_url=True, share_id=None):
+    def _save_file(self, *, path, basename, return_sha1_url=True, upload_to=None):
         path = self.realizeFile(path)
         if not path:
             return None
@@ -1195,29 +1021,25 @@ class MountainClient():
             path=path, basename=basename, return_sha1_url=return_sha1_url)
         if not ret:
             return None
-        if share_id is None:
-            share_id = self._remote_config['share_id']
-        if share_id in self._kacheries.keys():
-            upload_token=self._kacheries[share_id].get('upload_token', None)
-        else:
-            upload_token=None
-        if share_id == self._remote_config['share_id']:
-            upload_token = self._remote_config['upload_token']
-        if (share_id) and (upload_token) and (not prevent_upload):
-            sha1 = self.computeFileSha1(path=path)
-            if sha1:
-                if share_id in self._kacheries.keys():
-                    kachery_url=self._kacheries[share_id]['url']
-                    self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=upload_token)
-                else:
-                    url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-                    if not url:
-                        cas_upload_server_url = self._get_cas_upload_server_url_for_share(
-                            share_id=share_id)
-                        if cas_upload_server_url:
-                            if not self._remote_client.uploadFile(path=path, sha1=sha1, cas_upload_server_url=cas_upload_server_url, upload_token=upload_token):
-                                raise Exception('Problem uploading file {}'.format(path))
+        if upload_to:
+            sha1 = self.computeFileSha1(path=ret)
+            kachery_url = self._resolve_kachery_url(upload_to)
+            if not kachery_url:
+                raise Exception('Unable to resolve kachery url for: {}'.format(upload_to))
+            if upload_to not in self._kachery_upload_tokens.keys():
+                raise Exception('Kachery upload token not found for: {}'.format(upload_to))
+            kachery_upload_token=self._kachery_upload_tokens[upload_to]
+            self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=kachery_upload_token)
         return ret
+    
+    def _resolve_kachery_url(self, name):
+        if name.startswith('http://') or name.startswith('https://'):
+            return name
+        if '.' in name:
+            return self._get_value_from_alias(name)
+        if name not in self._kachery_urls.keys():
+            return None
+        return self._kachery_urls[name]
 
     def _upload_to_kachery(self, *, path, sha1, kachery_url, upload_token):
         url_check_path0 = '/check/sha1/'+sha1
@@ -1249,53 +1071,23 @@ class MountainClient():
                 return False
             return True
         else:
-            print('Already on server (***)')
+            # print('Already on server (***)')
             return True
 
-    # def _wait_until_found_on_kbucket(self, *, share_id, sha1):
-    #     timer = time.time()
-    #     wait_str = 'Waiting until file is on kbucket {} (sha1={})'.format(
-    #         share_id, sha1)
-    #     print(wait_str)
-    #     retry_delays = [0.25, 0.5, 1, 2, 4, 8]
-    #     if self._wait_until_found_on_kbucket_helper(share_id=share_id, sha1=sha1, retry_delays=retry_delays):
-    #         print('File is on kbucket: {}'.format(sha1))
-    #         return True
-    #     raise Exception('Unable to find file {} on kbucket after waiting for {} seconds.'.format(sha1,
-    #                                                                                              time.time()-timer))
+    def _find_on_kachery_or_kbucket(self, *, download_from, sha1):
+        assert download_from
 
-    # def _wait_until_found_on_kbucket_helper(self, *, share_id, sha1, retry_delays):
-    #     ii = 0  # index for retry delays
-    #     while True:
-    #         url, _ = self._find_on_kbucket(share_id=share_id, sha1=sha1)
-    #         if url:
-    #             return True
-    #         if ii < len(retry_delays):
-    #             print('Retrying in {} seconds...'.format(retry_delays[ii]))
-    #             time.sleep(retry_delays[ii])
-    #             ii = ii+1
-    #         else:
-    #             return False
-
-    def _find_on_kbucket(self, *, share_id, sha1):
-        assert share_id, 'Cannot find_on_kbucket for share_id: '+share_id
-
-        if _is_http_url(share_id):
-            kachery_url = share_id
-        elif share_id in self._kacheries.keys():
-            kachery_url = self._kacheries[share_id]['url']
-        else:
-            kachery_url = None
+        kachery_url = self._resolve_kachery_url(download_from)
 
         if kachery_url:
             check_url = kachery_url + '/check/sha1/' + sha1
             try:
                 obj = _http_get_json(check_url)
             except:
-                print('WARNING: failed in check to kachery {}: {}'.format(share_id, check_url))
+                print('WARNING: failed in check to kachery {}: {}'.format(download_from, check_url))
                 return (None, None)
             if not obj['success']:
-                print('WARNING: problem checking kachery {}: {}'.format(share_id, check_url))
+                print('WARNING: problem checking kachery {}: {}'.format(download_from, check_url))
                 return (None, None)
             if not obj['found']:
                 return (None, None)
@@ -1305,18 +1097,18 @@ class MountainClient():
 
         # first check in the upload location
         (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(
-            path='kbucket://'+share_id+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
+            path='kbucket://'+download_from+'/sha1-cache/'+sha1[0:1]+'/'+sha1[1:3]+'/'+sha1)
         if sha1_0 is not None:
             if sha1_0 == sha1:
                 return (url_0, size_0)
             else:
-                print('Unexpected issue where checksums do not match on _find_on_kbucket: {} <> {}'.format(
+                print('Unexpected issue where checksums do not match on _find_on_kachery_or_kbucket: {} <> {}'.format(
                     sha1, sha1_0))
 
         kbucket_url = self._local_db.kbucketUrl()
         if not kbucket_url:
             return (None, None)
-        url = kbucket_url+'/'+share_id+'/api/find/'+sha1
+        url = kbucket_url+'/'+download_from+'/api/find/'+sha1
         obj = _http_get_json(url)
         if not obj:
             return (None, None)
@@ -1329,7 +1121,7 @@ class MountainClient():
         except:
             size = 0
         urls = obj['urls']
-        node_info = self._local_db.getNodeInfo(share_id=share_id)
+        node_info = self._local_db.getNodeInfo(share_id=download_from)
         if node_info and node_info['accessible']:
             for url0 in urls:
                 if url0.startswith(node_info['listen_url']):
@@ -1381,6 +1173,8 @@ class MountainClient():
             dirs={}
         )
         list0 = _safe_list_dir(path)
+        if list0 is None:
+            return None
         for name0 in list0:
             path0 = path+'/'+name0
             if os.path.isfile(path0):
@@ -1412,8 +1206,10 @@ class MountainClientLocal():
         if not os.path.exists(subkey_db_path):
             return []
         ret = []
-        with FileLock(subkey_db_path+'.lock'):
+        with FileLock(subkey_db_path+'.lock', exclusive=False):
             list0 = _safe_list_dir(subkey_db_path)
+            if list0 is None:
+                return None
             for name0 in list0:
                 if name0.endswith('.txt'):
                     ret.append(name0[0:-4])
@@ -1437,7 +1233,7 @@ class MountainClientLocal():
                 fname0 = os.path.join(subkey_db_path, subkey+'.txt')
                 if not os.path.exists(fname0):
                     return None
-                with FileLock(subkey_db_path+'.lock', _disable_lock=_disable_lock):
+                with FileLock(subkey_db_path+'.lock', _disable_lock=_disable_lock, exclusive=False):
                     txt = _read_text_file(fname0)
                     return txt
         else:
@@ -1452,7 +1248,7 @@ class MountainClientLocal():
                         if val:
                             return val
                 return None
-            with FileLock(fname0+'.lock', _disable_lock=_disable_lock):
+            with FileLock(fname0+'.lock', _disable_lock=_disable_lock, exclusive=False):
                 txt = _read_text_file(fname0)
                 return txt
 
@@ -1463,7 +1259,7 @@ class MountainClientLocal():
                 if value is not None:
                     raise Exception('Cannot set all subkeys with value that is not None')
                 subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash, _create=True)
-                with FileLock(subkey_db_path+'.lock'):
+                with FileLock(subkey_db_path+'.lock', exclusive=True):
                     shutil.rmtree(subkey_db_path)
             else:
                 subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash, _create=True)
@@ -1471,7 +1267,7 @@ class MountainClientLocal():
                 if os.path.exists(fname0):
                     if not overwrite:
                         return False
-                with FileLock(subkey_db_path+'.lock'):
+                with FileLock(subkey_db_path+'.lock', exclusive=True):
                     if os.path.exists(fname0):
                         if not overwrite:
                             return False
@@ -1488,7 +1284,7 @@ class MountainClientLocal():
             if os.path.exists(fname0):
                 if not overwrite:
                     return False
-            with FileLock(fname0+'.lock'):
+            with FileLock(fname0+'.lock', exclusive=True):
                 if os.path.exists(fname0):
                     if not overwrite:
                         return False
@@ -1996,8 +1792,7 @@ def _safe_list_dir(path):
         ret = os.listdir(path)
         return ret
     except:
-        print('Warning: unable to listdir: '+path)
-        return []
+        return None
 
 # The global module client
 _global_client = MountainClient()

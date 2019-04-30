@@ -29,7 +29,7 @@ class YASS(mlpr.Processor):
     # this one uses python 3
     CONTAINER = 'sha1://348be6fb09807c774e469c3aeabf4bca867c039f/03-29-2019/yass.simg'
     
-    CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
+    # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(

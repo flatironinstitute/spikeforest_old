@@ -16,7 +16,7 @@ import pytest
 
 def setup_module(module):
     # Use this so we can download containers as needed
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
     # Check if singularity is installed
     retval = os.system('singularity --version')

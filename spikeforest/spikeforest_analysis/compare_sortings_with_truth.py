@@ -33,7 +33,7 @@ def _create_job_for_sorting(sorting, container):
     return job
 
 @mtlogging.log()
-def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None):
+def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None,upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'compare sortings with truth'))
     container='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
@@ -79,6 +79,9 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label
         comparison_with_truth['json'] = jobs_gen_table[ii].result.outputs['json_out']
         comparison_with_truth['html'] = jobs_gen_table[ii].result.outputs['html_out']
         sorting['comparison_with_truth'] = comparison_with_truth
+        if upload_to:
+            mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
+            mt.createSnapshot(path=comparison_with_truth['html'], upload_to=upload_to)
 
     return sortings_out
 
@@ -89,6 +92,7 @@ class GenSortingComparisonTable(mlpr.Processor):
     units_true=mlpr.IntegerListParameter('List of true units to consider')
     json_out=mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out=mlpr.Output('Table as .html file produced from pandas dataframe')
+    CONTAINER='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
     
     def run(self):
         sorting=SFMdaSortingExtractor(firings_file=self.firings)

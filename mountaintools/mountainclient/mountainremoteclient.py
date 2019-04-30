@@ -113,7 +113,7 @@ class MountainRemoteClient():
                 return False
             return True
         else:
-            print('Already on server (**)')
+            # print('Already on server (**)')
             return True
 
     def getSubKeys(self, *, collection, key, url):

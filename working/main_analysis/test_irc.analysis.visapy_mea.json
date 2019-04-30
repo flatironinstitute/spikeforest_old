@@ -4,7 +4,7 @@
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.visapy_mea.json"],
     "sorter_keys": ["irc", "irc-d2"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
-    "download_from": ["spikeforest.spikeforest2", "kbucket"],
+    "download_from": ["spikeforest.spikeforest2", "spikeforest.kbucket"],
     "job_timeout":1200,
     "test":false,
     "compute_resources": {

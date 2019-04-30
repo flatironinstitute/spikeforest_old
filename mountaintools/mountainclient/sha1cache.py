@@ -269,7 +269,7 @@ def _safe_remove_file(fname):
 
 @mtlogging.log()
 def _read_json_file(path, *, delete_on_error=False):
-    with FileLock(path+'.lock'):
+    with FileLock(path+'.lock', exclusive=False):
         try:
             with open(path) as f:
                 return json.load(f)
@@ -287,7 +287,7 @@ def _read_json_file(path, *, delete_on_error=False):
 
 
 def _write_json_file(obj, path):
-    with FileLock(path+'.lock'):
+    with FileLock(path+'.lock', exclusive=True):
         with open(path, 'w') as f:
             return json.dump(obj, f)
 

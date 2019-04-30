@@ -8,7 +8,7 @@ from .recordingcontext import RecordingContext
 local_client = MountainClient()
 
 class SpikeForestContext():
-    def __init__(self, studies=[], recordings=[], sorting_results=[]):
+    def __init__(self, studies=[], recordings=[], sorting_results=[], aggregated_sorting_results=None):
         self._signal_handlers = dict()
         self._any_state_change_handlers = []
         
@@ -16,6 +16,7 @@ class SpikeForestContext():
         self._studies = studies
         self._recordings = recordings
         self._sorting_results = sorting_results
+        self._aggregated_sorting_results = aggregated_sorting_results
         self._recording_contexts = dict()
 
         self._studies_by_name = dict()
@@ -46,6 +47,12 @@ class SpikeForestContext():
     def viewLaunchers(self):
         return get_spikeforest_view_launchers(self)
 
+    def studyObject(self, name):
+        return deepcopy(self._studies_by_name.get(name, {}))
+
+    def studySetNameForStudy(self, name):
+        return self.studyObject(name).get('study_set')
+
     def studyNames(self):
         return sorted(list())
 
@@ -59,6 +66,16 @@ class SpikeForestContext():
         if not recid:
             return None
         return self._recording_contexts[recid]
+
+    def hasAggregatedSortingResults(self):
+        return self._aggregated_sorting_results is not None
+
+    def aggregatedSortingResults(self):
+        if type(self._aggregated_sorting_results) == str:
+            obj = mt.loadObject(path=self._aggregated_sorting_results)
+            return obj
+        else:
+            return self._aggregated_sorting_results
 
     # def recordingExtractor(self, recording_name, *, download):
     #     print('loading recording extractor....', recording_name, download)

@@ -1,0 +1,26 @@
+{
+    "analysis_name": "test_ks2_synth_magland",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.test_ks2_synth_magland.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.test_synth_magland.json"],
+    "sorter_keys": ["ms4"],
+    "sorter_keys_disable": ["ks2"],
+    "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
+    "upload_to": "spikeforest.kbucket",
+    "job_timeout":1200,
+    "compute_resources": {
+        "default":null,
+        "cpu":null,
+        "gpu":null
+    },
+    "sorters":{
+        "ks2": {
+            "name": "KiloSort2",
+            "processor_name": "KiloSort2",
+            "params": {
+                "detect_sign": -1,
+                "adjacency_radius": 50
+            },
+            "compute_resource": "gpu"
+        }
+    }
+}

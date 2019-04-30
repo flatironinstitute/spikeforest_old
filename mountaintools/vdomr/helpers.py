@@ -93,6 +93,8 @@ p = _create_component('p')
 pre = _create_component('pre')
 ul = _create_component('ul')
 
+nobr = _create_component('nobr')
+
 # Inline text semantics
 a = _create_component('a', callbacks=[dict(name='onclick', kwargs='{}')])
 abbr = _create_component('abbr')
@@ -142,7 +144,7 @@ datalist = _create_component('datalist')
 fieldset = _create_component('fieldset')
 form = _create_component('form')
 input = _create_component('input', callbacks=[dict(
-    name='onchange', kwargs='{value:this.value}')])
+    name='onchange', kwargs='{value:this.value}'), dict(name='onclick', kwargs='{}')])
 label = _create_component('label')
 legend = _create_component('legend')
 meter = _create_component('meter')

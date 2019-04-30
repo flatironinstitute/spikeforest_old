@@ -46,10 +46,10 @@ def test_spikeforest_analysis(tmpdir):
             SFMdaSortingExtractor.writeSorting(
                 sorting=sx_true, save_path=dirname+'/firings_true.mda')
 
-    # Use this to optionally connect to a kbucket share:
-    # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
-    # for downloading containers if needed
-    mt.setRemoteConfig(alternate_share_ids=['spikeforest.spikeforest2'])
+    # # Use this to optionally connect to a kbucket share:
+    # # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
+    # # for downloading containers if needed
+    mt.configDownloadFrom(['spikeforest.spikeforest2'])
 
     # Specify the compute resource (see the note above)
     # compute_resource = 'local-computer'

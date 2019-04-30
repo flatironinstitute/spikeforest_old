@@ -12,7 +12,7 @@ class TableWidget(vd.Component):
         self._selection_changed_handlers = []
         vd.devel.loadBootstrap()
         vd.devel.loadJavascript(path=source_path+'/tablewidget.js')
-        vd.devel.loadJavascript(path=source_path+'/../../../spikeforest/spikeforestwidgets/dist/jquery-3.3.1.min.js')
+        vd.devel.loadJavascript(path=source_path+'/../../spikeforestwidgets/dist/jquery-3.3.1.min.js')
         vd.devel.loadCss(css=_CSS)
     def currentRowIndex(self):
         return self._current_row_index

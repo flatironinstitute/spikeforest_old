@@ -129,7 +129,7 @@ class MountainJob():
                 else:
                     ext = _get_file_ext(input_value) or '.in'
                     
-                    if input0.get('directory', False) and (input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://')):
+                    if input0.get('directory', False) and ((input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://'))):
                         infile_in_container = input0['path']
                     else:
                         infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
@@ -319,7 +319,7 @@ class MountainJob():
             raise Exception('Processor code is missing for job', self._job_object.get('processor_name'))
         code = mt.loadObject(path = self._job_object['processor_code'])
         if code is None:
-            raise Exception('Unable to load processor code for job.')
+            raise Exception('Unable to load processor code for job: {}'.format(self._job_object['processor_code']))
         _write_python_code_to_directory(temp_path+'/processor_source', code)
         
         processor_class_name = self._job_object['processor_class_name']

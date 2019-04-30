@@ -1,0 +1,6 @@
+recursive-include spikesorters *.params
+recursive-include spikesorters config*
+recursive-include spikeforestwidgets *.js
+recursive-include spikeforestwidgets *.css
+recursive-include forestview *.js
+recursive-include forestview *.css

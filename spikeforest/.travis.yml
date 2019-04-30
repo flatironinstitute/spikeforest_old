@@ -1,0 +1,17 @@
+language: python
+python:
+- '3.6'
+install:
+- pip install pytest
+- pip install mountaintools==0.2.5
+- pip install .
+script:
+- echo "no test"
+# - pytest -s
+deploy:
+  provider: pypi
+  user: magland
+  on:
+    tags: true
+  password:
+    secure: qE/jQlSwRcAX75u+Pg5KQqRKcKbbaEDIPcRgeMuJHhuPe+ed93NgVbOAaRcrxmmN1RAATBczPy/Iu/oJKfvqTMzGzD2urctllFZH4B7L9ToGyqS90cQFiBKpPa0qM3DediF7WbenHXzuupoo5txBr6UmDVnucGleVAksXxyw3HsmC8f0Xf50cdJyxQFtswvTiIloJubrm2DjX9GBtgHvZDLkiY1yyu9sOEScX+spZ17hIOQMeR0q15GBtqbg7J9QyzB6vJUumWj5/DLy1sZxHVAREEFb+KB9xjs2nncZPCz/ysZowg1Wg8aRFW7l772Z8j5Do/1shVtj6jQ8NyZ7uNH6HN7LOxmUmvQWPvKSdpHStj9y/Tgo/IrWfKTsNJq2aK0MgFDCD2BfQZ0cyQeaMnP5rzuOlVL7W3m7sEXp01raJfusp5vxEfgTqYZvPC2553/0gzbq3E0nkM+sswe/eDDb4F3qdWs4bSjKjNTZEpZhRZcZmyaJDq9K0eNi8YHD/+YDzdR+daKQkNREIHXcOdQFKLOIKuEGp7/mDMvT7I1lU4y2CuXq+DIObFw6uoX1SDucrH05uMQzghqeMnXjZqjoy60a3d9hvpgDf6I5Wmbxed0v2DHif/Skm1YI3FynY7Hk2QvzmRnZSjnLx5UoR2/VD57ElWYvTUWH745EpFo=
