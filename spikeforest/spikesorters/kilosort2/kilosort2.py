@@ -42,19 +42,19 @@ class KiloSort2(mlpr.Processor):
     freq_max = mlpr.FloatParameter(
         optional=True, default=6000, description='Use 0 for no bandpass filtering')
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.98, description='TODO')
+        optional=True, default=0.98, description='Threshold for merging clusters.')
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=3, description='TODO')
+        optional=True, default=3, description='Principal Components per channel')
     Th1 = mlpr.FloatParameter(
-        optional=True, default=10, description='TODO')
+        optional=True, default=10, description='Threshold for projections on last pass.')
     Th2 = mlpr.FloatParameter(
-        optional=True, default=4, description='TODO')
+        optional=True, default=4, description='Threshold for projections.')
     CAR = mlpr.IntegerParameter(
-        optional=True, default=1, description='TODO')
+        optional=True, default=1, description='Whether to do common average referencing.')
     nfilt_factor = mlpr.IntegerParameter(
-        optional=True, default=4, description='TODO')
+        optional=True, default=4, description='Max number of assignable clusters (even during fitting) for each channel.')
     NT_fac = mlpr.IntegerParameter(
-        optional=True, default=1024, description='TODO')
+        optional=True, default=1024, description='Batch size (will be multiplied by 32).')
 
 
     def run(self):
