@@ -131,6 +131,7 @@ def main():
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
         studies = studies + obj['studies']
+        print(obj.keys())
         study_sets = study_sets + obj.get('study_sets', [])
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
