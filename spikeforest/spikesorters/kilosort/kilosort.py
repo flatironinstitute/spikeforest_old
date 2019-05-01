@@ -149,7 +149,7 @@ quit(0);
             tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
             firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
     matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort.m',keep_temp_files=True)
-    matlab_cmd.write();
+    matlab_cmd.write()
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
