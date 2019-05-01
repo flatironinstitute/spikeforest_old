@@ -17,7 +17,7 @@ import json
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.2.4'
+    VERSION = '0.2.5'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.m']
@@ -44,7 +44,7 @@ class IronClust(mlpr.Processor):
     merge_thresh = mlpr.FloatParameter(
         optional=True, default=0.98, description='Threshold for automated merging')
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=3, description='Number of principal components per channel')
+        optional=True, default=2, description='Number of principal components per channel')
 
     # added in version 0.2.4
     whiten = mlpr.BoolParameter(
@@ -56,15 +56,15 @@ class IronClust(mlpr.Processor):
     common_ref_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, mean, median}')
     nTime_clu = mlpr.IntegerParameter(
-        optional=True, default=1, description='Number of time periods to cluster together')
+        optional=True, default=4, description='Number of time periods to cluster together')
     nTime_drift = mlpr.IntegerParameter(
-        optional=True, default=1, description='Number of time segments for drift correction')
+        optional=True, default=64, description='Number of time segments for drift correction')
     knn = mlpr.IntegerParameter(
         optional=True, default=30, description='K nearest neighbors')
     min_count = mlpr.IntegerParameter(
         optional=True, default=30, description='Minimum cluster size')
     fGpu = mlpr.BoolParameter(
-        optional=True, default=True, description='Use GPU if available')
+        optional=True, default=False, description='Use GPU if available')
     fft_thresh = mlpr.FloatParameter(
         optional=True, default=0, description='FFT-based noise peak threshold')
     nSites_whiten = mlpr.IntegerParameter(
