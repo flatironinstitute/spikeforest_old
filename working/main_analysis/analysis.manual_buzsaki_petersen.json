@@ -2,8 +2,8 @@
     "analysis_name": "manual_buzsaki_petersen",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_buzsaki_petersen.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_buzsaki_petersen.json"],
-    "sorter_keys": ["ms4", "irc"],
-    "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
+    "sorter_keys": ["ms4", "irc", "irc-s", "ks", "ks2"],
+    "sorter_keys_disable": ["ms4", "irc", "irc-s", "ks", "ks2", "yass", "sc"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
     "job_timeout":1200,
@@ -24,6 +24,14 @@
             "compute_resource":"cpu"
         },
         "irc": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {
+                "detect_sign": -1
+            },
+            "compute_resource": "cpu"
+        },
+        "irc-s": {
             "name":"IronClust-s",
             "processor_name":"IronClust",
             "params": {

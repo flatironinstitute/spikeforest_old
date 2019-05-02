@@ -57,12 +57,12 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                         if comparison is None:
                             # put in a zero comparison
                             comparison = []
-                            true_unit in true_units_info:
+                            for true_unit in true_units_info:
                                 comparison.append(dict(
                                     unit_id = true_unit['unit_id'],
-                                    unit['num_false_positives'] = 0,
-                                    unit['num_false_negatives'] = true_unit['num_events'],
-                                    unit['num_matches'] = 0
+                                    num_false_positives = 0,
+                                    num_false_negatives = true_unit['num_events'],
+                                    num_matches = 0
                                 ))
                         if comparison is not None:
                             recording_results0=dict(
