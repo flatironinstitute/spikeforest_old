@@ -3,6 +3,7 @@
 import argparse
 from mountaintools import client as mt
 import os
+import frontmatter
 
 help_txt="""
 This script saves collections in the following .json files in an output directory
@@ -81,6 +82,10 @@ Sorter
 * processorName (str)
 * processorVersion (str)
 * sortingParameters (object)
+
+Algorithm
+* label
+* processor_name
 """
 
 def main():
@@ -138,6 +143,22 @@ def main():
 
     if output_dir is not None:
         os.mkdir(output_dir)
+        
+    ### ALGORITHMS
+    print('******************************** ASSEMBLING ALGORITHMS...')
+    Algorithms = []
+    basepath = '../../spikeforest/spikesorters/descriptions'
+    repo_base_url = 'https://github.com/flatironinstitute/spikeforest/blob/master'
+    for item in os.listdir(basepath):
+        if item.endswith('.md'):
+            alg = frontmatter.load(basepath+'/'+item).to_dict()
+            alg['markdown_link'] = repo_base_url + '/spikeforest/spikesorters/descriptions/' + item
+            alg['markdown'] = alg['content']
+            del alg['content']
+            Algorithms.append(alg)
+    print([alg['label'] for alg in Algorithms])
+    if output_dir is not None:
+        mt.saveObject(object=Algorithms, dest_path=os.path.abspath(os.path.join(output_dir, 'Algorithms.json')))
 
     ### STUDY SETS
     print('******************************** ASSEMBLING STUDY SETS...')
@@ -274,7 +295,8 @@ def main():
         unit_results=UnitResults,
         sorting_results=SortingResults,
         sorters=Sorters,
-        studies=Studies
+        studies=Studies,
+        algorithms=Algorithms
     )
     address = mt.saveObject(object=obj)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
