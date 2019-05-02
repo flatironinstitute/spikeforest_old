@@ -131,6 +131,6 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                     )
                     aggregated_sorting_results['study_sorting_results'].append(study_sorting_result)
                 else:
-                    print('WARNING: Skipping aggregation for sorter because not all comparisons exist: {}'.format(srname))
+                    print('WARNING: Skipping aggregation for sorter because no comparisons exist: {}'.format(srname))
     
     return aggregated_sorting_results
