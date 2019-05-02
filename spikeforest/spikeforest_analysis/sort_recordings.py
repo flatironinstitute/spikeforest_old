@@ -171,7 +171,8 @@ def multi_sort_recordings(*,sorters,recordings,num_workers=None,disable_containe
             sr['firings'] = (sorting_job_results0[ii].outputs or dict()).get('firings_out', None)
             if upload_to:
                 mt.createSnapshot(path=sr['console_out'], upload_to=upload_to)
-                mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
+                if sr['firings']:
+                    mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
         sorting_results.extend(sorting_results0)
 
     return sorting_results
