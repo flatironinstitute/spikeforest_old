@@ -44,7 +44,7 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                         some_comparison_exists = True
                 if not comparisons_all_exist:
                     print('WARNING: Comparisons do not all exist for sorter sorter: {}'.format(srname))
-                if not some_comparison_exists:
+                if some_comparison_exists:
                     for recording_index,rname in enumerate(S.recordingNames()):
                         print('recording: {}/{}'.format(study_name,rname))
                         rec = S.recording(rname)
