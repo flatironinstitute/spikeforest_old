@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -68,6 +68,17 @@ def test_ks2_neuropix32c():
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
+
+@pytest.mark.spikeforest
+@pytest.mark.irc_neuropix32c
+@pytest.mark.exclude
+def test_irc_neuropix32c():
+    sorter = IronClust
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=75,
     )
     do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
 
