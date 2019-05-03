@@ -211,7 +211,7 @@ def main():
     SortingResults = []
     sorter_names_by_study = dict()
     for sr in sorting_results:
-        if ('comparison_with_truth' in sr) and (sr['comparison_with_truth']):
+        if sr.get('comparison_with_truth', None):
             SortingResults.append(dict(
                 recording=sr['recording']['name'],
                 study=sr['recording']['study'],
@@ -247,6 +247,7 @@ def main():
                 ))
         else:
             print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
+            print('Console output is here: ' + sr['console_out'])
     for study in sorter_names_by_study.keys():
         sorter_names_by_study[study] = list(sorter_names_by_study[study])
         sorter_names_by_study[study].sort()

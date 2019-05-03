@@ -181,7 +181,7 @@ def _read_header(path):
     f = open(path, "rb")
     try:
         dt_code = _read_int32(f)
-        # num_bytes_per_entry = _read_int32(f)
+        _ = _read_int32(f)  # num bytes per entry
         num_dims = _read_int32(f)
         uses64bitdims = False
         if (num_dims < 0):
@@ -505,7 +505,7 @@ def _write_int64(f, val):
 def _header_from_file(f):
     try:
         dt_code = _read_int32(f)
-        # num_bytes_per_entry = _read_int32(f)
+        _ = _read_int32(f)  # num bytes per entry
         num_dims = _read_int32(f)
         uses64bitdims = False
         if (num_dims < 0):
