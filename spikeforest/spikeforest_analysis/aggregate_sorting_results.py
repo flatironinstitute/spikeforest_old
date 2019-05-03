@@ -76,8 +76,8 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                             )
 
                             ok = True
-                            for i in comparison:
-                                unit = comparison[i]
+                            for _, unit in enumerate(comparison):
+                                # unit = comparison[i]
                                 # best_unit = unit['best_unit']
                                 unit_id = unit['unit_id']
                                 true_unit = true_units_info_by_id[unit_id]
