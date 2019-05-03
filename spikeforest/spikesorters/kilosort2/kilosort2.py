@@ -18,7 +18,7 @@ import shlex
 
 class KiloSort2(mlpr.Processor):
     NAME = 'KiloSort2'
-    VERSION = '0.2.3'  # wrapper VERSION
+    VERSION = '0.2.32'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -38,13 +38,24 @@ class KiloSort2(mlpr.Processor):
         optional=True, default=3, description='')
     # prm_template_name=mlpr.StringParameter(optional=False,description='TODO')
     freq_min = mlpr.FloatParameter(
-        optional=True, default=150, description='Use 0 for no bandpass filtering')
+        optional=True, default=500, description='Use 0 for no bandpass filtering')
     freq_max = mlpr.FloatParameter(
         optional=True, default=6000, description='Use 0 for no bandpass filtering')
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.98, description='TODO')
+        optional=True, default=0.98, description='Threshold for merging clusters.')
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=3, description='TODO')
+        optional=True, default=3, description='Principal Components per channel')
+    Th1 = mlpr.FloatParameter(
+        optional=True, default=10, description='Threshold for projections on last pass.')
+    Th2 = mlpr.FloatParameter(
+        optional=True, default=4, description='Threshold for projections.')
+    CAR = mlpr.IntegerParameter(
+        optional=True, default=1, description='Whether to do common average referencing.')
+    nfilt_factor = mlpr.IntegerParameter(
+        optional=True, default=4, description='Max number of assignable clusters (even during fitting) for each channel.')
+    NT_fac = mlpr.IntegerParameter(
+        optional=True, default=1024, description='Batch size (will be multiplied by 32).')
+
 
     def run(self):
         code = ''.join(random.choice(string.ascii_uppercase)
@@ -67,7 +78,12 @@ class KiloSort2(mlpr.Processor):
                 merge_thresh=self.merge_thresh,
                 freq_min=self.freq_min,
                 freq_max=self.freq_max,
-                pc_per_chan=self.pc_per_chan
+                pc_per_chan=self.pc_per_chan,
+                Th1=self.Th1,
+                Th2=self.Th2,
+                CAR=self.CAR,
+                nfilt_factor=self.nfilt_factor,
+                NT_fac=self.NT_fac
             )
             SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
@@ -79,18 +95,23 @@ class KiloSort2(mlpr.Processor):
 
 
 def kilosort2_helper(*,
-                     recording,  # Recording object
-                     tmpdir,  # Temporary working directory
-                     detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
-                     adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
-                     detect_threshold=5,  # Threshold for detection
-                     merge_thresh=.98,  # Cluster merging threhold 0..1
-                     freq_min=150,  # Lower frequency limit for band-pass filter
-                     freq_max=6000,  # Upper frequency limit for band-pass filter
-                     pc_per_chan=3,  # Number of pc per channel
-                     KILOSORT2_PATH=None,  # github kilosort2
-                     IRONCLUST_PATH=None  # github ironclust
-                     ):
+                    recording,  # Recording object
+                    tmpdir,  # Temporary working directory
+                    detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
+                    adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
+                    detect_threshold=5,  # Threshold for detection
+                    merge_thresh=.98,  # Cluster merging threhold 0..1
+                    freq_min=150,  # Lower frequency limit for band-pass filter
+                    freq_max=6000,  # Upper frequency limit for band-pass filter
+                    pc_per_chan=3,  # Number of pc per channel
+                    Th1=10,
+                    Th2=4,
+                    CAR=1,
+                    nfilt_factor=4,
+                    NT_fac=1024,
+                    KILOSORT2_PATH=None,  # github kilosort2
+                    IRONCLUST_PATH=None  # github ironclust
+                    ):
     if KILOSORT2_PATH is None:
         KILOSORT2_PATH = os.getenv('KILOSORT2_PATH', None)
     if not KILOSORT2_PATH:
@@ -130,31 +151,40 @@ def kilosort2_helper(*,
     txt += 'freq_min={}\n'.format(freq_min)
     txt += 'freq_max={}\n'.format(freq_max)
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
-    _write_text_file(dataset_dir + '/argfile.txt', txt)
+    txt += 'Th1={}\n'.format(Th1)
+    txt += 'Th2={}\n'.format(Th2)
+    txt += 'CAR={}\n'.format(CAR)
+    txt += 'nfilt_factor={}\n'.format(nfilt_factor)
+    txt += 'NT_fac={}\n'.format(NT_fac)
+    _write_text_file(dataset_dir+'/argfile.txt', txt)
 
-    print('Running Kilosort2 in {tmpdir}...'.format(tmpdir=tmpdir))
+    print('Running kilosort2...')
+    print('Running kilosort2 in {tmpdir}...'.format(tmpdir=tmpdir))
+    logfilename = 'run.log'
+    print('Logfile at {tmpdir}...'.format(tmpdir=logfilename))
     cmd = '''
-        addpath('{source_dir}');
-        try
-            p_kilosort2('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
-        catch
-            quit(1);
-        end
-        quit(0);
+addpath('{source_dir}');
+try
+    p_kilosort2('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
+catch e
+    disp(getReport(e))
+    quit(1);
+end
+quit(0);
         '''
-    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH,
-                     tmpdir=tmpdir, raw=dataset_dir + '/raw.mda', geom=dataset_dir + '/geom.csv',
-                     firings=tmpdir + '/firings.mda', arg=dataset_dir + '/argfile.txt')
-    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_kilosort2.m', keep_temp_files=True)
-    matlab_cmd.write()
+    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH, \
+            tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
+            firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
+    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort.m',keep_temp_files=True)
+    matlab_cmd.write();
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        echo '=====================' `date` '=====================' >> run_kilosort2.log
-        matlab -nosplash -nodisplay -r run_kilosort2 &>> run_kilosort2.log
-    '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_kilosort2.sh', keep_temp_files=True)
-    shell_cmd.write(tmpdir + '/run_kilosort2.sh')
+        echo '=====================' `date` '=====================' >> {lf}
+        matlab -nosplash -nodisplay -r run_kilosort &>> {lf}
+    '''.format(tmpdir=tmpdir,lf=logfilename)
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir+'/run_kilosort.sh')
     shell_cmd.start()
     retcode = shell_cmd.wait()
 
