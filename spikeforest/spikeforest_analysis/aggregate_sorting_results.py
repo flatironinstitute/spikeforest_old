@@ -47,7 +47,6 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                     print('WARNING: Comparisons do not all exist for sorter sorter: {}'.format(srname))
                 if some_comparison_exists:
                     for recording_index, rname in enumerate(S.recordingNames()):
-                        print('recording: {}/{}'.format(study_name, rname))
                         rec = S.recording(rname)
                         true_units_info = rec.trueUnitsInfo(format='json')
                         true_units_info_by_id = dict()
@@ -57,15 +56,16 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                         comparison = SR.comparisonWithTruth(format='json')
                         if comparison is None:
                             # put in a zero comparison
-                            comparison = []
+                            comparison = dict()
                             for true_unit in true_units_info:
-                                comparison.append(dict(
+                                comparison[unit_id] = dict(
                                     unit_id=true_unit['unit_id'],
                                     num_false_positives=0,
                                     num_false_negatives=true_unit['num_events'],
                                     num_matches=0
-                                ))
+                                )
                         if comparison is not None:
+                            print(comparison)
                             recording_results0 = dict(
                                 true_unit_ids=[],
                                 true_unit_snrs=[],
@@ -76,8 +76,8 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                             )
 
                             ok = True
-                            for _, unit in enumerate(comparison):
-                                # unit = comparison[i]
+                            for key0 in comparison.keys():
+                                unit = comparison[key0]
                                 # best_unit = unit['best_unit']
                                 unit_id = unit['unit_id']
                                 true_unit = true_units_info_by_id[unit_id]
