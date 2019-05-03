@@ -85,7 +85,6 @@
             "name": "HerdingSpikes2",
             "processor_name": "HerdingSpikes2",
             "params": {
-                "detect_sign": -1,
                 "adjacency_radius": 50
             },
             "compute_resource": "cpu"
