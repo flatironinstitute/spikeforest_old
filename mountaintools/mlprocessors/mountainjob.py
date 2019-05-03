@@ -21,14 +21,15 @@ import numpy as np
 
 local_client = MountainClient()
 
+
 class MountainJob():
     def __init__(self, *, processor=None, job_object=None):
         if processor and (job_object is None):
             raise Exception('Use createJob() or createJobs() to create MountainJob objects.')
-        self.result=None
-        self._processor=processor
-        self._job_object=deepcopy(job_object)
-        self._use_cached_results_only=False
+        self.result = None
+        self._processor = processor
+        self._job_object = deepcopy(job_object)
+        self._use_cached_results_only = False
 
     def isNull(self):
         return (self._job_object is None)
@@ -39,9 +40,9 @@ class MountainJob():
     def addFilesToRealize(self, files_to_realize):
         if self._job_object is None:
             return
-        if type(files_to_realize)==str:
+        if type(files_to_realize) == str:
             self._job_object['additional_files_to_realize'].append(files_to_realize)
-        elif type(files_to_realize)==list:
+        elif type(files_to_realize) == list:
             self._job_object['additional_files_to_realize'].extend(files_to_realize)
         else:
             raise Exception('Unexpected type of files_to_realize in addFilesToRealize')
@@ -50,7 +51,7 @@ class MountainJob():
         if self._job_object is None:
             return []
         # These are the files needed at the compute location to actually run the job
-        ret=[]
+        ret = []
         if self._job_object['container']:
             ret.append(self._job_object['container'])
         for input0 in self._job_object['inputs'].values():
@@ -101,8 +102,8 @@ class MountainJob():
         if self._use_cached_results_only:
             return None
 
-        keep_temp_files=True
-        with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_'+self._job_object['processor_name']) as tmp_output_path:
+        keep_temp_files = True
+        with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_outputdir_' + self._job_object['processor_name']) as tmp_output_path:
             attributes_for_processor = dict()
             tmp_output_file_names = dict()
             output_files_to_copy = []
@@ -128,7 +129,7 @@ class MountainJob():
                     attributes_for_processor[input_name] = input_value
                 else:
                     ext = _get_file_ext(input_value) or '.in'
-                    
+
                     if input0.get('directory', False) and ((input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://'))):
                         infile_in_container = input0['path']
                     else:
@@ -136,19 +137,19 @@ class MountainJob():
                         inputs_to_bind.append((input_value, infile_in_container))
                     attributes_for_processor[input_name] = infile_in_container
             for output_name, output_value in self._job_object['outputs'].items():
-                if type(output_value)==str:
+                if type(output_value) == str:
                     file_ext = _get_file_ext(output_value) or '.out'
-                elif type(output_value)==dict:
+                elif type(output_value) == dict:
                     file_ext = output_value.get('ext', '.out')
                 else:
                     raise Exception('Unexpected type for output value {}: {}'.format(output_name, type(output_value)))
-                tmp_output_fname = os.path.join(tmp_output_path, output_name+file_ext)
+                tmp_output_fname = os.path.join(tmp_output_path, output_name + file_ext)
                 tmp_output_file_names[output_name] = tmp_output_fname
-                if type(output_value)==str:
-                    output_fname=output_value
+                if type(output_value) == str:
+                    output_fname = output_value
                     output_files_to_copy.append((tmp_output_fname, output_fname))
                     output_files[output_name] = output_fname
-                elif type(output_value)==dict:
+                elif type(output_value) == dict:
                     if output_value.get('dest_path', None):
                         output_fname = output_value['dest_path']
                         output_files_to_copy.append((tmp_output_fname, output_fname))
@@ -158,9 +159,9 @@ class MountainJob():
                 else:
                     raise Exception('Unexpected type for output value {}: {}'.format(output_name, type(output_value)))
                 if not container:
-                   attributes_for_processor[output_name] = tmp_output_fname
+                    attributes_for_processor[output_name] = tmp_output_fname
                 else:
-                    tmp_output_fname_in_container = os.path.join('/processor_outputs', output_name+file_ext)
+                    tmp_output_fname_in_container = os.path.join('/processor_outputs', output_name + file_ext)
                     attributes_for_processor[output_name] = tmp_output_fname_in_container
             for param_name, param_value in self._job_object['parameters'].items():
                 attributes_for_processor[param_name] = param_value
@@ -186,12 +187,12 @@ class MountainJob():
                     runtime_capture.stop_capturing()
                     R.retcode = -1
                     R.runtime_info = runtime_capture.runtimeInfo()
-                    R.console_out = local_client.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
+                    R.console_out = local_client.saveText(text=runtime_capture.consoleOut(), basename='console_out.txt')
                     return R
             else:
                 # Otherwise we need to do code generation
                 timer = time.time()
-                with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_'+self._job_object['processor_name']) as temp_path:
+                with TemporaryDirectory(remove=(not keep_temp_files), prefix='tmp_execute_' + self._job_object['processor_name']) as temp_path:
                     self._generate_execute_code(temp_path, attributes_for_processor=attributes_for_processor)
 
                     run_sh_script = ShellScript("""
@@ -205,7 +206,7 @@ class MountainJob():
                         run_sh_script.substitute('{temp_path}', temp_path)
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname)
                         run_sh_script.substitute('{env_vars}', '')
-                        shell_script=run_sh_script
+                        shell_script = run_sh_script
                     else:
                         print('Realizing container file: {}'.format(container))
                         container_orig = container
@@ -215,7 +216,7 @@ class MountainJob():
                         singularity_opts, env_vars = _get_singularity_opts_and_env_vars()
                         singularity_opts.append('-B {}:{}'.format(temp_path, '/run_in_container'))
                         singularity_opts.append('-B {}:{}'.format(tmp_output_path, '/processor_outputs'))
-                        source_path=os.path.dirname(os.path.realpath(__file__))
+                        source_path = os.path.dirname(os.path.realpath(__file__))
                         singularity_opts.append('-B {}:/python/mountaintools'.format(os.path.abspath(os.path.join(source_path, '..'))))
                         for tobind in inputs_to_bind:
                             singularity_opts.append('-B {}:{}'.format(tobind[0], tobind[1]))
@@ -225,10 +226,10 @@ class MountainJob():
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
                         env_vars.append('PYTHONPATH=/python/mountaintools')
-                        
+
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
-                        run_sh_script.substitute('{env_vars}', '\n'.join(['export '+env_var for env_var in env_vars]))
+                        run_sh_script.substitute('{env_vars}', '\n'.join(['export ' + env_var for env_var in env_vars]))
                         run_sh_script.write()
 
                         singularity_sh_script = ShellScript("""
@@ -258,22 +259,22 @@ class MountainJob():
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
-                        lines0=process_console_out.splitlines()
+                        lines0 = process_console_out.splitlines()
                         for line0 in lines0:
                             print('>> {}'.format(line0))
                     else:
                         print('>> No console out for process')
                 else:
-                    print('WARNING: no process console out file found: '+tmp_process_console_out_fname)
+                    print('WARNING: no process console out file found: ' + tmp_process_console_out_fname)
                 elapsed = time.time() - timer
                 print('========== {} exited with code {} after {} sec'.format(self._job_object['processor_name'], retcode, elapsed))
                 print('================================================================================')
-            
+
             runtime_capture.stop_capturing()
             R.retcode = retcode
             R.runtime_info = runtime_capture.runtimeInfo()
-            R.console_out = local_client.saveText(text = runtime_capture.consoleOut(), basename='console_out.txt')
-            R.outputs=dict()
+            R.console_out = local_client.saveText(text=runtime_capture.consoleOut(), basename='console_out.txt')
+            R.outputs = dict()
             if retcode == 0:
                 for output_tocopy in output_files_to_copy:
                     print('Saving output: {} -> {}'.format(output_tocopy[0], output_tocopy[1]))
@@ -317,11 +318,11 @@ class MountainJob():
     def _generate_execute_code(self, temp_path, attributes_for_processor):
         if not self._job_object['processor_code']:
             raise Exception('Processor code is missing for job', self._job_object.get('processor_name'))
-        code = mt.loadObject(path = self._job_object['processor_code'])
+        code = mt.loadObject(path=self._job_object['processor_code'])
         if code is None:
             raise Exception('Unable to load processor code for job: {}'.format(self._job_object['processor_code']))
-        _write_python_code_to_directory(temp_path+'/processor_source', code)
-        
+        _write_python_code_to_directory(temp_path + '/processor_source', code)
+
         processor_class_name = self._job_object['processor_class_name']
 
         run_py_script = ShellScript("""
@@ -344,7 +345,7 @@ class MountainJob():
                     sys.stderr.flush()
                     raise
         """)
-        
+
         set_attributes_code = []
         for attr_name, attr_val in attributes_for_processor.items():
             set_attributes_code.append(
@@ -365,7 +366,7 @@ class MountainJob():
             if not output_path:
                 return None
             output_paths[output_name] = output_path
-        
+
         runtime_info_signature = self._job_object['runtime_info_signature']
         output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature, check_alt=True)
         if not output_paths['--runtime-info--']:
@@ -375,14 +376,14 @@ class MountainJob():
         output_paths['--console-out--'] = local_client.getValue(key=console_out_signature, check_alt=True)
         if not output_paths['--console-out--']:
             return None
-    
+
         for output_name in output_paths.keys():
             orig_path = output_paths[output_name]
             output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
             if not output_paths[output_name]:
                 print('Unable to realize cached output', output_name, orig_path)
                 return None
-            
+
         runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
         if runtime_info is None:
             print('Unable to load cached runtime info', output_paths['--runtime-info--'])
@@ -392,12 +393,12 @@ class MountainJob():
         if console_out_text is None:
             print('Unable to load cached console out text:', output_paths['--console-out--'])
             return None
-        
+
         R = MountainJobResult()
-        R.retcode=0
+        R.retcode = 0
         R.runtime_info = runtime_info
         R.console_out = local_client.saveFile(path=output_paths['--console-out--'])
-        R.outputs=dict()
+        R.outputs = dict()
         for output_name in self._job_object['outputs'].keys():
             R.outputs[output_name] = local_client.saveFile(path=output_paths[output_name])
         return R
@@ -422,7 +423,7 @@ class MountainJob():
         for output_name, output0 in self._job_object['outputs'].items():
             if type(output0) == str:
                 dest_path = output0
-            elif type(output0)==dict:
+            elif type(output0) == dict:
                 if output0.get('dest_path', None):
                     dest_path = output0['dest_path']
                 else:
@@ -433,6 +434,7 @@ class MountainJob():
                 local_client.realizeFile(result.outputs[output_name], dest_path=dest_path)
                 result.outputs[output_name] = dest_path
 
+
 class MountainJobResult():
     def __init__(self, result_object=None):
         self.retcode = 0
@@ -442,6 +444,7 @@ class MountainJobResult():
         self.outputs = None
         if result_object is not None:
             self.fromObject(result_object)
+
     def getObject(self):
         return dict(
             retcode=self.retcode,
@@ -450,12 +453,14 @@ class MountainJobResult():
             runtime_info=deepcopy(self.runtime_info),
             outputs=deepcopy(self.outputs)
         )
+
     def fromObject(self, obj):
         self.retcode = obj['retcode']
         self.timed_out = obj.get('timed_out', False)
         self.console_out = obj['console_out']
         self.runtime_info = deepcopy(obj['runtime_info'])
         self.outputs = deepcopy(obj['outputs'])
+
 
 class Logger2(object):
     def __init__(self, file1, file2):
@@ -469,6 +474,7 @@ class Logger2(object):
     def flush(self):
         self.file1.flush()
         self.file2.flush()
+
 
 class ConsoleCapture():
     def __init__(self):
@@ -501,13 +507,14 @@ class ConsoleCapture():
 
     def runtimeInfo(self):
         return dict(
-            start_time = self._time_start - 0,
-            end_time = self._time_stop - 0,
-            elapsed_sec = self._time_stop - self._time_start
+            start_time=self._time_start - 0,
+            end_time=self._time_stop - 0,
+            elapsed_sec=self._time_stop - self._time_start
         )
 
     def consoleOut(self):
         return self._console_out
+
 
 def _write_python_code_to_directory(dirname, code):
     if os.path.exists(dirname):
@@ -515,12 +522,13 @@ def _write_python_code_to_directory(dirname, code):
             'Cannot write code to already existing directory: {}'.format(dirname))
     os.mkdir(dirname)
     for item in code['files']:
-        fname0 = dirname+'/'+item['name']
+        fname0 = dirname + '/' + item['name']
         with open(fname0, 'w') as f:
             f.write(item['content'])
     for item in code['dirs']:
         _write_python_code_to_directory(
-            dirname+'/'+item['name'], item['content'])
+            dirname + '/' + item['name'], item['content'])
+
 
 def _code_generate_value(val):
     if type(val) == str:
@@ -529,6 +537,7 @@ def _code_generate_value(val):
         return "{}".format(json.dumps(val))
     else:
         return val
+
 
 def _get_singularity_opts_and_env_vars():
     singularity_opts = []
@@ -550,6 +559,7 @@ def _get_singularity_opts_and_env_vars():
     singularity_opts.append('-e')
     return singularity_opts, env_vars
 
+
 def _read_text_file(fname):
     with open(fname) as f:
         return f.read()
@@ -559,9 +569,11 @@ def _write_text_file(fname, str):
     with open(fname, 'w') as f:
         f.write(str)
 
+
 def _get_file_ext(fname):
     _, ext = os.path.splitext(fname)
     return ext
+
 
 def _make_remote_url_for_file(fname):
     if fname.startswith('sha1://'):
@@ -570,7 +582,7 @@ def _make_remote_url_for_file(fname):
         return fname
     else:
         sha1 = local_client.computeFileSha1(fname)
-        return 'sha1://'+sha1+'/'+os.path.basename(fname)
+        return 'sha1://' + sha1 + '/' + os.path.basename(fname)
 
 # def _run_command_and_print_output(command, timeout=None):
 #     timer = time.time()

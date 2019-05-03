@@ -79,7 +79,7 @@ class IronClust(mlpr.Processor):
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/ironclust-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/ironclust-tmp-' + code
 
         print('------------------------------------- using', tmpdir)
 
@@ -92,7 +92,7 @@ class IronClust(mlpr.Processor):
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
 
-            all_params=dict()
+            all_params = dict()
             for param0 in self.PARAMETERS:
                 all_params[param0.name] = getattr(self, param0.name)
             sorting = ironclust_helper(
@@ -125,8 +125,6 @@ class IronClust(mlpr.Processor):
             SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            print('---------------------------------------', tmpdir, os.path.exists(tmpdir))
-            raise
             if os.path.exists(tmpdir):
                 if not getattr(self, '_keep_temp_files', False):
                     shutil.rmtree(tmpdir)
@@ -136,32 +134,32 @@ class IronClust(mlpr.Processor):
             # shutil.rmtree(tmpdir)
 
 
-def ironclust_helper(*,
-    recording,  # Recording object
-    tmpdir,  # Temporary working directory
-    # detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
-    # adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
-    # detect_threshold=5,  # Threshold for detection
-    # merge_thresh=.98,  # Cluster merging threhold 0..1
-    # freq_min=300,  # Lower frequency limit for band-pass filter
-    # freq_max=6000,  # Upper frequency limit for band-pass filter
-    # pc_per_chan=3,  # Number of pc per channel
-    # whiten=False,  # Spatial whitening
-    # filter_type='bandpass',  # filter type
-    # common_ref_type='none',  # common average reference type
-    # nTime_clu=1,  # Number of time periods to cluster together
-    # nTime_drift=1,  # Number of time segments for drift correction
-    # knn=30,  # K nearest neighbors
-    # min_count=30,  # minimum cluster size
-    # fGpu=True,  # use GPU if available
-    # fft_thresh=0,  # fft-cleanup threshold
-    # nSites_whiten=32,  # number of adjacent channels to whiten
-    # feature_type='gpca',  # feature name
-    # prm_template_name='',  # Name of the template file
-    ironclust_path=None,
-    params=dict(),
-    **kwargs
-    ):
+def ironclust_helper(
+        *,
+        recording,  # Recording object
+        tmpdir,  # Temporary working directory
+        # detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
+        # adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
+        # detect_threshold=5,  # Threshold for detection
+        # merge_thresh=.98,  # Cluster merging threhold 0..1
+        # freq_min=300,  # Lower frequency limit for band-pass filter
+        # freq_max=6000,  # Upper frequency limit for band-pass filter
+        # pc_per_chan=3,  # Number of pc per channel
+        # whiten=False,  # Spatial whitening
+        # filter_type='bandpass',  # filter type
+        # common_ref_type='none',  # common average reference type
+        # nTime_clu=1,  # Number of time periods to cluster together
+        # nTime_drift=1,  # Number of time segments for drift correction
+        # knn=30,  # K nearest neighbors
+        # min_count=30,  # minimum cluster size
+        # fGpu=True,  # use GPU if available
+        # fft_thresh=0,  # fft-cleanup threshold
+        # nSites_whiten=32,  # number of adjacent channels to whiten
+        # feature_type='gpca',  # feature name
+        # prm_template_name='',  # Name of the template file
+        ironclust_path=None,
+        params=dict(),
+        **kwargs):
     if ironclust_path is None:
         ironclust_path = os.getenv('ironclust_path', None)
     if not ironclust_path:
@@ -169,7 +167,7 @@ def ironclust_helper(*,
             'You must either set the ironclust_path environment variable, or pass the ironclust_path parameter')
     # source_dir=os.path.dirname(os.path.realpath(__file__))
 
-    dataset_dir = tmpdir+'/ironclust_dataset'
+    dataset_dir = tmpdir + '/ironclust_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.writeRecording(
         recording=recording, save_path=dataset_dir, params=params)
@@ -177,10 +175,10 @@ def ironclust_helper(*,
     samplerate = recording.getSamplingFrequency()
 
     print('Reading timeseries header...')
-    HH = mdaio.readmda_header(dataset_dir+'/raw.mda')
+    HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
     num_channels = HH.dims[0]
     num_timepoints = HH.dims[1]
-    duration_minutes = num_timepoints/samplerate/60
+    duration_minutes = num_timepoints / samplerate / 60
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(
         num_channels, num_timepoints, duration_minutes))
 
@@ -212,7 +210,7 @@ def ironclust_helper(*,
 
     if 'scale_factor' in params:
         txt += 'scale_factor={}\n'.format(params["scale_factor"])
-    _write_text_file(dataset_dir+'/argfile.txt', txt)
+    _write_text_file(dataset_dir + '/argfile.txt', txt)
 
     # new method
     print('Running ironclust in {tmpdir}...'.format(tmpdir=tmpdir))
@@ -229,19 +227,18 @@ def ironclust_helper(*,
     '''
     cmd = cmd.format(ironclust_path=ironclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
 
-    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir+'/run_ironclust.m',keep_temp_files=True)
+    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_ironclust.m', keep_temp_files=True)
     matlab_cmd.write()
 
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        echo '=====================' `date` '=====================' >> run_ironclust.log 
         matlab -nosplash -nodisplay -r run_ironclust
     '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_ironclust.sh', keep_temp_files=True)
-    shell_cmd.write(tmpdir+'/run_ironclust.sh')
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_ironclust.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir + '/run_ironclust.sh')
     shell_cmd.start()
-    
+
     retcode = shell_cmd.wait()
 
     if retcode != 0:
@@ -264,7 +261,7 @@ def ironclust_helper(*,
     #     raise Exception('IronClust returned a non-zero exit code')
 
     # parse output
-    result_fname = tmpdir+'/firings.mda'
+    result_fname = tmpdir + '/firings.mda'
     if not os.path.exists(result_fname):
         raise Exception('Result file does not exist: ' + result_fname)
 
@@ -300,11 +297,11 @@ def _run_command_and_print_output(command):
 
 
 def read_dataset_params(dsdir):
-    #ca = _load_required_modules()
-    fname1 = dsdir+'/params.json'
+    # ca = _load_required_modules()
+    fname1 = dsdir + '/params.json'
     fname2 = mt.realizeFile(path=fname1)
     if not fname2:
-        raise Exception('Unable to find file: '+fname1)
+        raise Exception('Unable to find file: ' + fname1)
     if not os.path.exists(fname2):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:

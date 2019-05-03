@@ -3,6 +3,7 @@ import spikeextractors as se
 import numpy as np
 from mountaintools import client as mt
 
+
 class FilterRecording(se.RecordingExtractor):
     def __init__(self, *, recording, chunk_size=10000):
         se.RecordingExtractor.__init__(self)
@@ -14,7 +15,7 @@ class FilterRecording(se.RecordingExtractor):
         return None
 
     def hash(self):
-        params = self.paramsForHash() # pylint: disable=assignment-from-none
+        params = self.paramsForHash()  # pylint: disable=assignment-from-none
         if params is None:
             raise Exception('Cannot compute hash. Params for hash not implemented.')
         return mt.sha1OfObject(dict(

@@ -5,20 +5,20 @@ import os
 import requests
 
 
-def steady_download_and_compute_sha1(url, target_path, chunk_size=1024*1024*10):
+def steady_download_and_compute_sha1(url, target_path, chunk_size=1024 * 1024 * 10):
     response = requests.head(url)
     size_bytes = int(response.headers['content-length'])
     str = ''.join(random.sample(string.ascii_lowercase, 8))
-    path_tmp = target_path+'.tmp.'+str
+    path_tmp = target_path + '.tmp.' + str
     try:
         hh = hashlib.sha1()
         with open(path_tmp, 'wb') as f:
             for ii in range(0, size_bytes, chunk_size):
-                jj = ii+chunk_size
+                jj = ii + chunk_size
                 if jj > size_bytes:
                     jj = size_bytes
                 headers = {
-                    'Range': 'bytes={}-{}'.format(ii, jj-1)
+                    'Range': 'bytes={}-{}'.format(ii, jj - 1)
                 }
                 response = requests.get(url, headers=headers, stream=True)
                 for chunk in response.iter_content(chunk_size=5120):

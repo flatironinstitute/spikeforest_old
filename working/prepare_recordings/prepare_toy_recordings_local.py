@@ -6,6 +6,7 @@ import os
 import shutil
 from mountaintools import client as mt
 
+
 def prepare_toy_recordings():
     studies = []
     recordings = []
@@ -46,12 +47,12 @@ def _generate_toy_recordings():
             SFMdaRecordingExtractor.writeRecording(
                 recording=rx, save_path=recpath)
             SFMdaSortingExtractor.writeSorting(
-                sorting=sx_true, save_path=recpath+'/firings_true.mda')
+                sorting=sx_true, save_path=recpath + '/firings_true.mda')
         ret.append(dict(
             name='example_K{}'.format(K),
             study='toy_study',
             directory=os.path.abspath(recpath),
-            description='A toy recording with K={} units'.format(K)            
+            description='A toy recording with K={} units'.format(K)
         ))
 
     return ret

@@ -13,6 +13,7 @@ from .tools import saveProbeFile
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from .spykingcircussortingextractor import SpykingCircusSortingExtractor
 
+
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
     VERSION = '0.2.2'
@@ -43,7 +44,7 @@ class SpykingCircus(mlpr.Processor):
     def run(self):
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/spyking-circus-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/spyking-circus-tmp-' + code
 
         num_workers = os.environ.get('NUM_WORKERS', 1)
 
@@ -96,19 +97,17 @@ def spyking_circus(
     electrode_dimensions=None,
     whitening_max_elts=1000,  # I believe it relates to subsampling and affects compute time
     # I believe it relates to subsampling and affects compute time
-    clustering_max_elts=10000,
-    singularity_container=None
+    clustering_max_elts=10000
 ):
-    if not singularity_container:
-        try:
-            import circus # pylint: disable=import-error
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("\nTo use Spyking-Circus, install spyking-circus: \n\n"
-                                      "\npip install spyking-circus"
-                                      "\nfor ubuntu install openmpi: "
-                                      "\nsudo apt install libopenmpi-dev"
-                                      "\nMore information on Spyking-Circus at: "
-                                      "\nhttps://spyking-circus.readthedocs.io/en/latest/")
+    try:
+        import circus  # pylint: disable=import-error
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("\nTo use Spyking-Circus, install spyking-circus: \n\n"
+                                  "\npip install spyking-circus"
+                                  "\nfor ubuntu install openmpi: "
+                                  "\nsudo apt install libopenmpi-dev"
+                                  "\nMore information on Spyking-Circus at: "
+                                  "\nhttps://spyking-circus.readthedocs.io/en/latest/")
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
     if output_folder is None:
@@ -123,7 +122,7 @@ def spyking_circus(
     # save prb file:
     if probe_file is None:
         saveProbeFile(recording, join(output_folder, 'probe.prb'), format='spyking_circus', radius=adjacency_radius,
-                         dimensions=electrode_dimensions)
+                      dimensions=electrode_dimensions)
         probe_file = join(output_folder, 'probe.prb')
     # save binary file
     if file_name is None:
@@ -163,26 +162,19 @@ def spyking_circus(
     print('Running spyking circus...')
     t_start_proc = time.time()
     if n_cores is None:
-        n_cores = np.maximum(1, int(os.cpu_count()/2))
+        n_cores = np.maximum(1, int(os.cpu_count() / 2))
 
     output_folder_cmd = output_folder
-    if singularity_container:
-        output_folder_cmd = '/output_folder'
 
     num_cores_str = ''
     if int(n_cores) > 1:
         num_cores_str = '-c {}'.format(n_cores)
     cmd = 'spyking-circus {} {} '.format(
-        join(output_folder_cmd, file_name+'.npy'), num_cores_str)
+        join(output_folder_cmd, file_name + '.npy'), num_cores_str)
 
     # I think the merging step requires a gui and some user interaction. TODO: inquire about this
     # cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
     # cmd_convert = 'spyking-circus {} -m converting'.format(join(output_folder, file_name+'.npy'))
-
-    if singularity_container:
-        cmd = 'singularity exec --contain -e -B {}:{} -B /tmp:/tmp {} bash -c "{}"'.format(
-            output_folder, output_folder_cmd, singularity_container, cmd)
-        # cmd_merge='singularity exec --contain -e -B {}:{} -B /tmp:/tmp {} bash -c "{}"'.format(output_folder,output_folder_cmd,singularity_container,cmd_merge)
 
     retcode = run_command_and_print_output(cmd)
     if retcode != 0:
@@ -199,7 +191,7 @@ def spyking_circus(
 
 
 def run_command_and_print_output(command):
-    print('RUNNING: '+command)
+    print('RUNNING: ' + command)
     with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
         while True:
             output_stdout = process.stdout.readline()

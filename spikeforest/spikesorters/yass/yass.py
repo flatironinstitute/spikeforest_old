@@ -25,17 +25,17 @@ class YASS(mlpr.Processor):
 
     # The following container uses python 2
     # CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
-    
+
     # this one uses python 3
     CONTAINER = 'sha1://348be6fb09807c774e469c3aeabf4bca867c039f/03-29-2019/yass.simg'
-    
+
     # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
         description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
-    #paramfile_out = mlpr.Output('YASS yaml config file')
+    # paramfile_out = mlpr.Output('YASS yaml config file')
 
     detect_sign = mlpr.IntegerParameter(description='-1, 1, or 0')
     adjacency_radius = mlpr.FloatParameter(
@@ -50,10 +50,10 @@ class YASS(mlpr.Processor):
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/yass-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/yass-tmp-' + code
 
-        #num_workers = os.environ.get('NUM_WORKERS', 1)
-        #print('num_workers: {}'.format(num_workers))
+        # num_workers = os.environ.get('NUM_WORKERS', 1)
+        # print('num_workers: {}'.format(num_workers))
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
             if len(self.channels) > 0:
@@ -61,7 +61,7 @@ class YASS(mlpr.Processor):
                     parent_recording=recording, channel_ids=self.channels)
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
-            sorting, yaml_file = yass_helper(
+            sorting, _ = yass_helper(
                 recording=recording,
                 output_folder=tmpdir,
                 probe_file=None,
@@ -72,7 +72,7 @@ class YASS(mlpr.Processor):
                 filter=self.filter)
             SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
-            #shutil.copyfile(yaml_file, self.paramfile_out)
+            # shutil.copyfile(yaml_file, self.paramfile_out)
         except:
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
@@ -116,7 +116,7 @@ def yass_helper(
     # print('bin_file:{}'.format(bin_file))
     writeRecording_(recording=recording, save_path=bin_file,
                     fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=1)
-    #print('bin_file exists? {}'.format(os.path.exists(bin_file)))
+    # print('bin_file exists? {}'.format(os.path.exists(bin_file)))
 
     # set up yass config file
     print(source_dir)
@@ -143,11 +143,11 @@ def yass_helper(
     print('Running yass...')
     t_start_proc = time.time()
 
-    yass_path = '/usr/local/bin'
-    num_cores_str = ''
+    # yass_path = '/usr/local/bin'
+    # num_cores_str = ''
     # cmd = 'python2 {}/yass {} {} '.format(
     #    yass_path, join(output_folder, file_name+'.yaml'), num_cores_str)
-    cmd = 'yass {}'.format(join(output_folder, file_name+'.yaml'))
+    cmd = 'yass {}'.format(join(output_folder, file_name + '.yaml'))
 
     retcode = run_command_and_print_output(cmd)
     if retcode != 0:
@@ -164,7 +164,7 @@ def yass_helper(
 
 
 def run_command_and_print_output(command):
-    print('RUNNING: '+command)
+    print('RUNNING: ' + command)
     with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
         while True:
             output_stdout = process.stdout.readline()
@@ -185,10 +185,10 @@ def join_abspath_(path1, path2):
 
 
 def writeRecording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=1):
-    #save_path = Path(save_path)
+    # save_path = Path(save_path)
     print('writeRecording2: {}'.format(str(save_path)))
 
-    if dtype == None:
+    if dtype is None:
         dtype = np.float32
     np_Wav = np.array(recording.getTraces(), dtype=dtype)
     if transpose:

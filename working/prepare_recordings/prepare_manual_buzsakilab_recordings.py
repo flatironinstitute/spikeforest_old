@@ -18,18 +18,18 @@ def prepare_manual_buzsaki_studies(*, basedir):
         load_study_set_from_md('descriptions/spf_manual_buzsakilab.md')
     ]
     study_set_name = study_sets[0]['name']
-    
-    study_set_dir0 = basedir+'/manual_sortings/buzsaki_petersen'
+
+    study_set_dir0 = basedir + '/manual_sortings/buzsaki_petersen'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
-        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.manual_buzsaki'
-    print('Using study set dir: '+study_set_dir)
+        raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
+    study_set_dir = study_set_dir + '.manual_buzsaki'
+    print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
 
     study_name = 'manual_siprobe'
-    print('PREPARING: '+study_name)
+    print('PREPARING: ' + study_name)
     study_dir = study_set_dir
     study0 = dict(
         name=study_name,
@@ -45,7 +45,7 @@ def prepare_manual_buzsaki_studies(*, basedir):
             name=dsname,
             study=study_name,
             directory=dsdir,
-            firings_true=dsdir+'/firings_true.mda',
+            firings_true=dsdir + '/firings_true.mda',
             description='One of the recordings in the {} study'.format(
                 study_name)
         ))

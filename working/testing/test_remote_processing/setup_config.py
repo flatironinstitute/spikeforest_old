@@ -39,7 +39,7 @@ config = dict(
 )
 
 mt.setRemoteConfig(url='https://pairio.org:20443')
-mt.addRemoteCollection(collection='test_collection1',token='test_token1',admin_token=os.environ['CAIRIO_ADMIN_TOKEN'])
+mt.addRemoteCollection(collection='test_collection1', token='test_token1', admin_token=os.environ['CAIRIO_ADMIN_TOKEN'])
 
 config = dict(
     url='https://pairio.org:20443',
