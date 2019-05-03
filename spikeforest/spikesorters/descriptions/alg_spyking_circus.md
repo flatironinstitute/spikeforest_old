@@ -1,5 +1,6 @@
 ---
 label: ALG_SPYKING_CIRCUS
+processor_name: SpykingCircus
 dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/spyking_circus/container/Dockerfile
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/spyking_circus/spyking_circus.py
 website: https://spyking-circus.readthedocs.io/en/latest/

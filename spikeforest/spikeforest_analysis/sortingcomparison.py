@@ -2,6 +2,7 @@ import numpy as np
 import spikeextractors as se
 from scipy.optimize import linear_sum_assignment
 
+
 class SortingComparison():
     def __init__(self, sorting1, sorting2, sorting1_name=None, sorting2_name=None, delta_tp=10, minimum_accuracy=0.5,
                  count=False, verbose=False):
@@ -151,58 +152,6 @@ class SortingComparison():
         if self._counts is None:
             self._do_counting(verbose=False)
 
-    def plotConfusionMatrix(self, xlabel=None, ylabel=None):
-        import matplotlib.pylab as plt
-
-        if self._counts is None:
-            self._do_counting(verbose=False)
-
-        sorting1 = self._sorting1
-        sorting2 = self._sorting2
-        unit1_ids = sorting1.getUnitIds()
-        unit2_ids = sorting2.getUnitIds()
-        N1 = len(unit1_ids)
-        N2 = len(unit2_ids)
-        st1_idxs, st2_idxs = self._do_confusion()
-        fig, ax = plt.subplots()
-        # Using matshow here just because it sets the ticks up nicely. imshow is faster.
-        ax.matshow(self._confusion_matrix, cmap='Greens')
-
-        for (i, j), z in np.ndenumerate(self._confusion_matrix):
-            if z != 0:
-                if z > np.max(self._confusion_matrix) / 2.:
-                    ax.text(j, i, '{:d}'.format(z), ha='center', va='center', color='white')
-                else:
-                    ax.text(j, i, '{:d}'.format(z), ha='center', va='center', color='black')
-
-        ax.axhline(int(N1 - 1) + 0.5, color='black')
-        ax.axvline(int(N2 - 1) + 0.5, color='black')
-
-        # Major ticks
-        ax.set_xticks(np.arange(0, N2 + 1))
-        ax.set_yticks(np.arange(0, N1 + 1))
-        ax.xaxis.tick_bottom()
-        # Labels for major ticks
-        ax.set_xticklabels(np.append(st2_idxs, 'FN'), fontsize=12)
-        ax.set_yticklabels(np.append(st1_idxs, 'FP'), fontsize=12)
-
-        if xlabel == None:
-            if self.sorting2_name is None:
-                ax.set_xlabel('Sorting 2', fontsize=15)
-            else:
-                ax.set_xlabel(self.sorting2_name, fontsize=15)
-        else:
-            ax.set_xlabel(xlabel, fontsize=20)
-        if ylabel == None:
-            if self.sorting1_name is None:
-                ax.set_ylabel('Sorting 1', fontsize=15)
-            else:
-                ax.set_ylabel(self.sorting1_name, fontsize=15)
-        else:
-            ax.set_ylabel(ylabel, fontsize=20)
-
-        return ax
-
     def _do_matching(self):
         self._event_counts_1 = dict()
         self._event_counts_2 = dict()
@@ -240,8 +189,8 @@ class SortingComparison():
             for i2, u2 in enumerate(unit2_ids):
                 times2 = sorting2.getUnitSpikeTrain(u2)
                 num_matches = count_matching_events(times1, times2, delta=self._delta_tp)
-                #test_unmatched=get_unmatched_times(times1,times2,delta=self._delta_tp)
-                #print(u1,u2,'num_matches',num_matches,'num_unmatched',len(test_unmatched),'sum',num_matches+len(test_unmatched),'total',len(times1))
+                # test_unmatched=get_unmatched_times(times1,times2,delta=self._delta_tp)
+                # print(u1,u2,'num_matches',num_matches,'num_unmatched',len(test_unmatched),'sum',num_matches+len(test_unmatched),'total',len(times1))
                 matching_event_counts[i1, i2] = num_matches
                 scores[i1, i2] = self._compute_agreement_score(num_matches, event_counts1[i1], event_counts2[i2])
 
@@ -249,7 +198,7 @@ class SortingComparison():
         for i1, u1 in enumerate(unit1_ids):
             scores0 = scores[i1, :]
             self._matching_event_counts_12[u1] = dict()
-            if len(scores0)>0:
+            if len(scores0) > 0:
                 if np.max(scores0) > 0:
                     inds0 = np.where(scores0 > 0)[0]
                     for i2 in inds0:
@@ -265,7 +214,7 @@ class SortingComparison():
         for i2, u2 in enumerate(unit2_ids):
             scores0 = scores[:, i2]
             self._matching_event_counts_21[u2] = dict()
-            if len(scores0)>0:
+            if len(scores0) > 0:
                 if np.max(scores0) > 0:
                     inds0 = np.where(scores0 > 0)[0]
                     for i1 in inds0:
@@ -281,10 +230,10 @@ class SortingComparison():
         [inds1, inds2] = linear_sum_assignment(-scores)
         inds1 = list(inds1)
         inds2 = list(inds2)
-        if len(unit2_ids)>0:
-            k2 = np.max(unit2_ids) + 1
-        else:
-            k2 = 1
+        # if len(unit2_ids) > 0:
+        #     k2 = np.max(unit2_ids) + 1
+        # else:
+        #     k2 = 1
         for i1, u1 in enumerate(unit1_ids):
             if i1 in inds1:
                 aa = inds1.index(i1)
@@ -298,10 +247,10 @@ class SortingComparison():
                 # self._unit_map12[u1] = k2
                 # k2 = k2+1
                 self._unit_map12[u1] = -1
-        if len(unit1_ids)>0:
-            k1 = np.max(unit1_ids) + 1
-        else:
-            k1 = 1
+        # if len(unit1_ids) > 0:
+        #     k1 = np.max(unit1_ids) + 1
+        # else:
+        #     k1 = 1
         for i2, u2 in enumerate(unit2_ids):
             if i2 in inds2:
                 aa = inds2.index(i2)
@@ -323,8 +272,8 @@ class SortingComparison():
         unit2_ids = sorting2.getUnitIds()
         self._labels_st1 = dict()
         self._labels_st2 = dict()
-        N1 = len(unit1_ids)
-        N2 = len(unit2_ids)
+        # N1 = len(unit1_ids)
+        # N2 = len(unit2_ids)
         # Evaluate
         for u1 in unit1_ids:
             st1 = sorting1.getUnitSpikeTrain(u1)
@@ -337,7 +286,7 @@ class SortingComparison():
 
         if verbose:
             print('Finding TP')
-        for u_i, u1 in enumerate(sorting1.getUnitIds()):
+        for u1 in sorting1.getUnitIds():
             if self.getMappedSorting1().getMappedUnitIds(u1) != -1:
                 lab_st1 = self._labels_st1[u1]
                 lab_st2 = self._labels_st2[self.getMappedSorting1().getMappedUnitIds(u1)]
@@ -354,12 +303,12 @@ class SortingComparison():
         # find CL-CLO-CLSO
         if verbose:
             print('Finding CL')
-        for u_i, u1 in enumerate(sorting1.getUnitIds()):
+        for u1 in sorting1.getUnitIds():
             lab_st1 = self._labels_st1[u1]
             st1 = sorting1.getUnitSpikeTrain(u1)
             for l_gt, lab in enumerate(lab_st1):
                 if lab == 'UNPAIRED':
-                    for u_j, u2 in enumerate(sorting2.getUnitIds()):
+                    for u2 in sorting2.getUnitIds():
                         if u2 in self.getMappedSorting1().getMappedUnitIds() \
                                 and self.getMappedSorting1().getMappedUnitIds(u1) != -1:
                             lab_st2 = self._labels_st2[u2]
@@ -444,7 +393,7 @@ class SortingComparison():
             lab_st1 = self._labels_st1[u1]
             tp = len(np.where('TP' == lab_st1)[0])
             conf_matrix[u_i, u_i] = int(tp)
-            for u_j, u2 in enumerate(sorting2.getUnitIds()):
+            for u2 in sorting2.getUnitIds():
                 lab_st2 = self._labels_st2[u2]
                 cl_str = str(u1) + '_' + str(u2)
                 cl = len([i for i, v in enumerate(lab_st1) if 'CL' in v and cl_str in v])
@@ -459,7 +408,7 @@ class SortingComparison():
             fn = len(np.where('FN' == lab_st1)[0])
             conf_matrix[u_i + len(idxs_matched), -1] = int(fn)
 
-        for u_j, u2 in enumerate(sorting2.getUnitIds()):
+        for _, u2 in enumerate(sorting2.getUnitIds()):
             lab_st2 = self._labels_st2[u2]
             fp = len(np.where('FP' == lab_st2)[0])
             st_p = np.where(u2 == unit_map_matched)[0]
@@ -530,22 +479,25 @@ class MappedSortingExtractor(se.SortingExtractor):
             print(unit_id, " is not matched!")
             return None
 
-## for troubleshooting
-def get_unmatched_times(times1,times2,*,delta):
-  times1=np.array(times1)
-  times2=np.array(times2)
-  times_concat = np.concatenate((times1, times2))
-  membership = np.concatenate((np.ones(times1.shape) * 1, np.ones(times2.shape) * 2))
-  indices = times_concat.argsort()
-  times_concat_sorted = times_concat[indices]
-  membership_sorted = membership[indices]
-  diffs = times_concat_sorted[1:] - times_concat_sorted[:-1]
-  unmatched_inds = 1+np.where((diffs[1:] > delta) & (diffs[:-1] > delta) & (membership_sorted[1:-1]==1))[0]
-  if (diffs[0]>delta) and (membership_sorted[0]==1):
-    unmatched_inds=np.concatenate(([0],unmatched_inds))
-  if (diffs[-1]>delta) and (membership_sorted[-1]==1):
-    unmatched_inds=np.concatenate((unmatched_inds,[len(membership_sorted)-1]))
-  return times_concat_sorted[unmatched_inds]
+# for troubleshooting
+
+
+def get_unmatched_times(times1, times2, *, delta):
+    times1 = np.array(times1)
+    times2 = np.array(times2)
+    times_concat = np.concatenate((times1, times2))
+    membership = np.concatenate((np.ones(times1.shape) * 1, np.ones(times2.shape) * 2))
+    indices = times_concat.argsort()
+    times_concat_sorted = times_concat[indices]
+    membership_sorted = membership[indices]
+    diffs = times_concat_sorted[1:] - times_concat_sorted[:-1]
+    unmatched_inds = 1 + np.where((diffs[1:] > delta) & (diffs[:-1] > delta) & (membership_sorted[1:-1] == 1))[0]
+    if (diffs[0] > delta) and (membership_sorted[0] == 1):
+        unmatched_inds = np.concatenate(([0], unmatched_inds))
+    if (diffs[-1] > delta) and (membership_sorted[-1] == 1):
+        unmatched_inds = np.concatenate((unmatched_inds, [len(membership_sorted) - 1]))
+    return times_concat_sorted[unmatched_inds]
+
 
 def count_matching_events(times1, times2, delta=10):
     times_concat = np.concatenate((times1, times2))
@@ -581,8 +533,8 @@ def confusion_matrix(gtst, sst, pairs, plot_fig=True, xlabel=None, ylabel=None):
     gtst_clean = np.array(gtst)[idxs_pairs_clean]
     gtst_extra = np.array(gtst)[idxs_pairs_dirty]
 
-    gtst_idxs = np.append(idxs_pairs_clean, idxs_pairs_dirty)
-    sst_idxs = pairs_clean
+    # gtst_idxs = np.append(idxs_pairs_clean, idxs_pairs_dirty)
+    # sst_idxs = pairs_clean
     sst_extra = []
 
     for gt_i, gt in enumerate(gtst_clean):
@@ -609,39 +561,7 @@ def confusion_matrix(gtst, sst, pairs, plot_fig=True, xlabel=None, ylabel=None):
             sst_extra.append(int(st_i))
             conf_matrix[-1, len(pairs_clean) + len(sst_extra) - 1] = fp
 
-    if plot_fig:
-        fig, ax = plt.subplots()
-        # Using matshow here just because it sets the ticks up nicely. imshow is faster.
-        ax.matshow(conf_matrix, cmap='Greens')
-
-        for (i, j), z in np.ndenumerate(conf_matrix):
-            if z != 0:
-                if z > np.max(conf_matrix) / 2.:
-                    ax.text(j, i, '{:d}'.format(z), ha='center', va='center', color='white')
-                else:
-                    ax.text(j, i, '{:d}'.format(z), ha='center', va='center', color='black')
-                    # ,   bbox=dict(boxstyle='round', facecolor='white', edgecolor='0.3'))
-
-        ax.axhline(int(len(gtst) - 1) + 0.5, color='black')
-        ax.axvline(int(len(sst) - 1) + 0.5, color='black')
-
-        # Major ticks
-        ax.set_xticks(np.arange(0, len(sst) + 1))
-        ax.set_yticks(np.arange(0, len(gtst) + 1))
-        ax.xaxis.tick_bottom()
-        # Labels for major ticks
-        ax.set_xticklabels(np.append(np.append(sst_idxs, sst_extra).astype(int), 'FN'), fontsize=12)
-        ax.set_yticklabels(np.append(gtst_idxs, 'FP'), fontsize=12)
-
-        if xlabel == None:
-            ax.set_xlabel('Sorted spike trains', fontsize=15)
-        else:
-            ax.set_xlabel(xlabel, fontsize=20)
-        if ylabel == None:
-            ax.set_ylabel('Ground truth spike trains', fontsize=15)
-        else:
-            ax.set_ylabel(ylabel, fontsize=20)
-
+    ax = None
     return conf_matrix, ax
 
 

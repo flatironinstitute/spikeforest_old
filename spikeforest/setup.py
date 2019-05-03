@@ -19,7 +19,7 @@ setuptools.setup(
     },
     include_package_data=True,
     install_requires=[
-        'numpy','scipy','matplotlib','requests','pillow','pandas','ipython','h5py','setuptools-git','scikit-learn','python-frontmatter','spikeextractors>=0.3,<0.4'
+        'numpy', 'scipy', 'matplotlib', 'requests', 'pillow', 'pandas', 'ipython', 'h5py', 'setuptools-git', 'scikit-learn', 'python-frontmatter', 'spikeextractors>=0.3,<0.4'
     ],
     scripts=['bin/forestview'],
     classifiers=(

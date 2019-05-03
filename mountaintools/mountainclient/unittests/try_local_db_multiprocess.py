@@ -17,14 +17,15 @@ import multiprocessing
 #     print(val0,val1)
 #     assert val0==val1
 
+
 def _test1(ii):
-    key=dict(test='key3')
-    val0='{}'.format(ii)
-    mt.setValue(key=key,value=val0)
-    val1=mt.getValue(key=key)
+    key = dict(test='key3')
+    val0 = '{}'.format(ii)
+    mt.setValue(key=key, value=val0)
+    val1 = mt.getValue(key=key)
     return val1
 
-pool=multiprocessing.Pool(100)
-pool.map(_test1,[ii for ii in range(100)])
+pool = multiprocessing.Pool(100)
+pool.map(_test1, [ii for ii in range(100)])
 pool.close()
 pool.join()

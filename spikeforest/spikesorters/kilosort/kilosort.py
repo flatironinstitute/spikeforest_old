@@ -13,7 +13,7 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
-#import h5py
+# import h5py
 
 
 class KiloSort(mlpr.Processor):
@@ -50,7 +50,7 @@ class KiloSort(mlpr.Processor):
         keep_temp_files = False
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/kilosort-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort-tmp-' + code
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -108,7 +108,7 @@ def kilosort_helper(*,
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
-    dataset_dir = tmpdir+'/kilosort_dataset'
+    dataset_dir = tmpdir + '/kilosort_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.writeRecording(
         recording=recording, save_path=dataset_dir)
@@ -116,10 +116,10 @@ def kilosort_helper(*,
     samplerate = recording.getSamplingFrequency()
 
     print('Reading timeseries header...')
-    HH = mdaio.readmda_header(dataset_dir+'/raw.mda')
+    HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
     num_channels = HH.dims[0]
     num_timepoints = HH.dims[1]
-    duration_minutes = num_timepoints/samplerate/60
+    duration_minutes = num_timepoints / samplerate / 60
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(
         num_channels, num_timepoints, duration_minutes))
 
@@ -133,7 +133,7 @@ def kilosort_helper(*,
     txt += 'freq_min={}\n'.format(freq_min)
     txt += 'freq_max={}\n'.format(freq_max)
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
-    _write_text_file(dataset_dir+'/argfile.txt', txt)
+    _write_text_file(dataset_dir + '/argfile.txt', txt)
 
     print('Running kilosort in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
@@ -145,19 +145,19 @@ catch
 end
 quit(0);
         '''
-    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT_PATH, iclust=IRONCLUST_PATH, \
-            tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
-            firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
-    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort.m',keep_temp_files=True)
+    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT_PATH, iclust=IRONCLUST_PATH,
+                     tmpdir=tmpdir, raw=dataset_dir + '/raw.mda', geom=dataset_dir + '/geom.csv',
+                     firings=tmpdir + '/firings.mda', arg=dataset_dir + '/argfile.txt')
+    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_kilosort.m', keep_temp_files=True)
     matlab_cmd.write()
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        echo '=====================' `date` '=====================' >> run_kilosort.log 
+        echo '=====================' `date` '=====================' >> run_kilosort.log
         matlab -nosplash -nodisplay -r run_kilosort &>> run_kilosort.log
     '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort.sh', keep_temp_files=True)
-    shell_cmd.write(tmpdir+'/run_kilosort.sh')
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_kilosort.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir + '/run_kilosort.sh')
     shell_cmd.start()
     retcode = shell_cmd.wait()
 
@@ -165,7 +165,7 @@ quit(0);
         raise Exception('kilosort returned a non-zero exit code')
 
     # parse output
-    result_fname = tmpdir+'/firings.mda'
+    result_fname = tmpdir + '/firings.mda'
     if not os.path.exists(result_fname):
         raise Exception('Result file does not exist: ' + result_fname)
 
@@ -183,4 +183,3 @@ def _read_text_file(fname):
 def _write_text_file(fname, str):
     with open(fname, 'w') as f:
         f.write(str)
-

@@ -12,22 +12,22 @@ basedir = 'kbucket://15734439d8cf/groundtruth'
 
 def prepare_paired_studies(*, basedir, name):
     study_sets = [
-        load_study_set_from_md('descriptions/spf_paired_'+name+'.md')
+        load_study_set_from_md('descriptions/spf_paired_' + name + '.md')
     ]
     study_set_name = study_sets[0]['name']
 
-    study_dir0 = basedir+'/paired_recordings/'+name
+    study_dir0 = basedir + '/paired_recordings/' + name
     study_dir = mt.createSnapshot(study_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_dir:
-        raise Exception('Failed to create snapshot of directory: '+study_dir0)
-    study_dir=study_dir+'.paired_'+name
+        raise Exception('Failed to create snapshot of directory: ' + study_dir0)
+    study_dir = study_dir + '.paired_' + name
 
     studies = []
     recordings = []
     study_set_dir = study_dir
-    print('Using study set dir: '+study_set_dir)
+    print('Using study set dir: ' + study_set_dir)
 
-    print('PREPARING: '+name)
+    print('PREPARING: ' + name)
     study_name = 'paired_' + name
     study0 = dict(
         name=study_name,
@@ -43,7 +43,7 @@ def prepare_paired_studies(*, basedir, name):
             name=dsname,
             study=study_name,
             directory=dsdir,
-            firings_true=dsdir+'/firings_true.mda',
+            firings_true=dsdir + '/firings_true.mda',
             description='One of the recordings in the {} study'.format(
                 study_name)
         ))
@@ -51,10 +51,10 @@ def prepare_paired_studies(*, basedir, name):
 
 
 # Prepare the studies
-names = ['boyden32c','crcns','mea64c','kampff']
+names = ['boyden32c', 'crcns', 'mea64c', 'kampff']
 study_sets = []
 for name in names:
-    group_name = 'paired_'+name
+    group_name = 'paired_' + name
     print('PREPARING {}'.format(name))
     studies, recordings, study_sets = prepare_paired_studies(basedir=basedir, name=name)
     print('Saving object...')

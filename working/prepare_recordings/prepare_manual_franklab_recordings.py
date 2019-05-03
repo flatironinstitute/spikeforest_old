@@ -18,20 +18,20 @@ def prepare_manual_franklab_studies(*, basedir):
         load_study_set_from_md('descriptions/spf_manual_franklab.md')
     ]
     study_set_name = study_sets[0]['name']
-    
-    study_set_dir0 = basedir+'/manual_sortings'
+
+    study_set_dir0 = basedir + '/manual_sortings/franklab'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
-        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.manual_franklab'
-    print('Using study set dir: '+study_set_dir)
+        raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
+    study_set_dir = study_set_dir + '.manual_franklab'
+    print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
     names = ['600s', '1200s', '2400s']
     for name in names:
         study_name = 'manual_tetrode_' + name
-        print('PREPARING: '+study_name)
-        study_dir = study_set_dir+'/tetrode_'+name
+        print('PREPARING: ' + study_name)
+        study_dir = study_set_dir + '/tetrode_' + name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -46,7 +46,7 @@ def prepare_manual_franklab_studies(*, basedir):
                 name=dsname,
                 study=study_name,
                 directory=dsdir,
-                firings_true=dsdir+'/firings_true.mda',
+                firings_true=dsdir + '/firings_true.mda',
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))

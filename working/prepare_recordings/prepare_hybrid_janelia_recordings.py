@@ -19,19 +19,19 @@ def prepare_hybrid_janelia_studies(*, basedir):
     ]
     study_set_name = study_sets[0]['name']
 
-    study_set_dir0 = basedir+'/hybrid_synth/drift'
+    study_set_dir0 = basedir + '/hybrid_synth/drift'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
-        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.hybrid_janelia'
-    print('Using study set dir: '+study_set_dir)
+        raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
+    study_set_dir = study_set_dir + '.hybrid_janelia'
+    print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
     names = ['16c_600s', '16c_1200s', '32c_600s', '32c_1200s', '64c_600s', '64c_1200s']
     for name in names:
         study_name = 'hybrid_janelia_' + name
-        print('PREPARING: '+study_name)
-        study_dir = study_set_dir+'/hybrid_janelia_'+name
+        print('PREPARING: ' + study_name)
+        study_dir = study_set_dir + '/hybrid_janelia_' + name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
@@ -46,7 +46,7 @@ def prepare_hybrid_janelia_studies(*, basedir):
                 name=dsname,
                 study=study_name,
                 directory=dsdir,
-                firings_true=dsdir+'/firings_true.mda',
+                firings_true=dsdir + '/firings_true.mda',
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))

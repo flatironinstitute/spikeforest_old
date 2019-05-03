@@ -13,7 +13,7 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
-#import h5py
+# import h5py
 
 
 class KiloSort2(mlpr.Processor):
@@ -49,7 +49,7 @@ class KiloSort2(mlpr.Processor):
     def run(self):
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/kilosort2-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-tmp-' + code
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -72,25 +72,25 @@ class KiloSort2(mlpr.Processor):
             SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            #if os.path.exists(tmpdir):
+            # if os.path.exists(tmpdir):
             #    shutil.rmtree(tmpdir)
             raise
-        #shutil.rmtree(tmpdir)
+        # shutil.rmtree(tmpdir)
 
 
 def kilosort2_helper(*,
-                    recording,  # Recording object
-                    tmpdir,  # Temporary working directory
-                    detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
-                    adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
-                    detect_threshold=5,  # Threshold for detection
-                    merge_thresh=.98,  # Cluster merging threhold 0..1
-                    freq_min=150,  # Lower frequency limit for band-pass filter
-                    freq_max=6000,  # Upper frequency limit for band-pass filter
-                    pc_per_chan=3,  # Number of pc per channel
-                    KILOSORT2_PATH=None,  # github kilosort2
-                    IRONCLUST_PATH=None  # github ironclust
-                    ):
+                     recording,  # Recording object
+                     tmpdir,  # Temporary working directory
+                     detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
+                     adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
+                     detect_threshold=5,  # Threshold for detection
+                     merge_thresh=.98,  # Cluster merging threhold 0..1
+                     freq_min=150,  # Lower frequency limit for band-pass filter
+                     freq_max=6000,  # Upper frequency limit for band-pass filter
+                     pc_per_chan=3,  # Number of pc per channel
+                     KILOSORT2_PATH=None,  # github kilosort2
+                     IRONCLUST_PATH=None  # github ironclust
+                     ):
     if KILOSORT2_PATH is None:
         KILOSORT2_PATH = os.getenv('KILOSORT2_PATH', None)
     if not KILOSORT2_PATH:
@@ -105,7 +105,7 @@ def kilosort2_helper(*,
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
-    dataset_dir = tmpdir+'/kilosort2_dataset'
+    dataset_dir = tmpdir + '/kilosort2_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.writeRecording(
         recording=recording, save_path=dataset_dir)
@@ -113,10 +113,10 @@ def kilosort2_helper(*,
     samplerate = recording.getSamplingFrequency()
 
     print('Reading timeseries header...')
-    HH = mdaio.readmda_header(dataset_dir+'/raw.mda')
+    HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
     num_channels = HH.dims[0]
     num_timepoints = HH.dims[1]
-    duration_minutes = num_timepoints/samplerate/60
+    duration_minutes = num_timepoints / samplerate / 60
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(
         num_channels, num_timepoints, duration_minutes))
 
@@ -130,7 +130,7 @@ def kilosort2_helper(*,
     txt += 'freq_min={}\n'.format(freq_min)
     txt += 'freq_max={}\n'.format(freq_max)
     txt += 'pc_per_chan={}\n'.format(pc_per_chan)
-    _write_text_file(dataset_dir+'/argfile.txt', txt)
+    _write_text_file(dataset_dir + '/argfile.txt', txt)
 
     print('Running Kilosort2 in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
@@ -142,28 +142,27 @@ def kilosort2_helper(*,
         end
         quit(0);
         '''
-    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH, \
-            tmpdir=tmpdir, raw=dataset_dir+'/raw.mda', geom=dataset_dir+'/geom.csv', \
-            firings=tmpdir+'/firings.mda', arg=dataset_dir+'/argfile.txt')
-    matlab_cmd = mlpr.ShellScript(cmd,script_path=tmpdir+'/run_kilosort2.m',keep_temp_files=True)
+    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH,
+                     tmpdir=tmpdir, raw=dataset_dir + '/raw.mda', geom=dataset_dir + '/geom.csv',
+                     firings=tmpdir + '/firings.mda', arg=dataset_dir + '/argfile.txt')
+    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_kilosort2.m', keep_temp_files=True)
     matlab_cmd.write()
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        echo '=====================' `date` '=====================' >> run_kilosort2.log 
+        echo '=====================' `date` '=====================' >> run_kilosort2.log
         matlab -nosplash -nodisplay -r run_kilosort2 &>> run_kilosort2.log
     '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir+'/run_kilosort2.sh', keep_temp_files=True)
-    shell_cmd.write(tmpdir+'/run_kilosort2.sh')
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_kilosort2.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir + '/run_kilosort2.sh')
     shell_cmd.start()
     retcode = shell_cmd.wait()
 
     if retcode != 0:
         raise Exception('kilosort2 returned a non-zero exit code')
-            
 
     # parse output
-    result_fname = tmpdir+'/firings.mda'
+    result_fname = tmpdir + '/firings.mda'
     if not os.path.exists(result_fname):
         raise Exception('Result file does not exist: ' + result_fname)
 

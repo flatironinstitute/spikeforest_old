@@ -17,7 +17,7 @@ class KlustaSortingExtractor(SortingExtractor):
             group_id = int(cgroup)
             for cluster_id in channel_groups[cgroup]['clusters']['main']:
                 clusters = np.array(channel_groups[cgroup]['spikes']['clusters']['main'])
-                idx =    np.nonzero(clusters == int(cluster_id))
+                idx = np.nonzero(clusters == int(cluster_id))
                 st = np.array(channel_groups[cgroup]['spikes']['time_samples'])[idx]
                 self._spiketrains.append(st)
                 self._unit_ids.append(int(cluster_id))

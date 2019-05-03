@@ -148,7 +148,7 @@ class VDOMRServer():
                 html = session_id.join(html.split('{session_id}'))
                 html = html.replace('{init_js}', _get_init_javascript())
                 if server_self._token:
-                    html = html.replace('{vdomr_token_str}', server_self._token+'/')
+                    html = html.replace('{vdomr_token_str}', server_self._token + '/')
                 else:
                     html = html.replace('{vdomr_token_str}', '')
                 self.write(html)
@@ -161,10 +161,10 @@ class VDOMRServer():
                     return
                 vd._set_server_session(session_id)
                 try:
-                    data = json.loads(self.request.body)
+                    json.loads(self.request.body)
                 except:
                     self.write(
-                        dict(success=False, error='Missing self.request.body'))
+                        dict(success=False, error='Missing or incorrect self.request.body'))
                     return
                 try:
                     obj = json.loads(self.request.body)
@@ -202,7 +202,7 @@ class VDOMRServer():
                     return
                 delay = 1
                 num_delays = 10
-                for i in range(num_delays):
+                for _ in range(num_delays):
                     vd._set_server_session(session_id)
                     js_list = []
                     while True:
@@ -240,17 +240,16 @@ class VDOMRServer():
         else:
             port = os.environ.get('PORT', 3005)
 
-
-        _root_path='/'
-        _invoke_path='/invoke/'
-        _script_path='/script.js'
-        _script_immediate_path='/script_immediate.js'
+        _root_path = '/'
+        _invoke_path = '/invoke/'
+        _script_path = '/script.js'
+        _script_immediate_path = '/script_immediate.js'
 
         if self._token:
-            _root_path='/{}{}'.format(self._token, _root_path)
-            _invoke_path='/{}{}'.format(self._token, _invoke_path)
-            _script_path='/{}{}'.format(self._token, _script_path)
-            _script_immediate_path='/{}{}'.format(self._token, _script_immediate_path)
+            _root_path = '/{}{}'.format(self._token, _root_path)
+            _invoke_path = '/{}{}'.format(self._token, _invoke_path)
+            _script_path = '/{}{}'.format(self._token, _script_path)
+            _script_immediate_path = '/{}{}'.format(self._token, _script_immediate_path)
 
         application = tornado.web.Application([
             (_root_path, RootHandler),
@@ -267,6 +266,7 @@ class VDOMRServer():
             print('VDOMR server is listening on port {}'.format(port))
             print('http://localhost:{}'.format(port))
         tornado.ioloop.IOLoop.current().start()
+
 
 def _random_string(num):
     return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))

@@ -86,8 +86,8 @@ class ProcessorRegistry:
             return
         if opcode == 'test':
             try:
-                self.test([opts.processor]+opts.args, trace=os.getenv('TRACEBACK',
-                                                                      False) not in ['0', 0, 'False', 'F', False])
+                self.test([opts.processor] + opts.args, trace=os.getenv('TRACEBACK',
+                                                                        False) not in ['0', 0, 'False', 'F', False])
             except KeyError as e:
                 # taking __str__ from Base to prevent adding quotes to KeyError
                 print(BaseException.__str__(e))

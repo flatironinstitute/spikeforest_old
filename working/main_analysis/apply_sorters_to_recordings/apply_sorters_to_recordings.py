@@ -6,7 +6,7 @@ import mtlogging
 
 
 @mtlogging.log()
-def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_sets, output_id=None, output_path=None, job_timeout=60*20, upload_to=None):
+def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_sets, output_id=None, output_path=None, job_timeout=60 * 20, upload_to=None):
     # Summarize the recordings
     mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
@@ -45,7 +45,7 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_se
     # Aggregate the results
     mtlogging.sublog('aggregate')
     aggregated_sorting_results = sa.aggregate_sorting_results(
-         studies, recordings, sorting_results)
+        studies, recordings, sorting_results)
 
     output_object = dict(
         studies=studies,
@@ -68,7 +68,7 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_se
             object=output_object,
             upload_to=upload_to
         )
-    
+
     if output_path:
         print('Saving the output to {}'.format(output_path))
         mtlogging.sublog('save-output-path')
@@ -85,7 +85,7 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_se
         n1 = np.array(sr['num_matches'])
         n2 = np.array(sr['num_false_positives'])
         n3 = np.array(sr['num_false_negatives'])
-        accuracies = n1/(n1+n2+n3)
+        accuracies = n1 / (n1 + n2 + n3)
         avg_accuracy = np.mean(accuracies)
         txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(
             study_name, sorter_name, avg_accuracy)

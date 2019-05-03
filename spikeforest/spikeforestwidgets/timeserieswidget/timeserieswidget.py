@@ -13,33 +13,35 @@ from spikeforest import EfficientAccessRecordingExtractor
 import mtlogging
 import time
 
-source_path=os.path.dirname(os.path.realpath(__file__))
+source_path = os.path.dirname(os.path.realpath(__file__))
+
 
 def _mda32_to_base64(X):
-    f=io.BytesIO()
-    mdaio.writemda32(X,f)
+    f = io.BytesIO()
+    mdaio.writemda32(X, f)
     return base64.b64encode(f.getvalue()).decode('utf-8')
 
+
 class TimeseriesWidget(vd.Component):
-    def __init__(self,*,recording,sorting=None,unit_ids=None,start_frame=0,end_frame=None,size=(800,400)):
+    def __init__(self, *, recording, sorting=None, unit_ids=None, start_frame=0, end_frame=None, size=(800, 400)):
         vd.Component.__init__(self)
 
         vd.devel.loadBootstrap()
         vd.devel.loadCss(url='https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css')
-        vd.devel.loadJavascript(path=source_path+'/mda.js')
-        vd.devel.loadJavascript(path=source_path+'/timeseriesmodel.js')
-        vd.devel.loadJavascript(path=source_path+'/canvaswidget.js')
-        vd.devel.loadJavascript(path=source_path+'/timeserieswidget.js')
-        vd.devel.loadJavascript(path=source_path+'/../dist/jquery-3.3.1.min.js')
+        vd.devel.loadJavascript(path=source_path + '/mda.js')
+        vd.devel.loadJavascript(path=source_path + '/timeseriesmodel.js')
+        vd.devel.loadJavascript(path=source_path + '/canvaswidget.js')
+        vd.devel.loadJavascript(path=source_path + '/timeserieswidget.js')
+        vd.devel.loadJavascript(path=source_path + '/../dist/jquery-3.3.1.min.js')
 
-        self._div_id='SFTimeseriesWidget-'+str(uuid.uuid4())
+        self._div_id = 'SFTimeseriesWidget-' + str(uuid.uuid4())
         self._recording = recording
         self._multiscale_recordings = _create_multiscale_recordings(recording=recording, progressive_ds_factor=3)
         self._segment_size = 1000
         self._data_segments_set = dict()
 
         if sorting:
-            self._sorting=sorting
+            self._sorting = sorting
             if not unit_ids:
                 unit_ids = sorting.getUnitIds()
             # This is not ideal as it seems possible to get this information directly from the recording
@@ -47,11 +49,11 @@ class TimeseriesWidget(vd.Component):
             if not end_frame:
                 end_frame = len(recording.getNumFrames())
             spike_trains_list = ['[{}]'.format(','.join(str(x) for x in
-                sorting.getUnitSpikeTrain(u, start_frame=start_frame, end_frame=end_frame)))
-                for u in unit_ids]
-            spike_trains_str = '['+','.join(spike_trains_str)+']'
+                                                        sorting.getUnitSpikeTrain(u, start_frame=start_frame, end_frame=end_frame)))
+                                 for u in unit_ids]
+            spike_trains_str = '[' + ','.join(spike_trains_str) + ']'
         else:
-            spike_trains_str ='[[]]'
+            spike_trains_str = '[[]]'
 
         # js_lines=[
         #         "window.sfdata=window.sfdata||{}",
@@ -66,7 +68,7 @@ class TimeseriesWidget(vd.Component):
         # important to set some data here so that the auto-scaling can take place
         self._set_data_segment(ds_factor=1, segment_num=0, autoscale=True)
 
-        self._size=size
+        self._size = size
 
     @mtlogging.log()
     def _set_data_segment(self, *, ds_factor, segment_num, autoscale=False):
@@ -82,7 +84,7 @@ class TimeseriesWidget(vd.Component):
             X = _extract_data_segment(recording=self._recording, segment_num=segment_num, segment_size=self._segment_size)
         else:
             rx = self._multiscale_recordings[ds_factor]
-            X = _extract_data_segment(recording=rx, segment_num=segment_num, segment_size=self._segment_size*2)
+            X = _extract_data_segment(recording=rx, segment_num=segment_num, segment_size=self._segment_size * 2)
 
         # X = ComputeDataSegment.execute(
         #     recording=self._recording,
@@ -92,7 +94,7 @@ class TimeseriesWidget(vd.Component):
         #     array_out=True
         # ).outputs['array_out']
 
-        X_b64=_mda32_to_base64(X)
+        X_b64 = _mda32_to_base64(X)
         js = """
         let TS = window.timeseries_models['{component_id}'];
         let X=new window.Mda();
@@ -112,13 +114,16 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{segment_num}', str(segment_num))
 
         self.executeJavascript(js=js)
-    def setSize(self,size):
-        if self._size==size:
+
+    def setSize(self, size):
+        if self._size == size:
             return
-        self._size=size
+        self._size = size
         self._update_size()
+
     def size(self):
         return self._size
+
     def _update_size(self):
         js = """
         let W=window.timeseries_widgets['{component_id}'];
@@ -130,12 +135,14 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{width}', str(self._size[0]))
         js = js.replace('{height}', str(self._size[1]))
         self.executeJavascript(js)
+
     def render(self):
-        div=vd.div(id=self._div_id)
+        div = vd.div(id=self._div_id)
         self._update_size()
         return div
+
     def postRenderScript(self):
-        js="""
+        js = """
         if (!window.timeseries_models) window.timeseries_models={};
         if (!window.timeseries_models['{component_id}']) {
             let TS0=new window.TimeseriesModel({samplerate:{samplerate}, num_channels:{num_channels}, num_timepoints:{num_timepoints}, segment_size:{segment_size}});
@@ -178,23 +185,25 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{request_data_segment_callback_id}', request_data_segment_callback_id)
         return js
 
+
 def _do_downsample(X, ds_factor):
     M = X.shape[0]
     N = X.shape[1]
-    N2 = N//ds_factor
+    N2 = N // ds_factor
     X_reshaped = np.reshape(X, (M, N2, ds_factor), order='C')
-    ret = np.zeros((M, N2*2))
-    ret[:,0::2] = np.min(X_reshaped, axis=2)
-    ret[:,1::2] = np.max(X_reshaped, axis=2)
+    ret = np.zeros((M, N2 * 2))
+    ret[:, 0::2] = np.min(X_reshaped, axis=2)
+    ret[:, 1::2] = np.max(X_reshaped, axis=2)
     return ret
+
 
 @mtlogging.log()
 def _extract_data_segment(*, recording, segment_num, segment_size):
     segment_num = int(segment_num)
     segment_size = int(segment_size)
-    a1 = segment_size*segment_num
-    a2 = segment_size*(segment_num+1)
-    if a2>recording.getNumFrames():
+    a1 = segment_size * segment_num
+    a2 = segment_size * (segment_num + 1)
+    if a2 > recording.getNumFrames():
         a2 = recording.getNumFrames()
     X = recording.getTraces(start_frame=a1, end_frame=a2)
     return X
@@ -217,22 +226,25 @@ def _extract_data_segment(*, recording, segment_num, segment_size):
 #         print('===================== Saving file to:', self.array_out, X.shape)
 #         np.save(self.array_out, X)
 
+
 def precomputeMultiscaleRecordings(*, recording):
     _create_multiscale_recordings(recording=recording, progressive_ds_factor=3)
+
 
 def _create_multiscale_recordings(*, recording, progressive_ds_factor):
     ret = dict()
     current_rx = recording
     current_ds_factor = 1
     N = recording.getNumFrames()
-    recording_has_minmax=False
-    while current_ds_factor*progressive_ds_factor < N:
+    recording_has_minmax = False
+    while current_ds_factor * progressive_ds_factor < N:
         current_rx = _DownsampledRecordingExtractor(recording=current_rx, ds_factor=progressive_ds_factor, input_has_minmax=recording_has_minmax)
         current_rx = EfficientAccessRecordingExtractor(recording=current_rx)
-        current_ds_factor = current_ds_factor*progressive_ds_factor
+        current_ds_factor = current_ds_factor * progressive_ds_factor
         ret[current_ds_factor] = current_rx
         recording_has_minmax = True
     return ret
+
 
 class _DownsampledRecordingExtractor(se.RecordingExtractor):
     def __init__(self, *, recording, ds_factor, input_has_minmax):
@@ -241,16 +253,16 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
         self._ds_factor = ds_factor
         self._input_has_minmax = input_has_minmax
         self.copyChannelProperties(recording)
-    
+
     def hash(self):
         return mt.sha1OfObject(dict(
             name='downsampled-recording-extractor',
             version=2,
-            recording = self._recording.hash(),
-            ds_factor = self._ds_factor,
-            input_has_minmax = self._input_has_minmax
+            recording=self._recording.hash(),
+            ds_factor=self._ds_factor,
+            input_has_minmax=self._input_has_minmax
         ))
-        
+
     def getChannelIds(self):
         # same channel IDs
         return self._recording.getChannelIds()
@@ -277,30 +289,30 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
             # get the traces *ds_factor
             X = self._recording.getTraces(
                 channel_ids=channel_ids,
-                start_frame=start_frame*ds_factor,
-                end_frame=end_frame*ds_factor
+                start_frame=start_frame * ds_factor,
+                end_frame=end_frame * ds_factor
             )
-            X_mins = X[:,0::2] # here are the minimums
-            X_maxs = X[:,1::2] # here are the maximums
-            X_mins_reshaped = np.reshape(X_mins, (X_mins.shape[0], X_mins.shape[1]//ds_factor, ds_factor), order='C')
-            X_maxs_reshaped = np.reshape(X_maxs, (X_maxs.shape[0], X_maxs.shape[1]//ds_factor, ds_factor), order='C')
+            X_mins = X[:, 0::2]  # here are the minimums
+            X_maxs = X[:, 1::2]  # here are the maximums
+            X_mins_reshaped = np.reshape(X_mins, (X_mins.shape[0], X_mins.shape[1] // ds_factor, ds_factor), order='C')
+            X_maxs_reshaped = np.reshape(X_maxs, (X_maxs.shape[0], X_maxs.shape[1] // ds_factor, ds_factor), order='C')
             # the size of the output is the size X divided by ds_factor
-            ret = np.zeros((X.shape[0], X.shape[1]//ds_factor))
-            ret[:,0::2] = np.min(X_mins_reshaped, axis=2) # here are the mins
-            ret[:,1::2] = np.max(X_maxs_reshaped, axis=2) # here are the maxs
+            ret = np.zeros((X.shape[0], X.shape[1] // ds_factor))
+            ret[:, 0::2] = np.min(X_mins_reshaped, axis=2)  # here are the mins
+            ret[:, 1::2] = np.max(X_maxs_reshaped, axis=2)  # here are the maxs
             return ret
         else:
             X = self._recording.getTraces(
                 channel_ids=channel_ids,
-                start_frame=start_frame*self._ds_factor//2,
-                end_frame=end_frame*self._ds_factor//2
+                start_frame=start_frame * self._ds_factor // 2,
+                end_frame=end_frame * self._ds_factor // 2
             )
-            X_reshaped = np.reshape(X, (X.shape[0], X.shape[1]//ds_factor, ds_factor), order='C')
-            ret = np.zeros((X.shape[0], (X.shape[1]//ds_factor)*2))
-            ret[:,0::2] = np.min(X_reshaped, axis=2)
-            ret[:,1::2] = np.max(X_reshaped, axis=2)
+            X_reshaped = np.reshape(X, (X.shape[0], X.shape[1] // ds_factor, ds_factor), order='C')
+            ret = np.zeros((X.shape[0], (X.shape[1] // ds_factor) * 2))
+            ret[:, 0::2] = np.min(X_reshaped, axis=2)
+            ret[:, 1::2] = np.max(X_reshaped, axis=2)
             return ret
-    
+
     @staticmethod
     def writeRecording(recording, save_path):
         rx = EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)

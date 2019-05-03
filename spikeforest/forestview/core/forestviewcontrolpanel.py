@@ -1,5 +1,6 @@
 import vdomr as vd
 
+
 class ForestViewControlPanel(vd.Component):
     def __init__(self, context):
         vd.Component.__init__(self)
@@ -21,8 +22,8 @@ class ForestViewControlPanel(vd.Component):
             group_elements = []
             for VL in view_launchers['launchers']:
                 if VL['group'] == group['name']:
-                    attrs=dict()
-                    style0={'width':'130px', 'height':'28px', 'margin':'5px', 'font-size':'10px'}
+                    attrs = dict()
+                    style0 = {'width': '130px', 'height': '28px', 'margin': '5px', 'font-size': '10px'}
                     if not VL['enabled']:
                         attrs['disabled'] = 'disabled'
                         style0['color'] = 'lightgray'
@@ -44,11 +45,11 @@ class ForestViewControlPanel(vd.Component):
             if group['label'] is not '':
                 group_elements.append(vd.h4(group['label']))
             if 'sublabel' in group:
-                group_elements.append(vd.span(group['sublabel'], style={'overflow-wrap':'break-word','font-size':'11px'}))
+                group_elements.append(vd.span(group['sublabel'], style={'overflow-wrap': 'break-word', 'font-size': '11px'}))
             group_elements.append(table)
             for component in view_launcher_components:
                 group_elements.append(component)
-            elements.append(vd.div(group_elements, style={'border':'solid 2px lightgray', 'padding':'5px', 'margin':'5px'}))
+            elements.append(vd.div(group_elements, style={'border': 'solid 2px lightgray', 'padding': '5px', 'margin': '5px'}))
 
         return vd.div(
             *elements
@@ -58,16 +59,17 @@ class ForestViewControlPanel(vd.Component):
         for handler in self._launch_view_handlers:
             handler(VL)
 
+
 def _make_button_table(buttons, num_columns):
     rows = []
     i = 0
-    while i<len(buttons):
-        row_buttons = buttons[i:i+num_columns]
-        while len(row_buttons)<num_columns:
+    while i < len(buttons):
+        row_buttons = buttons[i:i + num_columns]
+        while len(row_buttons) < num_columns:
             row_buttons.append(vd.span())
         rows.append(vd.tr([
             vd.td(button)
             for button in row_buttons
         ]))
-        i = i+num_columns
-    return vd.div(vd.table(*rows), style={'background-color':'lightgray'})
+        i = i + num_columns
+    return vd.div(vd.table(*rows), style={'background-color': 'lightgray'})
