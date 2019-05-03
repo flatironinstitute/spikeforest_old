@@ -19,7 +19,7 @@ class IronClust(mlpr.Processor):
     NAME = 'IronClust'
     VERSION = '0.2.5'
     ENVIRONMENT_VARIABLES = [
-        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
+        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
     CONTAINER = None
     CONTAINER_SHARE_ID = None
@@ -99,26 +99,6 @@ class IronClust(mlpr.Processor):
                 recording=recording,
                 tmpdir=tmpdir,
                 **all_params,
-                # detect_sign=self.detect_sign,
-                # adjacency_radius=self.adjacency_radius,
-                # detect_threshold=self.detect_threshold,
-                # merge_thresh=self.merge_thresh,
-                # freq_min=self.freq_min,
-                # freq_max=self.freq_max,
-                # pc_per_chan=self.pc_per_chan,
-                # whiten=self.whiten,
-                # filter_type=self.filter_type,
-                # filter_detect_type=self.filter_detect_type,
-                # common_ref_type=self.common_ref_type,
-                # nTime_clu=self.nTime_clu,
-                # nTime_drift=self.nTime_drift,
-                # knn=self.knn,
-                # min_count=self.min_count,
-                # fGpu=self.fGpu,
-                # fft_thresh=self.fft_thresh,
-                # nSites_whiten=self.nSites_whiten,
-                # feature_type=self.feature_type,
-                # prm_template_name=self.prm_template_name,
                 ironclust_path=ironclust_path,
                 params=params,
             )
@@ -138,25 +118,6 @@ def ironclust_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        # detect_sign=-1,  # Polarity of the spikes, -1, 0, or 1
-        # adjacency_radius=-1,  # Channel neighborhood adjacency radius corresponding to geom file
-        # detect_threshold=5,  # Threshold for detection
-        # merge_thresh=.98,  # Cluster merging threhold 0..1
-        # freq_min=300,  # Lower frequency limit for band-pass filter
-        # freq_max=6000,  # Upper frequency limit for band-pass filter
-        # pc_per_chan=3,  # Number of pc per channel
-        # whiten=False,  # Spatial whitening
-        # filter_type='bandpass',  # filter type
-        # common_ref_type='none',  # common average reference type
-        # nTime_clu=1,  # Number of time periods to cluster together
-        # nTime_drift=1,  # Number of time segments for drift correction
-        # knn=30,  # K nearest neighbors
-        # min_count=30,  # minimum cluster size
-        # fGpu=True,  # use GPU if available
-        # fft_thresh=0,  # fft-cleanup threshold
-        # nSites_whiten=32,  # number of adjacent channels to whiten
-        # feature_type='gpca',  # feature name
-        # prm_template_name='',  # Name of the template file
         ironclust_path=None,
         params=dict(),
         **kwargs):

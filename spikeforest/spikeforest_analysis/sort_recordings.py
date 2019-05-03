@@ -9,7 +9,7 @@ import multiprocessing
 import mtlogging
 # from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort, KiloSort2, MountainSort4TestError
+from spikesorters import MountainSort4, SpykingCircus, YASS, IronClust, KiloSort, KiloSort2, MountainSort4TestError, HerdingSpikes2
 
 Processors = dict(
     MountainSort4=(MountainSort4, 'default'),
