@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # IMPORTANT: before running this example, you must start a local compute resource via:
-# > bin/compute-resource-start local-test --parallel 4
+# > compute-resource-start local-test --parallel 4
 
 import spikeforest_analysis as sa
 from mountaintools import client as mt
