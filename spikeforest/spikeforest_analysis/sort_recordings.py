@@ -18,7 +18,8 @@ Processors = dict(
     KiloSort=(KiloSort, None),
     KiloSort2=(KiloSort2, None),
     Yass=(YASS, 'default'),
-    MountainSort4TestError=(MountainSort4TestError, 'default')
+    MountainSort4TestError=(MountainSort4TestError, 'default'),
+    HerdingSpikes2=(HerdingSpikes2, None),
 )
 
 

@@ -2,7 +2,6 @@ import mlprocessors as mlpr
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, mdaio
 import os, time, random, string, shutil, sys, shlex, json
-from os.path import join
 from mountaintools import client as mt
 
 try:
@@ -18,7 +17,14 @@ class HerdingSpikes2(mlpr.Processor):
       written by J. James Jun, May 3, 2019
       modified from `spiketoolkit/sorters/HerdingSpikesSorter`
       to be made compatible with SpikeForest
-      
+
+    [Installation instruction in SpikeForest environment]
+    1. Run `git clone https://github.com/mhhennig/hs2`
+    2. Activate conda environment for SpikeForest
+    3. Run `pip install joblib`
+    4. Run `python setup.py develop` in herdingspikes2 doretory
+    5. Create `herdingspikes/probes` and `herdingspikes/probe_info` folders
+
     HerdingSpikes is a sorter based on estimated spike location, developed by
     researchers at the University of Edinburgh. It's a fast and scalable choice.
 
@@ -31,50 +37,38 @@ class HerdingSpikes2(mlpr.Processor):
     VERSION = '0.0.1'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
-        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
+        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER = None
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
-    firings_out = mlpr.Output('Output firings file')    
-
-    channels = mlpr.IntegerListParameter(description='List of channels to use.', optional=True, default=[])
-    clustering_bandwidth = mlpr.FloatParameter(optional=True, default=6.0, description='')
-    clustering_alpha = mlpr.FloatParameter(optional=True, default=6.0, description='')
-    clustering_bin_seeding = mlpr.BoolParameter(optional=True, default=False, description='Use GPU if available')
-    left_cutout_time = mlpr.FloatParameter(description='', optional=True, default=1.0)
-    right_cutout_time = mlpr.FloatParameter(description='', optional=True, default=2.2)
-    detection_threshold = mlpr.FloatParameter(description='', optional=True, default=20)
-    probe_masked_channels = mlpr.IntegerListParameter(description='', optional=True, default=[])
-    
-    params_extra = dict(
-        extra_probe_params={
-            'inner_radius': 50,
-            'neighbor_radius': 50,
-            'event_length': 0.5,
-            'peak_jitter': 0.2
-        },
-        extra_detection_params={
-            'to_localize': True,
-            'num_com_centers': 1,
-            'maa': 0,
-            'ahpthr': 0,
-            'out_file_name': "HS2_detected",
-            'decay_filtering': False,
-            'save_all': False,
-            'amp_evaluation_time': 0.4,
-            'spk_evaluation_time': 1.7
-        },
-        extra_pca_params={
-            'pca_ncomponents': 2,
-            'pca_whiten': True
-        },
-    )
+    firings_out = mlpr.Output('Output firings file')
+    adjacency_radius = mlpr.FloatParameter('Use -1 to include all channels in every neighborhood')
+    channels = mlpr.IntegerListParameter(
+        description='List of channels to use.', optional=True, default=[])
+    clustering_bandwidth = mlpr.FloatParameter(
+        optional=True, default=6.0, description='')
+    clustering_alpha = mlpr.FloatParameter(
+        optional=True, default=6.0, description='')
+    clustering_bin_seeding = mlpr.BoolParameter(
+        optional=True, default=False, description='Use GPU if available')
+    cutout_start = mlpr.FloatParameter(
+        description='', optional=True, default=10)
+    cutout_end = mlpr.FloatParameter(
+        description='', optional=True, default=30)
+    detection_threshold = mlpr.FloatParameter(
+        description='', optional=True, default=20)
+    probe_masked_channels = mlpr.IntegerListParameter(
+        description='', optional=True, default=[])
 
     def run(self):
-        # recording, tmpdir
         recording = SFMdaRecordingExtractor(self.recording_dir)
         clustering_n_jobs = os.environ.get('NUM_WORKERS', None)
+
+        code = ''.join(random.choice(string.ascii_uppercase)
+                       for x in range(10))
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + \
+                                '/herdingspikes2-tmp-' + code
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -92,7 +86,6 @@ class HerdingSpikes2(mlpr.Processor):
                 recording=recording,
                 tmpdir=tmpdir,
                 params=params,
-                params_extra=self.params_extra,
                 clustering_n_jobs=clustering_n_jobs,
                 **all_params,
             )
@@ -111,49 +104,69 @@ def hs2_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        params_extra, # fixed extra parameters
-        params, # dataset parameters
-        clustering_n_jobs, # number of workers
-        **kwargs): # all mlpr parameters
+        params,  # dataset parameters
+        clustering_n_jobs,  # number of workers
+        **kwargs):  # all mlpr parameters
 
-        # this should have its name changed
-        Probe = hs.probe.RecordingExtractor(
-            recording, masked_channels=probe_masked_channels, 
-            **params_extra['extra_probe_params'])
+    extra_probe_params = {
+        'inner_radius': kwargs['adjacency_radius'],
+        'neighbor_radius': kwargs['adjacency_radius'],
+        #'event_length': 0.5,
+        #'peak_jitter': 0.2
+    }
+    extra_detection_params = {
+        'to_localize': True,
+        'num_com_centers': 1,
+        'maa': 0,
+        'ahpthr': 0,
+        'out_file_name': "HS2_detected",
+        'decay_filtering': False,
+        'save_all': False,
+        #'amp_evaluation_time': 0.4,
+        #'spk_evaluation_time': 1.7
+    }
+    extra_pca_params = {
+        'pca_ncomponents': 2,
+        'pca_whiten': True
+    }
 
-        H = hs.HSDetection(Probe, file_directory_name=str(tmpdir),
-                           left_cutout_time=left_cutout_time,
-                           right_cutout_time=right_cutout_time,
-                           threshold=detection_threshold,
-                           **params_extra['extra_detection_params'])
+    # this should have its name changed
+    Probe = hs.probe.RecordingExtractor(
+        recording, masked_channels=kwargs['probe_masked_channels'],
+        **extra_probe_params)
 
-        H.DetectFromRaw(load=True)
+    H = hs.HSDetection(Probe, file_directory_name=str(tmpdir),
+                       cutout_start=kwargs['cutout_start'],
+                       cutout_end=kwargs['cutout_end'],
+                       threshold=kwargs['detection_threshold'],
+                       **extra_detection_params)
 
+    H.DetectFromRaw(load=True)
+
+    C = hs.HSClustering(H)
+    C.ShapePCA(**extra_pca_params)
+    C.CombinedClustering(bandwidth=kwargs['clustering_bandwidth'],
+                           alpha=kwargs['clustering_alpha'],
+                           n_jobs=clustering_n_jobs,
+                           bin_seeding=kwargs['clustering_bin_seeding'])
+
+    sorted_file = os.path.join(tmpdir, 'HS2_sorted.hdf5')
+    if(not H.spikes.empty):
         C = hs.HSClustering(H)
-        C.ShapePCA(**params_extra['extra_pca_params'])
-        C.CombinedClustering(bandwidth=clustering_bandwidth,
-                             alpha=clustering_alpha,
-                             n_jobs=clustering_n_jobs,
-                             bin_seeding=clustering_bin_seeding)
+        C.ShapePCA(**extra_pca_params)
+        C.CombinedClustering(alpha=kwargs['clustering_alpha'],
+                                cluster_subset=None,
+                                bandwidth=kwargs['clustering_bandwidth'],
+                                bin_seeding=kwargs['clustering_bin_seeding'],
+                                n_jobs=clustering_n_jobs,
+                                )
+        C.SaveHDF5(sorted_file)
+    else:
+        C = hs.HSClustering(H)
+        C.SaveHDF5(sorted_file)
 
-        sorted_file = str(tmpdir / 'HS2_sorted.hdf5')
-        if(not H.spikes.empty):
-            C = hs.HSClustering(H)
-            C.ShapePCA(**params_extra['extra_pca_params'])
-            C.CombinedClustering(alpha=clustering_alpha,
-                                 cluster_subset=None,
-                                 bandwidth=clustering_bandwidth,
-                                 bin_seeding=clustering_bin_seeding,
-                                 n_jobs=clustering_n_jobs,
-                                 )
-            C.SaveHDF5(sorted_file)
-        else:
-            C = hs.HSClustering(H)
-            C.SaveHDF5(sorted_file)        
-
-        sorting = se.HS2SortingExtractor(sorted_file)
-        return sorting
-
+    sorting = se.HS2SortingExtractor(sorted_file)
+    return sorting
 
 
 def read_dataset_params(dsdir):
