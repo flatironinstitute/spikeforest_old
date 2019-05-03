@@ -48,7 +48,7 @@ class Sha1Cache():
         for altpath in alternate_paths:
             if os.path.exists(altpath):
                 return altpath
-        hints_fname = path+'.hints.json'
+        hints_fname = path + '.hints.json'
         if os.path.exists(hints_fname):
             hints = _read_json_file(hints_fname, delete_on_error=True)
             if hints and ('files' in hints):
@@ -66,13 +66,13 @@ class Sha1Cache():
                     try:
                         _write_json_file(hints, hints_fname)
                     except:
-                        print('Warning: problem writing hints file: '+hints_fname)
+                        print('Warning: problem writing hints file: ' + hints_fname)
                     return matching_files[0]['stat']['path']
                 else:
                     _safe_remove_file(hints_fname)
             else:
                 print(
-                    'Warning: failed to load hints json file, or invalid file. Removing: '+hints_fname)
+                    'Warning: failed to load hints json file, or invalid file. Removing: ' + hints_fname)
                 _safe_remove_file(hints_fname)
         return None
 
@@ -82,19 +82,19 @@ class Sha1Cache():
             target_path = self._get_path(sha1, create=True)
         else:
             alternate_target_path = True
-        
-        path_tmp = target_path+'.downloading.' + _random_string(6)
+
+        path_tmp = target_path + '.downloading.' + _random_string(6)
         if (verbose) or (show_progress) or (size > 10000):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
-        
-        timer=time.time()
+
+        timer = time.time()
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)
-        elapsed=time.time()-timer
+        elapsed = time.time() - timer
 
         if (verbose) or (show_progress) or (size > 10000):
             print('Downloaded file ({}) in {} sec.'.format(_format_file_size(size), elapsed))
-            
+
         if not sha1b:
             if os.path.exists(path_tmp):
                 _safe_remove_file(path_tmp)
@@ -106,7 +106,7 @@ class Sha1Cache():
         if alternate_target_path:
             if os.path.exists(target_path):
                 _safe_remove_file(target_path)
-            _rename_file(path_tmp, target_path, remove_if_exists=True)            
+            _rename_file(path_tmp, target_path, remove_if_exists=True)
             self.reportFileSha1(target_path, sha1)
         else:
             if not os.path.exists(target_path):
@@ -122,7 +122,7 @@ class Sha1Cache():
             if path != path0:
                 _safe_remove_file(path)
         else:
-            tmp_fname=path0+'.copying.'+_random_string(6)
+            tmp_fname = path0 + '.copying.' + _random_string(6)
             _rename_or_copy(path, tmp_fname)
             _rename_file(tmp_fname, path0, remove_if_exists=False)
 
@@ -133,7 +133,7 @@ class Sha1Cache():
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
         if not os.path.exists(path0):
-            tmp_path=path0+'.copying.'+ _random_string(6)
+            tmp_path = path0 + '.copying.' + _random_string(6)
             copyfile(path, tmp_path)
             _rename_file(tmp_path, path0, remove_if_exists=False)
         return path0, sha1
@@ -142,7 +142,7 @@ class Sha1Cache():
     def computeFileSha1(self, path, _known_sha1=None):
         path = os.path.abspath(path)
         basename = os.path.basename(path)
-        if len(basename)==40:
+        if len(basename) == 40:
             # suspect it is itself a file in the cache
             if self._get_path(sha1=basename) == path:
                 # in that case we don't need to compute
@@ -151,7 +151,7 @@ class Sha1Cache():
         aa = _get_stat_object(path)
         aa_hash = _compute_string_sha1(json.dumps(aa, sort_keys=True))
 
-        path0 = self._get_path(aa_hash, create=True)+'.record.json'
+        path0 = self._get_path(aa_hash, create=True) + '.record.json'
         if not _known_sha1:
             if os.path.exists(path0):
                 obj = _read_json_file(path0, delete_on_error=True)
@@ -176,9 +176,9 @@ class Sha1Cache():
         try:
             _write_json_file(obj, path0)
         except:
-            print('Warning: problem writing .record.json file: '+path0)
+            print('Warning: problem writing .record.json file: ' + path0)
 
-        path1 = self._get_path(sha1, create=True, directory=self.directory())+'.hints.json'
+        path1 = self._get_path(sha1, create=True, directory=self.directory()) + '.hints.json'
         if os.path.exists(path1):
             hints = _read_json_file(path1, delete_on_error=True)
         else:
@@ -189,7 +189,7 @@ class Sha1Cache():
         try:
             _write_json_file(hints, path1)
         except:
-            print('Warning: problem writing .hints.json file: '+path1)
+            print('Warning: problem writing .hints.json file: ' + path1)
         # todo: use hints for findFile
         return sha1
 
@@ -207,22 +207,22 @@ class Sha1Cache():
                     os.makedirs(path0)
                 except:
                     if not os.path.exists(path0):
-                        raise Exception('Unable to make directory: '+path0)
+                        raise Exception('Unable to make directory: ' + path0)
         if not return_alternates:
             return os.path.join(path0, sha1)
         else:
-            altpaths=[]
+            altpaths = []
             alt_dirs = self.alternateDirectories()
             for altdir in alt_dirs:
                 altpaths.append(os.path.join(altdir, path1, sha1))
-            return os.path.join(path0,sha1), altpaths
+            return os.path.join(path0, sha1), altpaths
 
 
 @mtlogging.log()
 def _compute_file_sha1(path):
     if not os.path.exists(path):
         return None
-    if (os.path.getsize(path) > 1024*1024*100):
+    if (os.path.getsize(path) > 1024 * 1024 * 100):
         print('Computing sha1 of {}'.format(path))
     BLOCKSIZE = 65536
     sha = hashlib.sha1()
@@ -264,30 +264,30 @@ def _safe_remove_file(fname):
     try:
         os.remove(fname)
     except:
-        print('Warning: unable to remove file that we thought existed: '+fname)
+        print('Warning: unable to remove file that we thought existed: ' + fname)
 
 
 @mtlogging.log()
 def _read_json_file(path, *, delete_on_error=False):
-    with FileLock(path+'.lock', exclusive=False):
+    with FileLock(path + '.lock', exclusive=False):
         try:
             with open(path) as f:
                 return json.load(f)
         except:
             if delete_on_error:
-                print('Warning: Unable to read or parse json file. Deleting: '+path)
+                print('Warning: Unable to read or parse json file. Deleting: ' + path)
                 try:
                     os.unlink(path)
                 except:
-                    print('Warning: unable to delete file: '+path)
+                    print('Warning: unable to delete file: ' + path)
                     pass
             else:
-                print('Warning: Unable to read or parse json file: '+path)
+                print('Warning: Unable to read or parse json file: ' + path)
             return None
 
 
 def _write_json_file(obj, path):
-    with FileLock(path+'.lock', exclusive=True):
+    with FileLock(path + '.lock', exclusive=True):
         with open(path, 'w') as f:
             return json.dump(obj, f)
 
@@ -299,6 +299,7 @@ def _safe_list_dir(path):
     except:
         return []
 
+
 def _rename_or_copy(path1, path2):
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
@@ -309,6 +310,7 @@ def _rename_or_copy(path1, path2):
             shutil.copyfile(path1, path2)
         except:
             raise Exception('Problem renaming or copying file: {} -> {}'.format(path1, path2))
+
 
 @mtlogging.log()
 def _rename_file(path1, path2, remove_if_exists):
@@ -352,6 +354,7 @@ def _sizeof_fmt(num, suffix='B'):
             return "%3.1f %s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f %s%s" % (num, 'Yi', suffix)
+
 
 def _random_string(num_chars):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'

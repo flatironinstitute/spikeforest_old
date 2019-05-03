@@ -12,7 +12,7 @@ import tempfile
 @pytest.mark.cairio
 def test_cairio(tmpdir):
     tmpdir = str(tmpdir)
-    os.environ['KBUCKET_CACHE_DIR'] = tmpdir+'/sha1-cache'
+    os.environ['KBUCKET_CACHE_DIR'] = tmpdir + '/sha1-cache'
 
     from mountaintools import CairioClient
     cc = CairioClient()
@@ -44,7 +44,7 @@ def test_cairio(tmpdir):
     # Output: /tmp/sha1-cache/4/82/482cb0cfcbed6740a2bcb659c9ccc22a4d27b369
 
     # Or we can store some large text by key and retrieve it later
-    large_text = 'some large repeating text'*100
+    large_text = 'some large repeating text' * 100
     cc.saveText(key=dict(name='key-for-repeating-text'), text=large_text)
     txt = cc.loadText(key=dict(name='key-for-repeating-text'))
     assert txt == large_text
@@ -66,9 +66,9 @@ def test_cairio(tmpdir):
     assert json.dumps(some_other_object) == json.dumps(obj)
 
     # You can do the same with files
-    with open(tempfile.gettempdir()+'/test___.txt', 'w') as f:
+    with open(tempfile.gettempdir() + '/test___.txt', 'w') as f:
         f.write('some file content')
-    path = cc.saveFile(tempfile.gettempdir()+'/test___.txt')
+    path = cc.saveFile(tempfile.gettempdir() + '/test___.txt')
     print(path)
     # Output: sha1://ee025361a15e3e8074e9c0b44b4f98aabc829b3d/test___.txt
 
@@ -78,7 +78,7 @@ def test_cairio(tmpdir):
     assert txt == 'some file content'
 
     sha1 = cc.computeFileSha1(path=cc.realizeFile(path))
-    txt2 = cc.loadText(path='sha1://'+sha1)
+    txt2 = cc.loadText(path='sha1://' + sha1)
     assert txt2 == 'some file content'
 
 

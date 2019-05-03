@@ -9,11 +9,12 @@ import spikeforest_analysis as sa
 from spikeforest import EfficientAccessRecordingExtractor
 import json
 
+
 class UnitTableView(vd.Component):
     def __init__(self, context):
         vd.Component.__init__(self)
         self._context = context
-        self._size=(100, 100)
+        self._size = (100, 100)
         self._unit_table_widget = None
 
         self._connection_to_init, connection_to_parent = multiprocessing.Pipe()
@@ -22,18 +23,23 @@ class UnitTableView(vd.Component):
 
         self._init_log_text = ''
         vd.set_timeout(self._check_init, 0.5)
+
     def _on_init_completed(self, result):
         self._unit_table_widget = UnitTableWidget(context=self._context, units_info=result)
         self._unit_table_widget.setSize(self._size)
         self.refresh()
+
     def setSize(self, size):
-        self._size=size
+        self._size = size
         if self._unit_table_widget:
             self._unit_table_widget.setSize(size)
+
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Unit table'
+
     def render(self):
         if self._unit_table_widget:
             return vd.div(
@@ -44,6 +50,7 @@ class UnitTableView(vd.Component):
                 vd.h3('Initializing...'),
                 vd.pre(self._init_log_text)
             )
+
     def _check_init(self):
         if not self._unit_table_widget:
             if self._connection_to_init.poll():
@@ -56,28 +63,32 @@ class UnitTableView(vd.Component):
                     return
             vd.set_timeout(self._check_init, 1)
 
+
 class UnitTableWidget(vd.Component):
     def __init__(self, *, context, units_info):
         vd.Component.__init__(self)
-        self._size = (100,100)
+        self._size = (100, 100)
         self._units_info = units_info
+
     def setSize(self, size):
         self._size = size
         self.refresh()
+
     def render(self):
         return vd.pre(json.dumps(self._units_info, indent=2))
 
 # Initialization in a worker thread
 mtlogging.log(root=True)
+
+
 def _initialize(context, connection_to_parent):
     with StdoutSender(connection=connection_to_parent):
         print('***** Preparing efficient access recording extractor...')
-        earx = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
+        _ = EfficientAccessRecordingExtractor(recording=context.recordingExtractor())
         print('***** computing units info...')
         info0 = sa.compute_units_info(recording=context.recordingExtractor(), sorting=context.trueSortingExtractor())
         print('*****')
     connection_to_parent.send(dict(
         name='result',
         result=info0
-    )) 
-    
+    ))

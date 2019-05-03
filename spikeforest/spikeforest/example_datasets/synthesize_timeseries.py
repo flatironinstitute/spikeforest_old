@@ -24,6 +24,6 @@ def synthesize_timeseries(*, sorting, waveforms, noise_level=1, samplerate=30000
             tstart = np.int64(np.floor(t0)) - Tmid
             if (0 <= tstart) and (tstart + T <= N):
                 X[:, tstart:tstart + T] = X[:, tstart:tstart + T] + waveform0[:,
-                                                                    frac_offset::waveform_upsamplefac] * amp0
+                                                                              frac_offset::waveform_upsamplefac] * amp0
 
     return X

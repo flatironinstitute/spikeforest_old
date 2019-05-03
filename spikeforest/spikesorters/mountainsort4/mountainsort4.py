@@ -4,6 +4,7 @@ import sys
 from .bandpass_filter import bandpass_filter
 from .whiten import whiten
 
+
 class MountainSort4(mlpr.Processor):
     NAME = 'MountainSort4'
     VERSION = '4.2.0'
@@ -40,7 +41,7 @@ class MountainSort4(mlpr.Processor):
         from spikeforest import SFMdaSortingExtractor
         from .bandpass_filter import bandpass_filter
         from .whiten import whiten
-        
+
         import ml_ms4alg
 
         print('MountainSort4......')
@@ -79,6 +80,7 @@ class MountainSort4(mlpr.Processor):
 
         SFMdaSortingExtractor.writeSorting(
             sorting=sorting, save_path=self.firings_out)
+
 
 class MountainSort4TestError(mlpr.Processor):
     NAME = 'MountainSort4'
@@ -121,7 +123,7 @@ class MountainSort4TestError(mlpr.Processor):
 
         from spikeforest import SFMdaRecordingExtractor
         from spikeforest import SFMdaSortingExtractor
-        
+
         import ml_ms4alg
 
         print('MountainSort4......')

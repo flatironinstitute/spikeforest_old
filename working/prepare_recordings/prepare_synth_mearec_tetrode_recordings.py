@@ -12,25 +12,26 @@ basedir = 'kbucket://15734439d8cf/groundtruth'
 
 group_name = 'synth_mearec_tetrode'
 
+
 def prepare_synth_mearec_tetrode_studies(*, basedir):
     study_sets = [
         load_study_set_from_md('descriptions/spf_synth_mearec_tetrode.md')
     ]
     study_set_name = study_sets[0]['name']
-    
-    study_set_dir0 = basedir+'/mearec_synth/tetrode'
+
+    study_set_dir0 = basedir + '/mearec_synth/tetrode'
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
-        raise Exception('Failed to create snapshot of study set directory: '+study_set_dir0)
-    study_set_dir=study_set_dir+'.synth_mearec_tetrode'
-    print('Using study set dir: '+study_set_dir)
+        raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
+    study_set_dir = study_set_dir + '.synth_mearec_tetrode'
+    print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
-    names=['noise10_K10_C4','noise10_K20_C4','noise20_K10_C4', 'noise20_K20_C4']
+    names = ['noise10_K10_C4', 'noise10_K20_C4', 'noise20_K10_C4', 'noise20_K20_C4']
     for name in names:
-        print('PREPARING: '+name)
-        study_name = 'synth_mearec_tetrode_'+name
-        study_dir = study_set_dir+'/datasets_'+name
+        print('PREPARING: ' + name)
+        study_name = 'synth_mearec_tetrode_' + name
+        study_dir = study_set_dir + '/datasets_' + name
 
         study0 = dict(
             name=study_name,
@@ -46,7 +47,7 @@ def prepare_synth_mearec_tetrode_studies(*, basedir):
                 name=dsname,
                 study=study_name,
                 directory=dsdir,
-                firings_true=dsdir+'/firings_true.mda',
+                firings_true=dsdir + '/firings_true.mda',
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))

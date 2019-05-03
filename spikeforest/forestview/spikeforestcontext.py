@@ -7,11 +7,12 @@ from .recordingcontext import RecordingContext
 
 local_client = MountainClient()
 
+
 class SpikeForestContext():
     def __init__(self, studies=[], recordings=[], sorting_results=[], aggregated_sorting_results=None):
         self._signal_handlers = dict()
         self._any_state_change_handlers = []
-        
+
         print('******** FORESTVIEW: Initializing study context')
         self._studies = studies
         self._recordings = recordings
@@ -25,7 +26,7 @@ class SpikeForestContext():
 
         self._recordings_by_id = dict()
         for rec in self._recordings:
-            id0 = rec['study']+'/'+rec['name']
+            id0 = rec['study'] + '/' + rec['name']
             self._recordings_by_id[id0] = rec
             c0 = RecordingContext(rec)
             c0.onAnyStateChanged(self._trigger_any_state_change_handlers)
@@ -33,15 +34,15 @@ class SpikeForestContext():
 
         for sr in self._sorting_results:
             rec = sr['recording']
-            id0 = rec['study']+'/'+rec['name']
+            id0 = rec['study'] + '/' + rec['name']
             if id0 in self._recording_contexts:
                 rc = self._recording_contexts[id0]
                 rc.addSortingResult(sr)
 
         print('******** FORESTVIEW: Done initializing study context')
         self._state = dict(
-            current_recording_id = None,
-            selected_recording_ids = []
+            current_recording_id=None,
+            selected_recording_ids=[]
         )
 
     def viewLaunchers(self):
@@ -108,7 +109,7 @@ class SpikeForestContext():
     # selected recordings
     def setSelectedRecordingIds(self, recids):
         if recids is None:
-            recids=[]
+            recids = []
         recids = sorted(recids)
         self._set_state_value('selected_recording_ids', recids)
 
@@ -122,13 +123,13 @@ class SpikeForestContext():
         if self._state[name] == val:
             return
         self._state[name] = deepcopy(val)
-        self._emit('state-changed-'+name)
+        self._emit('state-changed-' + name)
 
     def _get_state_value(self, name):
         return deepcopy(self._state[name])
 
     def _register_state_change_handler(self, name, handler):
-        self._register_signal_handler('state-changed-'+name, handler)
+        self._register_signal_handler('state-changed-' + name, handler)
 
     def _register_signal_handler(self, signal_name, handler):
         if signal_name not in self._signal_handlers:

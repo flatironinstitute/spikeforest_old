@@ -12,6 +12,7 @@ import sys
 import uuid
 import mtlogging
 
+
 class TheApp():
     def __init__(self, *, mode, path):
         self._mode = mode
@@ -19,7 +20,7 @@ class TheApp():
 
     def createSession(self):
         W = forestview(path=self._path, mode=self._mode)
-        
+
         _make_full_browser(W)
         return W
 
@@ -27,6 +28,7 @@ class TheApp():
         return 'ForestView ({}) - {}'.format(self._mode, self._path)
 
 _default_spikeforest_file = 'sha1dir://03e12d2f1af3e038886f25a94871f3723a66502a.toy_recordings'
+
 
 def main():
     parser = argparse.ArgumentParser(description='Browse SpikeForest studies, recordings, and results')
@@ -74,6 +76,7 @@ def main():
     else:
         print(APP.title())
         vd.pyqt5_start(app=APP, title=APP.title())
+
 
 def _make_full_browser(W):
     resize_callback_id = 'resize-callback-' + str(uuid.uuid4())

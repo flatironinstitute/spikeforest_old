@@ -28,12 +28,14 @@ class InOutBase():
     def spec(self):
         return {'name': self.name, 'description': self.description, 'optional': self.optional}
 
+
 class Input(InOutBase):
     def __init__(self, description=None, optional=False, multi=False, directory=False, validators=None, *args, **kwargs):
         super().__init__(description, optional, multi,
                          directory, validators, *args, **kwargs)
         self.validators.append(FileExistsValidator())
         # self.formats = []
+
 
 class Output(InOutBase):
     def __init__(self, description=None, optional=False, multi=False, validators=None, is_array=False, *args, **kwargs):
@@ -42,10 +44,12 @@ class Output(InOutBase):
                          directory, validators, *args, **kwargs)
         self.is_array = is_array
 
+
 class OutputArray(Output):
     def __init__(self, description=None, optional=False, multi=False, validators=None, *args, **kwargs):
         super().__init__(description, optional, multi,
                          validators, is_array=True, *args, **kwargs)
+
 
 class StreamInput(Input):
     """
@@ -340,7 +344,7 @@ class Processor(metaclass=ProcMeta):
 
         arglist = []
         for key, value in kwargs.items():
-            arglist.append('--'+key)
+            arglist.append('--' + key)
             if isinstance(value, list):
                 serialized = ','.join([str(x) for x in value])
             else:
@@ -411,7 +415,7 @@ class Processor(metaclass=ProcMeta):
                 opts['required'] = not elem.optional
                 if elem.multi:
                     opts['action'] = 'append'
-                parser.add_argument('--'+elem.name, **opts)
+                parser.add_argument('--' + elem.name, **opts)
 
         # populate parser with INPUTS
         populate_parser(parser, self.INPUTS)
@@ -437,7 +441,7 @@ class Processor(metaclass=ProcMeta):
                     opts['choices'] = [choice[0] for choice in param.choices]
                 else:
                     opts['choices'] = param.choices
-            parser.add_argument('--'+param.name, **opts)
+            parser.add_argument('--' + param.name, **opts)
 
         if self.USE_ARGUMENTS:
             parser.add_argument('--_tempdir', required=False,
@@ -454,7 +458,7 @@ class Processor(metaclass=ProcMeta):
         if args is None:
             args = []
         for kwargname in kwargs:
-            args.append('--'+kwargname)
+            args.append('--' + kwargname)
             args.append('{}'.format(kwargs[kwargname]))
         parser = proc.invoke_parser(noexit=(_instance is not None))
         opts = parser.parse_args(args)

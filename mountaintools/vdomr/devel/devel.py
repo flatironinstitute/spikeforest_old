@@ -32,13 +32,13 @@ def loadCss(*, url=None, path=None, css=None, integrity=None, crossorigin=None):
         # display(HTML('<style>{}</style>'.format(css)))
         return
     if url:
-        attrs = []
+        # attrs = []
         # if integrity:
         #  attrs.append('integrity={}'.format(integrity))
         # if crossorigin:
         #  attrs.append('crossorigin={}'.format(crossorigin))
-        html = '<link rel="stylesheet" href="{}" {}'.format(
-            url, ' '.join(attrs))
+        # html = '<link rel="stylesheet" href="{}" {}'.format(
+        #     url, ' '.join(attrs))
 
         js = """
     let link = document.createElement( "link" );
@@ -60,8 +60,8 @@ loaded_javascript_files = {}
 
 def loadJavascript(*, url=None, path=None, js=None, delay=None):
     if path:
-        modified_timestamp = os.path.getmtime(path)
-        colab_mode = (vd.mode() == 'colab')
+        # modified_timestamp = os.path.getmtime(path)
+        # colab_mode = (vd.mode() == 'colab')
         # if (not colab_mode) and (path in loaded_javascript_files):
         #  if loaded_javascript_files[path]['mtime']==modified_timestamp:
         # already loaded
@@ -81,11 +81,11 @@ def loadJavascript(*, url=None, path=None, js=None, delay=None):
             js2 = str(delay).join(js2.split('{delay}'))
             js2 = js.join(js2.split('{js}'))
             js = js2
-        js = '{\n'+js+'\n}'
+        js = '{\n' + js + '\n}'
         vd.exec_javascript(js)
         return
     if url:
-        colab_mode = (vd.mode() == 'colab')
+        # colab_mode = (vd.mode() == 'colab')
         # if (not colab_mode) and (url in loaded_javascript_files):
         # already loaded
         #  return

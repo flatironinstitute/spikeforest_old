@@ -5,16 +5,17 @@ from .analysis_view_launchers import get_analysis_view_launchers
 
 local_client = MountainClient()
 
+
 class AnalysisContext():
     def __init__(self, obj):
         self._object = obj
-        self._o = self._object # for convenience
+        self._o = self._object  # for convenience
         self._any_state_change_handlers = []
         self._signal_handlers = dict()
 
         print('******** FORESTVIEW: Done initializing study context')
         self._state = dict(
-            current_sorter = None
+            current_sorter=None
         )
 
     def initialize(self):
@@ -43,7 +44,7 @@ class AnalysisContext():
 
     def sorterDefinitionKeys(self):
         return self._o.get('sorters', dict()).keys()
-    
+
     def sorterDefinition(self, key):
         return self._o.get('sorters', dict()).get(key)
 
@@ -63,13 +64,13 @@ class AnalysisContext():
         if self._state[name] == val:
             return
         self._state[name] = deepcopy(val)
-        self._emit('state-changed-'+name)
+        self._emit('state-changed-' + name)
 
     def _get_state_value(self, name):
         return deepcopy(self._state[name])
 
     def _register_state_change_handler(self, name, handler):
-        self._register_signal_handler('state-changed-'+name, handler)
+        self._register_signal_handler('state-changed-' + name, handler)
 
     def _register_signal_handler(self, signal_name, handler):
         if signal_name not in self._signal_handlers:

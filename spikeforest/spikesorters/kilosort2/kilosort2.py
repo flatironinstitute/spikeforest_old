@@ -13,7 +13,7 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
-#import h5py
+# import h5py
 
 
 class KiloSort2(mlpr.Processor):
@@ -60,7 +60,7 @@ class KiloSort2(mlpr.Processor):
     def run(self):
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp')+'/kilosort2-tmp-'+code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-tmp-' + code
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -88,10 +88,10 @@ class KiloSort2(mlpr.Processor):
             SFMdaSortingExtractor.writeSorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            #if os.path.exists(tmpdir):
+            # if os.path.exists(tmpdir):
             #    shutil.rmtree(tmpdir)
             raise
-        #shutil.rmtree(tmpdir)
+        # shutil.rmtree(tmpdir)
 
 
 def kilosort2_helper(*,
@@ -126,7 +126,7 @@ def kilosort2_helper(*,
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
-    dataset_dir = tmpdir+'/kilosort2_dataset'
+    dataset_dir = tmpdir + '/kilosort2_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.writeRecording(
         recording=recording, save_path=dataset_dir)
@@ -134,10 +134,10 @@ def kilosort2_helper(*,
     samplerate = recording.getSamplingFrequency()
 
     print('Reading timeseries header...')
-    HH = mdaio.readmda_header(dataset_dir+'/raw.mda')
+    HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
     num_channels = HH.dims[0]
     num_timepoints = HH.dims[1]
-    duration_minutes = num_timepoints/samplerate/60
+    duration_minutes = num_timepoints / samplerate / 60
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(
         num_channels, num_timepoints, duration_minutes))
 
@@ -192,7 +192,7 @@ quit(0);
         raise Exception('kilosort2 returned a non-zero exit code')
 
     # parse output
-    result_fname = tmpdir+'/firings.mda'
+    result_fname = tmpdir + '/firings.mda'
     if not os.path.exists(result_fname):
         raise Exception('Result file does not exist: ' + result_fname)
 

@@ -164,7 +164,7 @@ def saveProbeFile(recording, probe_file, format=None, radius=100, dimensions=Non
                                      "'location' property to save .csv probe file")
     elif probe_file.suffix == '.prb':
         _export_prb_file(recording, probe_file, format, radius=radius, dimensions=dimensions)
-    elif probe_file.suffix == '.npy': #YASS foramt
+    elif probe_file.suffix == '.npy':  # YASS foramt
         _export_prb_file(recording, probe_file, format)
     else:
         raise NotImplementedError("Only .csv and .prb probe files can be saved.")
@@ -260,7 +260,7 @@ def _export_prb_file(recording, file_name, format=None, adjacency_distance=None,
     file_name: str
         probe filename to be exported to
     format: str
-        'klusta' | 'spiking_circus' | 'yass' (defualt=None) 
+        'klusta' | 'spiking_circus' | 'yass' (defualt=None)
     adjacency_distance: float
         distance to consider 2 channels adjacent (if 'location' is a property)
     graph: bool

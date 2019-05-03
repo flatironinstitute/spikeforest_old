@@ -10,6 +10,7 @@ import multiprocessing
 
 local_client = MountainClient()
 
+
 @mtlogging.log()
 def createJobs(proc, argslist, verbose=None):
     if verbose is None:
@@ -34,7 +35,7 @@ def createJobs(proc, argslist, verbose=None):
             content='from .{} import {}'.format(
                 processor_source_basename_noext, proc.__name__)
         ))
-        code = local_client.saveObject(object = code)
+        code = local_client.saveObject(object=code)
     else:
         code = None
 
@@ -60,10 +61,10 @@ def createJobs(proc, argslist, verbose=None):
 
         if _container:
             if not _file_exists_or_is_sha1_url(_container):
-                raise Exception('Unable to find container file: '+_container)
-        
+                raise Exception('Unable to find container file: ' + _container)
+
         if _label is None:
-            _label='{} (version: {})'.format(proc.NAME, proc.VERSION)
+            _label = '{} (version: {})'.format(proc.NAME, proc.VERSION)
 
         # hashes for inputs are computed below
         inputs = dict()
@@ -73,13 +74,13 @@ def createJobs(proc, argslist, verbose=None):
                 fname0 = args[name0]
                 if input0.directory:
                     inputs[name0] = dict(
-                        directory = True,
-                        path = fname0
+                        directory=True,
+                        path=fname0
                     )
                 else:
                     if type(fname0) == str:
                         inputs[name0] = dict(
-                            path = fname0
+                            path=fname0
                         )
                     else:
                         if not hasattr(fname0, 'hash'):
@@ -89,9 +90,9 @@ def createJobs(proc, argslist, verbose=None):
                         else:
                             hash0 = fname0.hash
                         inputs[name0] = dict(
-                            path = None,
-                            object = fname0,
-                            hash = hash0
+                            path=None,
+                            object=fname0,
+                            hash=hash0
                         )
             else:
                 if not input0.optional:
@@ -106,8 +107,8 @@ def createJobs(proc, argslist, verbose=None):
                 if type(val0) == str:
                     _, file_extension = os.path.splitext(val0)
                     outputs[name0] = dict(
-                        ext = file_extension,
-                        dest_path = os.path.abspath(val0)
+                        ext=file_extension,
+                        dest_path=os.path.abspath(val0)
                     )
                 elif type(val0) == dict:
                     outputs[name0] = val0
@@ -141,24 +142,24 @@ def createJobs(proc, argslist, verbose=None):
         else:
             environment_variables = []
 
-        job_object=dict(
+        job_object = dict(
             processor_name=proc.NAME,
             processor_version=proc.VERSION,
             processor_class_name=proc.__name__,
             processor_code=code,
             label=_label,
-            inputs=inputs, # hashes are computed below
-            outputs=outputs, # signatures are computed below
+            inputs=inputs,  # hashes are computed below
+            outputs=outputs,  # signatures are computed below
             parameters=parameters,
             container=_container,
-            force_run=_force_run, 
+            force_run=_force_run,
             use_cache=_use_cache,
             keep_temp_files=_keep_temp_files,
             environment_variables=environment_variables,
             additional_files_to_realize=_additional_files_to_realize or [],
             timeout=_timeout,
-            runtime_info_signature=None, # computed below
-            console_out_signature=None, # computed below
+            runtime_info_signature=None,  # computed below
+            console_out_signature=None,  # computed below
         )
         job_objects.append(job_object)
 
@@ -260,6 +261,7 @@ def createJobs(proc, argslist, verbose=None):
 
     return [MountainJob(processor=proc, job_object=job_object) for job_object in job_objects]
 
+
 @mtlogging.log()
 def createJob(
     proc,
@@ -286,12 +288,13 @@ def createJob(
     jobs = createJobs(proc, [args], verbose=_verbose)
     return jobs[0]
 
+
 def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
-    patterns = ['*.py']+additional_files
+    patterns = ['*.py'] + additional_files
     files = []
     dirs = []
     for fname in os.listdir(dirname):
-        if os.path.isfile(dirname+'/'+fname):
+        if os.path.isfile(dirname + '/' + fname):
             matches = False
             for pattern in patterns:
                 if fnmatch.fnmatch(fname, pattern):
@@ -299,17 +302,17 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
             if exclude_init and (fname == '__init__.py'):
                 matches = False
             if matches:
-                with open(dirname+'/'+fname) as f:
+                with open(dirname + '/' + fname) as f:
                     txt = f.read()
                 files.append(dict(
                     name=fname,
                     content=txt
                 ))
-        elif os.path.isdir(dirname+'/'+fname):
+        elif os.path.isdir(dirname + '/' + fname):
             if (not fname.startswith('__')) and (not fname.startswith('.')):
                 content = _read_python_code_of_directory(
-                    dirname+'/'+fname, additional_files=additional_files, exclude_init=False)
-                if len(content['files'])+len(content['dirs']) > 0:
+                    dirname + '/' + fname, additional_files=additional_files, exclude_init=False)
+                if len(content['files']) + len(content['dirs']) > 0:
                     dirs.append(dict(
                         name=fname,
                         content=content
@@ -319,8 +322,9 @@ def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=Tr
         dirs=dirs
     )
 
+
 def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
-    input_hashes=dict()
+    input_hashes = dict()
     for input_name, input0 in inputs.items():
         if input0.get('directory', False):
             hash0 = input0.get('hash', None)
@@ -339,10 +343,12 @@ def _compute_mountain_job_output_signature(*, processor_name, processor_version,
     )
     signature_string = json.dumps(signature_obj, sort_keys=True)
     return _sha1(signature_string)
-        
+
+
 def _sha1(str):
     hash_object = hashlib.sha1(str.encode('utf-8'))
     return hash_object.hexdigest()
+
 
 def _file_exists_or_is_sha1_url(fname):
     if fname.startswith('sha1://'):
@@ -350,6 +356,7 @@ def _file_exists_or_is_sha1_url(fname):
     if local_client.findFile(path=fname):
         return True
     return False
+
 
 @mtlogging.log()
 def _compute_sha1s_for_local_file_inputs(inputs):
@@ -362,12 +369,14 @@ def _compute_sha1s_for_local_file_inputs(inputs):
     pool.join()
     return ret
 
+
 def _compute_sha1_for_local_file_input(input0):
     path0 = input0['path']
     if not os.path.exists(path0):
         raise Exception('Input file does not exists: {}'.format(path0))
     sha1 = local_client.computeFileSha1(path0)
     return sha1
+
 
 @mtlogging.log()
 def _compute_sha1s_for_kbucket_file_inputs(inputs):
@@ -380,12 +389,14 @@ def _compute_sha1s_for_kbucket_file_inputs(inputs):
     pool.join()
     return ret
 
+
 def _compute_sha1_for_kbucket_file_input(input0):
     path0 = input0['path']
     sha1 = local_client.computeFileSha1(path0)
     if not sha1:
         raise Exception('Unable to find input: {}'.format(path0))
     return sha1
+
 
 @mtlogging.log()
 def _compute_sha1s_for_sha1_file_inputs(inputs):
@@ -399,6 +410,7 @@ def _compute_sha1s_for_sha1_file_inputs(inputs):
         ret.append(sha1)
     return ret
 
+
 @mtlogging.log()
 def _compute_hashes_for_local_dir_inputs(inputs):
     # do not parallelize if small number
@@ -410,6 +422,7 @@ def _compute_hashes_for_local_dir_inputs(inputs):
     pool.join()
     return ret
 
+
 def _compute_hash_for_local_dir_input(input0):
     path0 = input0['path']
     if not os.path.isdir(path0):
@@ -418,6 +431,7 @@ def _compute_hash_for_local_dir_input(input0):
     if not hash0:
         raise Exception('Unable to compute hash of directory: {}'.format(path0))
     return hash0
+
 
 @mtlogging.log()
 def _compute_hashes_for_kbucket_dir_inputs(inputs):
@@ -429,6 +443,7 @@ def _compute_hashes_for_kbucket_dir_inputs(inputs):
     pool.close()
     pool.join()
     return ret
+
 
 def _compute_hash_for_kbucket_dir_input(input0):
     path0 = input0['path']

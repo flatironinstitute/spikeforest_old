@@ -15,16 +15,17 @@ import vdomr as vd
 from mountaintools import client as mt
 import json
 
+
 def get_spikeforest_view_launchers(context):
-    launchers=[]
-    groups=[]
+    launchers = []
+    groups = []
     ret = dict(
         groups=groups,
         launchers=launchers
     )
 
     # General
-    groups.append(dict(name='general',label=''))
+    groups.append(dict(name='general', label=''))
 
     launchers.append(dict(
         group='general', name='recording-table', label='Recording table',
@@ -45,12 +46,12 @@ def get_spikeforest_view_launchers(context):
         context=context, opts=dict(),
         enabled=True
     ))
-    
+
     recording_context = context.recordingContext(context.currentRecordingId())
 
     # Aggregated sorting results
     if context.hasAggregatedSortingResults():
-        groups.append(dict(name='aggregated_sorting_results',label='Aggregated results'))
+        groups.append(dict(name='aggregated_sorting_results', label='Aggregated results'))
 
         launchers.append(dict(
             group='aggregated_sorting_results', name='aggregated-results-table', label='Results table',
@@ -62,8 +63,8 @@ def get_spikeforest_view_launchers(context):
 
     # Recording
     if recording_context:
-        groups.append(dict(name='recording',label='Recording',sublabel=context.currentRecordingId()))
-    
+        groups.append(dict(name='recording', label='Recording', sublabel=context.currentRecordingId()))
+
         launchers.append(dict(
             group='recording', name='recording-summary', label='Recording summary',
             view_class=RecordingSummaryView,
@@ -97,7 +98,7 @@ def get_spikeforest_view_launchers(context):
     if recording_context and recording_context.trueSortingContext():
         true_sorting_context = recording_context.trueSortingContext()
 
-        groups.append(dict(name='true-sorting',label='True sorting'))
+        groups.append(dict(name='true-sorting', label='True sorting'))
         launchers.append(dict(
             group='true-sorting', name='true-templates', label='Templates',
             view_class=TemplatesView,
@@ -126,8 +127,8 @@ def get_spikeforest_view_launchers(context):
             always_open_new=True,
             enabled=(len(true_sorting_context.selectedUnitIds()) > 0)
         ))
-    
-        dict(name='unit',label='Unit')
+
+        dict(name='unit', label='Unit')
         launchers.append(dict(
             group='true-sorting', name='test', label='Test',
             view_class=TemplatesView,
@@ -138,7 +139,7 @@ def get_spikeforest_view_launchers(context):
 
     # Sorting results
     if recording_context and (len(recording_context.sortingResultNames()) > 0):
-        groups.append(dict(name='sorting-results',label='Sorting results'))
+        groups.append(dict(name='sorting-results', label='Sorting results'))
         launchers.append(dict(
             group='sorting-results', name='sorting-results-table', label='Sorting results table',
             view_class=SortingResultsTableView,
@@ -159,7 +160,7 @@ def get_spikeforest_view_launchers(context):
         srname = recording_context.currentSortingResult()
         sorting_result_context = recording_context.sortingResultContext(srname)
 
-        groups.append(dict(name='sorting-result',label='Sorting result',sublabel=srname))
+        groups.append(dict(name='sorting-result', label='Sorting result', sublabel=srname))
         launchers.append(dict(
             group='sorting-result', name='sorting-result-details', label='Details',
             view_class=SortingResultDetailView,
@@ -216,8 +217,8 @@ def get_spikeforest_view_launchers(context):
             always_open_new=True,
             enabled=(sorting_result_context.comparisonWithTruthPath() is not None)
         ))
-    
-        dict(name='unit',label='Unit')
+
+        dict(name='unit', label='Unit')
         launchers.append(dict(
             group='sorting-result', name='test', label='Test',
             view_class=TemplatesView,
@@ -225,9 +226,9 @@ def get_spikeforest_view_launchers(context):
             always_open_new=True,
             enabled=(sorting_result_context.currentUnitId() is not None)
         ))
-    
-    
+
     return ret
+
 
 class ConsoleOutView(vd.Component):
     def __init__(self, *, context, opts=None):
@@ -241,13 +242,17 @@ class ConsoleOutView(vd.Component):
 
     def setSize(self, size):
         if self._size != size:
-            self._size=size
+            self._size = size
+
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Console out'
+
     def render(self):
         return vd.components.ScrollArea(vd.pre(self._text), height=self._size[1])
+
 
 class ExecutionStatsView(vd.Component):
     def __init__(self, *, context, opts=None):
@@ -258,11 +263,14 @@ class ExecutionStatsView(vd.Component):
 
     def setSize(self, size):
         if self._size != size:
-            self._size=size
+            self._size = size
+
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Exec stats'
+
     def render(self):
         if not self._stats:
             return vd.div('No stats found')
@@ -281,12 +289,15 @@ class ComparisonWithTruthView(vd.Component):
 
     def setSize(self, size):
         if self._size != size:
-            self._size=size
+            self._size = size
+
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Comparison with truth'
+
     def render(self):
         if not self._object:
             return vd.div('Unable to load comparison data.')
-        return vd.components.ScrollArea(vd.pre(json.dumps(self._object,indent=4)), height=self._size[1])
+        return vd.components.ScrollArea(vd.pre(json.dumps(self._object, indent=4)), height=self._size[1])

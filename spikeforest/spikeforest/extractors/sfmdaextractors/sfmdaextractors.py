@@ -8,6 +8,7 @@ import os
 import mtlogging
 import mlprocessors as mlpr
 
+
 def _load_required_modules():
     try:
         from mountaintools import client as mt
@@ -32,7 +33,6 @@ class SFMdaRecordingExtractor(RecordingExtractor):
                 raise Exception('Unable to realize file: ' + self._timeseries_path)
             self._timeseries_path = path0
 
-        
         geom0 = dataset_directory + '/geom.csv'
         self._geom_fname = ca.realizeFile(path=geom0)
         self._geom = np.genfromtxt(self._geom_fname, delimiter=',')
@@ -41,7 +41,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         if not ca.isLocalPath(timeseries_path_or_url):
             a = ca.findFile(timeseries_path_or_url)
             if not a:
-                raise Exception('Cannot find timeseries file: '+timeseries_path_or_url)
+                raise Exception('Cannot find timeseries file: ' + timeseries_path_or_url)
             timeseries_path_or_url = a
 
         # if is_kbucket_url(timeseries0):
@@ -57,10 +57,10 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
         X = DiskReadMda(timeseries_path_or_url)
         if self._geom.shape[0] != X.N1():
-            #raise Exception(
+            # raise Exception(
             #    'Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0], X.N1()))
             print('WARNING: Incompatible dimensions between geom.csv and timeseries file {} <> {}'.format(self._geom.shape[0], X.N1()))
-            self._geom=np.zeros((X.N1(), 2))
+            self._geom = np.zeros((X.N1(), 2))
 
         self._num_channels = X.N1()
         self._num_timepoints = X.N2()
@@ -70,9 +70,9 @@ class SFMdaRecordingExtractor(RecordingExtractor):
     def hash(self):
         from mountainclient import client as mt
         obj = dict(
-            raw = mt.computeFileSha1(self._timeseries_path),
-            geom = mt.computeFileSha1(self._geom_fname),
-            params = self._dataset_params
+            raw=mt.computeFileSha1(self._timeseries_path),
+            geom=mt.computeFileSha1(self._geom_fname),
+            params=self._dataset_params
         )
         return mt.sha1OfObject(obj)
 
@@ -121,9 +121,10 @@ class SFMdaRecordingExtractor(RecordingExtractor):
             os.mkdir(save_path)
         writemda32(raw, save_path + '/' + raw_fname)
         params["samplerate"] = recording.getSamplingFrequency()
-        with open(save_path + '/' + params_fname,'w') as f:
+        with open(save_path + '/' + params_fname, 'w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
+
 
 class SFMdaSortingExtractor(SortingExtractor):
     def __init__(self, firings_file):
@@ -141,8 +142,8 @@ class SFMdaSortingExtractor(SortingExtractor):
         else:
             self._firings_path = ca.realizeFile(path=firings_file)
         if not self._firings_path:
-            raise Exception('Unable to realize firings file: '+firings_file)
-        
+            raise Exception('Unable to realize firings file: ' + firings_file)
+
         self._firings = readmda(self._firings_path)
         self._times = self._firings[1, :]
         self._labels = self._firings[2, :]
@@ -210,10 +211,10 @@ def is_url(path):
 def read_dataset_params(dsdir, params_fname):
     ca = _load_required_modules()
 
-    fname1=dsdir+'/'+params_fname
-    fname2=ca.realizeFile(path=fname1)
+    fname1 = dsdir + '/' + params_fname
+    fname2 = ca.realizeFile(path=fname1)
     if not fname2:
-        raise Exception('Unable to find file: '+fname1)
+        raise Exception('Unable to find file: ' + fname1)
     if not os.path.exists(fname2):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:

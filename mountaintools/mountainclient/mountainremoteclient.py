@@ -7,6 +7,7 @@ import requests
 import time
 import mtlogging
 
+
 class MountainRemoteClient():
     def __init__(self):
         pass
@@ -20,11 +21,11 @@ class MountainRemoteClient():
             return False
         path = '/admin/create/{}/{}'.format(collection, token)
         signature = _sha1_of_object({'path': path, 'token': admin_token})
-        url0 = url+path
-        url0 = url0+'?signature={}'.format(signature)
+        url0 = url + path
+        url0 = url0 + '?signature={}'.format(signature)
         obj = _http_get_json(url0)
         if not obj.get('success'):
-            print('Problem adding collection: '+obj.get('error', ''))
+            print('Problem adding collection: ' + obj.get('error', ''))
             return False
         return True
 
@@ -37,7 +38,7 @@ class MountainRemoteClient():
             path = '/get/{}/{}'.format(collection, keyhash)
         else:
             path = '/get/{}/{}/{}'.format(collection, keyhash, subkey)
-        url0 = url+path
+        url0 = url + path
         obj = _http_get_json(url0)
         if not obj.get('success'):
             return None
@@ -65,10 +66,10 @@ class MountainRemoteClient():
             else:
                 path = '/remove/{}/{}/{}'.format(collection, keyhash, subkey)
         signature = _sha1_of_object({'path': path, 'token': token})
-        url0 = url+path
-        url0 = url0+'?signature={}'.format(signature)
+        url0 = url + path
+        url0 = url0 + '?signature={}'.format(signature)
         if not overwrite:
-            url0 = url0+'&overwrite=false'
+            url0 = url0 + '&overwrite=false'
         obj = _http_get_json(url0)
         if not obj.get('success'):
             if overwrite:
@@ -78,38 +79,38 @@ class MountainRemoteClient():
         return True
 
     def uploadFile(self, *, path, sha1, cas_upload_server_url, upload_token):
-        url_check_path0 = '/check/'+sha1
+        url_check_path0 = '/check/' + sha1
         signature = _sha1_of_object(
             {'path': url_check_path0, 'token': upload_token})
-        url_check = cas_upload_server_url+url_check_path0+'?signature=' + \
-            signature+'&size={}'.format(os.path.getsize(path))
+        url_check = cas_upload_server_url + url_check_path0 + '?signature=' + \
+            signature + '&size={}'.format(os.path.getsize(path))
         resp_obj = _http_get_json(url_check)
         if not resp_obj['success']:
-            print('Warning: Problem checking for upload: '+resp_obj['error'])
+            print('Warning: Problem checking for upload: ' + resp_obj['error'])
             return False
         if not resp_obj['okay_to_upload']:
             print('Cannot upload {}: {}'.format(path, resp_obj['message']))
             return False
 
         if not resp_obj['found']:
-            url_path0 = '/upload/'+sha1
+            url_path0 = '/upload/' + sha1
             signature = _sha1_of_object(
                 {'path': url_path0, 'token': upload_token})
-            url = cas_upload_server_url+url_path0+'?signature='+signature
+            url = cas_upload_server_url + url_path0 + '?signature=' + signature
             size0 = os.path.getsize(path)
             if size0 > 10000:
                 print(
                     'Uploading file --- ({}): {} -> {}'.format(_format_file_size(size0), path, url))
 
-            timer=time.time()
+            timer = time.time()
             resp_obj = _http_post_file_data(url, path)
-            elapsed=time.time()-timer
+            elapsed = time.time() - timer
 
             if size0 > 10000:
                 print('File uploaded ({}) in {} sec'.format(_format_file_size(size0), elapsed))
-            
+
             if not resp_obj.get('success', False):
-                print('Problem posting file data: '+resp_obj.get('error', ''))
+                print('Problem posting file data: ' + resp_obj.get('error', ''))
                 return False
             return True
         else:
@@ -154,7 +155,7 @@ def _http_get_json(url, verbose=None, retry_delays=None):
         timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
-        print('_http_get_json::: '+url)
+        print('_http_get_json::: ' + url)
     try:
         req = request.urlopen(url)
     except:
@@ -164,14 +165,15 @@ def _http_get_json(url, verbose=None, retry_delays=None):
             time.sleep(retry_delays[0])
             return _http_get_json(url, verbose=verbose, retry_delays=retry_delays[1:])
         else:
-            raise Exception('Unable to open url: '+url)
+            raise Exception('Unable to open url: ' + url)
     try:
         ret = json.load(req)
     except:
-        raise Exception('Unable to load json from url: '+url)
+        raise Exception('Unable to load json from url: ' + url)
     if verbose:
-        print('Elapsed time for _http_get_json: {} {}'.format(time.time()-timer, url))
+        print('Elapsed time for _http_get_json: {} {}'.format(time.time() - timer, url))
     return ret
+
 
 @mtlogging.log()
 def _http_post_file_data(url, fname, verbose=None):
@@ -179,7 +181,7 @@ def _http_post_file_data(url, fname, verbose=None):
         timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
-        print('_http_post_file_data::: '+fname)
+        print('_http_post_file_data::: ' + fname)
     with open(fname, 'rb') as f:
         try:
             obj = requests.post(url, data=f)
@@ -189,7 +191,7 @@ def _http_post_file_data(url, fname, verbose=None):
         raise Exception('Error posting file data: {} {}'.format(
             obj.status_code, obj.content.decode('utf-8')))
     if verbose:
-        print('Elapsed time for _http_post_file_Data: {}'.format(time.time()-timer))
+        print('Elapsed time for _http_post_file_Data: {}'.format(time.time() - timer))
     return json.loads(obj.content)
 
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size

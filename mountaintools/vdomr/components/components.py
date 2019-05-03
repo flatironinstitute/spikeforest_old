@@ -4,6 +4,7 @@ import os
 import uuid
 import json
 
+
 class SelectBox(vd.Component):
     def __init__(self, options=[], **kwargs):
         vd.Component.__init__(self)
@@ -45,6 +46,7 @@ class SelectBox(vd.Component):
                 opts.append(vd.option(option))
         X = vd.select(opts, onchange=self._on_change, **self._kwargs)
         return X
+
 
 class RadioButton(vd.Component):
     def __init__(self, checked=False, **kwargs):
@@ -163,11 +165,11 @@ class Pyplot(vd.Component):
             import base64
             from matplotlib import pyplot as plt
             fig = plt.figure(
-                figsize=(self._size[0]/100, self._size[1]/100), dpi=100)
+                figsize=(self._size[0] / 100, self._size[1] / 100), dpi=100)
             try:
                 self.plot()
             except Exception as e:
-                return vd.div('Error in plot: '+str(e))
+                return vd.div('Error in plot: ' + str(e))
             tmp_fname = 'tmp_pyplot.jpg'
             _save_plot(fig, tmp_fname, quality=100)
             with open(tmp_fname, 'rb') as f:
@@ -178,10 +180,11 @@ class Pyplot(vd.Component):
         elmt = vd.img(src=src)
         return elmt
 
+
 class PlotlyPlot(vd.Component):
     def __init__(self, data, layout=dict(), config=dict(), size=None):
         vd.Component.__init__(self)
-        self._elmt_id = 'PlotlyPlot-'+str(uuid.uuid4())
+        self._elmt_id = 'PlotlyPlot-' + str(uuid.uuid4())
         self._data = data
         self._layout = layout
         self._config = config
@@ -191,15 +194,15 @@ class PlotlyPlot(vd.Component):
     def _filter_data(self, data):
         # mostly to handle numpy arrays
         import numpy as np
-        if type(data)==list:
+        if type(data) == list:
             ret = []
             for val in data:
                 ret.append(self._filter_data(val))
             return ret
-        elif type(data)==dict:
+        elif type(data) == dict:
             ret = dict()
             for key, val in data.items():
-                ret[key]=self._filter_data(val)
+                ret[key] = self._filter_data(val)
             return ret
         elif type(data) == np.ndarray:
             if data.ndim != 1:
@@ -226,7 +229,7 @@ class PlotlyPlot(vd.Component):
                 },100);
             }
             on_plotly_ready(function() { // wait until plotly has loaded
-                let div=document.getElementById('{elmt_id}');                
+                let div=document.getElementById('{elmt_id}');
                 if (({width}) && ({height}) && (div)) {
                     Plotly.relayout(div, {width:{width}, height:{height}})
                 }
@@ -255,11 +258,11 @@ class PlotlyPlot(vd.Component):
     # MEDIUM TODO make on_plot_ready more robust... report error after x tries
     def postRenderScript(self):
         data = self._filter_data(self._data)
-        if type(data)!=list:
-            data=[data]
+        if type(data) != list:
+            data = [data]
         if self._size:
-            self._layout['width']=self._size[0]
-            self._layout['height']=self._size[1]
+            self._layout['width'] = self._size[0]
+            self._layout['height'] = self._size[1]
         js = """
         function on_plotly_ready(cb) {
             if (window.Plotly) {
@@ -321,10 +324,10 @@ def _save_plot(fig, fname, quality=40):
     os.environ['DISPLAY'] = ''
 
     # dpi = 100
-    plt.savefig(fname+'.png', pad_inches=0)  # ,bbox_inches='tight')
+    plt.savefig(fname + '.png', pad_inches=0)  # ,bbox_inches='tight')
     plt.close(fig)
-    im = Image.open(fname+'.png').convert('RGB')
-    os.remove(fname+'.png')
+    im = Image.open(fname + '.png').convert('RGB')
+    os.remove(fname + '.png')
     im.save(fname, quality=quality)
 
     if old_display:
@@ -336,7 +339,7 @@ class LazyDiv(vd.Component):
         vd.Component.__init__(self)
         self._child = child
         self._has_been_seen = False
-        self._div_id = 'LazyDiv-'+str(uuid.uuid4())
+        self._div_id = 'LazyDiv-' + str(uuid.uuid4())
 
     def _on_visible(self):
         self._has_been_seen = True
@@ -398,6 +401,7 @@ class LazyDiv(vd.Component):
             js = callback_id.join(js.split('{callback_id}'))
             vd.devel.loadJavascript(js=js, delay=100)
             return vd.div('Loading...', id=self._div_id, style=div_style)
+
 
 def _is_jsonable(x):
     try:

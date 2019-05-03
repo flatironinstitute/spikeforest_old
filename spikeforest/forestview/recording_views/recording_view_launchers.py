@@ -7,6 +7,7 @@ from .electrodegeometryview import ElectrodeGeometryView
 from .currentstateview import CurrentStateView
 from .unitdetailview import UnitDetailView
 
+
 def get_recording_view_launchers():
     return [
         dict(

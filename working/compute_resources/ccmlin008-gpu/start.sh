@@ -17,22 +17,22 @@ export DISPLAY=""
 COLLECTION=spikeforest
 KACHERY_NAME=kbucket
 
-#../../../bin/compute-resource-start $RESOURCE_NAME \
+#compute-resource-start $RESOURCE_NAME \
 #	--allow_uncontainerized --parallel 1  \
 #	--collection $COLLECTION --kachery_name $KACHERY_NAME
 
-../../../bin/compute-resource-start $RESOURCE_NAME \
+compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME \
         --srun_opts "-n 4 -c 2 -p gpu --gres=gpu:1 --constraint=v100" \
         --parallel 2
 
-#../../../bin/compute-resource-start $RESOURCE_NAME \
+#compute-resource-start $RESOURCE_NAME \
 #	--allow_uncontainerized  \
 #	--collection $COLLECTION --kachery_name $KACHERY_NAME \
 #        --parallel 2
 
-#../../../bin/compute-resource-start $RESOURCE_NAME \
+#compute-resource-start $RESOURCE_NAME \
 #	--allow_uncontainerized  \
 #	--collection $COLLECTION --kachery_name $KACHERY_NAME \
 #        --srun_opts "-n 1 -c 2 -p gpu --gres=gpu:1" \

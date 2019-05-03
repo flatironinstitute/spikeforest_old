@@ -1,19 +1,25 @@
 import vdomr as vd
 
+
 class RecordingSummaryView(vd.Component):
     def __init__(self, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
         self._context = context
-        self._size=(100, 100)
+        self._size = (100, 100)
+
     @staticmethod
     def prepareView(context, opts):
         context.initialize()
+
     def setSize(self, size):
         self._size = size
+
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Recording summary'
+
     def render(self):
         rows = []
         rows.append(vd.tr(
@@ -33,12 +39,12 @@ class RecordingSummaryView(vd.Component):
             vd.th('Samplerate'), vd.td('{}'.format(RX.getSamplingFrequency()))
         ))
         a = RX.getNumFrames() / RX.getSamplingFrequency()
-        rows.append(vd.tr(            
+        rows.append(vd.tr(
             vd.th('Duration (s)'), vd.td('{}'.format(a))
         ))
 
         a = ', '.join(self._context.sortingResultNames())
-        rows.append(vd.tr(            
+        rows.append(vd.tr(
             vd.th('Sorting results'), vd.td('{}'.format(a))
         ))
 

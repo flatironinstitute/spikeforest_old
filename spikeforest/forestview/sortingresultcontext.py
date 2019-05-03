@@ -4,15 +4,16 @@ from mountaintools import client as mt
 from .recordingcontext import RecordingContext
 import mtlogging
 
+
 class SortingResultContext():
     def __init__(self, *, sorting_result_object, recording_context):
         self._signal_handlers = dict()
         self._sorting_result_object = sorting_result_object
         self._recording_context = recording_context
-        
+
         self._state = dict(
-            current_unit_id = None,
-            selected_unit_ids = []
+            current_unit_id=None,
+            selected_unit_ids=[]
         )
 
         self._initialized = False
@@ -26,9 +27,9 @@ class SortingResultContext():
         self._recording_context.initialize()
 
         print('******** FORESTVIEW: Initializing sorting result context')
-        
+
         if self._sorting_result_object['firings']:
-            self._sorting_extractor = SFMdaSortingExtractor(firings_file =self._sorting_result_object['firings'])
+            self._sorting_extractor = SFMdaSortingExtractor(firings_file=self._sorting_result_object['firings'])
         else:
             self._sorting_extractor = None
 
@@ -80,7 +81,7 @@ class SortingResultContext():
     # selected unit IDs
     def setSelectedUnitIds(self, unit_ids):
         if unit_ids is None:
-            unit_ids=[]
+            unit_ids = []
         unit_ids = sorted([int(id) for id in unit_ids])
         self._set_state_value('selected_unit_ids', sorted(unit_ids))
 
@@ -94,13 +95,13 @@ class SortingResultContext():
         if self._state[name] == val:
             return
         self._state[name] = deepcopy(val)
-        self._emit('state-changed-'+name)
+        self._emit('state-changed-' + name)
 
     def _get_state_value(self, name):
         return deepcopy(self._state[name])
 
     def _register_state_change_handler(self, name, handler):
-        self._register_signal_handler('state-changed-'+name, handler)
+        self._register_signal_handler('state-changed-' + name, handler)
 
     def _register_signal_handler(self, signal_name, handler):
         if signal_name not in self._signal_handlers:

@@ -15,12 +15,12 @@ RESOURCE_NAME=${1:-ccmlin008-80}
 COLLECTION=spikeforest
 KACHERY_NAME=kbucket
 
-../../../bin/compute-resource-start $RESOURCE_NAME \
+compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME \
         --srun_opts "-c 2 -n 80 -p ccm"
 
-#../../../bin/compute-resource-start ccmlin008-80 \
+#compute-resource-start ccmlin008-80 \
 #	--allow_uncontainerized  \
 #	--collection $COLLECTION --kachery_name $KACHERY_NAME \
 #        --parallel 1

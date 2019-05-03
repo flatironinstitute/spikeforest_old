@@ -146,6 +146,7 @@ function ops = config_kilosort2_(S_opt)
 %       pc_per_chan, freq_min
 
 % rootH = '~/kilosort';
+ops.fig = 0;
 ops.fproc       = fullfile(S_opt.fpath, 'temp_wh.dat'); % proc file on a fast SSD  ;
 ops.trange = [0 Inf]; % time range to sort
 ops.NchanTOT    = S_opt.nChans; % total number of channels in your recording

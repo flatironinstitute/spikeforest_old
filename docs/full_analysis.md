@@ -2,6 +2,15 @@
 
 Here we provide instructions for running the SpikeForest analysis from start to finish.
 
+## Step 0. Configure security tokens to connect to the SpikeForest storage system (kbucket)
+You need to add two key files containing security tokens. Contact Jeremy Magland to acquire tokens.
+- Create a file `~/.mountaintools/kachery_upload_tokens`
+  - Add a line `spikeforest.kbucket XXXXXX`
+  
+- Create a file `~/.mountaintools/pairio_tokens`
+  - Add a line `spikeforest XXXXXX`
+
+
 ## Step 1. Prepare the studies and recordings
 
 Raw data for the SpikeForest website is hosted on a kbucket share. Scripts for assembling study and recording information into JSON objects are found in the `working/prepare_recordings` directory.
