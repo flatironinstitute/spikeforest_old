@@ -7,6 +7,7 @@ from copy import deepcopy
 from spikeforest import EfficientAccessRecordingExtractor
 import spikeforestwidgets as SFW
 
+
 class FeatureSpaceView(vd.Component):
     def __init__(self, *, context, opts=None, prepare_result=None):
         vd.Component.__init__(self)
@@ -18,6 +19,7 @@ class FeatureSpaceView(vd.Component):
         self._widget = SFW.FeatureSpaceWidgetPlotly(recording=self._rx, sorting=self._sorting_context.sortingExtractor(), unit_ids=unit_ids)
         self._widget.setSize(self._size)
         self.refresh()
+
     @staticmethod
     def prepareView(context, opts):
         sorting_context = context
@@ -25,17 +27,20 @@ class FeatureSpaceView(vd.Component):
         sorting_context.initialize()
         earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
         return dict(
-            earx_path = earx.path()
+            earx_path=earx.path()
         )
+
     def setSize(self, size):
         if self._size != size:
-            self._size=size
+            self._size = size
         if self._widget:
             self._widget.setSize(size)
 
     def size(self):
         return self._size
+
     def tabLabel(self):
         return 'Feature space'
+
     def render(self):
         return self._widget

@@ -12,7 +12,7 @@ class Status(vd.Component):
         self.refresh()
 
     def render(self):
-        return vd.div('STATUS: '+self._status)
+        return vd.div('STATUS: ' + self._status)
 
 
 class MyApp():

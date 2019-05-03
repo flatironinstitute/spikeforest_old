@@ -7,7 +7,7 @@ def exp_growth(amp1, amp2, dur1, dur2):
     # Want Y[0]=amp1
     # Want Y[-1]=amp2
     Y = Y / (Y[-1] - Y[0]) * (amp2 - amp1)
-    Y = Y - Y[0] + amp1;
+    Y = Y - Y[0] + amp1
     return Y
 
 
@@ -31,7 +31,7 @@ def synthesize_single_waveform(*, N=800, durations=[200, 10, 30, 200], amps=[0.5
 
     amps = np.array(amps).ravel()
 
-    timepoints = np.round(np.hstack((0, np.cumsum(durations) - 1))).astype('int');
+    timepoints = np.round(np.hstack((0, np.cumsum(durations) - 1))).astype('int')
 
     t = np.r_[0:np.sum(durations) + 1]
 

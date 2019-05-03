@@ -59,9 +59,7 @@ def register_callback(callback_id, callback):
         colab_output.register_callback(callback_id, the_callback)
         exec_javascript(
             'window.vdomr_invokeFunction=google.colab.kernel.invokeFunction')
-    elif ((VDOMR_GLOBAL['mode'] == 'jp_proxy_widget')
-          or (VDOMR_GLOBAL['mode'] == 'server') 
-          or (VDOMR_GLOBAL['mode'] == 'pyqt5')):
+    elif ((VDOMR_GLOBAL['mode'] == 'jp_proxy_widget') or (VDOMR_GLOBAL['mode'] == 'server') or (VDOMR_GLOBAL['mode'] == 'pyqt5')):
         VDOMR_GLOBAL['invokable_functions'][callback_id] = the_callback
     ret = "(function(args, kwargs) {window.vdomr_invokeFunction('{callback_id}', args, kwargs);})"
     ret = ret.replace('{callback_id}', callback_id)
@@ -69,7 +67,7 @@ def register_callback(callback_id, callback):
 
 
 def create_callback(callback):
-    callback_id = 'callback-'+str(uuid.uuid4())
+    callback_id = 'callback-' + str(uuid.uuid4())
     return register_callback(callback_id, callback)
 
 
@@ -82,7 +80,7 @@ def set_timeout(callback, timeout_sec):
     }, {timeout_msec});
     """
     js = js.replace('{timeout_callback_id}', timeout_callback_id)
-    js = js.replace('{timeout_msec}', str(timeout_sec*1000))
+    js = js.replace('{timeout_msec}', str(timeout_sec * 1000))
     exec_javascript(js)
 
 
@@ -133,14 +131,14 @@ def _take_javascript_to_execute():
         return None
     js = SS['javascript_to_execute'][0]
     SS['javascript_to_execute'] = SS['javascript_to_execute'][1:]
-    #js = '\n'.join(SS['javascript_to_execute'])
-    #SS['javascript_to_execute'] = []
+    # js = '\n'.join(SS['javascript_to_execute'])
+    # SS['javascript_to_execute'] = []
     return js
 
 
 def _found_colab():
     try:
-        from google.colab import output as colab_output # pylint: disable=unused-import
+        from google.colab import output as colab_output  # pylint: disable=unused-import
         return True
     except ImportError:
         return False
@@ -148,7 +146,7 @@ def _found_colab():
 
 def _found_jp_proxy_widget():
     try:
-        import jp_proxy_widget # pylint: disable=unused-import
+        import jp_proxy_widget  # pylint: disable=unused-import
         return True
     except ImportError:
         return False
@@ -205,12 +203,14 @@ def config_colab(local_runtime=False):
     VDOMR_GLOBAL['mode'] = 'colab'
     if local_runtime:
         # this is needed so that dummy "google" may be imported, and thus callbacks may be registered
-        source_path=os.path.dirname(os.path.realpath(__file__))
+        source_path = os.path.dirname(os.path.realpath(__file__))
         sys.path.append(source_path)
+
 
 def init_colab():
     config_colab()
     exec_javascript(_get_init_javascript())
+
 
 def config_server():
     VDOMR_GLOBAL['mode'] = 'server'
@@ -365,7 +365,7 @@ def pyqt5_start(*, app, title):
             time.sleep(0.001)
             if not view.isVisible():
                 break
-    except: # pylint: disable=bare-except
+    except:  # pylint: disable=bare-except
         traceback.print_exc()
     process.terminate()
     # qapp.exec_()
@@ -398,7 +398,7 @@ def _pyqt5_worker_process(app, connection_to_gui):
                 try:
                     invoke_callback(
                         callback_id, argument_list=args, kwargs=kwargs)
-                except: # pylint: disable=bare-except
+                except:  # pylint: disable=bare-except
                     traceback.print_exc()
                 connection_to_gui.send(dict(message='ok'))
         time.sleep(0.001)

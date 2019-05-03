@@ -15,7 +15,7 @@ def main():
         duration=600,
         noise_level=12,
         templates=templates,
-        n_exc=int(K/2), n_inh=K-int(K/2),
+        n_exc=int(K / 2), n_inh=K - int(K / 2),
         f_exc=2, f_inh=7,
         min_rate=0.5,
         st_exc=1, st_inh=3,
@@ -24,7 +24,7 @@ def main():
     )
     num_datasets = 10
 
-    for j in range(1, num_datasets+1):
+    for j in range(1, num_datasets + 1):
         ds = dict(
             name='{}_synth'.format('{0:03d}'.format(j)),
             seed=j
@@ -40,7 +40,7 @@ def main():
     P = mlp.initPipeline()
 
     with P:
-        gen_synth_datasets(datasets, tmpdir='tmp', outdir='datasets')
+        gen_synth_datasets(datasets, outdir='datasets')
 
 
 if __name__ == "__main__":

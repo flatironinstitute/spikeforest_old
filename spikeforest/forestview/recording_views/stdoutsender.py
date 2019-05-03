@@ -1,6 +1,7 @@
 import sys
 import time
 
+
 class _StdoutHandler(object):
     def __init__(self, connection):
         self._connection = connection
@@ -27,12 +28,14 @@ class _StdoutHandler(object):
     def send(self):
         if self._text:
             self._connection.send(dict(name="log", text=self._text))
-            self._text=''
+            self._text = ''
+
 
 class StdoutSender():
     def __init__(self, connection):
         self._connection = connection
         self._handler = _StdoutHandler(connection)
+
     def __enter__(self):
         self._old_stdout = sys.stdout
         self._old_stderr = sys.stderr
@@ -40,6 +43,7 @@ class StdoutSender():
         sys.stdout = self._handler
         sys.stderr = self._handler
         return dict()
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._handler.send()
         sys.stdout = self._old_stdout

@@ -5,7 +5,7 @@ from mountaintools import client as mt
 import os
 import frontmatter
 
-help_txt="""
+help_txt = """
 This script saves collections in the following .json files in an output directory
 
 StudySets.json
@@ -88,12 +88,13 @@ Algorithm
 * processor_name
 """
 
+
 def main():
-    parser = argparse.ArgumentParser(description = help_txt, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--output_dir',help='The output directory for saving the files.', required=False, default=None)
-    parser.add_argument('--output_ids',help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
-    parser.add_argument('--upload_to',help='Optional kachery to upload to', required=False, default=None)
-    parser.add_argument('--dest_key_path',help='Optional destination key path', required=False, default=None)
+    parser = argparse.ArgumentParser(description=help_txt, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--output_dir', help='The output directory for saving the files.', required=False, default=None)
+    parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
+    parser.add_argument('--upload_to', help='Optional kachery to upload to', required=False, default=None)
+    parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
     args = parser.parse_args()
@@ -106,13 +107,13 @@ def main():
     if output_dir is not None:
         if os.path.exists(output_dir):
             raise Exception('Output directory already exists: {}'.format(output_dir))
-    
+
     mt.configDownloadFrom(['spikeforest.kbucket'])
 
     if args.output_ids is not None:
         output_ids = args.output_ids.split(',')
     else:
-        output_ids=[
+        output_ids = [
             'paired_boyden32c',
             'paired_crcns',
             'paired_mea64c',
@@ -143,15 +144,15 @@ def main():
 
     if output_dir is not None:
         os.mkdir(output_dir)
-        
-    ### ALGORITHMS
+
+    # ALGORITHMS
     print('******************************** ASSEMBLING ALGORITHMS...')
     Algorithms = []
     basepath = '../../spikeforest/spikesorters/descriptions'
     repo_base_url = 'https://github.com/flatironinstitute/spikeforest/blob/master'
     for item in os.listdir(basepath):
         if item.endswith('.md'):
-            alg = frontmatter.load(basepath+'/'+item).to_dict()
+            alg = frontmatter.load(basepath + '/' + item).to_dict()
             alg['markdown_link'] = repo_base_url + '/spikeforest/spikesorters/descriptions/' + item
             alg['markdown'] = alg['content']
             del alg['content']
@@ -160,26 +161,26 @@ def main():
     if output_dir is not None:
         mt.saveObject(object=Algorithms, dest_path=os.path.abspath(os.path.join(output_dir, 'Algorithms.json')))
 
-    ### STUDY SETS
+    # STUDY SETS
     print('******************************** ASSEMBLING STUDY SETS...')
-    StudySets=[]
+    StudySets = []
     for study_set in study_sets:
         StudySets.append(study_set)
     if output_dir is not None:
         mt.saveObject(object=StudySets, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySets.json')))
     print(StudySets)
 
-    ### RECORDINGS and TRUE UNITS
+    # RECORDINGS and TRUE UNITS
     print('******************************** ASSEMBLING RECORDINGS and TRUE UNITS...')
-    Recordings=[]
-    TrueUnits=[]
+    Recordings = []
+    TrueUnits = []
     for recording in recordings:
-        true_units_info=mt.loadObject(path=recording['summary']['true_units_info'])
+        true_units_info = mt.loadObject(path=recording['summary']['true_units_info'])
         for unit_info in true_units_info:
             TrueUnits.append(dict(
                 unitId=unit_info['unit_id'],
                 recording=recording['name'],
-                recordingExt=recording['study']+':'+recording['name'],
+                recordingExt=recording['study'] + ':' + recording['name'],
                 study=recording['study'],
                 meanFiringRateHz=unit_info['firing_rate'],
                 numEvents=unit_info['num_events'],
@@ -200,81 +201,81 @@ def main():
     if output_dir is not None:
         mt.saveObject(object=Recordings, dest_path=os.path.abspath(os.path.join(output_dir, 'Recordings.json')))
         mt.saveObject(object=TrueUnits, dest_path=os.path.abspath(os.path.join(output_dir, 'TrueUnits.json')))
-    print('Num recordings:',len(Recordings))
-    print('Num true units:',len(TrueUnits))
-    print('studies for recordings:',set([recording['study'] for recording in Recordings]))
+    print('Num recordings:', len(Recordings))
+    print('Num true units:', len(TrueUnits))
+    print('studies for recordings:', set([recording['study'] for recording in Recordings]))
 
-    ### UNIT RESULTS and SORTING RESULTS
+    # UNIT RESULTS and SORTING RESULTS
     print('******************************** ASSEMBLING UNIT RESULTS and SORTING RESULTS...')
-    UnitResults=[]
-    SortingResults=[]
-    sorter_names_by_study=dict()
+    UnitResults = []
+    SortingResults = []
+    sorter_names_by_study = dict()
     for sr in sorting_results:
         if ('comparison_with_truth' in sr) and (sr['comparison_with_truth']):
             SortingResults.append(dict(
                 recording=sr['recording']['name'],
                 study=sr['recording']['study'],
                 sorter=sr['sorter']['name'],
-                cpuTimeSec=sr['execution_stats'].get('elapsed_sec',None)
+                cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
             ))
-            comparison_with_truth=mt.loadObject(path=sr['comparison_with_truth']['json'])
+            comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
             if comparison_with_truth is None:
                 print(sr)
                 raise Exception('Unable to retrieve comparison with truth object for sorting result.')
             for unit_result in comparison_with_truth.values():
-                study_name=sr['recording']['study']
-                sorter_name=sr['sorter']['name']
+                study_name = sr['recording']['study']
+                sorter_name = sr['sorter']['name']
                 if study_name not in sorter_names_by_study:
-                    sorter_names_by_study[study_name]=set()
+                    sorter_names_by_study[study_name] = set()
                 sorter_names_by_study[study_name].add(sorter_name)
-                n_match=unit_result['num_matches']
-                n_fp=unit_result['num_false_positives']
-                n_fn=unit_result['num_false_negatives']
+                n_match = unit_result['num_matches']
+                n_fp = unit_result['num_false_positives']
+                n_fn = unit_result['num_false_negatives']
                 UnitResults.append(dict(
                     unitId=unit_result['unit_id'],
                     recording=sr['recording']['name'],
-                    recordingExt=sr['recording']['study']+':'+sr['recording']['name'],
+                    recordingExt=sr['recording']['study'] + ':' + sr['recording']['name'],
                     study=study_name,
                     sorter=sorter_name,
                     numMatches=n_match,
                     numFalsePositives=n_fp,
                     numFalseNegatives=n_fn,
-                    checkAccuracy=n_match/(n_match+n_fp+n_fn),
-                    #checkPrecision=n_match/(n_match+n_fp),
-                    checkRecall=n_match/(n_match+n_fn),
+                    checkAccuracy=n_match / (n_match + n_fp + n_fn),
+                    # checkPrecision=n_match/(n_match+n_fp),
+                    checkRecall=n_match / (n_match + n_fn),
                     bestSortedUnitId=unit_result['best_unit']
                 ))
         else:
             print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
     for study in sorter_names_by_study.keys():
-        sorter_names_by_study[study]=list(sorter_names_by_study[study])
+        sorter_names_by_study[study] = list(sorter_names_by_study[study])
         sorter_names_by_study[study].sort()
     if output_dir is not None:
-        mt.saveObject(object=UnitResults, dest_path=os.path.abspath(os.path.join(output_dir, 'UnitResults.json')))  
-        mt.saveObject(object=SortingResults, dest_path=os.path.abspath(os.path.join(output_dir, 'SortingResults.json')))  
-    print('Num unit results:',len(UnitResults))
+        mt.saveObject(object=UnitResults, dest_path=os.path.abspath(os.path.join(output_dir, 'UnitResults.json')))
+        mt.saveObject(object=SortingResults, dest_path=os.path.abspath(os.path.join(output_dir, 'SortingResults.json')))
+    print('Num unit results:', len(UnitResults))
 
-    ### SORTERS
+    # SORTERS
     print('******************************** ASSEMBLING SORTERS...')
-    sorters_by_name=dict()
+    sorters_by_name = dict()
     for sr in sorting_results:
-        sorters_by_name[sr['sorter']['name']]=sr['sorter']
-    Sorters=[]
-    for name,sorter in sorters_by_name.items():
+        sorters_by_name[sr['sorter']['name']] = sr['sorter']
+    Sorters = []
+    for _, sorter in sorters_by_name.items():
         Sorters.append(dict(
             name=sorter['name'],
-            algorithm=sorter['processor_name'], # right now the algorithm is the same as the processor name
+            algorithm=sorter['processor_name'],  # right now the algorithm is the same as the processor name
             processorName=sorter['processor_name'],
-            processorVersion='0', # jfm needs to provide this
-            sorting_parameters=sorter['params'] # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
+            processorVersion='0',  # jfm needs to provide this
+            sorting_parameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
         ))
     if output_dir is not None:
         mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] for S in Sorters])
 
-    ### STUDIES
+    # STUDIES
     print('******************************** ASSEMBLING STUDIES...')
-    Studies=[]
+    Studies = []
     for study in studies:
         Studies.append(dict(
             name=study['name'],

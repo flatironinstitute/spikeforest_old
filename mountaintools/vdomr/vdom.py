@@ -5,6 +5,7 @@ import io
 from copy import deepcopy
 import numbers
 
+
 class VDOM(object):
     def __init__(self, tag_name, attributes=None, style=None, children=None):
         self.tag_name = tag_name

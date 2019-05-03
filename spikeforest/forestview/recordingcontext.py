@@ -4,9 +4,10 @@ import spikeforestwidgets as SFW
 from mountaintools import client as mt
 from .bandpass_filter import bandpass_filter
 
+
 class RecordingContext():
     def __init__(self, recording_object, *, download=True, create_earx=True, precompute_multiscale=True):
-        from .sortingresultcontext import SortingResultContext # avoid cyclic dependency
+        from .sortingresultcontext import SortingResultContext  # avoid cyclic dependency
 
         self._signal_handlers = dict()
         self._any_state_change_handlers = []
@@ -14,7 +15,7 @@ class RecordingContext():
         self._download = download
 
         self._sorting_result_contexts = dict()
-        
+
         if 'firings_true' in recording_object:
             sc_true = SortingResultContext(sorting_result_object=dict(firings=recording_object['firings_true']), recording_context=self)
             self._true_sorting_context = sc_true
@@ -28,10 +29,10 @@ class RecordingContext():
             self._intra_recording_context = None
 
         self._state = dict(
-            current_timepoint = None,
-            selected_time_range = None,
-            current_channel = None,
-            current_sorting_result = None
+            current_timepoint=None,
+            selected_time_range=None,
+            current_channel=None,
+            current_sorting_result=None
         )
 
         self._initialized = False
@@ -40,7 +41,7 @@ class RecordingContext():
         if self._initialized:
             return
         self._initialized = True
-        
+
         print('******** FORESTVIEW: Initializing recording context')
         self._recording_object = self._recording_object
         if self._download:
@@ -48,7 +49,7 @@ class RecordingContext():
         recdir = self._recording_object['directory']
         raw_fname = self._recording_object.get('raw_fname', 'raw.mda')
         params_fname = self._recording_object.get('params_fname', 'params.json')
-        self._rx = SFMdaRecordingExtractor(dataset_directory = recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
+        self._rx = SFMdaRecordingExtractor(dataset_directory=recdir, download=self._download, raw_fname=raw_fname, params_fname=params_fname)
         self._rx = bandpass_filter(self._rx)
 
         if self._true_sorting_context:
@@ -75,10 +76,10 @@ class RecordingContext():
         return self._sorting_result_contexts[name]
 
     def addSortingResult(self, sorting_result_object):
-        from .sortingresultcontext import SortingResultContext # avoid cyclic dependency
+        from .sortingresultcontext import SortingResultContext  # avoid cyclic dependency
         sc = SortingResultContext(sorting_result_object=sorting_result_object, recording_context=self)
         sc.onAnyStateChanged(self._trigger_any_state_change_handlers)
-        self._sorting_result_contexts[sorting_result_object['sorter']['name']]=sc
+        self._sorting_result_contexts[sorting_result_object['sorter']['name']] = sc
 
     def recordingObject(self):
         return deepcopy(self._recording_object)
@@ -127,7 +128,7 @@ class RecordingContext():
 
     def setCurrentChannel(self, ch):
         if ch is not None:
-            ch=int(ch)
+            ch = int(ch)
         self._set_state_value('current_channel', ch)
 
     def onCurrentChannelChanged(self, handler):
@@ -146,7 +147,7 @@ class RecordingContext():
 
     # current time range
     def setCurrentTimeRange(self, range):
-        range=(int(range[0]), int(range[1]))
+        range = (int(range[0]), int(range[1]))
         self._set_state_value('current_time_range', range)
 
     def currentTimeRange(self):
@@ -171,13 +172,13 @@ class RecordingContext():
         if self._state[name] == val:
             return
         self._state[name] = deepcopy(val)
-        self._emit('state-changed-'+name)
+        self._emit('state-changed-' + name)
 
     def _get_state_value(self, name):
         return deepcopy(self._state[name])
 
     def _register_state_change_handler(self, name, handler):
-        self._register_signal_handler('state-changed-'+name, handler)
+        self._register_signal_handler('state-changed-' + name, handler)
 
     def _register_signal_handler(self, signal_name, handler):
         if signal_name not in self._signal_handlers:

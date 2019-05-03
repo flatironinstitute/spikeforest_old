@@ -14,7 +14,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     scripts=['bin/kb-cat', 'bin/kb-ls', 'bin/kb-download', 'bin/kb-snapshot', 'bin/kb-resolve-key-path', 'bin/kb-find'],
     install_requires=[
-        'matplotlib','requests','ipython','simple-crypt','python-dotenv'
+        'matplotlib', 'requests', 'ipython', 'simple-crypt', 'python-dotenv'
         #        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'
     ],
     classifiers=(

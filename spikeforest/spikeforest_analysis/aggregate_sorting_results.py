@@ -1,6 +1,7 @@
 import sfdata as sf
 import mtlogging
 
+
 @mtlogging.log()
 def aggregate_sorting_results(studies, recordings, sorting_results):
     SF = sf.SFData()
@@ -13,28 +14,28 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
         study_sorting_results=[]
     )
     for study_name in SF.studyNames():
-        print('study: '+study_name)
+        print('study: ' + study_name)
         S = SF.study(study_name)
-        if len(S.recordingNames())>0:
+        if len(S.recordingNames()) > 0:
             first_recording = S.recording(S.recordingNames()[0])
             sorter_names = first_recording.sortingResultNames()
 
             for srname in sorter_names:
-                print('sorter: '+srname)
+                print('sorter: ' + srname)
 
-                study_results0=dict(
-                    recording_indices = [],
-                    true_unit_ids = [],
-                    true_unit_snrs = [],
-                    true_unit_firing_rates = [],
-                    num_matches = [],
-                    num_false_positives = [],
-                    num_false_negatives = []
+                study_results0 = dict(
+                    recording_indices=[],
+                    true_unit_ids=[],
+                    true_unit_snrs=[],
+                    true_unit_firing_rates=[],
+                    num_matches=[],
+                    num_false_positives=[],
+                    num_false_negatives=[]
                 )
 
-                comparisons_all_exist=True
+                comparisons_all_exist = True
                 some_comparison_exists = False
-                for recording_index,rname in enumerate(S.recordingNames()):
+                for recording_index, rname in enumerate(S.recordingNames()):
                     rec = S.recording(rname)
                     SR = rec.sortingResult(srname)
                     comparison = SR.comparisonWithTruth(format='json')
@@ -45,8 +46,8 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                 if not comparisons_all_exist:
                     print('WARNING: Comparisons do not all exist for sorter sorter: {}'.format(srname))
                 if some_comparison_exists:
-                    for recording_index,rname in enumerate(S.recordingNames()):
-                        print('recording: {}/{}'.format(study_name,rname))
+                    for recording_index, rname in enumerate(S.recordingNames()):
+                        print('recording: {}/{}'.format(study_name, rname))
                         rec = S.recording(rname)
                         true_units_info = rec.trueUnitsInfo(format='json')
                         true_units_info_by_id = dict()
@@ -59,19 +60,19 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                             comparison = []
                             for true_unit in true_units_info:
                                 comparison.append(dict(
-                                    unit_id = true_unit['unit_id'],
-                                    num_false_positives = 0,
-                                    num_false_negatives = true_unit['num_events'],
-                                    num_matches = 0
+                                    unit_id=true_unit['unit_id'],
+                                    num_false_positives=0,
+                                    num_false_negatives=true_unit['num_events'],
+                                    num_matches=0
                                 ))
                         if comparison is not None:
-                            recording_results0=dict(
-                                true_unit_ids = [],
-                                true_unit_snrs = [],
-                                true_unit_firing_rates = [],
-                                num_matches = [],
-                                num_false_positives = [],
-                                num_false_negatives = []
+                            recording_results0 = dict(
+                                true_unit_ids=[],
+                                true_unit_snrs=[],
+                                true_unit_firing_rates=[],
+                                num_matches=[],
+                                num_false_positives=[],
+                                num_false_negatives=[]
                             )
 
                             ok = True
@@ -107,17 +108,16 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                                 )
                                 aggregated_sorting_results['recording_sorting_results'].append(recording_sorting_result)
                             else:
-                                print('Warning: '+error)
+                                print('Warning: ' + error)
 
-
-                            study_results0['recording_indices'].extend([recording_index]*len(recording_results0['true_unit_ids']))
+                            study_results0['recording_indices'].extend([recording_index] * len(recording_results0['true_unit_ids']))
                             study_results0['true_unit_ids'].extend(recording_results0['true_unit_ids'])
                             study_results0['true_unit_snrs'].extend(recording_results0['true_unit_snrs'])
                             study_results0['true_unit_firing_rates'].extend(recording_results0['true_unit_firing_rates'])
                             study_results0['num_matches'].extend(recording_results0['num_matches'])
                             study_results0['num_false_positives'].extend(recording_results0['num_false_positives'])
                             study_results0['num_false_negatives'].extend(recording_results0['num_false_negatives'])
-                
+
                     study_sorting_result = dict(
                         study=study_name,
                         sorter=srname,
@@ -132,5 +132,5 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                     aggregated_sorting_results['study_sorting_results'].append(study_sorting_result)
                 else:
                     print('WARNING: Skipping aggregation for sorter because no comparisons exist: {}'.format(srname))
-    
+
     return aggregated_sorting_results
