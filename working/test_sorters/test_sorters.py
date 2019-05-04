@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -63,6 +63,39 @@ def test_ks2_magland_c8():
         adjacency_radius=50
     )
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.hs2_magland_c8
+@pytest.mark.exclude
+def test_hs2_magland_c8():
+    sorter = HerdingSpikes2
+    params = dict(
+        adjacency_radius=50,
+    )
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.hs2_neuropix32c
+@pytest.mark.exclude
+def test_hs2_neuropix32c():
+    sorter = HerdingSpikes2
+    params = dict(
+        adjacency_radius=50,
+    )
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.hs2_boyden32c
+@pytest.mark.exclude
+def test_hs2_boyden32c():
+    sorter = HerdingSpikes2
+    params = dict(
+        adjacency_radius=50,
+    )
+    do_sorting_test(sorter, params, boyden32c_recdir, assert_avg_accuracy=0.1)
 
 
 @pytest.mark.spikeforest
