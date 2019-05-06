@@ -1,4 +1,4 @@
-#from spikeforest import spikewidgets as sw
+# from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
 import json
 from mountaintools import client as mt
@@ -8,7 +8,7 @@ import multiprocessing
 import mtlogging
 
 import spikeextractors as si
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
 
 
@@ -39,7 +39,7 @@ def _create_job_for_sorting(sorting, container):
 def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, label=None, upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    container = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+    container = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
 
     sortings_out = deepcopy(sortings)
     sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
@@ -96,7 +96,7 @@ class GenSortingComparisonTable(mlpr.Processor):
     units_true = mlpr.IntegerListParameter('List of true units to consider')
     json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
-    CONTAINER = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+    CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
 
     def run(self):
         sorting = SFMdaSortingExtractor(firings_file=self.firings)
@@ -121,21 +121,21 @@ def get_comparison_data_frame(*, comparison):
     # Compute events counts
     sorting1 = SC.getSorting1()
     sorting2 = SC.getSorting2()
-    unit1_ids = sorting1.getUnitIds()
-    unit2_ids = sorting2.getUnitIds()
-    N1 = len(unit1_ids)
-    N2 = len(unit2_ids)
+    unit1_ids = sorting1.get_unit_ids()
+    unit2_ids = sorting2.get_unit_ids()
+    # N1 = len(unit1_ids)
+    # N2 = len(unit2_ids)
     event_counts1 = dict()
-    for i1, u1 in enumerate(unit1_ids):
-        times1 = sorting1.getUnitSpikeTrain(u1)
+    for _, u1 in enumerate(unit1_ids):
+        times1 = sorting1.get_unit_spike_train(u1)
         event_counts1[u1] = len(times1)
     event_counts2 = dict()
-    for i2, u2 in enumerate(unit2_ids):
-        times2 = sorting2.getUnitSpikeTrain(u2)
+    for _, u2 in enumerate(unit2_ids):
+        times2 = sorting2.get_unit_spike_train(u2)
         event_counts2[u2] = len(times2)
 
     rows = []
-    for u_1, unit1 in enumerate(unit1_ids):
+    for _, unit1 in enumerate(unit1_ids):
         unit2 = SC.getBestUnitMatch1(unit1)
         if unit2 >= 0:
             num_matches = SC.getMatchingEventCount(unit1, unit2)
@@ -158,7 +158,7 @@ def get_comparison_data_frame(*, comparison):
         }
         for prop in unit_properties:
             pname = prop['name']
-            row0[pname] = SC.getSorting1().getUnitProperty(unit_id=int(unit1), property_name=pname)
+            row0[pname] = SC.getSorting1().get_unit_property(unit_id=int(unit1), property_name=pname)
         rows.append(row0)
 
     df = pd.DataFrame(rows)

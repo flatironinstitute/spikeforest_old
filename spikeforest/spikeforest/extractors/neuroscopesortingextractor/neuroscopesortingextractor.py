@@ -33,25 +33,25 @@ class NeuroscopeSortingExtractor(SortingExtractor):
             self._spiketrains = []
             self._unit_ids = []
 
-    def getUnitIds(self):
+    def get_unit_ids(self):
         return list(self._unit_ids)
 
-    def getUnitSpikeTrain(self, unit_id, start_frame=None, end_frame=None):
+    def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
             end_frame = np.Inf
-        times = self._spiketrains[self.getUnitIds().index(unit_id)]
+        times = self._spiketrains[self.get_unit_ids().index(unit_id)]
         inds = np.where((start_frame <= times) & (times < end_frame))
         return times[inds]
 
     @staticmethod
-    def writeSorting(sorting, save_path):
+    def write_sorting(sorting, save_path):
         save_res = "{}.res".format(save_path)
         save_clu = "{}.clu".format(save_path)
 
-        unit_ids = sorting.getUnitIds()
-        spiketrains = [sorting.getUnitSpikeTrain(u) for u in unit_ids]
+        unit_ids = sorting.get_unit_ids()
+        spiketrains = [sorting.get_unit_spike_train(u) for u in unit_ids]
         res = np.concatenate(spiketrains).ravel()
         clu = np.concatenate([np.repeat(i + 1, len(st)) for i, st in enumerate(spiketrains)]).ravel()
         res_sort = np.argsort(res)

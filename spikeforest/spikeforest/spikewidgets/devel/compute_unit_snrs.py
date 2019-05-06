@@ -2,15 +2,14 @@ import numpy as np
 
 
 def get_random_spike_waveforms(*, recording, sorting, unit, snippet_len, max_num, channels=None):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
-                                   channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
     spikes = np.dstack(tuple(spikes))
     return spikes
 
@@ -33,9 +32,9 @@ def compute_template_snr(template, channel_noise_levels):
 
 
 def compute_channel_noise_levels(recording):
-    channel_ids = recording.getChannelIds()
-    M = len(channel_ids)
-    X = recording.getTraces(start_frame=0, end_frame=np.minimum(1000, recording.getNumFrames()))
+    channel_ids = recording.get_channel_ids()
+    # M = len(channel_ids)
+    X = recording.get_traces(start_frame=0, end_frame=np.minimum(1000, recording.get_num_frames()))
     ret = []
     for ii in len(channel_ids):
         noise_level = np.std(X[ii, :])
@@ -45,7 +44,7 @@ def compute_channel_noise_levels(recording):
 
 def compute_unit_snrs(*, recording, sorting, unit_ids=None):
     if unit_ids is None:
-        unit_ids = sorting.getUnitIds()
+        unit_ids = sorting.get_unit_ids()
     channel_noise_levels = compute_channel_noise_levels(recording=recording)
     templates = compute_unit_templates(recording=recording, sorting=sorting, unit_ids=unit_ids)
     ret = []

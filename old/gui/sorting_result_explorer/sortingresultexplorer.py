@@ -59,7 +59,7 @@ def get_unmatched_times(times1, times2, *, delta):
         unmatched_inds = np.concatenate(([0], unmatched_inds))
     if (diffs[-1] > delta) and (membership_sorted[-1] == 1):
         unmatched_inds = np.concatenate(
-            (unmatched_inds, [len(membership_sorted)-1]))
+            (unmatched_inds, [len(membership_sorted) - 1]))
     return times_concat_sorted[unmatched_inds]
 
 
@@ -69,15 +69,15 @@ def get_unmatched_sorting(sx1, sx2, ids1, ids2):
     for ii in range(len(ids1)):
         id1 = ids1[ii]
         id2 = ids2[ii]
-        train1 = sx1.getUnitSpikeTrain(unit_id=id1)
-        train2 = sx2.getUnitSpikeTrain(unit_id=id2)
+        train1 = sx1.get_unit_spike_train(unit_id=id1)
+        train2 = sx2.get_unit_spike_train(unit_id=id2)
         train = get_unmatched_times(train1, train2, delta=100)
         ret.addUnit(id1, train)
     return ret
 
 
 def _get_random_spike_waveforms(*, recording, sorting, unit, max_num=50, channels=None, snippet_len=100):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(
@@ -85,12 +85,12 @@ def _get_random_spike_waveforms(*, recording, sorting, unit, max_num=50, channel
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
-                                   channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
+                                    channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 
@@ -137,7 +137,7 @@ class VIEW_SelectedTrueUnitComparison(vd.Component):
             return
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
-        sf = rx.getSamplingFrequency()
+        sf = rx.get_sampling_frequency()
         rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()
@@ -238,7 +238,7 @@ class VIEW_SelectedTrueUnitComparison2(vd.Component):
             return
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
-        sf = rx.getSamplingFrequency()
+        sf = rx.get_sampling_frequency()
         rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()
@@ -249,7 +249,7 @@ class VIEW_SelectedTrueUnitComparison2(vd.Component):
             sx_sorted, sx_true, [self._sorted_unit_id], [self._true_unit_id])
         snippet_len = 80
 
-        channel_ids = rx.getChannelIds()
+        channel_ids = rx.get_channel_ids()
 
         snippets1 = _get_random_spike_waveforms(
             recording=rx, sorting=sx_true, unit=self._true_unit_id, max_num=250, snippet_len=snippet_len, channels=channel_ids)
@@ -258,16 +258,16 @@ class VIEW_SelectedTrueUnitComparison2(vd.Component):
         snippets3 = _get_random_spike_waveforms(
             recording=rx, sorting=sx_unmatched_sorted, unit=self._sorted_unit_id, max_num=250, snippet_len=snippet_len, channels=channel_ids)
         components = _compute_principal_components(snippets1.reshape(
-            (snippets1.shape[0]*snippets1.shape[1], snippets1.shape[2])), num_components=2)
+            (snippets1.shape[0] * snippets1.shape[1], snippets1.shape[2])), num_components=2)
         features1 = components.transpose() @ snippets1.reshape(
-            (snippets1.shape[0]*snippets1.shape[1], snippets1.shape[2]))
+            (snippets1.shape[0] * snippets1.shape[1], snippets1.shape[2]))
         features2 = components.transpose() @ snippets2.reshape(
-            (snippets2.shape[0]*snippets2.shape[1], snippets2.shape[2]))
+            (snippets2.shape[0] * snippets2.shape[1], snippets2.shape[2]))
         features3 = components.transpose() @ snippets3.reshape(
-            (snippets3.shape[0]*snippets3.shape[1], snippets3.shape[2]))
+            (snippets3.shape[0] * snippets3.shape[1], snippets3.shape[2]))
         features = np.concatenate((features1, features2, features3), axis=1)
         labels = np.concatenate(
-            (1*np.ones(features1.shape[1]), 2*np.ones(features2.shape[1]), 3*np.ones(features3.shape[1])))
+            (1 * np.ones(features1.shape[1]), 2 * np.ones(features2.shape[1]), 3 * np.ones(features3.shape[1])))
 
         class _ClusterPlot(vd.components.Pyplot):
             def __init__(self, *, features, labels):
@@ -287,7 +287,7 @@ class VIEW_SelectedTrueUnitComparison2(vd.Component):
 
     def setSize(self, size):
         self._size = size
-        self._widget.setSize((self._size[0]-20, self._size[1]-20))
+        self._widget.setSize((self._size[0] - 20, self._size[1] - 20))
         self.refresh()
 
     def render(self):
@@ -389,19 +389,19 @@ class SortingResultExplorer(vd.Component):
     def render(self):
         width = 1400
         width1 = 300
-        width2 = width-width1-10
+        width2 = width - width1 - 10
         height = 700
-        height1 = int(height/2)-5
-        height2 = height-height1-10
+        height1 = int(height / 2) - 5
+        height2 = height - height1 - 10
         style0 = dict(border='solid 1px gray')
         W_CP = Container(self._control_panel, position=(
             0, 0), size=(width1, height), style=style0)
         self._view_container_north.setSize((width2, height1))
         self._view_container_south.setSize((width2, height2))
         W_VCN = Container(self._view_container_north, position=(
-            width1+10, 0), size=(width2, height1), style=style0)
+            width1 + 10, 0), size=(width2, height1), style=style0)
         W_VCS = Container(self._view_container_south, position=(
-            width1+10, height1+10), size=(width2, height2), style=style0)
+            width1 + 10, height1 + 10), size=(width2, height2), style=style0)
         return Container(W_CP, W_VCN, W_VCS, position=(0, 0), size=(width, height), position_mode='relative')
 
 
@@ -413,10 +413,10 @@ class SpikeWaveformsWidget(vd.Component):
         self._geometry = None
         self._spikes = None
         basepath = os.environ['SIMPLOT_SRC_DIR']
-        vd.devel.loadJavascript(path=basepath+'/jquery-3.3.1.min.js')
-        vd.devel.loadJavascript(path=basepath+'/d3.min.js')
-        vd.devel.loadJavascript(path=basepath+'/simplot.js')
-        vd.devel.loadJavascript(path=basepath+'/spikeforestwidgets.js')
+        vd.devel.loadJavascript(path=basepath + '/jquery-3.3.1.min.js')
+        vd.devel.loadJavascript(path=basepath + '/d3.min.js')
+        vd.devel.loadJavascript(path=basepath + '/simplot.js')
+        vd.devel.loadJavascript(path=basepath + '/spikeforestwidgets.js')
 
     def setSize(self, W, H):
         self._size = [W, H]
@@ -496,7 +496,7 @@ class SpikeWaveformsWidget(vd.Component):
 
 
 def _get_random_spike_waveforms(*, recording, sorting, unit, max_num, channels, snippet_len):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(
@@ -504,12 +504,12 @@ def _get_random_spike_waveforms(*, recording, sorting, unit, max_num, channels, 
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
-                                   channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
+                                    channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 
@@ -517,11 +517,11 @@ class UnitWaveformWidget2(vd.Component):
     def __init__(self, *, recording, sorting, unit_id, average_waveform=None, show_average=True, max_num_spikes_per_unit=20, snippet_len=100):
         vd.Component.__init__(self)
 
-        channel_ids = recording.getChannelIds()
+        channel_ids = recording.get_channel_ids()
         M = len(channel_ids)
         geom = []
         for ii, ch in enumerate(channel_ids):
-            loc = recording.getChannelProperty(ch, 'location')
+            loc = recording.get_channel_property(ch, 'location')
             geom.append([loc[-2], loc[-1]])
 
         spikes = _get_random_spike_waveforms(recording=recording, sorting=sorting, unit=unit_id,
@@ -582,7 +582,7 @@ class VIEW_SelectedTrueUnitComparison3(vd.Component):
             return
         self._sorted_unit_id = self._true_unit_comparison_info['best_unit']
         rx = self._context.recording.recordingExtractor()
-        sf = rx.getSamplingFrequency()
+        sf = rx.get_sampling_frequency()
         rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         sx_true = self._context.recording.sortingTrue()

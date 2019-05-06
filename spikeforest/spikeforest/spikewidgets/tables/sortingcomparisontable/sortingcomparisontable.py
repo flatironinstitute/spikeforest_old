@@ -16,7 +16,7 @@ class SortingComparisonTable():
         SC = self._comparison
         rows = []
         if self._reference == 1:
-            for u_1, unit1 in enumerate(SC.getSorting1().getUnitIds()):
+            for _, unit1 in enumerate(SC.getSorting1().get_unit_ids()):
                 unit2 = SC.getBestUnitMatch1(unit1)
                 row0 = {
                     'unit_id': unit1,
@@ -29,10 +29,10 @@ class SortingComparisonTable():
                 }
                 for prop in self._unit_properties:
                     pname = prop['name']
-                    row0[pname] = SC.getSorting1().getUnitProperty(unit_id=int(unit1), property_name=pname)
+                    row0[pname] = SC.getSorting1().get_unit_property(unit_id=int(unit1), property_name=pname)
                 rows.append(row0)
         elif self._reference == 2:
-            for u_1, unit1 in enumerate(SC.getSorting2().getUnitIds()):
+            for u_1, unit1 in enumerate(SC.getSorting2().get_unit_ids()):
                 unit2 = SC.getBestUnitMatch2(unit1)
                 row0 = {
                     'unit_id': unit1,
@@ -45,7 +45,7 @@ class SortingComparisonTable():
                 }
                 for prop in self._unit_properties:
                     pname = prop['name']
-                    row0[pname] = SC.getSorting2().getUnitProperty(unit_id=int(unit1), property_name=pname)
+                    row0[pname] = SC.getSorting2().get_unit_property(unit_id=int(unit1), property_name=pname)
                 rows.append(row0)
 
         df = pd.DataFrame(rows)

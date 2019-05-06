@@ -27,8 +27,8 @@ class ElectrodeGeometryWidget(vd.Component):
     def _get_geom(self):
         RX = self._recording
         electrodes = []
-        for ch in RX.getChannelIds():
-            location = RX.getChannelProperty(channel_id=ch, property_name='location')
+        for ch in RX.get_channel_ids():
+            location = RX.get_channel_property(channel_id=ch, property_name='location')
             electrodes.append(
                 dict(
                     channel_id=ch,

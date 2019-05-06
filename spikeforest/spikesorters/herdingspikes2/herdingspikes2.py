@@ -1,7 +1,14 @@
 import mlprocessors as mlpr
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor, mdaio
-import os, time, random, string, shutil, sys, shlex, json
+import os
+import time
+import random
+import string
+import shutil
+import sys
+import shlex
+import json
 from mountaintools import client as mt
 
 try:
@@ -67,8 +74,7 @@ class HerdingSpikes2(mlpr.Processor):
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + \
-                                '/herdingspikes2-tmp-' + code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/herdingspikes2-tmp-' + code
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -89,7 +95,7 @@ class HerdingSpikes2(mlpr.Processor):
                 clustering_n_jobs=clustering_n_jobs,
                 **all_params,
             )
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
@@ -111,8 +117,8 @@ def hs2_helper(
     extra_probe_params = {
         'inner_radius': kwargs['adjacency_radius'],
         'neighbor_radius': kwargs['adjacency_radius'],
-        #'event_length': 0.5,
-        #'peak_jitter': 0.2
+        # 'event_length': 0.5,
+        # 'peak_jitter': 0.2
     }
     extra_detection_params = {
         'to_localize': True,
@@ -122,8 +128,8 @@ def hs2_helper(
         'out_file_name': "HS2_detected",
         'decay_filtering': False,
         'save_all': False,
-        #'amp_evaluation_time': 0.4,
-        #'spk_evaluation_time': 1.7
+        # 'amp_evaluation_time': 0.4,
+        # 'spk_evaluation_time': 1.7
     }
     extra_pca_params = {
         'pca_ncomponents': 2,
@@ -146,20 +152,20 @@ def hs2_helper(
     C = hs.HSClustering(H)
     C.ShapePCA(**extra_pca_params)
     C.CombinedClustering(bandwidth=kwargs['clustering_bandwidth'],
-                           alpha=kwargs['clustering_alpha'],
-                           n_jobs=clustering_n_jobs,
-                           bin_seeding=kwargs['clustering_bin_seeding'])
+                         alpha=kwargs['clustering_alpha'],
+                         n_jobs=clustering_n_jobs,
+                         bin_seeding=kwargs['clustering_bin_seeding'])
 
     sorted_file = os.path.join(tmpdir, 'HS2_sorted.hdf5')
     if(not H.spikes.empty):
         C = hs.HSClustering(H)
         C.ShapePCA(**extra_pca_params)
         C.CombinedClustering(alpha=kwargs['clustering_alpha'],
-                                cluster_subset=None,
-                                bandwidth=kwargs['clustering_bandwidth'],
-                                bin_seeding=kwargs['clustering_bin_seeding'],
-                                n_jobs=clustering_n_jobs,
-                                )
+                             cluster_subset=None,
+                             bandwidth=kwargs['clustering_bandwidth'],
+                             bin_seeding=kwargs['clustering_bin_seeding'],
+                             n_jobs=clustering_n_jobs,
+                             )
         C.SaveHDF5(sorted_file)
     else:
         C = hs.HSClustering(H)

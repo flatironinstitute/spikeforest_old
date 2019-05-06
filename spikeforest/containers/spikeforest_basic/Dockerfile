@@ -11,8 +11,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 RUN echo "29 March 2019"
 
 #########################################
-# spikeforest, but not mountaintools - as that gets injected
-RUN mkdir /src
-RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
-WORKDIR /src/spikeforest
-RUN pip install -e ./spikeforest
+# spikeforest dependencies
+RUN pip install numpy scipy matplotlib requests pillow pandas ipython h5py setuptools-git scikit-learn python-frontmatter
+RUN pip install spikeextractors==0.4.2

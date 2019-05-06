@@ -12,6 +12,7 @@ import spikeforestwidgets as SFW
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from spikeforest_analysis import bandpass_filter
 
+
 class ScrollArea(vd.Component):
     def __init__(self, child, *, height):
         vd.Component.__init__(self)
@@ -27,7 +28,7 @@ class ImageView(vd.Component):
         vd.Component.__init__(self)
         with open(fname, 'rb') as f:
             self._data_b64 = base64.b64encode(f.read()).decode('utf-8')
-        self._elmt_id = 'ImageView-'+str(uuid.uuid4())
+        self._elmt_id = 'ImageView-' + str(uuid.uuid4())
 
     def render(self):
         elmt = vd.img(id=self._elmt_id)
@@ -138,15 +139,15 @@ class PlotAutoCorrelograms(mlpr.Processor):
                 parent_recording=recording, channel_ids=self.channels)
         sorting = SFMdaSortingExtractor(firings_file=self.firings)
         sw.CrossCorrelogramsWidget(
-            samplerate=recording.getSamplingFrequency(), sorting=sorting).plot()
+            samplerate=recording.get_sampling_frequency(), sorting=sorting).plot()
         save_plot(self.plot_out)
 
 
 def save_plot(fname, quality=40):
-    plt.savefig(fname+'.png')
+    plt.savefig(fname + '.png')
     plt.close()
-    im = Image.open(fname+'.png').convert('RGB')
-    os.remove(fname+'.png')
+    im = Image.open(fname + '.png').convert('RGB')
+    os.remove(fname + '.png')
     im.save(fname, quality=quality)
 
 
@@ -184,13 +185,13 @@ class SFRecordingWidget(vd.Component):
 
     def _on_view_timeseries(self):
         rx = self._recording.recordingExtractor()
-        sf = rx.getSamplingFrequency()
+        sf = rx.get_sampling_frequency()
         if self._recording.recordingFileIsLocal():
             rx = se.SubRecordingExtractor(
-                parent_recording=rx, start_frame=int(sf*0), end_frame=int(sf*10))
+                parent_recording=rx, start_frame=int(sf * 0), end_frame=int(sf * 10))
         else:
             rx = se.SubRecordingExtractor(
-                parent_recording=rx, start_frame=int(sf*0), end_frame=int(sf*1))
+                parent_recording=rx, start_frame=int(sf * 0), end_frame=int(sf * 1))
         rx = bandpass_filter(
             recording=rx, freq_min=300, freq_max=6000)
         self._view = SFW.TimeseriesWidget(recording=rx)
@@ -220,7 +221,7 @@ class SFRecordingWidget(vd.Component):
         img = PlotAutoCorrelograms.execute(
             recording_dir=dirname,
             channels=[],
-            firings=dirname+'/firings_true.mda',
+            firings=dirname + '/firings_true.mda',
             plot_out={'ext': '.jpg'}
         ).outputs['plot_out']
         img = mt.realizeFile(img)
@@ -271,15 +272,15 @@ class SFRecordingWidget(vd.Component):
             ))
         RX = rec.recordingExtractor()
         rows.append(vd.tr(
-            vd.th('Num. channels'), vd.td('{}'.format(len(RX.getChannelIds())))
+            vd.th('Num. channels'), vd.td('{}'.format(len(RX.get_channel_ids())))
         ))
         rows.append(vd.tr(
-            vd.th('Samplerate'), vd.td('{}'.format(RX.getSamplingFrequency()))
+            vd.th('Samplerate'), vd.td('{}'.format(RX.get_sampling_frequency()))
         ))
-        a = RX.getNumFrames() / RX.getSamplingFrequency()
-        rows.append(vd.tr(            
+        a = RX.get_num_frames() / RX.get_sampling_frequency()
+        rows.append(vd.tr(
             vd.th('Duration (s)'), vd.td('{}'.format(a))
-        ))        
+        ))
 
         recording_file_is_local = self._recording.recordingFileIsLocal()
         if recording_file_is_local:
@@ -312,7 +313,7 @@ class SFRecordingWidget(vd.Component):
             sorting = res.sorting()
             rows.append(vd.tr(
                 vd.th('Num. sorted units'), vd.td(
-                    '{}'.format(len(sorting.getUnitIds())))
+                    '{}'.format(len(sorting.get_unit_ids())))
             ))
 
         table = vd.table(rows, style={

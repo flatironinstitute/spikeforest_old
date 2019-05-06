@@ -31,7 +31,7 @@ class ClusterView(vd.Component):
         unit_ids = sorting_context.selectedUnitIds()
         earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
 
-        M = earx.getNumChannels()
+        M = earx.get_num_channels()
         T = 50
         # K = len(unit_ids)
         num_features = 2
@@ -199,18 +199,18 @@ class ClusterWidget(vd.Component):
 
 
 def _get_random_spike_waveforms(*, sorting, recording, unit, max_num, channels, snippet_len):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 

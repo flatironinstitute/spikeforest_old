@@ -35,9 +35,9 @@ def main():
     if not os.path.exists(recpath):
         rx, sx_true = example_datasets.toy_example1(
             duration=60, num_channels=4, samplerate=30000, K=10)
-        SFMdaRecordingExtractor.writeRecording(
+        SFMdaRecordingExtractor.write_recording(
             recording=rx, save_path=recpath)
-        SFMdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.write_sorting(
             sorting=sx_true, save_path=recpath + '/firings_true.mda')
 
     # for downloading containers if needed

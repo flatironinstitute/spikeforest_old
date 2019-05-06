@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
 import numpy as np
 
+
 class FeatureSpaceWidget:
     def __init__(self, *, recording, sorting, channels=None, unit_ids=None, width=14, height=7, snippet_len=100,
                  title='', max_num_spikes_per_unit=50):
@@ -26,18 +27,18 @@ class FeatureSpaceWidget:
         units = self._unit_ids
         channels = self._channels
         if units is None:
-            units = self._OX.getUnitIds()
-        channel_ids = self._IX.getChannelIds()
+            units = self._OX.get_unit_ids()
+        channel_ids = self._IX.get_channel_ids()
         M = len(channel_ids)
         channel_locations = np.zeros((M, 2))
         for ii, ch in enumerate(channel_ids):
-            loc = self._IX.getChannelProperty(ch, 'location')
+            loc = self._IX.get_channel_property(ch, 'location')
             channel_locations[ii, :] = loc[-2:]
         if channels is None:
             channels = channel_ids
         list = []
         for unit in units:
-            st = self._OX.getUnitSpikeTrain(unit_id=unit)
+            st = self._OX.get_unit_spike_train(unit_id=unit)
             if st is not None:
                 spikes = self._get_random_spike_waveforms(unit=unit, max_num=self._max_num_spikes_per_unit,
                                                           channels=channels)
@@ -49,39 +50,39 @@ class FeatureSpaceWidget:
             else:
                 print(unit, ' spike train is None')
         print(np.shape(list[0]['representative_waveforms']))
-        opts = {'channel':-1,
-                'feature_extraction':'PCA',
-                'features_to_show':(2,1)}
+        opts = {'channel': -1,
+                'feature_extraction': 'PCA',
+                'features_to_show': (2, 1)}
         with plt.rc_context({'axes.edgecolor': 'gray'}):
             # self._plot_spike_shapes_multi(list,channel_locations=channel_locations[np.array(channels),:])
             #self._plot_spike_shapes_multi(list, channel_locations=None)
-            self._plot_spikes_in_feature_space_multi(list,opts)
+            self._plot_spikes_in_feature_space_multi(list, opts)
 
     def _plot_spikes_in_feature_space(self, spikes_dict, feature_space, opts):
         features_to_show = opts['features_to_show']
         waveforms = spikes_dict['representative_waveforms']
         features = feature_space.transform(waveforms.T)
         # TODO: Optionally exclude outliers
-        plt.scatter(features[:,features_to_show[0]], features[:,features_to_show[1]],
-                label=spikes_dict['title'])
+        plt.scatter(features[:, features_to_show[0]], features[:, features_to_show[1]],
+                    label=spikes_dict['title'])
 
-    def _plot_spikes_in_feature_space_multi(self,list,opts):
+    def _plot_spikes_in_feature_space_multi(self, list, opts):
         channel = opts['channel']
         all_waveforms = None
         for spikes_dict in list:
             waveforms = spikes_dict['representative_waveforms']
             if channel == -1:
                 s = np.shape(waveforms)
-                spikes_dict['representative_waveforms'] = waveforms = waveforms.reshape(s[0]*s[1],s[2])
+                spikes_dict['representative_waveforms'] = waveforms = waveforms.reshape(s[0] * s[1], s[2])
             else:
-                spikes_dict['representative_waveforms'] = waveforms = waveforms[channel,:,:]
+                spikes_dict['representative_waveforms'] = waveforms = waveforms[channel, :, :]
             if all_waveforms is None:
                 all_waveforms = waveforms
             else:
                 all_waveforms = np.concatenate([all_waveforms, waveforms], axis=1)
         feature_space = self._compute_features(all_waveforms, opts)
 
-        f = plt.figure(figsize=(10,10))
+        f = plt.figure(figsize=(10, 10))
         for d in list:
             self._plot_spikes_in_feature_space(d, feature_space, opts)
         plt.legend()
@@ -97,19 +98,19 @@ class FeatureSpaceWidget:
         return features_obj
 
     def _get_random_spike_waveforms(self, *, unit, max_num, channels):
-        st = self._OX.getUnitSpikeTrain(unit_id=unit)
+        st = self._OX.get_unit_spike_train(unit_id=unit)
         num_events = len(st)
         if num_events > max_num:
             event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
         else:
             event_indices = range(num_events)
 
-        spikes = self._IX.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
-                                      channel_ids=channels)
-        if len(spikes)>0:
+        spikes = self._IX.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
+                                       channel_ids=channels)
+        if len(spikes) > 0:
             spikes = np.dstack(tuple(spikes))
         else:
-            spikes = np.zeros((self._IX.getNumChannels(), self._snippet_len, 0))
+            spikes = np.zeros((self._IX.get_num_channels(), self._snippet_len, 0))
         return spikes
 
     def _get_ylim_for_item(self, average_waveform=None, representative_waveforms=None):

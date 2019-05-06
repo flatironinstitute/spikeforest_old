@@ -11,6 +11,8 @@ import string
 import shutil
 from .yasssortingextractor import yassSortingExtractor
 from .tools import saveProbeFile
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+import spikeextractors as se
 
 # yass uses negative polarity by default
 
@@ -27,7 +29,7 @@ class YASS(mlpr.Processor):
     # CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'
 
     # this one uses python 3
-    CONTAINER = 'sha1://348be6fb09807c774e469c3aeabf4bca867c039f/03-29-2019/yass.simg'
+    CONTAINER = 'sha1://9f0b23510b3c221a5700ac378de4d978ccc1a196/2019-05-06/yass.simg'
 
     # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
@@ -45,9 +47,6 @@ class YASS(mlpr.Processor):
     filter = mlpr.BoolParameter(optional=True, default=True)
 
     def run(self):
-        from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-        import spikeextractors as se
-
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/yass-tmp-' + code
@@ -70,7 +69,7 @@ class YASS(mlpr.Processor):
                 adjacency_radius=self.adjacency_radius,
                 template_width_ms=self.template_width_ms,
                 filter=self.filter)
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
             # shutil.copyfile(yaml_file, self.paramfile_out)
         except:
@@ -90,9 +89,6 @@ def yass_helper(
         template_width_ms=1,  # yass parameter
         filter=True,
         adjacency_radius=100):
-
-    from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
     # make output dir
@@ -114,8 +110,7 @@ def yass_helper(
         file_name = 'raw.bin'
     bin_file = join_abspath_(output_folder, file_name)
     # print('bin_file:{}'.format(bin_file))
-    writeRecording_(recording=recording, save_path=bin_file,
-                    fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=1)
+    write_recording_(recording=recording, save_path=bin_file, fReversePolarity=(detect_sign > 0), dtype=np.float32, scale_factor=1)
     # print('bin_file exists? {}'.format(os.path.exists(bin_file)))
 
     # set up yass config file
@@ -125,8 +120,8 @@ def yass_helper(
 
     # get the order
     # root_folder, recordings, geometry, dtype, sampling_rate, n_channels, spatial_radius, spike_size_ms, filter
-    n_channels = recording.getNumChannels()
-    sampling_rate = recording.getSamplingFrequency()
+    n_channels = recording.get_num_channels()
+    sampling_rate = recording.get_sampling_frequency()
 
     # print('sampling_rate={}'.format(sampling_rate))
 
@@ -184,13 +179,13 @@ def join_abspath_(path1, path2):
     return path_abs
 
 
-def writeRecording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=1):
+def write_recording_(recording, save_path, dtype=None, transpose=False, fReversePolarity=False, scale_factor=1):
     # save_path = Path(save_path)
-    print('writeRecording2: {}'.format(str(save_path)))
+    print('write_recording2: {}'.format(str(save_path)))
 
     if dtype is None:
         dtype = np.float32
-    np_Wav = np.array(recording.getTraces(), dtype=dtype)
+    np_Wav = np.array(recording.get_traces(), dtype=dtype)
     if transpose:
         np_Wav = np.transpose(np_Wav)
     if fReversePolarity:

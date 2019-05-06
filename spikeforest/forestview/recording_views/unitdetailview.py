@@ -91,7 +91,7 @@ class UnitDetailWidget(vd.Component):
         snippets = result0['snippets']
         template = result0['template']
         peak_chan_index = np.argmax(np.max(np.abs(template), axis=1), axis=0)
-        peak_chan = self._context.recordingExtractor().getChannelIds()[peak_chan_index]
+        peak_chan = self._context.recordingExtractor().get_channel_ids()[peak_chan_index]
         return vd.div(
             vd.pre(
                 'Unit {} has {} events. Peak is on channel {}.'.format(self._unit_id, result0['num_events'], peak_chan)
@@ -158,8 +158,8 @@ class ComputeUnitDetail(mlpr.Processor):
     output = mlpr.Output()
 
     def run(self):
-        event_times = self.sorting.getUnitSpikeTrain(unit_id=self.unit_id)  # pylint: disable=no-member
-        snippets = self.recording.getSnippets(reference_frames=event_times, snippet_len=100)  # pylint: disable=no-member
+        event_times = self.sorting.get_unit_spike_train(unit_id=self.unit_id)  # pylint: disable=no-member
+        snippets = self.recording.get_snippets(reference_frames=event_times, snippet_len=100)  # pylint: disable=no-member
         template = np.median(np.stack(snippets), axis=0)
         result0 = dict(
             unit_id=self.unit_id,

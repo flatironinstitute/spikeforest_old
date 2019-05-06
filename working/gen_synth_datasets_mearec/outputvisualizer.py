@@ -20,8 +20,8 @@ class OutputVisualizer:
             A list of channel ids
         '''
         if units is None:
-            units = self._OX.getUnitIds()
-        M = self._IX.getNumChannels()
+            units = self._OX.get_unit_ids()
+        M = self._IX.get_num_channels()
         channel_locations = np.zeros((M, 2))
         for ch in range(M):
             loc = self._IX.getChannelInfo(ch)['location']
@@ -70,7 +70,7 @@ class OutputVisualizer:
                 plt.gca().get_yaxis().set_ticks([])
 
     def _get_random_spike_waveforms(self, *, unit, max_num, channels):
-        st = self._OX.getUnitSpikeTrain(unit_id=unit)
+        st = self._OX.get_unit_spike_train(unit_id=unit)
         num_events = len(st)
         if num_events > max_num:
             event_indices = np.random.choice(

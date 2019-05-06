@@ -69,7 +69,7 @@ class KiloSort2(mlpr.Processor):
                 freq_max=self.freq_max,
                 pc_per_chan=self.pc_per_chan
             )
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             # if os.path.exists(tmpdir):
@@ -107,10 +107,10 @@ def kilosort2_helper(*,
 
     dataset_dir = tmpdir + '/kilosort2_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
-    SFMdaRecordingExtractor.writeRecording(
+    SFMdaRecordingExtractor.write_recording(
         recording=recording, save_path=dataset_dir)
 
-    samplerate = recording.getSamplingFrequency()
+    samplerate = recording.get_sampling_frequency()
 
     print('Reading timeseries header...')
     HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
@@ -168,7 +168,7 @@ def kilosort2_helper(*,
 
     firings = mdaio.readmda(result_fname)
     sorting = se.NumpySortingExtractor()
-    sorting.setTimesLabels(firings[1, :], firings[2, :])
+    sorting.set_times_labels(firings[1, :], firings[2, :])
     return sorting
 
 

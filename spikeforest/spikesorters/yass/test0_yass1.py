@@ -24,9 +24,9 @@ rx, sx = example_datasets.yass_example(set_id=1)
 # %%
 firings_true = tmpdir+'/recording/firings_true.mda'
 recording_path = tmpdir+'/recording'
-SFMdaRecordingExtractor.writeRecording(
+SFMdaRecordingExtractor.write_recording(
     recording=rx, save_path=recording_path)
-SFMdaSortingExtractor.writeSorting(
+SFMdaSortingExtractor.write_sorting(
     sorting=sx, save_path=firings_true)
 
 YASS.execute(

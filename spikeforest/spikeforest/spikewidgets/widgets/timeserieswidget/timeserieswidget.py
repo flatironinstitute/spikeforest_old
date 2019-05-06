@@ -30,7 +30,7 @@ class TimeseriesWidget:
     def __init__(self, *, recording, sorting=None, channels=None, trange=None, width=None, height=None):
         self._recording = recording
         self._sorting = sorting
-        self._samplerate = recording.getSamplingFrequency()
+        self._samplerate = recording.get_sampling_frequency()
         self._width = width
         self._height = height
         self._visible_channels = channels
@@ -39,10 +39,10 @@ class TimeseriesWidget:
         if self._height is None:
             self._height = 6
         if self._visible_channels is None:
-            self._visible_channels = recording.getChannelIds()
+            self._visible_channels = recording.get_channel_ids()
         self._visible_trange = trange
         if self._visible_trange is None:
-            self._visible_trange = [0, np.minimum(10000, recording.getNumFrames())]
+            self._visible_trange = [0, np.minimum(10000, recording.get_num_frames())]
         self._initialize_stats()
         self._vspacing = self._mean_channel_std * 15
         self._visible_trange = self._fix_trange(self._visible_trange)
@@ -74,7 +74,7 @@ class TimeseriesWidget:
             self._do_plot()
 
     def _do_plot(self):
-        chunk0 = self._recording.getTraces(
+        chunk0 = self._recording.get_traces(
             channel_ids=self._visible_channels,
             start_frame=self._visible_trange[0],
             end_frame=self._visible_trange[1]
@@ -112,7 +112,7 @@ class TimeseriesWidget:
         self._update_plot()
 
     def _fix_trange(self, trange):
-        N = self._recording.getNumFrames()
+        N = self._recording.get_num_frames()
         if trange[1] > N:
             trange[0] += N - trange[1]
             trange[1] += N - trange[1]
@@ -152,7 +152,7 @@ class TimeseriesWidget:
         self._channel_stats = {}
         # M=self._reader.numChannels()
         # N=self._reader.numTimepoints()
-        chunk0 = self._recording.getTraces(
+        chunk0 = self._recording.get_traces(
             channel_ids=self._visible_channels,
             start_frame=self._visible_trange[0],
             end_frame=self._visible_trange[1]

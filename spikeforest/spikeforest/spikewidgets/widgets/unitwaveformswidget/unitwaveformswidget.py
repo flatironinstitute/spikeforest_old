@@ -25,18 +25,18 @@ class UnitWaveformsWidget:
         units = self._unit_ids
         channels = self._channels
         if units is None:
-            units = self._OX.getUnitIds()
-        channel_ids = self._IX.getChannelIds()
+            units = self._OX.get_unit_ids()
+        channel_ids = self._IX.get_channel_ids()
         M = len(channel_ids)
         channel_locations = np.zeros((M, 2))
         for ii, ch in enumerate(channel_ids):
-            loc = self._IX.getChannelProperty(ch, 'location')
+            loc = self._IX.get_channel_property(ch, 'location')
             channel_locations[ii, :] = loc[-2:]
         if channels is None:
             channels = channel_ids
         list = []
         for unit in units:
-            st = self._OX.getUnitSpikeTrain(unit_id=unit)
+            st = self._OX.get_unit_spike_train(unit_id=unit)
             if st is not None:
                 spikes = self._get_random_spike_waveforms(unit=unit, max_num=self._max_num_spikes_per_unit,
                                                           channels=channels)
@@ -52,19 +52,19 @@ class UnitWaveformsWidget:
             self._plot_spike_shapes_multi(list, channel_locations=None)
 
     def _get_random_spike_waveforms(self, *, unit, max_num, channels):
-        st = self._OX.getUnitSpikeTrain(unit_id=unit)
+        st = self._OX.get_unit_spike_train(unit_id=unit)
         num_events = len(st)
         if num_events > max_num:
             event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
         else:
             event_indices = range(num_events)
 
-        spikes = self._IX.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
+        spikes = self._IX.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
                                       channel_ids=channels)
         if len(spikes)>0:
             spikes = np.dstack(tuple(spikes))
         else:
-            spikes = np.zeros((self._IX.getNumChannels(), self._snippet_len, 0))
+            spikes = np.zeros((self._IX.get_num_channels(), self._snippet_len, 0))
         return spikes
 
     def _plot_spike_shapes(self, *, representative_waveforms=None, average_waveform=None, channel_locations=None,

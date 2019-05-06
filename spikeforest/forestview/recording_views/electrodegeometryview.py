@@ -85,7 +85,7 @@ class ElectrodeGeometryWidget(vd.Component):
 
     def _on_state_change(self, current_electrode_index):
         current_electrode_index = int(current_electrode_index)
-        channel_ids = self._recording.getChannelIds()
+        channel_ids = self._recording.get_channel_ids()
         if current_electrode_index >= 0:
             ch = channel_ids[int(current_electrode_index)]
         else:
@@ -93,8 +93,8 @@ class ElectrodeGeometryWidget(vd.Component):
         self.setCurrentChannel(ch)
 
     def _update_widget(self):
-        channel_ids = self._recording.getChannelIds()
-        locations = self._recording.getChannelLocations(channel_ids=channel_ids)
+        channel_ids = self._recording.get_channel_ids()
+        locations = self._recording.get_channel_locations(channel_ids=channel_ids)
         locations = [[loc[0], loc[1]] for loc in locations]
         try:
             current_electrode_index = channel_ids.index(self._current_channel)
