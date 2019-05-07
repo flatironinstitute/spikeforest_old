@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 from mountaintools import client as mt
-import os, sys
+import os
+import sys
 import mlprocessors as mlpr
 import mtlogging
 import argparse
@@ -13,9 +14,10 @@ from apply_sorters_to_recordings import apply_sorters_to_recordings
 @mtlogging.log(root=True)
 def main():
 
-    parser = argparse.ArgumentParser(description = 'Run a SpikeForest analysis')
-    parser.add_argument('analysis_file',help='Path to the analysis specification file.')
-    parser.add_argument('--job_timeout',help='Job timeout in seconds. Overrides the parameter in the analysis file.', required=False, default=None)
+    parser = argparse.ArgumentParser(description='Run a SpikeForest analysis')
+    parser.add_argument('analysis_file', help='Path to the analysis specification file.')
+    parser.add_argument('--job_timeout', help='Job timeout in seconds. Overrides the parameter in the analysis file.', required=False, default=None)
+    parser.add_argument('--skip_failing', help='Use cached version of failing processes.', action='store_true')
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
@@ -55,7 +57,7 @@ def main():
     sorter_codes = analysis_obj['sorter_keys']
     sorters = [sorter_definitions[sorter_code] for sorter_code in sorter_codes]
     sorters = _expand_sorters(sorters)
-    print('Using sorters: ',[sorter['name'] for sorter in sorters])
+    print('Using sorters: ', [sorter['name'] for sorter in sorters])
     if args.verbose:
         for sorter in sorters:
             print(sorter)
@@ -68,7 +70,7 @@ def main():
     for recordings_path in analysis_obj['recordings']:
         obj = mt.loadObject(path=recordings_path)
         if obj is None:
-            raise Exception('Unable to load recordings from: '+recordings_path)
+            raise Exception('Unable to load recordings from: ' + recordings_path)
         recordings = recordings + obj['recordings']
         studies = studies + obj['studies']
         study_sets = study_sets + obj['study_sets']
@@ -82,12 +84,13 @@ def main():
 
     if args.test:
         print('Test mode... so only retaining a couple recordings and one study and not storing output.')
-        recordings=recordings[0:2]
-        studies=studies[0:1]
-        output_path=None    
+        recordings = recordings[0:2]
+        studies = studies[0:1]
+        output_path = None
 
     upload_to = analysis_obj.get('upload_to', None)
-    apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, study_sets=study_sets, output_path=output_path, job_timeout=float(job_timeout), upload_to=upload_to)
+    apply_sorters_to_recordings(label=analysis_name, sorters=sorters, recordings=recordings, studies=studies, study_sets=study_sets, output_path=output_path, job_timeout=float(job_timeout), upload_to=upload_to, skip_failing=args.skip_failing)
+
 
 def _expand_sorters(sorters):
     ret = []
@@ -96,10 +99,11 @@ def _expand_sorters(sorters):
         ret = ret + a
     return ret
 
+
 def _expand_sorter(sorter):
     params = sorter['params']
     for pname, pval in params.items():
-        if type(pval)==dict:
+        if type(pval) == dict:
             if '_list' in pval:
                 plist = pval['_list']
             elif '_range' in pval:
@@ -111,7 +115,7 @@ def _expand_sorter(sorter):
                 for ii, lval in enumerate(plist):
                     sorter2 = deepcopy(sorter)
                     sorter2['params'][pname] = lval
-                    sorter2['name']=sorter2['name']+'-{}'.format(ii)
+                    sorter2['name'] = sorter2['name'] + '-{}'.format(ii)
                     ret = ret + _expand_sorter(sorter2)
                 return ret
     return [sorter]

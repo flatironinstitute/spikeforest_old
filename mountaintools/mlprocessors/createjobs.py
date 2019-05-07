@@ -46,11 +46,15 @@ def createJobs(proc, argslist, verbose=None):
         _container = args.get('_container', None)
         _label = args.get('_label', None)
         _use_cache = args.get('_use_cache', True)
+        _skip_failing = args.get('_skip_failing', None)
         _timeout = args.get('_timeout', None)
         _additional_files_to_realize = args.get('_additional_files_to_realize', None)
 
         if _force_run is None:
             _force_run = (os.environ.get('MLPROCESSORS_FORCE_RUN', '') == 'TRUE')
+
+        if _skip_failing is None:
+            _skip_failing = (os.environ.get('MLPROCESSORS_SKIP_FAILING', '') == 'TRUE')
 
         if _keep_temp_files is None:
             _keep_temp_files = (os.environ.get('MLPROCESSORS_KEEP_TEMP_FILES', '') == 'TRUE')
@@ -154,6 +158,7 @@ def createJobs(proc, argslist, verbose=None):
             container=_container,
             force_run=_force_run,
             use_cache=_use_cache,
+            skip_failing=_skip_failing,
             keep_temp_files=_keep_temp_files,
             environment_variables=environment_variables,
             additional_files_to_realize=_additional_files_to_realize or [],
@@ -267,6 +272,7 @@ def createJob(
     proc,
     _container=None,
     _use_cache=True,
+    _skip_failing=None,
     _force_run=None,
     _keep_temp_files=None,
     _label=None,
@@ -278,6 +284,7 @@ def createJob(
     args = dict(
         _container=_container,
         _use_cache=_use_cache,
+        _skip_failing=_skip_failing,
         _force_run=_force_run,
         _keep_temp_files=_keep_temp_files,
         _label=_label,

@@ -6,7 +6,7 @@ import mtlogging
 
 
 @mtlogging.log()
-def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_sets, output_id=None, output_path=None, job_timeout=60 * 20, upload_to=None):
+def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_sets, output_id=None, output_path=None, job_timeout=60 * 20, upload_to=None, skip_failing=None):
     # Summarize the recordings
     mtlogging.sublog('summarize-recordings')
     recordings = sa.summarize_recordings(
@@ -22,7 +22,8 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_se
         recordings=recordings,
         label='Sort recordings ({})'.format(label),
         job_timeout=job_timeout,
-        upload_to=upload_to
+        upload_to=upload_to,
+        skip_failing=skip_failing
     )
 
     # Summarize the sortings
