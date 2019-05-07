@@ -45,7 +45,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
             assert type(self._recording_hash) == str
             geom = np.array(f.get('geom'))
             channel_locations = [geom[m, :].ravel() for m in range(self._num_channels)]
-            self.setChannelLocations(channel_ids=self._channel_ids, locations=channel_locations)
+            self.set_channel_locations(channel_ids=self._channel_ids, locations=channel_locations)
 
     def hash(self):
         return self._recording_hash
@@ -53,23 +53,23 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
     def path(self):
         return self._path
 
-    def getChannelIds(self):
+    def get_channel_ids(self):
         return self._channel_ids
 
-    def getNumFrames(self):
+    def get_num_frames(self):
         return self._num_timepoints
 
-    def getSamplingFrequency(self):
+    def get_sampling_frequency(self):
         return self._samplerate
 
-    @mtlogging.log(name='EfficientAccessRecordingExtractor:getTraces')
-    def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
+    @mtlogging.log(name='EfficientAccessRecordingExtractor:get_traces')
+    def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
-            end_frame = self.getNumFrames()
+            end_frame = self.get_num_frames()
         if channel_ids is None:
-            channel_ids = self.getChannelIds()
+            channel_ids = self.get_channel_ids()
 
         t1 = int(start_frame)
         t2 = int(end_frame)
@@ -93,7 +93,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
         return ret
 
     @staticmethod
-    def writeRecording(recording, save_path):
+    def write_recording(recording, save_path):
         EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
 
 
@@ -107,13 +107,13 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
     def run(self):
         recording = self.recording
         segment_size = self.segment_size
-        channel_ids = recording.getChannelIds()
-        samplerate = recording.getSamplingFrequency()
+        channel_ids = recording.get_channel_ids()
+        samplerate = recording.get_sampling_frequency()
         M = len(channel_ids)  # number of channels
-        N = recording.getNumFrames()  # Number of timepoints
+        N = recording.get_num_frames()  # Number of timepoints
         num_segments = int(np.ceil(N / segment_size))
 
-        channel_locations = recording.getChannelLocations(channel_ids=channel_ids)
+        channel_locations = recording.get_channel_locations(channel_ids=channel_ids)
         nd = len(channel_locations[0])
         geom = np.zeros((M, nd))
         for m in range(M):
@@ -142,7 +142,7 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
                 # determine aa so that t1-s1+aa = 0
                 # so, aa = -(t1-s1)
                 aa = -(t1 - s1)
-                segment[:, aa:aa + s2 - s1] = recording.getTraces(start_frame=s1, end_frame=s2)  # Read the segment
+                segment[:, aa:aa + s2 - s1] = recording.get_traces(start_frame=s1, end_frame=s2)  # Read the segment
 
                 for ii, ch in enumerate(channel_ids):
                     f.create_dataset('part-{}-{}'.format(ch, j), data=segment[ii, :].ravel())
@@ -151,8 +151,8 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
 def _hash(self):
     from mountaintools import client as mt
     obj = {
-        'channels': tuple(self.getChannelIds()),
-        'frames': self.getNumFrames(),
+        'channels': tuple(self.get_channel_ids()),
+        'frames': self.get_num_frames(),
         'data': samplehash(self)
     }
     return mt.sha1OfObject(obj)
@@ -160,10 +160,10 @@ def _hash(self):
 
 def samplehash(self):
     rng = np.random.RandomState(37)
-    n_samples = min(self.getNumFrames() // 1000, 100)
-    inds = rng.randint(low=0, high=self.getNumFrames(), size=n_samples)
+    n_samples = min(self.get_num_frames() // 1000, 100)
+    inds = rng.randint(low=0, high=self.get_num_frames(), size=n_samples)
     h = 0
     for i in inds:
-        t = self.getTraces(start_frame=i, end_frame=i + 100)
+        t = self.get_traces(start_frame=i, end_frame=i + 100)
         h = hash((hash(bytes(t)), hash(h)))
     return h

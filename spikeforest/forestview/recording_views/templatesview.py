@@ -38,9 +38,9 @@ class TemplatesView(vd.Component):
         sorting_context.initialize()
         earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
         sorting = sorting_context.sortingExtractor()
-        unit_ids = sorting.getUnitIds()
+        unit_ids = sorting.get_unit_ids()
         print('***** Computing unit templates...')
-        #templates = compute_unit_templates(recording=earx, sorting=sorting, unit_ids=unit_ids)
+        # templates = compute_unit_templates(recording=earx, sorting=sorting, unit_ids=unit_ids)
         templates = ComputeUnitTemplates.execute(recording=earx, sorting=sorting, unit_ids=unit_ids, templates_out=True).outputs['templates_out']
         print('*****')
         return dict(units=[
@@ -72,23 +72,23 @@ class TemplatesView(vd.Component):
 
 
 def get_random_spike_waveforms(*, recording, sorting, unit, snippet_len, max_num, channels=None):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 
 def compute_unit_templates(*, recording, sorting, unit_ids, snippet_len=50, max_num=100, channels=None):
-    M = len(recording.getChannelIds())
+    M = len(recording.get_channel_ids())
     T = snippet_len
     K = len(unit_ids)
     ret = np.zeros((M, T, K))
@@ -109,7 +109,7 @@ class ComputeUnitTemplates(mlpr.Processor):
     templates_out = mlpr.OutputArray()
 
     def run(self):
-        templates = compute_unit_templates(recording=self.recording, sorting=self.sorting, unit_ids=self.sorting.getUnitIds())  # pylint: disable=no-member
+        templates = compute_unit_templates(recording=self.recording, sorting=self.sorting, unit_ids=self.sorting.get_unit_ids())  # pylint: disable=no-member
         print('Saving templates...')
         np.save(self.templates_out, templates)
 

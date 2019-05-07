@@ -102,7 +102,7 @@ class IronClust(mlpr.Processor):
                 ironclust_path=ironclust_path,
                 params=params,
             )
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
@@ -130,10 +130,10 @@ def ironclust_helper(
 
     dataset_dir = tmpdir + '/ironclust_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
-    SFMdaRecordingExtractor.writeRecording(
+    SFMdaRecordingExtractor.write_recording(
         recording=recording, save_path=dataset_dir, params=params)
 
-    samplerate = recording.getSamplingFrequency()
+    samplerate = recording.get_sampling_frequency()
 
     print('Reading timeseries header...')
     HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
@@ -228,7 +228,7 @@ def ironclust_helper(
 
     firings = mdaio.readmda(result_fname)
     sorting = se.NumpySortingExtractor()
-    sorting.setTimesLabels(firings[1, :], firings[2, :])
+    sorting.set_times_labels(firings[1, :], firings[2, :])
     return sorting
 
 

@@ -19,7 +19,7 @@ class TheApp():
         recording = se.SubRecordingExtractor(
             parent_recording=recording, start_frame=0, end_frame=10000)
         recording = se.NumpyRecordingExtractor(
-            timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
+            timeseries=recording.get_traces(), samplerate=recording.get_sampling_frequency())
         W = SFW.TimeseriesWidget(recording=recording)
         _make_full_browser(W)
         return W

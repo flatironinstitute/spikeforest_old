@@ -2,9 +2,9 @@ import mlprocessors as mlpr
 import json
 
 import spikeextractors as si
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
-_CONTAINER = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+_CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
 
 
 # A MountainLab processor for generating the summary info for a recording
@@ -22,9 +22,9 @@ class ComputeRecordingInfo(mlpr.Processor):
         recording = SFMdaRecordingExtractor(dataset_directory=self.recording_dir, download=True)
         if len(self.channels) > 0:
             recording = si.SubRecordingExtractor(parent_recording=recording, channel_ids=self.channels)
-        ret['samplerate'] = recording.getSamplingFrequency()
-        ret['num_channels'] = len(recording.getChannelIds())
-        ret['duration_sec'] = recording.getNumFrames() / ret['samplerate']
+        ret['samplerate'] = recording.get_sampling_frequency()
+        ret['num_channels'] = len(recording.get_channel_ids())
+        ret['duration_sec'] = recording.get_num_frames() / ret['samplerate']
         write_json_file(self.json_out, ret)
 
 

@@ -160,6 +160,7 @@ class MountainClient():
             'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443')))
         self._kachery_urls = dict()
         self._kachery_upload_tokens = dict()
+        self._kachery_download_tokens = dict()
         self._pairio_tokens = dict()
         self._verbose = False
         self._remote_client = MountainRemoteClient()
@@ -255,6 +256,9 @@ class MountainClient():
         if 'kachery_upload_tokens' in config:
             for key0, val0 in config['kachery_upload_tokens'].items():
                 self.setKacheryUploadToken(key0, val0)
+        if 'kachery_download_tokens' in config:
+            for key0, val0 in config['kachery_download_tokens'].items():
+                self.setKacheryDownloadToken(key0, val0)
         print('Logged in as {}'.format(user))
 
     def setPairioToken(self, collection, token):
@@ -262,6 +266,9 @@ class MountainClient():
 
     def setKacheryUploadToken(self, kachery_name, token):
         self._kachery_upload_tokens[kachery_name] = token
+
+    def setKacheryDownloadToken(self, kachery_name, token):
+        self._kachery_download_tokens[kachery_name] = token
 
     def configLocal(self):
         """
@@ -439,7 +446,7 @@ class MountainClient():
         return list(self._get_sub_keys(key=key, collection=collection))
 
     @mtlogging.log(name='MountainClient:realizeFile')
-    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, collection=None, download_from=None):
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, collection=None, download_from=None, local_only=False, remote_only=False):
         """
         Return a local path to the specified file, downloading the file from a
         remote server to the local SHA-1 cache if needed. In other words,
@@ -511,12 +518,12 @@ class MountainClient():
         if path is not None:
             if key is not None:
                 raise Exception('Cannot specify both key and path in realizeFile.')
-            return self._realize_file(path=path, dest_path=dest_path, show_progress=show_progress, download_from=download_from)
+            return self._realize_file(path=path, dest_path=dest_path, show_progress=show_progress, download_from=download_from, local_only=local_only, remote_only=remote_only)
         elif key is not None:
             val = self.getValue(key=key, subkey=subkey, local_first=local_first, collection=collection)
             if not val:
                 return None
-            return self.realizeFile(path=val, dest_path=dest_path, show_progress=show_progress, download_from=download_from)
+            return self.realizeFile(path=val, dest_path=dest_path, show_progress=show_progress, download_from=download_from, local_only=local_only, remote_only=remote_only)
         else:
             raise Exception('Missing key or path in realizeFile().')
 
@@ -580,14 +587,14 @@ class MountainClient():
 
     # load object / save object
     @mtlogging.log(name='MountainClient:loadObject')
-    def loadObject(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None):
+    def loadObject(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None, local_only=False, remote_only=False):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
 
         txt = self.loadText(key=key, path=path,
-                            subkey=subkey, local_first=local_first, collection=collection, download_from=download_from)
+                            subkey=subkey, local_first=local_first, collection=collection, download_from=download_from, local_only=local_only, remote_only=remote_only)
         if txt is None:
             return None
         try:
@@ -721,14 +728,14 @@ class MountainClient():
 
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
-    def loadText(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None):
+    def loadText(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None, local_only=False, remote_only=False):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
 
         fname = self.realizeFile(
-            key=key, path=path, subkey=subkey, local_first=local_first, collection=collection, download_from=download_from)
+            key=key, path=path, subkey=subkey, local_first=local_first, collection=collection, download_from=download_from, local_only=local_only, remote_only=remote_only)
         if fname is None:
             return None
         try:
@@ -762,9 +769,9 @@ class MountainClient():
         return ret
 
     @mtlogging.log(name='MountainClient:readDir')
-    def readDir(self, path, recursive=False, include_sha1=True, download_from=None):
+    def readDir(self, path, recursive=False, include_sha1=True, download_from=None, local_only=False, remote_only=False):
         if path and path.startswith('key://'):
-            path = self.resolveKeyPath(path)
+            path = self.resolveKeyPath(path),
             if not path:
                 return None
 
@@ -789,7 +796,7 @@ class MountainClient():
             sha1 = list0[2]
             if '.' in sha1:
                 sha1 = sha1.split('.')[0]
-            dd = self.loadObject(path='sha1://' + sha1, download_from=download_from)
+            dd = self.loadObject(path='sha1://' + sha1, download_from=download_from, local_only=local_only, remote_only=remote_only)
             if not dd:
                 return None
             ii = 3
@@ -885,12 +892,12 @@ class MountainClient():
         return 'sha1://{}/{}'.format(sha1, basename)
 
     @mtlogging.log(name='MountainClient:findFile')
-    def findFile(self, path, local_only=False, download_from=None):
+    def findFile(self, path, local_only=False, remote_only=False, download_from=None):
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
                 return None
-        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, download_from=download_from)
+        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, remote_only=remote_only, download_from=download_from)
 
     @mtlogging.log(name='MountainClient:copyToLocalCache')
     def copyToLocalCache(self, path, basename=None):
@@ -903,14 +910,16 @@ class MountainClient():
     def _initialize_kacheries(self):
         kacheries_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kacheries')
         kachery_upload_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_upload_tokens')
+        kachery_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_tokens')
         kachery_urls = dict()
         kachery_upload_tokens = dict()
+        kachery_download_tokens = dict()
         if os.path.exists(kacheries_fname):
             txt = _read_text_file(kacheries_fname)
             lines = txt.splitlines()
             for line in lines:
-                if not line.startswith('#'):
-                    vals = line.split()
+                if (not line.startswith('#')) and (len(line.strip()) > 0):
+                    vals = line.strip().split()
                     if len(vals) != 2:
                         print('WARNING: problem parsing kacheries file.')
                     else:
@@ -919,16 +928,33 @@ class MountainClient():
             txt = _read_text_file(kachery_upload_tokens_fname)
             lines = txt.splitlines()
             for line in lines:
-                if not line.startswith('#'):
-                    vals = line.split()
+                if (not line.startswith('#')) and (len(line.strip()) > 0):
+                    vals = line.strip().split()
                     if len(vals) != 2:
                         print('WARNING: problem parsing kachery_upload_tokens file.')
                     else:
                         kachery_upload_tokens[vals[0]] = vals[1]
+        if os.path.exists(kachery_tokens_fname):
+            txt = _read_text_file(kachery_tokens_fname)
+            lines = txt.splitlines()
+            for line in lines:
+                if (not line.startswith('#')) and (len(line.strip()) > 0):
+                    vals = line.strip().split()
+                    if len(vals) != 3:
+                        print('WARNING: problem parsing kachery_tokens file.')
+                    else:
+                        if vals[1] == 'upload':
+                            kachery_upload_tokens[vals[0]] = vals[2]
+                        elif vals[1] == 'download':
+                            kachery_download_tokens[vals[0]] = vals[2]
+                        else:
+                            print('WARNING: problem parsing kachery_tokens file (*).')
         for name, url in kachery_urls.items():
             self._kachery_urls[name] = url
         for name, token in kachery_upload_tokens.items():
             self._kachery_upload_tokens[name] = token
+        for name, token in kachery_download_tokens.items():
+            self._kachery_download_tokens[name] = token
 
     def _read_pairio_tokens(self):
         pairio_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'pairio_tokens')
@@ -936,8 +962,8 @@ class MountainClient():
             txt = _read_text_file(pairio_tokens_fname)
             lines = txt.splitlines()
             for line in lines:
-                if not line.startswith('#'):
-                    vals = line.split()
+                if (not line.startswith('#')) and (len(line.strip()) > 0):
+                    vals = line.strip().split()
                     if len(vals) != 2:
                         print('WARNING: problem parsing pairio tokens file.')
                     else:
@@ -988,11 +1014,12 @@ class MountainClient():
         else:
             return self._local_db.getSubKeys(key=key)
 
-    def _realize_file(self, *, path, resolve_locally=True, local_only=False, dest_path=None, show_progress=False, download_from=None):
-        ret = self._local_db.realizeFile(
-            path=path, local_only=local_only, resolve_locally=resolve_locally, dest_path=dest_path, show_progress=show_progress)
-        if ret:
-            return ret
+    def _realize_file(self, *, path, resolve_locally=True, local_only=False, remote_only=False, dest_path=None, show_progress=False, download_from=None):
+        if not remote_only:
+            ret = self._local_db.realizeFile(
+                path=path, local_only=local_only, resolve_locally=resolve_locally, dest_path=dest_path, show_progress=show_progress)
+            if ret:
+                return ret
         if local_only:
             return None
         download_froms = []
@@ -1091,7 +1118,13 @@ class MountainClient():
                 return (None, None)
             if not obj['found']:
                 return (None, None)
-            return (kachery_url + '/get/sha1/' + sha1, obj['size'])
+            url0 = kachery_url + '/get/sha1/' + sha1
+            if download_from in self._kachery_download_tokens:
+                download_token0 = self._kachery_download_tokens[download_from]
+                url_path0 = '/get/sha1/' + sha1
+                signature0 = _sha1_of_object({'path': url_path0, 'token': download_token0})
+                url0 = url0 + '?signature=' + signature0
+            return (url0, obj['size'])
 
         # first check in the upload location
         (sha1_0, size_0, url_0) = self._local_db.getKBucketFileInfo(

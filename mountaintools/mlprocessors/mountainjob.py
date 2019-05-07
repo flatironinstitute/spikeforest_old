@@ -88,6 +88,7 @@ class MountainJob():
         container = self._job_object['container']
         force_run = self._job_object['force_run']
         use_cache = self._job_object['use_cache']
+        skip_failing = self._job_object['skip_failing']
         keep_temp_files = self._job_object['keep_temp_files']
         job_timeout = self._job_object.get('timeout', None)
         label = self._job_object.get('label', '')
@@ -96,8 +97,11 @@ class MountainJob():
         if (use_cache) and (not force_run) and (not ignore_local_cache):
             result = self._find_result_in_cache()
             if result:
-                self._copy_outputs_from_result_to_dest_paths(result)
-                return self._post_process_result(result)
+                if (result.retcode == 0) or (skip_failing):
+                    if result.retcode == 0:
+                        self._copy_outputs_from_result_to_dest_paths(result)
+                        result = self._post_process_result(result)
+                    return result
 
         if self._use_cached_results_only:
             return None
@@ -184,11 +188,7 @@ class MountainJob():
                     retcode = 0
                 except:
                     traceback.print_exc()
-                    runtime_capture.stop_capturing()
-                    R.retcode = -1
-                    R.runtime_info = runtime_capture.runtimeInfo()
-                    R.console_out = local_client.saveText(text=runtime_capture.consoleOut(), basename='console_out.txt')
-                    return R
+                    retcode = -1
             else:
                 # Otherwise we need to do code generation
                 timer = time.time()
@@ -273,6 +273,7 @@ class MountainJob():
             runtime_capture.stop_capturing()
             R.retcode = retcode
             R.runtime_info = runtime_capture.runtimeInfo()
+            R.runtime_info['retcode'] = retcode
             R.console_out = local_client.saveText(text=runtime_capture.consoleOut(), basename='console_out.txt')
             R.outputs = dict()
             if retcode == 0:
@@ -284,10 +285,16 @@ class MountainJob():
                         raise Exception('Unexpected: output file {} does not exist: {}'.format(output_name, fname), os.path.exists(fname))
                     R.outputs[output_name] = local_client.saveFile(path=fname)
 
-            if (retcode == 0) and use_cache:
+            if (retcode == 0):
+                R = self._post_process_result(R)
+
+            if use_cache:
+                # We will now store the result regardless of what the retcode was
+                # For retrieval we will then decide whether to repeat based on options
+                # specified (i.e., skip_failing)
                 self._store_result_in_cache(R)
 
-            return self._post_process_result(R)
+            return R
 
     def _post_process_result(self, R):
         output_names = R.outputs.keys()
@@ -360,34 +367,39 @@ class MountainJob():
 
     def _find_result_in_cache(self):
         output_paths = dict()
-        for output_name, output0 in self._job_object['outputs'].items():
-            signature0 = output0['signature']
-            output_path = local_client.getValue(key=signature0, check_alt=True)
-            if not output_path:
-                return None
-            output_paths[output_name] = output_path
 
         runtime_info_signature = self._job_object['runtime_info_signature']
         output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature, check_alt=True)
         if not output_paths['--runtime-info--']:
             return None
 
+        runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
+        if runtime_info is None:
+            print('Unable to load cached runtime info', output_paths['--runtime-info--'])
+            return None
+
+        retcode = runtime_info.get('retcode', 0)  # for now default is 0, but that should be unnecessary later
+
         console_out_signature = self._job_object['console_out_signature']
         output_paths['--console-out--'] = local_client.getValue(key=console_out_signature, check_alt=True)
         if not output_paths['--console-out--']:
             return None
 
-        for output_name in output_paths.keys():
-            orig_path = output_paths[output_name]
-            output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
-            if not output_paths[output_name]:
-                print('Unable to realize cached output', output_name, orig_path)
-                return None
+        if retcode == 0:
+            for output_name, output0 in self._job_object['outputs'].items():
+                signature0 = output0['signature']
+                output_path = local_client.getValue(key=signature0, check_alt=True)
+                if not output_path:
+                    return None
+                output_paths[output_name] = output_path
 
-        runtime_info = local_client.loadObject(path=output_paths['--runtime-info--'])
-        if runtime_info is None:
-            print('Unable to load cached runtime info', output_paths['--runtime-info--'])
-            return None
+        if retcode == 0:
+            for output_name in output_paths.keys():
+                orig_path = output_paths[output_name]
+                output_paths[output_name] = local_client.realizeFile(output_paths[output_name])
+                if not output_paths[output_name]:
+                    print('Unable to realize cached output', output_name, orig_path)
+                    return None
 
         console_out_text = local_client.loadText(path=output_paths['--console-out--'])
         if console_out_text is None:
@@ -395,21 +407,23 @@ class MountainJob():
             return None
 
         R = MountainJobResult()
-        R.retcode = 0
+        R.retcode = retcode
         R.runtime_info = runtime_info
         R.console_out = local_client.saveFile(path=output_paths['--console-out--'])
         R.outputs = dict()
-        for output_name in self._job_object['outputs'].keys():
-            R.outputs[output_name] = local_client.saveFile(path=output_paths[output_name])
+        if retcode == 0:
+            for output_name in self._job_object['outputs'].keys():
+                R.outputs[output_name] = local_client.saveFile(path=output_paths[output_name])
         return R
 
     def _store_result_in_cache(self, result):
-        for output_name, output0 in self._job_object['outputs'].items():
-            output_path = local_client.getSha1Url(result.outputs[output_name])
-            if output_path:
-                local_client.setValue(key=output0['signature'], value=output_path)
-            else:
-                raise Exception('Unable to store output in cache', output_name, result.outputs[output_name])
+        if result.retcode == 0:
+            for output_name, output0 in self._job_object['outputs'].items():
+                output_path = local_client.getSha1Url(result.outputs[output_name])
+                if output_path:
+                    local_client.setValue(key=output0['signature'], value=output_path)
+                else:
+                    raise Exception('Unable to store output in cache', output_name, result.outputs[output_name])
 
         runtime_info_signature = self._job_object['runtime_info_signature']
         runtime_info_path = local_client.saveObject(object=result.runtime_info)

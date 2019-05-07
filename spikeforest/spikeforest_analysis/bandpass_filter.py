@@ -10,7 +10,7 @@ class BandpassFilterRecording(FilterRecording):
         self._freq_min = freq_min
         self._freq_max = freq_max
         self._freq_wid = freq_wid
-        self.copyChannelProperties(recording)
+        self.copy_channel_properties(recording)
 
     def filterChunk(self, *, start_frame, end_frame):
         padding = 3000
@@ -20,9 +20,9 @@ class BandpassFilterRecording(FilterRecording):
         if i1 < 0:
             for m in range(padded_chunk.shape[0]):
                 padded_chunk[m, :-i1] = padded_chunk[m, -i1]
-        if i2 > self._recording.getNumFrames():
+        if i2 > self._recording.get_num_frames():
             for m in range(padded_chunk.shape[0]):
-                aa = (i2 - self._recording.getNumFrames())
+                aa = (i2 - self._recording.get_num_frames())
                 padded_chunk[m, -aa:] = padded_chunk[m, aa - 1]
         filtered_padded_chunk = self._do_filter(padded_chunk)
         return filtered_padded_chunk[:, start_frame - i1:end_frame - i1]
@@ -50,7 +50,7 @@ class BandpassFilterRecording(FilterRecording):
         return val
 
     def _do_filter(self, chunk):
-        samplerate = self._recording.getSamplingFrequency()
+        samplerate = self._recording.get_sampling_frequency()
         M = chunk.shape[0]
         chunk2 = chunk
         # Subtract off the mean of each channel unless we are doing only a low-pass filter
@@ -70,8 +70,8 @@ class BandpassFilterRecording(FilterRecording):
         return chunk_filtered
 
     def _read_chunk(self, i1, i2):
-        M = len(self._recording.getChannelIds())
-        N = self._recording.getNumFrames()
+        M = len(self._recording.get_channel_ids())
+        N = self._recording.get_num_frames()
         if i1 < 0:
             i1b = 0
         else:
@@ -81,7 +81,7 @@ class BandpassFilterRecording(FilterRecording):
         else:
             i2b = i2
         ret = np.zeros((M, i2 - i1))
-        ret[:, i1b - i1:i2b - i1] = self._recording.getTraces(start_frame=i1b, end_frame=i2b)
+        ret[:, i1b - i1:i2b - i1] = self._recording.get_traces(start_frame=i1b, end_frame=i2b)
         return ret
 
 

@@ -10,7 +10,7 @@ import string
 import shutil
 import spikeextractors as se
 from .tools import saveProbeFile
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from .spykingcircussortingextractor import SpykingCircusSortingExtractor
 
 
@@ -20,7 +20,7 @@ class SpykingCircus(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
-    CONTAINER = 'sha1://8daaf751fc3f40dd6f86696e8fcb675bcf1ba212/03-29-2019/spyking_circus.simg'
+    CONTAINER = 'sha1://8958530b960522d529163344af2faa09ea805716/2019-05-06/spyking_circus.simg'
     # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -71,7 +71,7 @@ class SpykingCircus(mlpr.Processor):
                 whitening_max_elts=self.whitening_max_elts,
                 clustering_max_elts=self.clustering_max_elts,
             )
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
             if not getattr(self, '_keep_temp_files', False):
@@ -130,7 +130,7 @@ def spyking_circus(
     elif file_name.endswith('.npy'):
         file_name = file_name[file_name.find('.npy')]
     np.save(join(output_folder, file_name),
-            recording.getTraces().astype('float32', order='F'))
+            recording.get_traces().astype('float32', order='F'))
 
     if detect_sign < 0:
         detect_sign = 'negative'
@@ -147,7 +147,7 @@ def spyking_circus(
     else:
         auto = 0
     circus_config = circus_config.format(
-        float(recording.getSamplingFrequency()
+        float(recording.get_sampling_frequency()
               ), probe_file, template_width_ms, spike_thresh, detect_sign, filter,
         whitening_max_elts, clustering_max_elts, auto
     )

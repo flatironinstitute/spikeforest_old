@@ -8,9 +8,7 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "29 February 2019"
-
-RUN mkdir /src
+RUN echo "6 May 2019"
 
 #########################################
 ### Spyking Circus
@@ -24,7 +22,8 @@ RUN apt-get update && apt-get install -y packagekit-gtk3-module
 RUN apt-get update && apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module
 #RUN DEBIAN_FRONTEND=noninteractive apt-get install -y xserver-xorg xorg jwm
 
-### spikeforest (but not mountaintools)
-RUN git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest && cd /src/spikeforest
-WORKDIR /src/spikeforest
-RUN pip install -e ./spikeforest
+### spikeextractors
+RUN pip install spikeextractors==0.4.2
+
+### Other dependencies
+RUN pip install requests

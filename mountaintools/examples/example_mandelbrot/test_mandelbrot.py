@@ -147,7 +147,7 @@ def test_mandelbrot_compute_resource_with_job_errors():
                 print('============================================= END CONSOLE OUT ==========================================')
 
         if len(X_list) > 0:
-            X = combine_subsampled_mandelbrot(X_list)
+            _ = combine_subsampled_mandelbrot(X_list)
 
 
 class LocalComputeResource():

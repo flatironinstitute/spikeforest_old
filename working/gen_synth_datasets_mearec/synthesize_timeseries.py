@@ -17,10 +17,10 @@ def synthesize_timeseries(*, output_extractor, waveforms, waveforms_tcenter=None
 
     X = np.random.randn(M, N)*noise_level
 
-    unit_ids = output_extractor.getUnitIds()
+    unit_ids = output_extractor.get_unit_ids()
     for k0 in unit_ids:
         waveform0 = waveforms[:, :, k0-1]
-        times0 = output_extractor.getUnitSpikeTrain(unit_id=k0)
+        times0 = output_extractor.get_unit_spike_train(unit_id=k0)
         for t0 in times0:
             amp0 = 1
             frac_offset = int(np.floor((t0-np.floor(t0))*waveform_upsamplefac))

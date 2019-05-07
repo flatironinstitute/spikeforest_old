@@ -9,23 +9,23 @@ class LazyFilterRecording(se.RecordingExtractor):
         self._recording = recording
         self._chunk_size = chunk_size
         self._filtered_chunk_cache = FilteredChunkCache()
-        self.copyChannelProperties(recording)
+        self.copy_channel_properties(recording)
 
-    def getChannelIds(self):
-        return self._recording.getChannelIds()
+    def get_channel_ids(self):
+        return self._recording.get_channel_ids()
 
-    def getNumFrames(self):
-        return self._recording.getNumFrames()
+    def get_num_frames(self):
+        return self._recording.get_num_frames()
 
-    def getSamplingFrequency(self):
-        return self._recording.getSamplingFrequency()
+    def get_sampling_frequency(self):
+        return self._recording.get_sampling_frequency()
 
-    def getTraces(self, start_frame=None, end_frame=None, channel_ids=None):
+    def get_traces(self, start_frame=None, end_frame=None, channel_ids=None):
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
-            end_frame = self.getNumFrames()
-        all_channel_ids = self.getChannelIds()
+            end_frame = self.get_num_frames()
+        all_channel_ids = self.get_channel_ids()
         if channel_ids is None:
             channel_ids = all_channel_ids
         channel_indices = [all_channel_ids.index(ch) for ch in channel_ids]

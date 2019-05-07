@@ -44,9 +44,9 @@ def gen_synth_datasets(datasets, *, outdir, samplerate=32000):
         )
         IX = si.NumpyRecordingExtractor(
             timeseries=X, samplerate=samplerate, geom=geom)
-        SFMdaRecordingExtractor.writeRecording(
+        SFMdaRecordingExtractor.write_recording(
             IX, outdir+'/{}'.format(ds_name))
-        SFMdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.write_sorting(
             OX, outdir+'/{}/firings_true.mda'.format(ds_name))
     print('Done.')
 
@@ -74,7 +74,7 @@ def gen_spiketrains(*, duration, n_exc, n_inh, f_exc, f_inh, st_exc, st_inh, min
 
 def gen_recording(*, templates, output_extractor, noise_level, samplerate, duration):
     OX = output_extractor
-    K = len(OX.getUnitIds())
+    K = len(OX.get_unit_ids())
     templates_path = mlp.realizeFile(templates)
     templates_data = {}
     with h5py.File(templates_path, 'r') as F:
@@ -118,10 +118,10 @@ class NeoSpikeTrainsOutputExtractor(si.SortingExtractor):
         self._num_units = len(spiketrains)
         self._unit_ids = [int(x) for x in range(self._num_units)]
 
-    def getUnitIds(self):
+    def get_unit_ids(self):
         return self._unit_ids
 
-    def getUnitSpikeTrain(self, unit_id, start_frame=None, end_frame=None):
+    def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
         if start_frame is None:
             start_frame = 0
         if end_frame is None:

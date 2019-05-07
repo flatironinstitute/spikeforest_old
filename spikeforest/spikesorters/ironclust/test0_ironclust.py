@@ -33,9 +33,9 @@ rx, sx = example_datasets.yass_example(set_id=1) """
 recording_path = 'kbucket://15734439d8cf/groundtruth/visapy_mea/set1'
 firings_true = recording_path + '/firings_true.mda'
 # recording_path = recording_path+'/recording'
-# SFMdaRecordingExtractor.writeRecording(
+# SFMdaRecordingExtractor.write_recording(
 # recording=rx, save_path=recording_path)
-# SFMdaSortingExtractor.writeSorting(
+# SFMdaSortingExtractor.write_sorting(
 # sorting=sx, save_path=firings_true)
 result_path = os.path.abspath('test_irc')
 if not os.path.exists(result_path):

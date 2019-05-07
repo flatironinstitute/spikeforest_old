@@ -42,7 +42,7 @@ class BandpassFilterRecording(LazyFilterRecording):
         return val
 
     def _do_filter(self, chunk):
-        samplerate = self._recording.getSamplingFrequency()
+        samplerate = self._recording.get_sampling_frequency()
         M = chunk.shape[0]
         chunk2 = chunk
         # Subtract off the mean of each channel unless we are doing only a low-pass filter
@@ -62,9 +62,9 @@ class BandpassFilterRecording(LazyFilterRecording):
         return chunk_filtered
 
     def _read_chunk(self, i1, i2):
-        channel_ids = self._recording.getChannelIds()
+        channel_ids = self._recording.get_channel_ids()
         M = len(channel_ids)
-        N = self._recording.getNumFrames()
+        N = self._recording.get_num_frames()
         if i1 < 0:
             i1b = 0
         else:
@@ -74,7 +74,7 @@ class BandpassFilterRecording(LazyFilterRecording):
         else:
             i2b = i2
         ret = np.zeros((M, i2 - i1))
-        ret[:, i1b - i1:i2b - i1] = self._recording.getTraces(start_frame=i1b, end_frame=i2b)
+        ret[:, i1b - i1:i2b - i1] = self._recording.get_traces(start_frame=i1b, end_frame=i2b)
         return ret
 
 

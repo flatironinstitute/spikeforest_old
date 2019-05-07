@@ -33,12 +33,12 @@ class RecordingSummaryView(vd.Component):
         ))
         RX = self._context.recordingExtractor()
         rows.append(vd.tr(
-            vd.th('Num. channels'), vd.td('{}'.format(len(RX.getChannelIds())))
+            vd.th('Num. channels'), vd.td('{}'.format(len(RX.get_channel_ids())))
         ))
         rows.append(vd.tr(
-            vd.th('Samplerate'), vd.td('{}'.format(RX.getSamplingFrequency()))
+            vd.th('Samplerate'), vd.td('{}'.format(RX.get_sampling_frequency()))
         ))
-        a = RX.getNumFrames() / RX.getSamplingFrequency()
+        a = RX.get_num_frames() / RX.get_sampling_frequency()
         rows.append(vd.tr(
             vd.th('Duration (s)'), vd.td('{}'.format(a))
         ))
@@ -51,7 +51,7 @@ class RecordingSummaryView(vd.Component):
         sc_true = self._context.trueSortingContext()
         if sc_true:
             SX_true = sc_true.sortingExtractor()
-            true_unit_ids = SX_true.getUnitIds()
+            true_unit_ids = SX_true.get_unit_ids()
             rows.append(vd.tr(
                 vd.th('Num. true units'), vd.td('{}'.format(len(true_unit_ids)))
             ))

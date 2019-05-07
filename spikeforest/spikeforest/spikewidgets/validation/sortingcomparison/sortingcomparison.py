@@ -122,26 +122,26 @@ class SortingComparison():
 
         sorting1 = self._sorting1
         sorting2 = self._sorting2
-        unit1_ids = sorting1.getUnitIds()
-        unit2_ids = sorting2.getUnitIds()
+        unit1_ids = sorting1.get_unit_ids()
+        unit2_ids = sorting2.get_unit_ids()
         N1 = len(unit1_ids)
         N2 = len(unit2_ids)
         event_counts1 = np.zeros((N1)).astype(np.int64)
         for i1, u1 in enumerate(unit1_ids):
-            times1 = sorting1.getUnitSpikeTrain(u1)
+            times1 = sorting1.get_unit_spike_train(u1)
             event_counts1[i1] = len(times1)
             self._event_counts_1[u1] = len(times1)
         event_counts2 = np.zeros((N2)).astype(np.int64)
         for i2, u2 in enumerate(unit2_ids):
-            times2 = sorting2.getUnitSpikeTrain(u2)
+            times2 = sorting2.get_unit_spike_train(u2)
             event_counts2[i2] = len(times2)
             self._event_counts_2[u2] = len(times2)
         matching_event_counts = np.zeros((N1, N2)).astype(np.int64)
         scores = np.zeros((N1, N2))
         for i1, u1 in enumerate(unit1_ids):
-            times1 = sorting1.getUnitSpikeTrain(u1)
+            times1 = sorting1.get_unit_spike_train(u1)
             for i2, u2 in enumerate(unit2_ids):
-                times2 = sorting2.getUnitSpikeTrain(u2)
+                times2 = sorting2.get_unit_spike_train(u2)
                 num_matches = count_matching_events(times1, times2, delta=self._delta_tp)
                 matching_event_counts[i1, i2] = num_matches
                 scores[i1, i2] = self._compute_agreement_score(num_matches, event_counts1[i1], event_counts2[i2])
@@ -203,15 +203,15 @@ class MappedSortingExtractor(se.SortingExtractor):
         self._reverse_map = dict()
         for key in unit_map:
             self._reverse_map[unit_map[key]] = key
-        units = sorting.getUnitIds()
+        units = sorting.get_unit_ids()
         self._unit_ids = list(np.sort([self._unit_map[unit] for unit in units]))
 
-    def getUnitIds(self):
+    def get_unit_ids(self):
         return self._unit_ids
 
-    def getUnitSpikeTrain(self, unit_id, start_frame=None, end_frame=None):
+    def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
         unit2 = self._reverse_map[unit_id]
-        return self._sorting.getUnitSpikeTrain(unit2, start_frame=start_frame, end_frame=end_frame)
+        return self._sorting.get_unit_spike_train(unit2, start_frame=start_frame, end_frame=end_frame)
 
 
 def count_matching_events(times1, times2, delta=20):

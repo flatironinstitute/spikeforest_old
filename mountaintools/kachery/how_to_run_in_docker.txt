@@ -1,3 +1,3 @@
-For example:
+An example:
 
 docker run -v $PWD/data:/share -p 25481:25481 -it magland/kachery /bin/bash -c "KACHERY_UPLOAD_DIR=/share KACHERY_UPLOAD_TOKEN=token1 /kachery/src/kacheryserver.js"

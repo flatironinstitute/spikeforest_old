@@ -27,7 +27,7 @@ class SortingAccuracyWidget:
 
     def _do_plot(self, ax=None, accuracy_thresh=.8, show=True):
         SC = self._SC
-        units = SC.getSorting1().getUnitIds()
+        units = SC.getSorting1().get_unit_ids()
         agreements = [SC.getAgreementFraction(unit) for unit in units]
         if self._property_name:
             xvals = SC.getSorting1().getUnitsProperty(unit_ids=units, property_name=self._property_name)
@@ -47,7 +47,7 @@ class SortingAccuracyWidget:
     def _do_plot_recall(self, ax=None, recall_thresh=.8, show=True):
         SC = self._SC
 
-        units = SC.getSorting1().getUnitIds()
+        units = SC.getSorting1().get_unit_ids()
         recall = [1-SC.getFalsePositiveFraction(unit) for unit in units]
         if self._property_name:
             xvals = SC.getSorting1().getUnitsProperty(unit_ids=units, property_name=self._property_name)
@@ -67,7 +67,7 @@ class SortingAccuracyWidget:
     def _do_plot_precision(self, ax=None, precision_thresh=.8, show=True):
         SC = self._SC
 
-        units = SC.getSorting1().getUnitIds()
+        units = SC.getSorting1().get_unit_ids()
         precision = [1-SC.getFalseNegativeFraction(unit) for unit in units]
         if self._property_name:
             xvals = SC.getSorting1().getUnitsProperty(unit_ids=units, property_name=self._property_name)

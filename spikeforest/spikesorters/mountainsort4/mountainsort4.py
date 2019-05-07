@@ -3,6 +3,7 @@ import os
 import sys
 from .bandpass_filter import bandpass_filter
 from .whiten import whiten
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 
 class MountainSort4(mlpr.Processor):
@@ -10,7 +11,7 @@ class MountainSort4(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://d6e7ec1a18df847c36c9c5924183106e08d97439/03-29-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
     # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
     PYTHON_PACKAGES = ['../../spikeforest']
 
@@ -37,8 +38,6 @@ class MountainSort4(mlpr.Processor):
         optional=True, default=0.15, description='Use None for no automated curation')
 
     def run(self):
-        from spikeforest import SFMdaRecordingExtractor
-        from spikeforest import SFMdaSortingExtractor
         from .bandpass_filter import bandpass_filter
         from .whiten import whiten
 
@@ -78,7 +77,7 @@ class MountainSort4(mlpr.Processor):
         #      noise_overlap_threshold=self.noise_overlap_threshold
         #    )
 
-        SFMdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.write_sorting(
             sorting=sorting, save_path=self.firings_out)
 
 
@@ -87,7 +86,7 @@ class MountainSort4TestError(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://d6e7ec1a18df847c36c9c5924183106e08d97439/03-29-2019/mountainsort4.simg'
+    CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
     # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -120,10 +119,6 @@ class MountainSort4TestError(mlpr.Processor):
             sys.stdout.flush()
             time.sleep(3)
             raise Exception('Intentional error.')
-
-        from spikeforest import SFMdaRecordingExtractor
-        from spikeforest import SFMdaSortingExtractor
-
         import ml_ms4alg
 
         print('MountainSort4......')
@@ -160,5 +155,5 @@ class MountainSort4TestError(mlpr.Processor):
         #      noise_overlap_threshold=self.noise_overlap_threshold
         #    )
 
-        SFMdaSortingExtractor.writeSorting(
+        SFMdaSortingExtractor.write_sorting(
             sorting=sorting, save_path=self.firings_out)

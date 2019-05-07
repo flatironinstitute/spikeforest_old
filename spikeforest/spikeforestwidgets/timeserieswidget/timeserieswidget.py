@@ -43,14 +43,14 @@ class TimeseriesWidget(vd.Component):
         if sorting:
             self._sorting = sorting
             if not unit_ids:
-                unit_ids = sorting.getUnitIds()
+                unit_ids = sorting.get_unit_ids()
             # This is not ideal as it seems possible to get this information directly from the recording
             # Alas we cannot be sure this recording (as opposed to it's parent) was the one used for sorting
             if not end_frame:
-                end_frame = len(recording.getNumFrames())
-            spike_trains_list = ['[{}]'.format(','.join(str(x) for x in
-                                                        sorting.getUnitSpikeTrain(u, start_frame=start_frame, end_frame=end_frame)))
-                                 for u in unit_ids]
+                end_frame = len(recording.get_num_frames())
+            # spike_trains_list = ['[{}]'.format(','.join(str(x) for x in
+            #                                             sorting.get_unit_spike_train(u, start_frame=start_frame, end_frame=end_frame)))
+            #                      for u in unit_ids]
             spike_trains_str = '[' + ','.join(spike_trains_str) + ']'
         else:
             spike_trains_str = '[[]]'
@@ -178,9 +178,9 @@ class TimeseriesWidget(vd.Component):
         js = js.replace('{div_id}', self._div_id)
         js = js.replace('{component_id}', self.componentId())
         # js = js.replace('{spike_trains}', spike_trains_str)
-        js = js.replace('{samplerate}', str(self._recording.getSamplingFrequency()))
-        js = js.replace('{num_channels}', str(self._recording.getNumChannels()))
-        js = js.replace('{num_timepoints}', str(self._recording.getNumFrames()))
+        js = js.replace('{samplerate}', str(self._recording.get_sampling_frequency()))
+        js = js.replace('{num_channels}', str(self._recording.get_num_channels()))
+        js = js.replace('{num_timepoints}', str(self._recording.get_num_frames()))
         js = js.replace('{segment_size}', str(self._segment_size))
         js = js.replace('{request_data_segment_callback_id}', request_data_segment_callback_id)
         return js
@@ -203,9 +203,9 @@ def _extract_data_segment(*, recording, segment_num, segment_size):
     segment_size = int(segment_size)
     a1 = segment_size * segment_num
     a2 = segment_size * (segment_num + 1)
-    if a2 > recording.getNumFrames():
-        a2 = recording.getNumFrames()
-    X = recording.getTraces(start_frame=a1, end_frame=a2)
+    if a2 > recording.get_num_frames():
+        a2 = recording.get_num_frames()
+    X = recording.get_traces(start_frame=a1, end_frame=a2)
     return X
 
 # to remove
@@ -235,7 +235,7 @@ def _create_multiscale_recordings(*, recording, progressive_ds_factor):
     ret = dict()
     current_rx = recording
     current_ds_factor = 1
-    N = recording.getNumFrames()
+    N = recording.get_num_frames()
     recording_has_minmax = False
     while current_ds_factor * progressive_ds_factor < N:
         current_rx = _DownsampledRecordingExtractor(recording=current_rx, ds_factor=progressive_ds_factor, input_has_minmax=recording_has_minmax)
@@ -252,7 +252,7 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
         self._recording = recording
         self._ds_factor = ds_factor
         self._input_has_minmax = input_has_minmax
-        self.copyChannelProperties(recording)
+        self.copy_channel_properties(recording)
 
     def hash(self):
         return mt.sha1OfObject(dict(
@@ -263,31 +263,31 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
             input_has_minmax=self._input_has_minmax
         ))
 
-    def getChannelIds(self):
+    def get_channel_ids(self):
         # same channel IDs
-        return self._recording.getChannelIds()
+        return self._recording.get_channel_ids()
 
-    def getNumFrames(self):
+    def get_num_frames(self):
         if self._input_has_minmax:
             # number of frames is just /ds_factor (but not quite -- tricky!)
-            return ((self._recording.getNumFrames() // 2) // self._ds_factor) * 2
+            return ((self._recording.get_num_frames() // 2) // self._ds_factor) * 2
         else:
             # need to double because we will now keep track of mins and maxs
-            return (self._recording.getNumFrames() // self._ds_factor) * 2
+            return (self._recording.get_num_frames() // self._ds_factor) * 2
 
-    def getSamplingFrequency(self):
+    def get_sampling_frequency(self):
         if self._input_has_minmax:
             # sampling frequency is just /ds_factor
-            return self._recording.getSamplingFrequency() / self._ds_factor
+            return self._recording.get_sampling_frequency() / self._ds_factor
         else:
             # need to double because we will now keep track of mins and maxes
-            return (self._recording.getSamplingFrequency() / self._ds_factor) * 2
+            return (self._recording.get_sampling_frequency() / self._ds_factor) * 2
 
-    def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
+    def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
         ds_factor = self._ds_factor
         if self._input_has_minmax:
             # get the traces *ds_factor
-            X = self._recording.getTraces(
+            X = self._recording.get_traces(
                 channel_ids=channel_ids,
                 start_frame=start_frame * ds_factor,
                 end_frame=end_frame * ds_factor
@@ -302,7 +302,7 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
             ret[:, 1::2] = np.max(X_maxs_reshaped, axis=2)  # here are the maxs
             return ret
         else:
-            X = self._recording.getTraces(
+            X = self._recording.get_traces(
                 channel_ids=channel_ids,
                 start_frame=start_frame * self._ds_factor // 2,
                 end_frame=end_frame * self._ds_factor // 2
@@ -314,5 +314,5 @@ class _DownsampledRecordingExtractor(se.RecordingExtractor):
             return ret
 
     @staticmethod
-    def writeRecording(recording, save_path):
-        rx = EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)
+    def write_recording(recording, save_path):
+        EfficientAccessRecordingExtractor(recording=recording, _dest_path=save_path)

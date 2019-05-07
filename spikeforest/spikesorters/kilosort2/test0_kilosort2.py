@@ -43,9 +43,9 @@ def test_kilosort2(tmpdir):
     rx = SFMdaRecordingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11')
     sx = SFMdaSortingExtractor('/mnt/home/jjun/ceph/groundtruth/hybrid_drift/rec_64c_1200s_11/firings_true.mda')
 
-    SFMdaRecordingExtractor.writeRecording(
+    SFMdaRecordingExtractor.write_recording(
         recording=rx, save_path=tmpdir+'/recording')
-    SFMdaSortingExtractor.writeSorting(
+    SFMdaSortingExtractor.write_sorting(
         sorting=sx, save_path=tmpdir+'/recording/firings_true.mda')
 
     KiloSort2.execute(

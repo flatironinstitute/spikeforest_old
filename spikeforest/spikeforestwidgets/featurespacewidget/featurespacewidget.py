@@ -80,7 +80,7 @@ class FeatureSpaceWidget(vd.Component):
         js = self._div_id.join(js.split('{div_id}'))
         js = js.replace('{width}', str(self._size[0]))
         js = js.replace('{height}', str(self._size[1]))
-        js = '{}'.format(self._recording.getSamplingFrequency()).join(js.split('{samplerate}'))
+        js = '{}'.format(self._recording.get_sampling_frequency()).join(js.split('{samplerate}'))
         vd.devel.loadJavascript(js=js, delay=1)
         return div
 
@@ -94,18 +94,18 @@ class FeatureSpaceWidget(vd.Component):
         units = self._unit_ids
         channels = self._channels
         if units is None:
-            units = self._sorting.getUnitIds()
-        channel_ids = self._recording.getChannelIds()
+            units = self._sorting.get_unit_ids()
+        channel_ids = self._recording.get_channel_ids()
         M = len(channel_ids)
         channel_locations = np.zeros((M, 2))
         for ii, ch in enumerate(channel_ids):
-            loc = self._recording.getChannelProperty(ch, 'location')
+            loc = self._recording.get_channel_property(ch, 'location')
             channel_locations[ii, :] = loc[-2:]
         if channels is None:
             channels = channel_ids
         self._spike_waveforms_list = []
         for unit in units:
-            st = self._sorting.getUnitSpikeTrain(unit_id=unit)
+            st = self._sorting.get_unit_spike_train(unit_id=unit)
             if st is not None:
                 spikes, spiketimes = self._get_random_spike_waveforms(unit=unit, max_num=self._max_num_spikes_per_unit,
                                                                       channels=channels)
@@ -176,19 +176,18 @@ class FeatureSpaceWidget(vd.Component):
         return features_obj
 
     def _get_random_spike_waveforms(self, *, unit, max_num, channels):
-        st = self._sorting.getUnitSpikeTrain(unit_id=unit)
+        st = self._sorting.get_unit_spike_train(unit_id=unit)
         num_events = len(st)
         if num_events > max_num:
             event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
         else:
             event_indices = range(num_events)
 
-        spikes = self._recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len,
-                                             channel_ids=channels)
+        spikes = self._recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=self._snippet_len, channel_ids=channels)
         if len(spikes) > 0:
             spikes = np.dstack(tuple(spikes))
         else:
-            spikes = np.zeros((self._recording.getNumChannels(), self._snippet_len, 0))
+            spikes = np.zeros((self._recording.get_num_channels(), self._snippet_len, 0))
         return spikes, st[event_indices]
 
 

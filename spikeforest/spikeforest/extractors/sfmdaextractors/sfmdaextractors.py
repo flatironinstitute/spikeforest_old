@@ -24,7 +24,12 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
-        self._timeseries_path = dataset_directory + '/' + raw_fname
+        if '/' not in raw_fname:
+            # relative path
+            self._timeseries_path = dataset_directory + '/' + raw_fname
+        else:
+            # absolute path
+            self._timeseries_path = raw_fname
         self._dataset_params = read_dataset_params(dataset_directory, params_fname)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if download:
@@ -65,7 +70,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         self._num_channels = X.N1()
         self._num_timepoints = X.N2()
         for m in range(self._num_channels):
-            self.setChannelProperty(m, 'location', self._geom[m, :])
+            self.set_channel_property(m, 'location', self._geom[m, :])
 
     def hash(self):
         from mountainclient import client as mt
@@ -79,48 +84,48 @@ class SFMdaRecordingExtractor(RecordingExtractor):
     def recordingDirectory(self):
         return self._dataset_directory
 
-    def getChannelIds(self):
+    def get_channel_ids(self):
         return list(range(self._num_channels))
 
-    def getNumFrames(self):
+    def get_num_frames(self):
         return self._num_timepoints
 
-    def getSamplingFrequency(self):
+    def get_sampling_frequency(self):
         return self._samplerate
 
-    @mtlogging.log(name='SFMdaRecordingExtractor:getTraces')
-    def getTraces(self, channel_ids=None, start_frame=None, end_frame=None):
+    @mtlogging.log(name='SFMdaRecordingExtractor:get_traces')
+    def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
         ca = _load_required_modules()
         if not ca.isLocalPath(self._timeseries_path):
             raise Exception('Cannot get traces -- timeseries file is not downloaded')
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
-            end_frame = self.getNumFrames()
+            end_frame = self.get_num_frames()
         if channel_ids is None:
-            channel_ids = self.getChannelIds()
+            channel_ids = self.get_channel_ids()
         X = DiskReadMda(self._timeseries_path)
         recordings = X.readChunk(i1=0, i2=start_frame, N1=X.N1(), N2=end_frame - start_frame)
         recordings = recordings[channel_ids, :]
         return recordings
 
     @staticmethod
-    def writeRecording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json'):
+    def write_recording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json'):
         # ca = _load_required_modules()
-        channel_ids = recording.getChannelIds()
+        channel_ids = recording.get_channel_ids()
         M = len(channel_ids)
-        # N = recording.getNumFrames()
-        raw = recording.getTraces()
-        location0 = recording.getChannelProperty(channel_ids[0], 'location')
+        # N = recording.get_num_frames()
+        raw = recording.get_traces()
+        location0 = recording.get_channel_property(channel_ids[0], 'location')
         nd = len(location0)
         geom = np.zeros((M, nd))
         for ii in range(len(channel_ids)):
-            location_ii = recording.getChannelProperty(channel_ids[ii], 'location')
+            location_ii = recording.get_channel_property(channel_ids[ii], 'location')
             geom[ii, :] = list(location_ii)
         if not os.path.isdir(save_path):
             os.mkdir(save_path)
         writemda32(raw, save_path + '/' + raw_fname)
-        params["samplerate"] = recording.getSamplingFrequency()
+        params["samplerate"] = recording.get_sampling_frequency()
         with open(save_path + '/' + params_fname, 'w') as f:
             json.dump(params, f)
         np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
@@ -149,10 +154,10 @@ class SFMdaSortingExtractor(SortingExtractor):
         self._labels = self._firings[2, :]
         self._unit_ids = np.unique(self._labels).astype(int)
 
-    def getUnitIds(self):
+    def get_unit_ids(self):
         return self._unit_ids
 
-    def getUnitSpikeTrain(self, unit_id, start_frame=None, end_frame=None):
+    def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
@@ -165,9 +170,9 @@ class SFMdaSortingExtractor(SortingExtractor):
         return mt.computeFileSha1(self._firings_path)
 
     @staticmethod
-    def writeSorting(sorting, save_path):
+    def write_sorting(sorting, save_path):
         # ca = _load_required_modules()
-        unit_ids = sorting.getUnitIds()
+        unit_ids = sorting.get_unit_ids()
         # if len(unit_ids) > 0:
         #     K = np.max(unit_ids)
         # else:
@@ -176,7 +181,7 @@ class SFMdaSortingExtractor(SortingExtractor):
         labels_list = []
         for i in range(len(unit_ids)):
             unit = unit_ids[i]
-            times = sorting.getUnitSpikeTrain(unit_id=unit)
+            times = sorting.get_unit_spike_train(unit_id=unit)
             times_list.append(times)
             labels_list.append(np.ones(times.shape) * unit)
         all_times = _concatenate(times_list)

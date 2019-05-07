@@ -41,9 +41,9 @@ def test_spikeforest_analysis(tmpdir):
         if not os.path.exists(dirname):
             rx, sx_true = example_datasets.toy_example1(
                 duration=duration, num_channels=4, samplerate=30000, K=10)
-            SFMdaRecordingExtractor.writeRecording(
+            SFMdaRecordingExtractor.write_recording(
                 recording=rx, save_path=dirname)
-            SFMdaSortingExtractor.writeSorting(
+            SFMdaSortingExtractor.write_sorting(
                 sorting=sx_true, save_path=dirname + '/firings_true.mda')
 
     # # Use this to optionally connect to a kbucket share:

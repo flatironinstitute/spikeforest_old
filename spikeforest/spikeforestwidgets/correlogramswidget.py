@@ -15,7 +15,7 @@ class CorrelogramsWidget(vd.Component):
                 unit1_id=id,
                 unit2_id=id
             )
-            for id in sorting.getUnitIds()
+            for id in sorting.get_unit_ids()
         ]
         vd.devel.loadBootstrap()
 
@@ -140,7 +140,7 @@ def compute_autocorrelogram(times, *, max_dt_tp, bin_size_tp, max_samples=None):
 def plot_correlogram(*, sorting, samplerate, unit1_id, unit2_id, title=''):
     if unit1_id != unit2_id:
         raise Exception('This case not supported yet.')
-    times = sorting.getUnitSpikeTrain(unit_id=unit1_id)
+    times = sorting.get_unit_spike_train(unit_id=unit1_id)
     max_dt_msec = 50
     bin_size_msec = 2
     max_dt_tp = max_dt_msec * samplerate / 1000

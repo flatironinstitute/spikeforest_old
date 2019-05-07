@@ -29,13 +29,13 @@ class SortingComparison():
         return self._sorting2
 
     def getLabels1(self, unit_id):
-        if unit_id in self._sorting1.getUnitIds():
+        if unit_id in self._sorting1.get_unit_ids():
             return self._labels_st1[unit_id]
         else:
             raise Exception("Unit_id is not a valid unit")
 
     def getLabels2(self, unit_id):
-        if unit_id in self._sorting1.getUnitIds():
+        if unit_id in self._sorting1.get_unit_ids():
             return self._labels_st1[unit_id]
         else:
             raise Exception("Unit_id is not a valid unit")
@@ -164,20 +164,20 @@ class SortingComparison():
 
         sorting1 = self._sorting1
         sorting2 = self._sorting2
-        unit1_ids = sorting1.getUnitIds()
-        unit2_ids = sorting2.getUnitIds()
+        unit1_ids = sorting1.get_unit_ids()
+        unit2_ids = sorting2.get_unit_ids()
         N1 = len(unit1_ids)
         N2 = len(unit2_ids)
 
         # Compute events counts
         event_counts1 = np.zeros((N1)).astype(np.int64)
         for i1, u1 in enumerate(unit1_ids):
-            times1 = sorting1.getUnitSpikeTrain(u1)
+            times1 = sorting1.get_unit_spike_train(u1)
             event_counts1[i1] = len(times1)
             self._event_counts_1[u1] = len(times1)
         event_counts2 = np.zeros((N2)).astype(np.int64)
         for i2, u2 in enumerate(unit2_ids):
-            times2 = sorting2.getUnitSpikeTrain(u2)
+            times2 = sorting2.get_unit_spike_train(u2)
             event_counts2[i2] = len(times2)
             self._event_counts_2[u2] = len(times2)
 
@@ -185,9 +185,9 @@ class SortingComparison():
         matching_event_counts = np.zeros((N1, N2)).astype(np.int64)
         scores = np.zeros((N1, N2))
         for i1, u1 in enumerate(unit1_ids):
-            times1 = sorting1.getUnitSpikeTrain(u1)
+            times1 = sorting1.get_unit_spike_train(u1)
             for i2, u2 in enumerate(unit2_ids):
-                times2 = sorting2.getUnitSpikeTrain(u2)
+                times2 = sorting2.get_unit_spike_train(u2)
                 num_matches = count_matching_events(times1, times2, delta=self._delta_tp)
                 # test_unmatched=get_unmatched_times(times1,times2,delta=self._delta_tp)
                 # print(u1,u2,'num_matches',num_matches,'num_unmatched',len(test_unmatched),'sum',num_matches+len(test_unmatched),'total',len(times1))
@@ -268,51 +268,51 @@ class SortingComparison():
     def _do_counting(self, verbose=False):
         sorting1 = self._sorting1
         sorting2 = self._sorting2
-        unit1_ids = sorting1.getUnitIds()
-        unit2_ids = sorting2.getUnitIds()
+        unit1_ids = sorting1.get_unit_ids()
+        unit2_ids = sorting2.get_unit_ids()
         self._labels_st1 = dict()
         self._labels_st2 = dict()
         # N1 = len(unit1_ids)
         # N2 = len(unit2_ids)
         # Evaluate
         for u1 in unit1_ids:
-            st1 = sorting1.getUnitSpikeTrain(u1)
+            st1 = sorting1.get_unit_spike_train(u1)
             lab_st1 = np.array(['UNPAIRED'] * len(st1))
             self._labels_st1[u1] = lab_st1
         for u2 in unit2_ids:
-            st2 = sorting2.getUnitSpikeTrain(u2)
+            st2 = sorting2.get_unit_spike_train(u2)
             lab_st2 = np.array(['UNPAIRED'] * len(st2))
             self._labels_st2[u2] = lab_st2
 
         if verbose:
             print('Finding TP')
-        for u1 in sorting1.getUnitIds():
+        for u1 in sorting1.get_unit_ids():
             if self.getMappedSorting1().getMappedUnitIds(u1) != -1:
                 lab_st1 = self._labels_st1[u1]
                 lab_st2 = self._labels_st2[self.getMappedSorting1().getMappedUnitIds(u1)]
-                mapped_st = self.getMappedSorting1().getUnitSpikeTrain(u1)
+                mapped_st = self.getMappedSorting1().get_unit_spike_train(u1)
                 # from gtst: TP, TPO, TPSO, FN, FNO, FNSO
-                for sp_i, n_sp in enumerate(sorting1.getUnitSpikeTrain(u1)):
+                for sp_i, n_sp in enumerate(sorting1.get_unit_spike_train(u1)):
                     id_sp = np.where((mapped_st > n_sp - self._delta_tp) & (mapped_st < n_sp + self._delta_tp))[0]
                     if len(id_sp) == 1:
                         lab_st1[sp_i] = 'TP'
                         lab_st2[id_sp] = 'TP'
             else:
-                lab_st1 = np.array(['FN'] * len(sorting1.getUnitSpikeTrain(u1)))
+                lab_st1 = np.array(['FN'] * len(sorting1.get_unit_spike_train(u1)))
 
         # find CL-CLO-CLSO
         if verbose:
             print('Finding CL')
-        for u1 in sorting1.getUnitIds():
+        for u1 in sorting1.get_unit_ids():
             lab_st1 = self._labels_st1[u1]
-            st1 = sorting1.getUnitSpikeTrain(u1)
+            st1 = sorting1.get_unit_spike_train(u1)
             for l_gt, lab in enumerate(lab_st1):
                 if lab == 'UNPAIRED':
-                    for u2 in sorting2.getUnitIds():
+                    for u2 in sorting2.get_unit_ids():
                         if u2 in self.getMappedSorting1().getMappedUnitIds() \
                                 and self.getMappedSorting1().getMappedUnitIds(u1) != -1:
                             lab_st2 = self._labels_st2[u2]
-                            st2 = sorting2.getUnitSpikeTrain(u2)
+                            st2 = sorting2.get_unit_spike_train(u2)
 
                             n_up = st1[l_gt]
                             id_sp = np.where((st2 > n_up - self._delta_tp) & (st2 < n_up + self._delta_tp))[0]
@@ -324,26 +324,26 @@ class SortingComparison():
 
         if verbose:
             print('Finding FP and FN')
-        for u1 in sorting1.getUnitIds():
+        for u1 in sorting1.get_unit_ids():
             lab_st1 = self._labels_st1[u1]
             for l_gt, lab in enumerate(lab_st1):
                 if lab == 'UNPAIRED':
                     lab_st1[l_gt] = 'FN'
 
-        for u2 in sorting2.getUnitIds():
+        for u2 in sorting2.get_unit_ids():
             lab_st2 = self._labels_st2[u2]
             for l_gt, lab in enumerate(lab_st2):
                 if lab == 'UNPAIRED':
                     lab_st2[l_gt] = 'FP'
 
-        TOT_ST1 = sum([len(sorting1.getUnitSpikeTrain(unit)) for unit in sorting1.getUnitIds()])
-        TOT_ST2 = sum([len(sorting2.getUnitSpikeTrain(unit)) for unit in sorting2.getUnitIds()])
+        TOT_ST1 = sum([len(sorting1.get_unit_spike_train(unit)) for unit in sorting1.get_unit_ids()])
+        TOT_ST2 = sum([len(sorting2.get_unit_spike_train(unit)) for unit in sorting2.get_unit_ids()])
         total_spikes = TOT_ST1 + TOT_ST2
-        TP = sum([len(np.where('TP' == self._labels_st1[unit])[0]) for unit in sorting1.getUnitIds()])
+        TP = sum([len(np.where('TP' == self._labels_st1[unit])[0]) for unit in sorting1.get_unit_ids()])
         CL = sum(
-            [len([i for i, v in enumerate(self._labels_st1[unit]) if 'CL' in v]) for unit in sorting1.getUnitIds()])
-        FN = sum([len(np.where('FN' == self._labels_st1[unit])[0]) for unit in sorting1.getUnitIds()])
-        FP = sum([len(np.where('FP' == self._labels_st2[unit])[0]) for unit in sorting2.getUnitIds()])
+            [len([i for i, v in enumerate(self._labels_st1[unit]) if 'CL' in v]) for unit in sorting1.get_unit_ids()])
+        FN = sum([len(np.where('FN' == self._labels_st1[unit])[0]) for unit in sorting1.get_unit_ids()])
+        FP = sum([len(np.where('FP' == self._labels_st2[unit])[0]) for unit in sorting2.get_unit_ids()])
         self.counts = {'TP': TP, 'CL': CL, 'FN': FN, 'FP': FP, 'TOT': total_spikes, 'TOT_ST1': TOT_ST1,
                        'TOT_ST2': TOT_ST2}
 
@@ -370,8 +370,8 @@ class SortingComparison():
         '''
         sorting1 = self._sorting1
         sorting2 = self._sorting2
-        unit1_ids = sorting1.getUnitIds()
-        unit2_ids = sorting2.getUnitIds()
+        unit1_ids = sorting1.get_unit_ids()
+        unit2_ids = sorting2.get_unit_ids()
         N1 = len(unit1_ids)
         N2 = len(unit2_ids)
 
@@ -384,16 +384,16 @@ class SortingComparison():
             idxs_unmatched = idxs_unmatched[0]
         unit_map_matched = np.array(self.getMappedSorting1().getMappedUnitIds())[idxs_matched]
 
-        st1_idxs = np.append(np.array(sorting1.getUnitIds())[idxs_matched],
-                             np.array(sorting1.getUnitIds())[idxs_unmatched])
+        st1_idxs = np.append(np.array(sorting1.get_unit_ids())[idxs_matched],
+                             np.array(sorting1.get_unit_ids())[idxs_unmatched])
         st2_matched = unit_map_matched
         st2_unmatched = []
 
-        for u_i, u1 in enumerate(np.array(sorting1.getUnitIds())[idxs_matched]):
+        for u_i, u1 in enumerate(np.array(sorting1.get_unit_ids())[idxs_matched]):
             lab_st1 = self._labels_st1[u1]
             tp = len(np.where('TP' == lab_st1)[0])
             conf_matrix[u_i, u_i] = int(tp)
-            for u2 in sorting2.getUnitIds():
+            for u2 in sorting2.get_unit_ids():
                 lab_st2 = self._labels_st2[u2]
                 cl_str = str(u1) + '_' + str(u2)
                 cl = len([i for i, v in enumerate(lab_st1) if 'CL' in v and cl_str in v])
@@ -403,12 +403,12 @@ class SortingComparison():
             fn = len(np.where('FN' == lab_st1)[0])
             conf_matrix[u_i, -1] = int(fn)
 
-        for u_i, u1 in enumerate(np.array(sorting1.getUnitIds())[idxs_unmatched]):
+        for u_i, u1 in enumerate(np.array(sorting1.get_unit_ids())[idxs_unmatched]):
             lab_st1 = self._labels_st1[u1]
             fn = len(np.where('FN' == lab_st1)[0])
             conf_matrix[u_i + len(idxs_matched), -1] = int(fn)
 
-        for _, u2 in enumerate(sorting2.getUnitIds()):
+        for _, u2 in enumerate(sorting2.get_unit_ids()):
             lab_st2 = self._labels_st2[u2]
             fp = len(np.where('FP' == lab_st2)[0])
             st_p = np.where(u2 == unit_map_matched)[0]
@@ -457,7 +457,7 @@ class MappedSortingExtractor(se.SortingExtractor):
         self._unit_map = unit_map
         self._unit_ids = list(self._unit_map.keys())
 
-    def getUnitIds(self, unit_ids=None):
+    def get_unit_ids(self, unit_ids=None):
         if unit_ids is None:
             return self._unit_ids
         else:
@@ -471,10 +471,10 @@ class MappedSortingExtractor(se.SortingExtractor):
         else:
             return list([self._unit_map[u] for u in self._unit_ids if u in unit_ids])
 
-    def getUnitSpikeTrain(self, unit_id, start_frame=None, end_frame=None):
+    def get_unit_spike_train(self, unit_id, start_frame=None, end_frame=None):
         unit2 = self._unit_map[unit_id]
         if unit2 != -1:
-            return self._sorting.getUnitSpikeTrain(unit2, start_frame=start_frame, end_frame=end_frame)
+            return self._sorting.get_unit_spike_train(unit2, start_frame=start_frame, end_frame=end_frame)
         else:
             print(unit_id, " is not matched!")
             return None

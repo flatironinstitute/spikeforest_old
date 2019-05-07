@@ -3,10 +3,11 @@ import json
 import mlprocessors as mlpr
 from mountaintools import client as mt
 import spikeextractors as si
-from spikeforest import spikewidgets as sw
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .bandpass_filter import bandpass_filter
+from .sfmdaextractors import SFMdaRecordingExtractor
+from .sfmdaextractors import SFMdaSortingExtractor
 
-_CONTAINER = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+_CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
 
 
 def write_json_file(fname, obj):
@@ -15,18 +16,18 @@ def write_json_file(fname, obj):
 
 
 def get_random_spike_waveforms(*, recording, sorting, unit, snippet_len, max_num, channels=None):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 
@@ -49,10 +50,10 @@ def compute_template_snr(template, channel_noise_levels):
 
 
 def compute_channel_noise_levels(recording):
-    channel_ids = recording.getChannelIds()
+    channel_ids = recording.get_channel_ids()
     # M=len(channel_ids)
-    samplerate = int(recording.getSamplingFrequency())
-    X = recording.getTraces(start_frame=samplerate * 1, end_frame=samplerate * 2)
+    samplerate = int(recording.get_sampling_frequency())
+    X = recording.get_traces(start_frame=samplerate * 1, end_frame=samplerate * 2)
     ret = []
     for ii in range(len(channel_ids)):
         # noise_level=np.std(X[ii,:])
@@ -84,15 +85,15 @@ def compute_units_info(*, recording, sorting, channel_ids=[], unit_ids=[]):
 
     # load into memory
     print('Loading recording into RAM...')
-    recording = si.NumpyRecordingExtractor(timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
+    recording = si.NumpyRecordingExtractor(timeseries=recording.get_traces(), samplerate=recording.get_sampling_frequency())
 
     # do filtering
     print('Filtering...')
-    recording = sw.lazyfilters.bandpass_filter(recording=recording, freq_min=300, freq_max=6000)
-    recording = si.NumpyRecordingExtractor(timeseries=recording.getTraces(), samplerate=recording.getSamplingFrequency())
+    recording = bandpass_filter(recording=recording, freq_min=300, freq_max=6000)
+    recording = si.NumpyRecordingExtractor(timeseries=recording.get_traces(), samplerate=recording.get_sampling_frequency())
 
     if (not unit_ids) or (len(unit_ids) == 0):
-        unit_ids = sorting.getUnitIds()
+        unit_ids = sorting.get_unit_ids()
 
     print('Computing channel noise levels...')
     channel_noise_levels = compute_channel_noise_levels(recording=recording)
@@ -101,7 +102,7 @@ def compute_units_info(*, recording, sorting, channel_ids=[], unit_ids=[]):
     print('Computing unit templates...')
     templates = compute_unit_templates(recording=recording, sorting=sorting, unit_ids=unit_ids, max_num=100)
 
-    print(recording.getChannelIds())
+    print(recording.get_channel_ids())
 
     ret = []
     for i, unit_id in enumerate(unit_ids):
@@ -109,15 +110,15 @@ def compute_units_info(*, recording, sorting, channel_ids=[], unit_ids=[]):
         template = templates[i]
         max_p2p_amps_on_channels = np.max(template, axis=1) - np.min(template, axis=1)
         peak_channel_index = np.argmax(max_p2p_amps_on_channels)
-        peak_channel = recording.getChannelIds()[peak_channel_index]
+        peak_channel = recording.get_channel_ids()[peak_channel_index]
         peak_signal = np.max(np.abs(template[peak_channel_index, :]))
         info0 = dict()
         info0['unit_id'] = int(unit_id)
         info0['snr'] = peak_signal / channel_noise_levels[peak_channel_index]
-        info0['peak_channel'] = int(recording.getChannelIds()[peak_channel])
-        train = sorting.getUnitSpikeTrain(unit_id=unit_id)
+        info0['peak_channel'] = int(recording.get_channel_ids()[peak_channel])
+        train = sorting.get_unit_spike_train(unit_id=unit_id)
         info0['num_events'] = int(len(train))
-        info0['firing_rate'] = float(len(train) / (recording.getNumFrames() / recording.getSamplingFrequency()))
+        info0['firing_rate'] = float(len(train) / (recording.get_num_frames() / recording.get_sampling_frequency()))
         ret.append(info0)
     return ret
 

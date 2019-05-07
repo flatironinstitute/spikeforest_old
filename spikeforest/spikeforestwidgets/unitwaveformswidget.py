@@ -17,7 +17,7 @@ class UnitWaveformsWidget(vd.Component):
                 max_num_spikes_per_unit=max_num_spikes_per_unit,
                 snippet_len=snippet_len
             )
-            for id in sorting.getUnitIds()
+            for id in sorting.get_unit_ids()
         ]
         vd.devel.loadBootstrap()
 
@@ -186,29 +186,28 @@ def _plot_spike_shapes(*, representative_waveforms=None, average_waveform=None, 
 
 
 def _get_random_spike_waveforms(*, recording, sorting, unit, max_num, channels, snippet_len):
-    st = sorting.getUnitSpikeTrain(unit_id=unit)
+    st = sorting.get_unit_spike_train(unit_id=unit)
     num_events = len(st)
     if num_events > max_num:
         event_indices = np.random.choice(range(num_events), size=max_num, replace=False)
     else:
         event_indices = range(num_events)
 
-    spikes = recording.getSnippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len,
-                                   channel_ids=channels)
+    spikes = recording.get_snippets(reference_frames=st[event_indices].astype(int), snippet_len=snippet_len, channel_ids=channels)
     if len(spikes) > 0:
         spikes = np.dstack(tuple(spikes))
     else:
-        spikes = np.zeros((recording.getNumChannels(), snippet_len, 0))
+        spikes = np.zeros((recording.get_num_channels(), snippet_len, 0))
     return spikes
 
 
 def plot_unit_waveform(*, recording, sorting, unit_id, max_num_spikes_per_unit, average_waveform, show_average, channel_ids=None, snippet_len=100, title=''):
     if not channel_ids:
-        channel_ids = recording.getChannelIds()
+        channel_ids = recording.get_channel_ids()
     M = len(channel_ids)
     channel_locations = np.zeros((M, 2))
     for ii, ch in enumerate(channel_ids):
-        loc = recording.getChannelProperty(ch, 'location')
+        loc = recording.get_channel_property(ch, 'location')
         channel_locations[ii, :] = loc[-2:]
 
     spikes = _get_random_spike_waveforms(recording=recording, sorting=sorting, unit=unit_id, max_num=max_num_spikes_per_unit, channels=channel_ids, snippet_len=snippet_len)
