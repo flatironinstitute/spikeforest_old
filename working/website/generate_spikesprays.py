@@ -7,6 +7,7 @@ import json
 
 import numpy as np
 import spikeextractors as se
+from spikeforest import mdaio
 from spikeforest_analysis import bandpass_filter
 import mlprocessors as mlpr
 
@@ -74,6 +75,9 @@ def main():
         # sx = SFMdaSortingExtractor(firings_file=mt.realizeFile(path=sr['firings']))
         cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
 
+        print('========================== Filtering recording {}/{}'.format(study_name, rec_name))
+        filtered_timeseries = _compute_filtered_timeseries(rec['directory'])
+
         list0 = list(cwt.values())
         for ii, unit in enumerate(list0):
             print('')
@@ -81,6 +85,7 @@ def main():
             # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
             result = CreateSpikeSprays.execute(
                 recording_directory=rec['directory'],
+                filtered_timeseries=filtered_timeseries,
                 firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
                 firings_sorted=sr['firings'],
                 unit_id_true=unit['unit_id'],
@@ -111,6 +116,27 @@ def main():
 
     address = mt.saveObject(object=spike_sprays)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+
+
+class FilterTimeseries(mlpr.Processor):
+    NAME = 'FilterTimeseries'
+    VERSION = '0.1.0'
+
+    recording_directory = mlpr.Input(description='Recording directory', optional=False, directory=True)
+    timeseries_out = mlpr.Output(description='Filtered timeseries file (.mda)')
+
+    def run(self):
+        rx = SFMdaRecordingExtractor(dataset_directory=self.recording_directory, download=True)
+        rx2 = bandpass_filter(recording=rx, freq_min=300, freq_max=6000, freq_wid=1000)
+        if not mdaio.writemda32(rx2.get_traces(), self.timeseries_out):
+            raise Exception('Unable to write output file.')
+
+
+def _compute_filtered_timeseries(recording_directory):
+    result = FilterTimeseries.execute(recording_directory=recording_directory, timeseries_out={'ext': '.mda'})
+    if result.retcode != 0:
+        raise Exception('Problem computing filtered timeseries')
+    return result.outputs['timeseries_out']
 
 
 def _get_random_spike_waveforms(*, recording, sorting, unit, max_num=50, channels=None, snippet_len=100):
@@ -197,7 +223,6 @@ def create_spikespray_object(waveforms, name, channel_ids):
 
 
 def create_spikesprays(*, rx, sx_true, sx_sorted, neighborhood_size, num_spikes, unit_id_true, unit_id_sorted):
-    rx = bandpass_filter(recording=rx, freq_min=300, freq_max=6000)
     sx_unmatched_true = get_unmatched_sorting(sx_true, sx_sorted, [unit_id_true], [unit_id_sorted])
     sx_unmatched_sorted = get_unmatched_sorting(sx_sorted, sx_true, [unit_id_sorted], [unit_id_true])
     waveforms0 = _get_random_spike_waveforms(recording=rx, sorting=sx_true, unit=unit_id_true)
@@ -231,6 +256,7 @@ class CreateSpikeSprays(mlpr.Processor):
     VERSION = '0.1.0'
 
     recording_directory = mlpr.Input(description='Recording directory', optional=False, directory=True)
+    filtered_timeseries = mlpr.Input(description='Filtered timeseries file (.mda)', optional=False)
     firings_true = mlpr.Input(description='True firings -- firings_true.mda', optional=False)
     firings_sorted = mlpr.Input(description='Sorted firings -- firings.mda', optional=False)
     unit_id_true = mlpr.IntegerParameter(description='ID of the true unit')
@@ -240,7 +266,7 @@ class CreateSpikeSprays(mlpr.Processor):
     json_out = mlpr.Output(description='Output json object')
 
     def run(self):
-        rx = SFMdaRecordingExtractor(dataset_directory=self.recording_directory, download=True)
+        rx = SFMdaRecordingExtractor(dataset_directory=self.recording_directory, download=True, raw_fname=self.filtered_timeseries)
         sx_true = SFMdaSortingExtractor(firings_file=self.firings_true)
         sx = SFMdaSortingExtractor(firings_file=self.firings_sorted)
         ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=self.neighborhood_size, num_spikes=self.num_spikes, unit_id_true=self.unit_id_true, unit_id_sorted=self.unit_id_sorted)

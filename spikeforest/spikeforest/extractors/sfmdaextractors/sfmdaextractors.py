@@ -24,7 +24,12 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
-        self._timeseries_path = dataset_directory + '/' + raw_fname
+        if '/' not in raw_fname:
+            # relative path
+            self._timeseries_path = dataset_directory + '/' + raw_fname
+        else:
+            # absolute path
+            self._timeseries_path = raw_fname
         self._dataset_params = read_dataset_params(dataset_directory, params_fname)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if download:
