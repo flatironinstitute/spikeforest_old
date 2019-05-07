@@ -17,6 +17,27 @@ import shlex
 
 
 class KiloSort2(mlpr.Processor):
+    """
+    KiloSort2 wrapper for SpikeForest framework
+      written by J. James Jun, May 7, 2019
+      modified from `spiketoolkit/sorters/Kilosort`
+      to be made compatible with SpikeForest
+
+    [Prerequisite]
+    1. MATLAB (Tested on R2018b)
+    2. CUDA Toolkit v9.1
+
+    [Installation instruction in SpikeForest environment]
+    1. Run `git clone https://github.com/alexmorley/Kilosort2.git`
+      Kilosort2 currently doesn't work on tetrodes and low-channel count probes (as of May 7, 2019).
+      Clone from Alex Morley's repository that fixed these issues.
+      Original Kilosort2 code can be obtained from `https://github.com/MouseLand/Kilosort2.git`
+    2. (optional) If Alex Morley's latest version doesn't work with SpikeForest, run
+        `git checkout 43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956`
+    3. In Matlab, run `CUDA\mexGPUall` to compile all CUDA codes
+    4. Add `KILOSORT2_PATH=...` in your .bashrc file.    
+    """
+        
     NAME = 'KiloSort2'
     VERSION = '0.2.3'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
