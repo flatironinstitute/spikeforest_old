@@ -99,13 +99,12 @@ def main():
                 raise Exception('Problem loading spikespray object output.')
             address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
             spike_sprays.append(dict(
-                study=study_name,
-                recording=rec_name,
-                unit_id_true=unit['unit_id'],
-                unit_id_sorted=unit['best_unit'],
-                sorter=sorter_name,
-                spikespray=address,
-                spikespray_http=mt.findFile(path=address, remote_only=True, download_from=args.upload_to)
+                studyName=study_name,
+                recordingName=rec_name,
+                sorterName=sorter_name,
+                trueUnitId=unit['unit_id'],
+                sortedUnitId=unit['best_unit'],
+                spikesprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to)
             ))
     #
     #         print('Saving to {}'.format(path))
