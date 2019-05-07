@@ -105,7 +105,7 @@ def main():
                 unit_id_sorted=unit['best_unit'],
                 sorter=sorter_name,
                 spikespray=address,
-                spikespray_http=mt.findFile(path=address, remote_only=True)
+                spikespray_http=mt.findFile(path=address, remote_only=True, download_from=args.upload_to)
             ))
     #
     #         print('Saving to {}'.format(path))
