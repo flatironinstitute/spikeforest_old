@@ -240,9 +240,9 @@ class CreateSpikeSprays(mlpr.Processor):
     json_out = mlpr.Output(description='Output json object')
 
     def run(self):
-        rx = se.MdaRecordingExtractor(dataset_directory=self.recording_directory, download=True)
-        sx_true = se.MdaSortingExtractor(firings_file=self.firings_true)
-        sx = se.MdaSortingExtractor(firings_file=self.firings_sorted)
+        rx = SFMdaRecordingExtractor(dataset_directory=self.recording_directory, download=True)
+        sx_true = SFMdaSortingExtractor(firings_file=self.firings_true)
+        sx = SFMdaSortingExtractor(firings_file=self.firings_sorted)
         ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=self.neighborhood_size, num_spikes=self.num_spikes, unit_id_true=self.unit_id_true, unit_id_sorted=self.unit_id_sorted)
         with open(self.json_out, 'w') as f:
             json.dump(ssobj, f)
