@@ -65,7 +65,6 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                                     num_matches=0
                                 )
                         if comparison is not None:
-                            print(comparison)
                             recording_results0 = dict(
                                 true_unit_ids=[],
                                 true_unit_snrs=[],
