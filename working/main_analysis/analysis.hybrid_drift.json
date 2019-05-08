@@ -1,20 +1,20 @@
 {
-    "analysis_name": "manual_franklab",
-    "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
-    "sorter_keys": ["irc", "ms4", "ks", "ks2", "yass", "sc"],
-    "sorter_keys_disable": ["ms4", "irc", "ks", "ks2-hanging", "yass", "sc"],
-    "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
-    "upload_to": "spikeforest.kbucket",
+    "analysis_name": "hybrid_drift",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.hybrid_drift.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.hybrid_drift.json"],
+    "sorter_keys": ["ks2", "irc-d2"],
+    "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc"],
+    "download_from": ["spikeforest.spikeforest2", "kbucket"],
     "job_timeout":1200,
+    "test":false,
     "compute_resources": {
-        "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
+        "default":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"},
+        "cpu":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"},
+        "gpu":{"resource_name":"ccmlin000-gpu", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"}
     },
     "sorters":{
         "ms4": {
-            "name": "MountainSort4",
+            "name": "MountainSort4-thr3",
             "processor_name": "MountainSort4",
             "params": {
                 "detect_sign": -1,
@@ -28,7 +28,7 @@
             "processor_name":"IronClust",
             "params": {
                 "detect_sign": -1,
-                "adjacency_radius": 50,
+                "adjacency_radius": 75,
                 "prm_template_name": "",
                 "detect_threshold": 4.5
             },
@@ -39,7 +39,7 @@
             "processor_name":"IronClust",
             "params": {
                 "detect_sign": -1,
-                "adjacency_radius": 50,
+                "adjacency_radius": 75,
                 "prm_template_name": "drift2_template.prm",
                 "detect_threshold": 4.5
             },
