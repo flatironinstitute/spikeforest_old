@@ -231,6 +231,10 @@ def main():
                 n_match = unit_result['num_matches']
                 n_fp = unit_result['num_false_positives']
                 n_fn = unit_result['num_false_negatives']
+                if n_match + n_fp > 0:
+                    precision = n_match / (n_match + n_fp)
+                else:
+                    precision = 0
                 UnitResults.append(dict(
                     unitId=unit_result['unit_id'],
                     recording=sr['recording']['name'],
@@ -241,7 +245,7 @@ def main():
                     numFalsePositives=n_fp,
                     numFalseNegatives=n_fn,
                     checkAccuracy=n_match / (n_match + n_fp + n_fn),
-                    checkPrecision=n_match / (n_match + n_fp),
+                    checkPrecision=precision,
                     checkRecall=n_match / (n_match + n_fn),
                     bestSortedUnitId=unit_result['best_unit']
                 ))
