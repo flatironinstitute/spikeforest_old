@@ -24,7 +24,7 @@ class SortingResultContext():
             return
         self._initialized = True
 
-        self._recording_context.initialize()
+        # self._recording_context.initialize()
 
         print('******** FORESTVIEW: Initializing sorting result context')
 

@@ -13,6 +13,9 @@ import mlprocessors as mlpr
 
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
+# _CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+_CONTAINER = None
+
 
 def main():
     parser = argparse.ArgumentParser(description='Generate spike spray data for website')
@@ -20,6 +23,7 @@ def main():
     parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
     parser.add_argument('--upload_to', help='Optional kachery to upload to', required=False, default=None)
     parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
+    parser.add_argument('--compute_resources', help='Optional path to a .json file specifying the "default" compute resource', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
     args = parser.parse_args()
@@ -30,6 +34,12 @@ def main():
     output_file = args.output_file
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
+
+    if args.compute_resources:
+        obj = mt.loadObject(path=args.compute_resources)
+        mlpr.configComputeResources(obj['compute_resources'])
+    else:
+        mlpr.configComputeResource('default', resource_name=None)
 
     if args.output_ids is not None:
         output_ids = args.output_ids.split(',')
@@ -63,52 +73,89 @@ def main():
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
-    spike_sprays = []
+    print('******************************** Filtering recordings...')
+    filter_jobs = FilterTimeseries.createJobs([
+        dict(
+            recording_directory=rec['directory'],
+            timeseries_out={'ext': '.mda'}
+        )
+        for rec in recordings
+    ])
+    filter_results = mlpr.executeBatch(jobs=filter_jobs, compute_resource='default')
+    filtered_timeseries_by_recid = dict()
+    for i, rec in enumerate(recordings):
+        result0 = filter_results[i]
+        recording_id = rec['study'] + '/' + rec['name']
+        if result0.retcode != 0:
+            raise Exception('Problem computing filtered timeseries for recording: {}'.format(recording_id))
+        filtered_timeseries_by_recid[recording_id] = result0.outputs['timeseries_out']
+
+    spike_spray_job_objects = []
     for sr in sorting_results:
         rec = sr['recording']
         study_name = rec['study']
         rec_name = rec['name']
         sorter_name = sr['sorter']['name']
 
+        print('====== {}/{}/{}'.format(study_name, rec_name, sorter_name))
+
         # rx = SFMdaRecordingExtractor(dataset_directory=rec['directory'], download=True)
         # sx_true = SFMdaSortingExtractor(firings_file=os.path.join(rec['directory'], 'firings_true.mda'))
         # sx = SFMdaSortingExtractor(firings_file=mt.realizeFile(path=sr['firings']))
         cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
 
-        print('========================== Filtering recording {}/{}'.format(study_name, rec_name))
-        filtered_timeseries = _compute_filtered_timeseries(rec['directory'])
+        recording_id = rec['study'] + '/' + rec['name']
+        filtered_timeseries = filtered_timeseries_by_recid[recording_id]
 
         list0 = list(cwt.values())
-        for ii, unit in enumerate(list0):
-            print('')
-            print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
+        for _, unit in enumerate(list0):
+            # print('')
+            # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
             # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
-            result = CreateSpikeSprays.execute(
-                recording_directory=rec['directory'],
-                filtered_timeseries=filtered_timeseries,
-                firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
-                firings_sorted=sr['firings'],
-                unit_id_true=unit['unit_id'],
-                unit_id_sorted=unit['best_unit'],
-                json_out={'ext': '.json'}
-            )
-            if result.retcode != 0:
-                raise Exception('Error creating spike sprays')
-            ssobj = mt.loadObject(path=result.outputs['json_out'])
-            if ssobj is None:
-                raise Exception('Problem loading spikespray object output.')
-            address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
-            spike_sprays.append(dict(
-                studyName=study_name,
-                recordingName=rec_name,
-                sorterName=sorter_name,
-                trueUnitId=unit['unit_id'],
-                sortedUnitId=unit['best_unit'],
-                spikesprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to)
+
+            spike_spray_job_objects.append(dict(
+                args=dict(
+                    recording_directory=rec['directory'],
+                    filtered_timeseries=filtered_timeseries,
+                    firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
+                    firings_sorted=sr['firings'],
+                    unit_id_true=unit['unit_id'],
+                    unit_id_sorted=unit['best_unit'],
+                    json_out={'ext': '.json'},
+                    _container='default'
+                ),
+                study_name=study_name,
+                rec_name=rec_name,
+                sorter_name=sorter_name,
+                unit=unit
             ))
-    #
-    #         print('Saving to {}'.format(path))
-    #         mt.saveObject(dest_path=path, object=ssobj)
+
+    spike_spray_jobs = CreateSpikeSprays.createJobs([
+        obj['args']
+        for obj in spike_spray_job_objects
+    ])
+
+    spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default')
+
+    spike_sprays = []
+    for i, result in enumerate(spike_spray_results):
+        obj0 = spike_spray_job_objects[i]
+        if result.retcode != 0:
+            raise Exception('Error creating spike sprays')
+        ssobj = mt.loadObject(path=result.outputs['json_out'])
+        if ssobj is None:
+            raise Exception('Problem loading spikespray object output.')
+        address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
+        unit = obj0['unit']
+        spike_sprays.append(dict(
+            studyName=obj0['study_name'],
+            recordingName=obj0['rec_name'],
+            sorterName=obj0['sorter_name'],
+            trueUnitId=unit['unit_id'],
+            sortedUnitId=unit['best_unit'],
+            spikesprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
+            _container='default'
+        ))
 
     if output_file is not None:
         mt.saveObject(object=spike_sprays, dest_path=output_file)
@@ -120,6 +167,7 @@ def main():
 class FilterTimeseries(mlpr.Processor):
     NAME = 'FilterTimeseries'
     VERSION = '0.1.0'
+    CONTAINER = _CONTAINER
 
     recording_directory = mlpr.Input(description='Recording directory', optional=False, directory=True)
     timeseries_out = mlpr.Output(description='Filtered timeseries file (.mda)')
@@ -129,13 +177,6 @@ class FilterTimeseries(mlpr.Processor):
         rx2 = bandpass_filter(recording=rx, freq_min=300, freq_max=6000, freq_wid=1000)
         if not mdaio.writemda32(rx2.get_traces(), self.timeseries_out):
             raise Exception('Unable to write output file.')
-
-
-def _compute_filtered_timeseries(recording_directory):
-    result = FilterTimeseries.execute(recording_directory=recording_directory, timeseries_out={'ext': '.mda'})
-    if result.retcode != 0:
-        raise Exception('Problem computing filtered timeseries')
-    return result.outputs['timeseries_out']
 
 
 def _get_random_spike_waveforms(*, recording, sorting, unit, max_num=50, channels=None, snippet_len=100):
@@ -253,6 +294,7 @@ def create_spikesprays(*, rx, sx_true, sx_sorted, neighborhood_size, num_spikes,
 class CreateSpikeSprays(mlpr.Processor):
     NAME = 'CreateSpikeSprays'
     VERSION = '0.1.0'
+    CONTAINER = _CONTAINER
 
     recording_directory = mlpr.Input(description='Recording directory', optional=False, directory=True)
     filtered_timeseries = mlpr.Input(description='Filtered timeseries file (.mda)', optional=False)
