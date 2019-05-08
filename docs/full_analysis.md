@@ -5,8 +5,10 @@ Here we provide instructions for running the SpikeForest analysis from start to 
 ## Step 0. Configure security tokens to connect to the SpikeForest storage system (kbucket)
 You need to add two key files containing security tokens. Contact Jeremy Magland to acquire tokens.
 - Create a file `~/.mountaintools/kachery_tokens`
-  - Add a line `spikeforest.kbucket upload XXXXXX`
-  - Add a line `spikeforest.kbucket download XXXXXX`
+  - Add a line `spikeforest.kbucket upload XXXX`
+  - Add a line `spikeforest.kbucket download YYYY`
+  - Add a line `spikeforest upload XXXX`
+  - Add a line `spikeforest download YYYY`
   
 - Create a file `~/.mountaintools/pairio_tokens`
   - Add a line `spikeforest XXXXXX`
