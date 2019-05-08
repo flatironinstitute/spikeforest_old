@@ -39,7 +39,7 @@ class KiloSort2(mlpr.Processor):
     """
         
     NAME = 'KiloSort2'
-    VERSION = '0.2.3'  # wrapper VERSION
+    VERSION = '0.3.0'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
