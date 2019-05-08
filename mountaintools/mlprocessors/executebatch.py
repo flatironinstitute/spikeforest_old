@@ -33,6 +33,16 @@ def configComputeResource(name, *, resource_name, collection=None, kachery_name=
         _compute_resources_config[name] = None
 
 
+def configComputeResources(obj):
+    for key, cr in obj.items():
+        configComputeResource(
+            name=key,
+            resource_name=cr.get('resource_name', None),
+            collection=cr.get('collection', None),
+            share_id=cr.get('share_id', None)
+        )
+
+
 @mtlogging.log()
 def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None, cached_results_only=False):
     all_kwargs = locals()
