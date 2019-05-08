@@ -278,6 +278,12 @@ def main():
         mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] for S in Sorters])
 
+    # STUDY SORTER RESULTS
+    print('******************************** ASSEMBLING STUDY SORTER RESULTS...')
+    StudySorterResults = _assemble_study_sorter_results(recordings=recordings, studies=studies, sorting_results=sorting_results)
+    if output_dir is not None:
+        mt.saveObject(object=StudySorterResults, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySorterResults.json')))
+
     # STUDIES
     print('******************************** ASSEMBLING STUDIES...')
     Studies = []
@@ -306,6 +312,84 @@ def main():
     )
     address = mt.saveObject(object=obj)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+
+
+def _assemble_study_sorter_results(*, recordings, studies, sorting_results):
+    sorter_names = sorted(list(set([sr['sorter']['name'] for sr in sorting_results])))
+
+    true_units_by_recording = dict()
+    for rec in recordings:
+        snrs = []
+        firing_rates = []
+        num_events = []
+        snr_by_id = dict()
+        firing_rate_by_id = dict()
+        num_events_by_id = dict()
+        true_units_info = mt.loadObject(path=rec['summary']['true_units_info'])
+        for unit_info in true_units_info:
+            id0 = unit_info['unit_id']
+            snr_by_id[id0] = unit_info['snr']
+            firing_rate_by_id[id0] = unit_info['firing_rate']
+            num_events_by_id[id0] = unit_info['num_events']
+        true_units_by_recording[rec['study'] + '/' + rec['name']] = dict(
+            snr_by_id=snr_by_id,
+            firing_rate_by_id=firing_rate_by_id,
+            num_events_by_id=num_events_by_id
+        )
+
+    study_sorter_results = []
+    for study in studies:
+        total_true_units = 0
+        for rec in recordings:
+            if rec['study'] == study['name']:
+                true_units_info = true_units_by_recording[rec['study'] + '/' + rec['name']]
+                total_true_units = total_true_units + len(true_units_info['snr_by_id'].keys())
+
+        for sorter_name in sorter_names:
+            srs = [sr for sr in sorting_results if (sr['sorter']['name'] == sorter_name) and (sr['recording']['study'] == study['name'])]
+            accuracies = []
+            precisions = []
+            recalls = []
+            snrs = []
+            firing_rates = []
+            num_events = []
+            for sr in srs:
+                if sr.get('comparison_with_truth', None):
+                    comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
+                    if comparison_with_truth is None:
+                        print(sr)
+                        raise Exception('Unable to retrieve comparison with truth object for sorting result.')
+                    true_units_info = true_units_by_recording[sr['recording']['study'] + '/' + sr['recording']['name']]
+                    for unit_result in comparison_with_truth.values():
+                        id0 = unit_result['unit_id']
+                        n_match = unit_result['num_matches']
+                        n_fp = unit_result['num_false_positives']
+                        n_fn = unit_result['num_false_negatives']
+                        accuracy = n_match / (n_match + n_fp + n_fn)
+                        if n_match + n_fp > 0:
+                            precision = n_match / (n_match + n_fp)
+                        else:
+                            precision = 0
+                        recall = n_match / (n_match + n_fn)
+                        accuracies.append(accuracy)
+                        precisions.append(precision)
+                        recalls.append(recall)
+                        snrs.append(true_units_info['snr_by_id'][id0])
+                        firing_rates.append(true_units_info['firing_rate_by_id'][id0])
+                        num_events.append(true_units_info['num_events_by_id'][id0])
+            study_sorter_results.append(dict(
+                study=study['name'],
+                sorter=sorter_name,
+                accuracies=accuracies,
+                precisions=precisions,
+                recalls=recalls,
+                snrs=snrs,
+                firing_rates=firing_rates,
+                num_events=num_events,
+                total_true_units=total_true_units,
+                missed_true_units=total_true_units - len(snrs)
+            ))
+    return study_sorter_results
 
 if __name__ == "__main__":
     main()
