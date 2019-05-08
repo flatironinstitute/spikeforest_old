@@ -16,11 +16,26 @@ import json
 
 
 class JRClust(mlpr.Processor):
+    """
+    JRClust v4 wrapper
+      written by J. James Jun, May 8, 2019
+      modified from `spikeforest/spikesorters/ironclust/ironclust.py`
+
+    [Installation instruction in SpikeForest environment]
+    1. Run `git clone https://github.com/JaneliaSciComp/JRCLUST`
+    2. Activate conda environment for SpikeForest
+    3. Create `JRCLUST_PATH` and `MDAIO_PATH`
+
+    See: James Jun, et al. Real-time spike sorting platform for 
+    high-density extracellular probes with ground-truth validation and drift correction    
+    https://github.com/JaneliaSciComp/JRCLUST
+    """
+
     NAME = 'JRClust'
-    VERSION = '0.0.1'
+    VERSION = '0.0.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    ADDITIONAL_FILES = ['*.m']
+    ADDITIONAL_FILES = ['*.m', '*.prm']
     CONTAINER = None
     CONTAINER_SHARE_ID = None
 
@@ -95,9 +110,9 @@ class JRClust(mlpr.Processor):
             SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            if os.path.exists(tmpdir):
-                if not getattr(self, '_keep_temp_files', False):
-                    shutil.rmtree(tmpdir)
+            #if os.path.exists(tmpdir):
+                #if not getattr(self, '_keep_temp_files', False):
+                    #shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
             pass
@@ -149,9 +164,10 @@ def jrclust_helper(
     _write_text_file(dataset_dir + '/argfile.txt', txt)
 
     # new method
+    source_path = os.path.dirname(os.path.realpath(__file__))
     print('Running jrclust in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
-        addpath('{jrclust_path}', '{mdaio_path}');
+        addpath('{jrclust_path}', '{mdaio_path}', '{source_path}');
         try
             p_jrclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
         catch
@@ -161,7 +177,7 @@ def jrclust_helper(
         end
         quit(0);
     '''
-    cmd = cmd.format(jrclust_path=jrclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
+    cmd = cmd.format(jrclust_path=jrclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir, mdaio_path=mdaio_path, source_path=source_path)
 
     matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_jrclust.m', keep_temp_files=True)
     matlab_cmd.write()

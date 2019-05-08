@@ -10,7 +10,6 @@ P.evtDetectRad = get_(S_txt, 'adjacency_radius', 50); % name translation
 P.filterType = get_(S_txt, 'adjacency_radius', 'ndiff'); % name translation
 P.qqFactor = get_(S_txt, 'detect_threshold', 5); % name translation
 P.clusterFeature = get_(S_txt, 'feature_type', 'pca'); % name translation
-P.fGpu = get_(S_txt, 'fGpu', 0); % name translation
 P.CARMode = get_(S_txt, 'common_ref_type', 'none');
 P.nPcsPerSite = get_(S_txt, 'pc_per_chan', 1);
 P.maxUnitSim = get_(S_txt, 'merge_thresh', .98);
@@ -18,7 +17,8 @@ P.minClusterSize = get_(S_txt, 'min_count', 30);
 P.clusterFeature = get_(S_txt, 'feature_type', 'pca');
 P.useGPU = get_(S_txt, 'fGpu', 0);
 P.useParfor = get_(S_txt, 'fParfor', 1);
-P.freqLimBP = [get_(S_txt, 'freq_min', 300), get_(S_txt, 'freq_max', 6000)]
+P.freqLimBP = [get_(S_txt, 'freq_min', 300), get_(S_txt, 'freq_max', 6000)];
+
 % raw recording
 P.outputDir = vcDir_temp;
 P.rawRecordings = {vcFile_raw};
@@ -29,13 +29,14 @@ P.dataType = S_mda.vcDataType;
 % probe file
 P.siteLoc = double(csvread(vcFile_geom));
 P.siteMap = 1:P.nChans;
+P.shankMap = ones(1, P.nChans);
 
 vcFile_prm = fullfile(vcDir_temp, 'myparam.prm');
 edit_prm_file_('template.prm', vcFile_prm, P);
 jrc('detect-sort', vcFile_prm);
 
 % convert the output to .mda file
-S0 = load(fullfile(P.outputDir, 'raw_res.mat'));
+S0 = load(fullfile(P.outputDir, 'myparam_res.mat'));
 nSpikes = numel(S0.spikeTimes);
 mr_mda = zeros(nSpikes, 3, 'double');
 mr_mda(:,1) = S0.spikeSites;

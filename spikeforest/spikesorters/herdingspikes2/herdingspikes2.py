@@ -26,7 +26,9 @@ class HerdingSpikes2(mlpr.Processor):
       to be made compatible with SpikeForest
 
     [Installation instruction in SpikeForest environment]
-    1. Run `git clone https://github.com/mhhennig/hs2`
+    1. Run `git clone https://github.com/jamesjun/hs2`
+      Note that James Jun forked a new version to make it compatible with singularity container.
+      Original code was creating folders under its source directory which is ready-only in SpikeForest containers.
     2. Activate conda environment for SpikeForest
     3. Run `pip install joblib`
     4. Run `python setup.py develop` in herdingspikes2 doretory

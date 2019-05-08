@@ -121,7 +121,7 @@ def ironclust_helper(
         params=dict(),
         **kwargs):
     if ironclust_path is None:
-        ironclust_path = os.getenv('ironclust_path', None)
+        ironclust_path = os.environ.get('IRONCLUST_PATH', None)
     if not ironclust_path:
         raise Exception(
             'You must either set the ironclust_path environment variable, or pass the ironclust_path parameter')
@@ -203,22 +203,6 @@ def ironclust_helper(
 
     if retcode != 0:
         raise Exception('ironclust returned a non-zero exit code')
-
-    # old method
-    # print('Running IronClust...')
-    # cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
-    #     ironclust_path, ironclust_path, ironclust_path)
-    # # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
-    # cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
-    #     .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    # cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-    #     cmd_path, cmd_call)
-    # print(cmd)
-    # #retcode = _run_command_and_print_output(cmd)
-    # retcode = os.system(cmd)
-
-    # if retcode != 0:
-    #     raise Exception('IronClust returned a non-zero exit code')
 
     # parse output
     result_fname = tmpdir + '/firings.mda'
