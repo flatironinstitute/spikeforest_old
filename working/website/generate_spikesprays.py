@@ -108,9 +108,9 @@ def main():
         filtered_timeseries = filtered_timeseries_by_recid[recording_id]
 
         list0 = list(cwt.values())
-        for ii, unit in enumerate(list0):
-            #print('')
-            #print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
+        for _, unit in enumerate(list0):
+            # print('')
+            # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
             # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
 
             spike_spray_job_objects.append(dict(

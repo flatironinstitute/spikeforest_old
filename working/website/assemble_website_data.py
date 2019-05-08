@@ -241,7 +241,7 @@ def main():
                     numFalsePositives=n_fp,
                     numFalseNegatives=n_fn,
                     checkAccuracy=n_match / (n_match + n_fp + n_fn),
-                    # checkPrecision=n_match/(n_match+n_fp),
+                    checkPrecision=n_match / (n_match + n_fp),
                     checkRecall=n_match / (n_match + n_fn),
                     bestSortedUnitId=unit_result['best_unit']
                 ))
