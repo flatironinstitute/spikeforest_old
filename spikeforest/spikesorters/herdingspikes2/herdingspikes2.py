@@ -41,11 +41,12 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.0.3'  # wrapper VERSION
+    VERSION = '0.0.5'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    CONTAINER = 'sha1://dd6cc3d61207cdf9a532fc7cbdb24c7403be6a04/2019-05-08/herdingspikes2.simg'
+    #CONTAINER = 'sha1://dd6cc3d61207cdf9a532fc7cbdb24c7403be6a04/2019-05-08/herdingspikes2.simg'
+    CONTAINER = None
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -137,6 +138,8 @@ def hs2_helper(
         'pca_ncomponents': kwargs['pca_ncomponents'],
         'pca_whiten': True,
     }
+
+    os.environ['HS2_PROBE_PATH'] = tmpdir
 
     # this should have its name changed
     Probe = hs.probe.RecordingExtractor(
