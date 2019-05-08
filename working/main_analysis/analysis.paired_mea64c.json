@@ -2,7 +2,7 @@
     "analysis_name": "paired_mea64c",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.paired_mea64c.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.paired_mea64c.json"],
-    "sorter_keys": ["irc", "ms4", "ks", "ks2", "yass", "hs2"],
+    "sorter_keys": ["irc", "ms4", "ks", "ks2", "yass", "sc", "hs2"],
     "sorter_keys_disable": ["ms4", "irc", "ks", "ks2", "yass", "sc-hangs-on-some"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
@@ -20,6 +20,13 @@
                 "detect_sign": -1,
                 "adjacency_radius": 50,
                 "detect_threshold": 3
+            },
+            "compute_resource":"cpu"
+        },
+        "hs2": {
+            "name": "HerdingSpikes2",
+            "processor_name": "HerdingSpikes2",
+            "params": {
             },
             "compute_resource":"cpu"
         },

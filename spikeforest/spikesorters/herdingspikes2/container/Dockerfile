@@ -16,10 +16,10 @@ RUN mkdir -p /src
 ### Herding spikes 2
 RUN pip install joblib
 RUN pip install numpy
-RUN git clone https://github.com/mhhennig/hs2 /src/hs2 && cd /src/hs2 && git checkout bb810abdab33f1319a1a51224705bd33a173868d
+RUN git clone https://github.com/jamesjun/HS2 /src/hs2 && cd /src/hs2 && git checkout 
+#RUN git clone https://github.com/mhhennig/hs2 /src/hs2 && cd /src/hs2 && git checkout 286e9db6e6896e1526139fe156c66eeebeea546a
 WORKDIR /src/hs2
 RUN python setup.py develop
-RUN mkdir -p herdingspikes/probes && mkdir -p herdingspikes/probe_info
 
 ### spikeextractors
 RUN pip install spikeextractors==0.4.2
