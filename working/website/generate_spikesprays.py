@@ -13,7 +13,8 @@ import mlprocessors as mlpr
 
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
-_CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+# _CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+_CONTAINER = None
 
 
 def main():
@@ -89,12 +90,14 @@ def main():
             raise Exception('Problem computing filtered timeseries for recording: {}'.format(recording_id))
         filtered_timeseries_by_recid[recording_id] = result0.outputs['timeseries_out']
 
-    spike_spray_jobs = []
+    spike_spray_job_objects = []
     for sr in sorting_results:
         rec = sr['recording']
         study_name = rec['study']
         rec_name = rec['name']
         sorter_name = sr['sorter']['name']
+
+        print('====== {}/{}/{}'.format(study_name, rec_name, sorter_name))
 
         # rx = SFMdaRecordingExtractor(dataset_directory=rec['directory'], download=True)
         # sx_true = SFMdaSortingExtractor(firings_file=os.path.join(rec['directory'], 'firings_true.mda'))
@@ -106,41 +109,48 @@ def main():
 
         list0 = list(cwt.values())
         for ii, unit in enumerate(list0):
-            print('')
-            print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
+            #print('')
+            #print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
             # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
-            job0 = CreateSpikeSprays.createJob(
-                recording_directory=rec['directory'],
-                filtered_timeseries=filtered_timeseries,
-                firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
-                firings_sorted=sr['firings'],
-                unit_id_true=unit['unit_id'],
-                unit_id_sorted=unit['best_unit'],
-                json_out={'ext': '.json'},
-                _container='default'
-            )
-            setattr(job0, 'study_name', study_name)
-            setattr(job0, 'rec_name', rec_name)
-            setattr(job0, 'sorter_name', sorter_name)
-            setattr(job0, 'unit', unit)
-            spike_spray_jobs.append(job0)
+
+            spike_spray_job_objects.append(dict(
+                args=dict(
+                    recording_directory=rec['directory'],
+                    filtered_timeseries=filtered_timeseries,
+                    firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
+                    firings_sorted=sr['firings'],
+                    unit_id_true=unit['unit_id'],
+                    unit_id_sorted=unit['best_unit'],
+                    json_out={'ext': '.json'},
+                    _container='default'
+                ),
+                study_name=study_name,
+                rec_name=rec_name,
+                sorter_name=sorter_name,
+                unit=unit
+            ))
+
+    spike_spray_jobs = CreateSpikeSprays.createJobs([
+        obj['args']
+        for obj in spike_spray_job_objects
+    ])
 
     spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default')
 
     spike_sprays = []
     for i, result in enumerate(spike_spray_results):
-        job0 = spike_spray_jobs[i]
+        obj0 = spike_spray_job_objects[i]
         if result.retcode != 0:
             raise Exception('Error creating spike sprays')
         ssobj = mt.loadObject(path=result.outputs['json_out'])
         if ssobj is None:
             raise Exception('Problem loading spikespray object output.')
         address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
-        unit = job0['unit']
+        unit = obj0['unit']
         spike_sprays.append(dict(
-            studyName=job0['study_name'],
-            recordingName=job0['rec_name'],
-            sorterName=job0['sorter_name'],
+            studyName=obj0['study_name'],
+            recordingName=obj0['rec_name'],
+            sorterName=obj0['sorter_name'],
             trueUnitId=unit['unit_id'],
             sortedUnitId=unit['best_unit'],
             spikesprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
