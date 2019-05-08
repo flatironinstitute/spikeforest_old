@@ -1,1 +1,1 @@
-from .tridesclous import Tridesclous
+from .tridesclous import TridesclousSorter

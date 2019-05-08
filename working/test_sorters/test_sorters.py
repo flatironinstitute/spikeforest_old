@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Klusta
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -96,6 +96,30 @@ def test_ks2_magland_c4():
 @pytest.mark.exclude
 def test_ks2_magland_c8():
     sorter = KiloSort2
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.klusta_magland_c4
+@pytest.mark.exclude
+def test_klusta_magland_c4():
+    sorter = Klusta
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.klusta_magland_c8
+@pytest.mark.exclude
+def test_klusta_magland_c8():
+    sorter = Klusta
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
@@ -281,7 +305,7 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
         units_true=[],
         json_out={'ext': '.json'},
         html_out={'ext': '.html'},
-        _container='default',
+        _container=None,
         _force_run=True
     )
 

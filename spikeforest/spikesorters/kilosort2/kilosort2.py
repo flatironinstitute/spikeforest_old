@@ -93,11 +93,11 @@ class KiloSort2(mlpr.Processor):
             SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            # if os.path.exists(tmpdir):
-            #    shutil.rmtree(tmpdir)
+            if os.path.exists(tmpdir):
+                shutil.rmtree(tmpdir)
             raise
-        # shutil.rmtree(tmpdir)
-
+        if not getattr(self, '_keep_temp_files', False):
+            shutil.rmtree(tmpdir)
 
 def kilosort2_helper(*,
                      recording,  # Recording object

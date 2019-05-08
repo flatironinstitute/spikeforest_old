@@ -77,8 +77,7 @@ class HerdingSpikes2(mlpr.Processor):
         recording = SFMdaRecordingExtractor(self.recording_dir)
         clustering_n_jobs = os.environ.get('NUM_WORKERS', None)
 
-        code = ''.join(random.choice(string.ascii_uppercase)
-                       for x in range(10))
+        code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/herdingspikes2-tmp-' + code
 
         try:
@@ -108,7 +107,7 @@ class HerdingSpikes2(mlpr.Processor):
                     shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
-            pass
+            shutil.rmtree(tmpdir)
 
 
 def hs2_helper(

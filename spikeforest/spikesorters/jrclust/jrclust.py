@@ -110,13 +110,12 @@ class JRClust(mlpr.Processor):
             SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
-            #if os.path.exists(tmpdir):
-                #if not getattr(self, '_keep_temp_files', False):
-                    #shutil.rmtree(tmpdir)
+            if os.path.exists(tmpdir):
+                if not getattr(self, '_keep_temp_files', False):
+                    shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
-            pass
-            # shutil.rmtree(tmpdir)
+            shutil.rmtree(tmpdir)
 
 
 def jrclust_helper(

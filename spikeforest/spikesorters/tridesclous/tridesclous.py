@@ -1,4 +1,3 @@
-import mlprocessors as mlpr
 from pathlib import Path
 import os
 import shutil
@@ -14,26 +13,26 @@ except ImportError:
     HAVE_TDC = False
 
 
-class Tridesclous(mlpr.Processor):
+class TridesclousSorter(BaseSorter):
     """
     tridesclous is one of the more convinient, fast and elegant
     spike sorter.
     Everyone should test it.
     """
-    
+
     sorter_name = 'tridesclous'
     installed = HAVE_TDC
-    
+
     _default_params = None  # later
-    
+
     installation_mesg = """
        >>> pip install https://github.com/tridesclous/tridesclous/archive/master.zip
-    
+
     More information on tridesclous at:
       * https://github.com/tridesclous/tridesclous
       * https://tridesclous.readthedocs.io
     """
-    
+
     def __init__(self, **kargs):
         BaseSorter.__init__(self, **kargs)
 
@@ -46,14 +45,14 @@ class Tridesclous(mlpr.Processor):
         # save prb file:
         probe_file = output_folder / 'probe.prb'
         se.save_probe_file(recording, probe_file, format='spyking_circus')
-        
+
         # source file
         if isinstance(recording, se.BinDatRecordingExtractor) and recording._frame_first:
             # no need to copy
             raw_filename = recording._datfile
             dtype = recording._timeseries.dtype.str
             nb_chan = len(recording._channels)
-            offset = recording._timeseries.offset   
+            offset = recording._timeseries.offset
         else:
             if self.debug:
                 print('Local copy of recording')
@@ -64,21 +63,21 @@ class Tridesclous(mlpr.Processor):
             se.write_binary_dat_format(recording, raw_filename, time_axis=0, dtype='float32', chunksize=chunksize)
             dtype='float32'
             offset = 0
-        
+
         # initialize source and probe file
         tdc_dataio = tdc.DataIO(dirname=str(output_folder))
         nb_chan = recording.get_num_channels()
-        
+
         tdc_dataio.set_data_source(type='RawData', filenames=[str(raw_filename)],
                                    dtype=dtype, sample_rate=recording.get_sampling_frequency(),
                                    total_channel=nb_chan, offset=offset)
         tdc_dataio.set_probe_file(str(probe_file))
         if self.debug:
             print(tdc_dataio)
-    
+
     def _run(self, recording, output_folder):
         nb_chan = recording.get_num_channels()
-    
+
         # check params and OpenCL when many channels
         use_sparse_template = False
         use_opencl_with_sparse = False
@@ -90,7 +89,7 @@ class Tridesclous(mlpr.Processor):
                 use_opencl_with_sparse = True
             else:
                 print('OpenCL is not available processing will be slow, try install it')
-        
+
         tdc_dataio = tdc.DataIO(dirname=str(output_folder))
         # make catalogue
         chan_grps = list(tdc_dataio.channel_groups.keys())
@@ -100,7 +99,7 @@ class Tridesclous(mlpr.Processor):
             if self.debug:
                 print(cc)
             cc.make_catalogue_for_peeler()
-            
+
             # apply Peeler (template matching)
             initial_catalogue = tdc_dataio.load_catalogue(chan_grp=chan_grp)
             peeler = tdc.Peeler(tdc_dataio)
@@ -109,7 +108,7 @@ class Tridesclous(mlpr.Processor):
                                  sparse_threshold_mad=1.5,
                                  use_opencl_with_sparse=use_opencl_with_sparse,)
             peeler.run(duration=None, progressbar=self.debug)
-    
+
     @staticmethod
     def get_result_from_folder(output_folder):
         sorting = se.TridesclousSortingExtractor(output_folder)

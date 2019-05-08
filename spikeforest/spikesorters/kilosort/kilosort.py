@@ -77,7 +77,7 @@ class KiloSort(mlpr.Processor):
                 if not keep_temp_files:
                     shutil.rmtree(tmpdir)
             raise
-        if not keep_temp_files:
+        if not getattr(self, '_keep_temp_files', False):
             shutil.rmtree(tmpdir)
 
 
