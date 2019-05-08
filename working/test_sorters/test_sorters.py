@@ -11,6 +11,7 @@ kampff1_recdir = 'sha1dir://c86202ca09f303b6c6d761b94975054c29c85d2b.paired_kamp
 neuropix32c_recdir = 'sha1dir://d446c8e74fc4ca3a0dab491fca6c10189b527709.neuropix32c.c14'
 boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c.1103_1_1'
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
+paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4
@@ -109,6 +110,15 @@ def test_hs2_magland_c8():
     sorter = HerdingSpikes2
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.hs2_paired_mea64c
+@pytest.mark.exclude
+def test_hs2_paired_mea64c():
+    sorter = HerdingSpikes2
+    params = dict()
+    do_sorting_test(sorter, params, paired_mea64c_recdir, assert_avg_accuracy=0.1, container=None)
 
 
 @pytest.mark.spikeforest
@@ -252,7 +262,7 @@ def test_ks2_kampff():
     do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
 
 
-def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy):
+def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy, container='default'):
     mt.configDownloadFrom('spikeforest.kbucket')
 
     recdir = recording_dir
@@ -261,7 +271,7 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
         recording_dir=recdir,
         firings_out={'ext': '.mda'},
         **params,
-        _container='default',
+        _container=container,
         _force_run=True
     )
 
