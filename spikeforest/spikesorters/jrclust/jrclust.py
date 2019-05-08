@@ -15,9 +15,9 @@ from mountaintools import client as mt
 import json
 
 
-class IronClust(mlpr.Processor):
-    NAME = 'IronClust'
-    VERSION = '0.2.5'
+class JRClust(mlpr.Processor):
+    NAME = 'JRClust'
+    VERSION = '0.0.1'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -35,8 +35,6 @@ class IronClust(mlpr.Processor):
         optional=True, default=75, description='Use -1 to include all channels in every neighborhood')
     detect_threshold = mlpr.FloatParameter(
         optional=True, default=4.5, description='detection threshold')
-    prm_template_name = mlpr.StringParameter(
-        optional=True, description='.prm template file name')
     freq_min = mlpr.FloatParameter(
         optional=True, default=300, description='Use 0 for no bandpass filtering')
     freq_max = mlpr.FloatParameter(
@@ -47,39 +45,30 @@ class IronClust(mlpr.Processor):
         optional=True, default=2, description='Number of principal components per channel')
 
     # added in version 0.2.4
-    whiten = mlpr.BoolParameter(
-        optional=True, default=False, description='Whether to do channel whitening as part of preprocessing')
     filter_type = mlpr.StringParameter(
         optional=True, default='bandpass', description='{none, bandpass, wiener, fftdiff, ndiff}')
-    filter_detect_type = mlpr.StringParameter(
-        optional=True, default='none', description='{none, bandpass, wiener, fftdiff, ndiff}')
     common_ref_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, mean, median}')
-    nTime_clu = mlpr.IntegerParameter(
-        optional=True, default=4, description='Number of time periods to cluster together')
-    nTime_drift = mlpr.IntegerParameter(
-        optional=True, default=64, description='Number of time segments for drift correction')
-    knn = mlpr.IntegerParameter(
-        optional=True, default=30, description='K nearest neighbors')
     min_count = mlpr.IntegerParameter(
         optional=True, default=30, description='Minimum cluster size')
     fGpu = mlpr.BoolParameter(
         optional=True, default=False, description='Use GPU if available')
-    fft_thresh = mlpr.FloatParameter(
-        optional=True, default=0, description='FFT-based noise peak threshold')
-    nSites_whiten = mlpr.IntegerParameter(
-        optional=True, default=32, description='Number of adjacent channels to whiten')
+    fParfor = mlpr.BoolParameter(
+        optional=True, default=True, description='Use parfor if available')        
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
     def run(self):
-        ironclust_path = os.environ.get('IRONCLUST_PATH', None)
-        if not ironclust_path:
-            raise Exception('Environment variable not set: IRONCLUST_PATH')
+        jrclust_path = os.environ.get('JRCLUST_PATH', None)
+        if not jrclust_path:
+            raise Exception('Environment variable not set: JRCLUST_PATH')
+        mdaio_path = os.environ.get('MDAIO_PATH', None)
+        if not mdaio_path:
+            raise Exception('Environment variable not set: MDAIO_PATH')
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/ironclust-tmp-' + code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/jrclust-tmp-' + code
 
         print('------------------------------------- using', tmpdir)
 
@@ -95,12 +84,14 @@ class IronClust(mlpr.Processor):
             all_params = dict()
             for param0 in self.PARAMETERS:
                 all_params[param0.name] = getattr(self, param0.name)
-            sorting = ironclust_helper(
+            sorting = jrclust_helper(
                 recording=recording,
                 tmpdir=tmpdir,                
-                ironclust_path=ironclust_path,
+                jrclust_path=jrclust_path,
+                mdaio_path=mdaio_path,
                 params=params,
-                **all_params)
+                **all_params,
+            )
             SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
@@ -113,21 +104,26 @@ class IronClust(mlpr.Processor):
             # shutil.rmtree(tmpdir)
 
 
-def ironclust_helper(
+def jrclust_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        ironclust_path=None,
+        jrclust_path=None,
+        mdaio_path=None,
         params=dict(),
         **kwargs):
-    if ironclust_path is None:
-        ironclust_path = os.getenv('ironclust_path', None)
-    if not ironclust_path:
+    if jrclust_path is None:
+        jrclust_path = os.getenv('JRCLUST_PATH', None)
+    if mdaio_path is None:
+        mdaio_path = os.getenv('MDAIO_PATH', None)        
+    if not jrclust_path:
         raise Exception(
-            'You must either set the ironclust_path environment variable, or pass the ironclust_path parameter')
-    # source_dir=os.path.dirname(os.path.realpath(__file__))
+            'You must either set the JRCLUST_PATH environment variable, or pass the jrclust_path parameter')
+    if not mdaio_path:
+        raise Exception(
+            'You must either set the MDAIO_PATH environment variable, or pass the mdaio_path parameter')
 
-    dataset_dir = tmpdir + '/ironclust_dataset'
+    dataset_dir = os.path.join(tmpdir, 'jrclust_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.write_recording(
         recording=recording, save_path=dataset_dir, params=params)
@@ -135,7 +131,8 @@ def ironclust_helper(
     samplerate = recording.get_sampling_frequency()
 
     print('Reading timeseries header...')
-    HH = mdaio.readmda_header(dataset_dir + '/raw.mda')
+    raw_mda = os.path.join(dataset_dir, 'raw.mda')
+    HH = mdaio.readmda_header(raw_mda)
     num_channels = HH.dims[0]
     num_timepoints = HH.dims[1]
     duration_minutes = num_timepoints / samplerate / 60
@@ -146,38 +143,17 @@ def ironclust_helper(
     txt = ''
     for key0, val0 in kwargs.items():
         txt += '{}={}\n'.format(key0, val0)
-    # txt += 'samplerate={}\n'.format(samplerate)
-    # txt += 'detect_sign={}\n'.format(detect_sign)
-    # txt += 'adjacency_radius={}\n'.format(adjacency_radius)
-    # txt += 'detect_threshold={}\n'.format(detect_threshold)
-    # txt += 'merge_thresh={}\n'.format(merge_thresh)
-    # txt += 'freq_min={}\n'.format(freq_min)
-    # txt += 'freq_max={}\n'.format(freq_max)
-    # txt += 'pc_per_chan={}\n'.format(pc_per_chan)
-    # txt += 'prm_template_name={}\n'.format(prm_template_name)
-    # txt += 'whiten={}\n'.format(whiten)
-    # txt += 'filter_type={}\n'.format(filter_type)
-    # txt += 'filter_detect_type={}\n'.format(filter_detect_type)
-    # txt += 'common_ref_type={}\n'.format(common_ref_type)
-    # txt += 'nTime_clu={}\n'.format(nTime_clu)
-    # txt += 'nTime_drift={}\n'.format(nTime_drift)
-    # txt += 'knn={}\n'.format(knn)
-    # txt += 'min_count={}\n'.format(min_count)
-    # txt += 'fGpu={}\n'.format(fGpu)
-    # txt += 'fft_thresh={}\n'.format(fft_thresh)
-    # txt += 'nSites_whiten={}\n'.format(nSites_whiten)
-    # txt += 'feature_type={}\n'.format(feature_type)
-
     if 'scale_factor' in params:
-        txt += 'scale_factor={}\n'.format(params["scale_factor"])
+        txt += 'bitScaling={}\n'.format(params["scale_factor"])
+    txt += 'sampleRate={}\n'.format(samplerate)
     _write_text_file(dataset_dir + '/argfile.txt', txt)
 
     # new method
-    print('Running ironclust in {tmpdir}...'.format(tmpdir=tmpdir))
+    print('Running jrclust in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
-        addpath('{ironclust_path}', '{ironclust_path}/matlab', '{ironclust_path}/matlab/mdaio');
+        addpath('{jrclust_path}', '{mdaio_path}');
         try
-            p_ironclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '', '', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
+            p_jrclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
         catch
             fprintf('----------------------------------------');
             fprintf(lasterr());
@@ -185,40 +161,24 @@ def ironclust_helper(
         end
         quit(0);
     '''
-    cmd = cmd.format(ironclust_path=ironclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
+    cmd = cmd.format(jrclust_path=jrclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
 
-    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_ironclust.m', keep_temp_files=True)
+    matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_jrclust.m', keep_temp_files=True)
     matlab_cmd.write()
 
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        matlab -nosplash -nodisplay -r run_ironclust
+        matlab -nosplash -nodisplay -r run_jrclust
     '''.format(tmpdir=tmpdir)
-    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_ironclust.sh', keep_temp_files=True)
-    shell_cmd.write(tmpdir + '/run_ironclust.sh')
+    shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_jrclust.sh', keep_temp_files=True)
+    shell_cmd.write(tmpdir + '/run_jrclust.sh')
     shell_cmd.start()
 
     retcode = shell_cmd.wait()
 
     if retcode != 0:
-        raise Exception('ironclust returned a non-zero exit code')
-
-    # old method
-    # print('Running IronClust...')
-    # cmd_path = "addpath('{}', '{}/matlab', '{}/matlab/mdaio');".format(
-    #     ironclust_path, ironclust_path, ironclust_path)
-    # # "p_ironclust('$(tempdir)','$timeseries$','$geom$','$prm$','$firings_true$','$firings_out$','$(argfile)');"
-    # cmd_call = "p_ironclust('{}', '{}', '{}', '', '', '{}', '{}');"\
-    #     .format(tmpdir, dataset_dir+'/raw.mda', dataset_dir+'/geom.csv', tmpdir+'/firings.mda', dataset_dir+'/argfile.txt')
-    # cmd = 'matlab -nosplash -nodisplay -r "{} {} quit;"'.format(
-    #     cmd_path, cmd_call)
-    # print(cmd)
-    # #retcode = _run_command_and_print_output(cmd)
-    # retcode = os.system(cmd)
-
-    # if retcode != 0:
-    #     raise Exception('IronClust returned a non-zero exit code')
+        raise Exception('jrclust returned a non-zero exit code')
 
     # parse output
     result_fname = tmpdir + '/firings.mda'

@@ -41,7 +41,7 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.0.1'  # wrapper VERSION
+    VERSION = '0.0.3'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
@@ -50,23 +50,25 @@ class HerdingSpikes2(mlpr.Processor):
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
-    adjacency_radius = mlpr.FloatParameter('Use -1 to include all channels in every neighborhood')
-    channels = mlpr.IntegerListParameter(
-        description='List of channels to use.', optional=True, default=[])
-    clustering_bandwidth = mlpr.FloatParameter(
-        optional=True, default=6.0, description='')
-    clustering_alpha = mlpr.FloatParameter(
-        optional=True, default=6.0, description='')
-    clustering_bin_seeding = mlpr.BoolParameter(
-        optional=True, default=False, description='Use GPU if available')
-    cutout_start = mlpr.FloatParameter(
-        description='', optional=True, default=10)
-    cutout_end = mlpr.FloatParameter(
-        description='', optional=True, default=30)
-    detection_threshold = mlpr.FloatParameter(
-        description='', optional=True, default=20)
-    probe_masked_channels = mlpr.IntegerListParameter(
-        description='', optional=True, default=[])
+    channels = mlpr.IntegerListParameter(optional=True, default=[],
+        description='List of channels to use.')
+    clustering_bandwidth = mlpr.FloatParameter(optional=True, default=5, description='')
+    clustering_alpha = mlpr.FloatParameter(optional=True, default=5, description='')
+    left_cutout_time = mlpr.FloatParameter(description='', optional=True, default=0.2)
+    right_cutout_time = mlpr.FloatParameter(description='', optional=True, default=1)
+    detection_threshold = mlpr.FloatParameter(optional=True, default=26, description='')
+    clustering_bin_seeding = mlpr.BoolParameter(optional=True, default=True, description='')
+    clustering_min_bin_freq = mlpr.FloatParameter(optional=True, default=8, description='')
+    pca_ncomponents = mlpr.IntegerParameter(optional=True, default=2, description='')
+
+    # extra_probe_params
+    inner_radius, neighbor_radius, event_length, peak_jitter = \
+        [mlpr.FloatParameter(optional=True, default=_x, description='') for _x in \
+            [75, 80, .2, .2]]
+    # extra_detection_params
+    maa, ahpthr, amp_evaluation_time, spk_evaluation_time = \
+        [mlpr.FloatParameter(optional=True, default=_x, description='') for _x in \
+            [0, 0, .05, 1]]
 
     def run(self):
         recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -115,61 +117,56 @@ def hs2_helper(
         **kwargs):  # all mlpr parameters
 
     extra_probe_params = {
-        'inner_radius': kwargs['adjacency_radius'],
-        'neighbor_radius': kwargs['adjacency_radius'],
-        # 'event_length': 0.5,
-        # 'peak_jitter': 0.2
+        'inner_radius': kwargs['inner_radius'],
+        'neighbor_radius': kwargs['neighbor_radius'],
+        'event_length': kwargs['event_length'],
+        'peak_jitter': kwargs['peak_jitter'],
     }
     extra_detection_params = {
         'to_localize': True,
         'num_com_centers': 1,
-        'maa': 0,
-        'ahpthr': 0,
+        'maa': kwargs['maa'],
+        'ahpthr': kwargs['ahpthr'],
         'out_file_name': "HS2_detected",
         'decay_filtering': False,
         'save_all': False,
-        # 'amp_evaluation_time': 0.4,
-        # 'spk_evaluation_time': 1.7
+        'amp_evaluation_time': kwargs['amp_evaluation_time'],
+        'spk_evaluation_time': kwargs['spk_evaluation_time'],
     }
     extra_pca_params = {
-        'pca_ncomponents': 2,
-        'pca_whiten': True
+        'pca_ncomponents': kwargs['pca_ncomponents'],
+        'pca_whiten': True,
     }
 
     # this should have its name changed
     Probe = hs.probe.RecordingExtractor(
-        recording, masked_channels=kwargs['probe_masked_channels'],
+        recording, 
         **extra_probe_params)
 
     H = hs.HSDetection(Probe, file_directory_name=str(tmpdir),
-                       cutout_start=kwargs['cutout_start'],
-                       cutout_end=kwargs['cutout_end'],
-                       threshold=kwargs['detection_threshold'],
-                       **extra_detection_params)
+        left_cutout_time=kwargs['left_cutout_time'],
+        right_cutout_time=kwargs['right_cutout_time'],
+        threshold=kwargs['detection_threshold'],
+        **extra_detection_params)
 
-    H.DetectFromRaw(load=True)
-
-    C = hs.HSClustering(H)
-    C.ShapePCA(**extra_pca_params)
-    C.CombinedClustering(bandwidth=kwargs['clustering_bandwidth'],
-                         alpha=kwargs['clustering_alpha'],
-                         n_jobs=clustering_n_jobs,
-                         bin_seeding=kwargs['clustering_bin_seeding'])
+    H.DetectFromRaw(load=True, tInc=1000000)
 
     sorted_file = os.path.join(tmpdir, 'HS2_sorted.hdf5')
     if(not H.spikes.empty):
         C = hs.HSClustering(H)
         C.ShapePCA(**extra_pca_params)
-        C.CombinedClustering(alpha=kwargs['clustering_alpha'],
-                             cluster_subset=None,
-                             bandwidth=kwargs['clustering_bandwidth'],
-                             bin_seeding=kwargs['clustering_bin_seeding'],
-                             n_jobs=clustering_n_jobs,
-                             )
-        C.SaveHDF5(sorted_file)
+        C.CombinedClustering(
+            alpha=kwargs['clustering_alpha'],
+            cluster_subset=None,
+            bandwidth=kwargs['clustering_bandwidth'],
+            bin_seeding=kwargs['clustering_bin_seeding'],
+            n_jobs=clustering_n_jobs,
+            min_bin_freq=kwargs['clustering_min_bin_freq'])        
     else:
         C = hs.HSClustering(H)
-        C.SaveHDF5(sorted_file)
+
+    print('Saving to '+sorted_file)
+    C.SaveHDF5(sorted_file)
 
     sorting = se.HS2SortingExtractor(sorted_file)
     return sorting
