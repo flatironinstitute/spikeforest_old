@@ -15,6 +15,12 @@ import mtlogging
 
 class TheApp():
     def __init__(self, *, mode, path):
+        if mode is None:
+            if path.endswith('.json'):
+                obj0 = mt.loadObject(path=path)
+                mode = obj0.get('mode', None)
+        if mode is None:
+            mode = 'spikeforest'
         self._mode = mode
         self._path = path
 
@@ -36,7 +42,7 @@ def main():
         'file', help='Path to the recording directory, a directory of recordings, or a spikeforest file', nargs='?', default=None
     )
     parser.add_argument(
-        '--mode', help="Possible modes: spikeforest, analysis", required=False, default='spikeforest'
+        '--mode', help="Possible modes: spikeforest, analysis, spike-front", required=False, default=None
     )
     parser.add_argument(
         '--port', help='The port to listen on (for a web service). Otherwise, attempt to launch as stand-alone GUI.', required=False, default=None

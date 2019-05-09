@@ -278,11 +278,20 @@ def main():
         mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] for S in Sorters])
 
-    # STUDY SORTER RESULTS
-    print('******************************** ASSEMBLING STUDY SORTER RESULTS...')
-    StudySorterResults = _assemble_study_sorter_results(recordings=recordings, studies=studies, sorting_results=sorting_results)
+    # STUDY ANALYSIS RESULTS
+    print('******************************** ASSEMBLING STUDY ANALYSIS RESULTS...')
+    sorter_names = sorted(list(set([sr['sorter']['name'] for sr in sorting_results])))
+    StudyAnalysisResults = [
+        _assemble_study_analysis_result(
+            study_name=study['name'],
+            recordings=recordings,
+            sorting_results=sorting_results,
+            sorter_names=sorter_names
+        )
+        for study in studies
+    ]
     if output_dir is not None:
-        mt.saveObject(object=StudySorterResults, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySorterResults.json')))
+        mt.saveObject(object=StudyAnalysisResults, dest_path=os.path.abspath(os.path.join(output_dir, 'StudyAnalysisResults.json')))
 
     # STUDIES
     print('******************************** ASSEMBLING STUDIES...')
@@ -301,95 +310,100 @@ def main():
     print([S['name'] for S in Studies])
 
     obj = dict(
-        study_sets=StudySets,
-        recordings=Recordings,
-        true_units=TrueUnits,
-        unit_results=UnitResults,
-        sorting_results=SortingResults,
-        sorters=Sorters,
-        studies=Studies,
-        algorithms=Algorithms
+        mode='spike-front',
+        StudySets=StudySets,
+        Recordings=Recordings,
+        TrueUnits=TrueUnits,
+        UnitResults=UnitResults,
+        SortingResults=SortingResults,
+        Sorters=Sorters,
+        Studies=Studies,
+        Algorithms=Algorithms,
+        StudyAnalysisResults=StudyAnalysisResults
     )
     address = mt.saveObject(object=obj)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
 
 
-def _assemble_study_sorter_results(*, recordings, studies, sorting_results):
-    sorter_names = sorted(list(set([sr['sorter']['name'] for sr in sorting_results])))
+def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, sorter_names):
+    true_units = dict()
+    recording_names = []
+    for irec, rec in enumerate(recordings):
+        if rec['study'] == study_name:
+            recording_names.append(rec['name'])
+            true_units_info = mt.loadObject(path=rec['summary']['true_units_info'])
+            for unit_info in true_units_info:
+                id0 = unit_info['unit_id']
+                true_units[study_name + '/' + rec['name'] + '/{}'.format(id0)] = dict(
+                    unit_id=id0,
+                    recording_index=irec,
+                    snr=unit_info['snr'],
+                    firing_rate=unit_info['firing_rate'],
+                    num_events=unit_info['num_events'],
+                    sorting_results=dict()
+                )
+    for sr in sorting_results:
+        rec = sr['recording']
+        if rec['study'] == study_name:
+            if sr.get('comparison_with_truth', None):
+                comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
+                if comparison_with_truth is None:
+                    print(sr)
+                    raise Exception('Unable to retrieve comparison with truth object for sorting result.')
+                sorter_name = sr['sorter']['name']
+                for unit_result in comparison_with_truth.values():
+                    id0 = unit_result['unit_id']
+                    n_match = unit_result['num_matches']
+                    n_fp = unit_result['num_false_positives']
+                    n_fn = unit_result['num_false_negatives']
+                    accuracy = n_match / (n_match + n_fp + n_fn)
+                    if n_match + n_fp > 0:
+                        precision = n_match / (n_match + n_fp)
+                    else:
+                        precision = 0
+                    recall = n_match / (n_match + n_fn)
+                    true_units[study_name + '/' + rec['name'] + '/{}'.format(id0)]['sorting_results'][sorter_name] = dict(
+                        accuracy=accuracy,
+                        precision=precision,
+                        recall=recall
+                    )
 
-    true_units_by_recording = dict()
-    for rec in recordings:
-        snrs = []
-        firing_rates = []
-        num_events = []
-        snr_by_id = dict()
-        firing_rate_by_id = dict()
-        num_events_by_id = dict()
-        true_units_info = mt.loadObject(path=rec['summary']['true_units_info'])
-        for unit_info in true_units_info:
-            id0 = unit_info['unit_id']
-            snr_by_id[id0] = unit_info['snr']
-            firing_rate_by_id[id0] = unit_info['firing_rate']
-            num_events_by_id[id0] = unit_info['num_events']
-        true_units_by_recording[rec['study'] + '/' + rec['name']] = dict(
-            snr_by_id=snr_by_id,
-            firing_rate_by_id=firing_rate_by_id,
-            num_events_by_id=num_events_by_id
+    keys0 = sorted(true_units.keys())
+    true_units_list = [true_units[key] for key in keys0]
+
+    snrs = [_round(x['snr'], 3) for x in true_units_list]
+    firing_rates = [_round(x['firing_rate'], 3) for x in true_units_list]
+    num_events = [x['num_events'] for x in true_units_list]
+    recording_indices = [x['recording_index'] for x in true_units_list]
+    unit_ids = [x['unit_id'] for x in true_units_list]
+
+    study_analysis_result = dict(
+        study_name=study_name,
+        recording_names=recording_names,
+        snrs=snrs,
+        firing_rates=firing_rates,
+        num_events=num_events,
+        recording_indices=recording_indices,
+        unit_ids=unit_ids,
+        sorting_results=dict()
+    )
+    for sorter_name in sorter_names:
+        accuracies = [_round(x['sorting_results'].get(sorter_name, {}).get('accuracy'), 3) for x in true_units_list]
+        precisions = [_round(x['sorting_results'].get(sorter_name, {}).get('precision'), 3) for x in true_units_list]
+        recalls = [_round(x['sorting_results'].get(sorter_name, {}).get('recall'), 3) for x in true_units_list]
+        study_analysis_result['sorting_results'][sorter_name] = dict(
+            accuracies=accuracies,
+            precisions=precisions,
+            recalls=recalls
         )
 
-    study_sorter_results = []
-    for study in studies:
-        total_true_units = 0
-        for rec in recordings:
-            if rec['study'] == study['name']:
-                true_units_info = true_units_by_recording[rec['study'] + '/' + rec['name']]
-                total_true_units = total_true_units + len(true_units_info['snr_by_id'].keys())
+    return study_analysis_result
 
-        for sorter_name in sorter_names:
-            srs = [sr for sr in sorting_results if (sr['sorter']['name'] == sorter_name) and (sr['recording']['study'] == study['name'])]
-            accuracies = []
-            precisions = []
-            recalls = []
-            snrs = []
-            firing_rates = []
-            num_events = []
-            for sr in srs:
-                if sr.get('comparison_with_truth', None):
-                    comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
-                    if comparison_with_truth is None:
-                        print(sr)
-                        raise Exception('Unable to retrieve comparison with truth object for sorting result.')
-                    true_units_info = true_units_by_recording[sr['recording']['study'] + '/' + sr['recording']['name']]
-                    for unit_result in comparison_with_truth.values():
-                        id0 = unit_result['unit_id']
-                        n_match = unit_result['num_matches']
-                        n_fp = unit_result['num_false_positives']
-                        n_fn = unit_result['num_false_negatives']
-                        accuracy = n_match / (n_match + n_fp + n_fn)
-                        if n_match + n_fp > 0:
-                            precision = n_match / (n_match + n_fp)
-                        else:
-                            precision = 0
-                        recall = n_match / (n_match + n_fn)
-                        accuracies.append(accuracy)
-                        precisions.append(precision)
-                        recalls.append(recall)
-                        snrs.append(true_units_info['snr_by_id'][id0])
-                        firing_rates.append(true_units_info['firing_rate_by_id'][id0])
-                        num_events.append(true_units_info['num_events_by_id'][id0])
-            study_sorter_results.append(dict(
-                study=study['name'],
-                sorter=sorter_name,
-                accuracies=accuracies,
-                precisions=precisions,
-                recalls=recalls,
-                snrs=snrs,
-                firing_rates=firing_rates,
-                num_events=num_events,
-                total_true_units=total_true_units,
-                missed_true_units=total_true_units - len(snrs)
-            ))
-    return study_sorter_results
+
+def _round(x, num):
+    if x is None:
+        return None
+    return round(x, num)
 
 if __name__ == "__main__":
     main()
