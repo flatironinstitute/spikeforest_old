@@ -128,18 +128,18 @@ def test_klusta_magland_c8():
 
 
 @pytest.mark.spikeforest
-@pytest.mark.tridesclous_magland_c4
+@pytest.mark.tdc_magland_c4
 @pytest.mark.exclude
-def test_tridesclous_magland_c4():
+def test_tdc_magland_c4():
     sorter = Tridesclous
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.1)
 
 
 @pytest.mark.spikeforest
-@pytest.mark.tridesclous_magland_c8
+@pytest.mark.tdc_magland_c8
 @pytest.mark.exclude
-def test_tridesclous_magland_c8():
+def test_tdc_magland_c8():
     sorter = Tridesclous
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
