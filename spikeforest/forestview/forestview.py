@@ -3,6 +3,7 @@ from mountaintools import client as mt
 from .core import ForestViewMainWindow
 from .spikeforestcontext import SpikeForestContext
 from .analysiscontext import AnalysisContext
+from .spikefrontcontext import SpikeFrontContext
 import os
 
 
@@ -11,6 +12,8 @@ def forestview(path, *, mode='spikeforest'):
         context = _load_spikeforest_context(path)
     elif mode == 'analysis':
         context = _load_analysis_context(path)
+    elif mode == 'spike-front':
+        context = _load_spikefront_context(path)
     else:
         raise Exception('Invalid mode: ' + mode)
 
@@ -49,6 +52,25 @@ def _load_analysis_context(path):
         return None
     context = AnalysisContext(
         obj=obj
+    )
+    return context
+
+
+def _load_spikefront_context(path):
+    obj = mt.loadObject(path=path)
+    if not obj:
+        print('Unable to load file: ' + path, file=sys.stderr)
+        return None
+    context = SpikeFrontContext(
+        StudySets=obj.get("StudySets", []),
+        Recordings=obj.get("Recordings", []),
+        TrueUnits=obj.get("TrueUnits", []),
+        UnitResults=obj.get("UnitResults", []),
+        SortingResults=obj.get("SortingResults", []),
+        Sorters=obj.get("Sorters", []),
+        Studies=obj.get("Studies", []),
+        Algorithms=obj.get("Algorithms", []),
+        StudyAnalysisResults=obj.get("StudyAnalysisResults", [])
     )
     return context
 
