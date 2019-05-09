@@ -13,6 +13,12 @@ boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 
+
+
+def main():
+    print('test_tridesclous_magland_c4')
+    test_tridesclous_magland_c4()
+
 @pytest.mark.spikeforest
 @pytest.mark.ms4
 @pytest.mark.exclude
@@ -334,3 +340,8 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
     print('Average accuracy: {}'.format(avg_accuracy))
 
     assert(avg_accuracy >= assert_avg_accuracy)
+
+
+
+if __name__=='__main__':
+    main()

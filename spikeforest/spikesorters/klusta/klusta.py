@@ -18,19 +18,15 @@ except ImportError:
 
 class Klusta(mlpr.Processor):
     """
-    Parameters
-    ----------
 
+    Installation instruction
+        >>> pip install Cython h5py tqdm
+        >>> pip install click klusta klustakwik2
 
-    probe_file
-    threshold_strong_std_factor
-    threshold_weak_std_factor
-    detect_sign
-    extract_s_before
-    extract_s_after
-    n_features_per_channel
-    pca_n_waveforms_max
-    num_starting_clusters
+    More information on klusta at:
+      * https://github.com/kwikteam/phy"
+      * https://github.com/kwikteam/klusta
+
     """
 
     NAME = 'Klusta'
@@ -54,15 +50,6 @@ class Klusta(mlpr.Processor):
     extract_s_before = mlpr.IntegerParameter(optional=True, default=16, description='')
     extract_s_after = mlpr.IntegerParameter(optional=True, default=32, description='')
 
-    installation_mesg = """
-       >>> pip install Cython h5py tqdm
-       >>> pip install click klusta klustakwik2
-
-    More information on klusta at:
-      * https://github.com/kwikteam/phy"
-      * https://github.com/kwikteam/klusta
-    """
-
     def run(self):
         # alias to params
         p = {
@@ -73,13 +60,9 @@ class Klusta(mlpr.Processor):
             p[param0.name] = getattr(self, param0.name)
         source_dir = Path(__file__).parent
 
-        code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))        
-        tmpdir = Path(os.environ.get('TEMPDIR', '/tmp') + '/klusta-tmp-' + code)
-        if not os.path.exists(tmpdir):
-            os.mkdir(tmpdir)
+        tmpdir = Path(_get_tmpdir('klusta'))
 
         # source file
-        recording = SFMdaRecordingExtractor(self.recording_dir)
         recording = SFMdaRecordingExtractor(self.recording_dir)
         if len(self.channels) > 0:
             recording = se.SubRecordingExtractor(
@@ -130,7 +113,6 @@ class Klusta(mlpr.Processor):
 
         try:
             sorting = klusta_helper(tmpdir=tmpdir)
-
             SFMdaSortingExtractor.write_sorting(
                 sorting=sorting, save_path=self.firings_out)
         except:
@@ -150,6 +132,19 @@ def klusta_helper(*, tmpdir):  # all mlpr parameters
         raise Exception('Klusta did not run successfully')
     sorting = se.KlustaSortingExtractor(tmpdir / 'recording.kwik')
     return sorting
+
+
+# To be shared across sorters (2019.05.05)
+def _get_tmpdir(sorter_name):
+    code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+    tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
+    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    # reset the output folder
+    if os.path.exists(tmpdir):
+        shutil.rmtree(str(tmpdir))
+    else:
+        os.makedirs(tmpdir)
+    return tmpdir
 
 
 def _run_command_and_print_output(command):

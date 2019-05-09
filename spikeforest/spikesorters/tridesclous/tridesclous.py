@@ -1,10 +1,12 @@
 from pathlib import Path
-import os
-import shutil
-import numpy as np
 
-from spiketoolkit.sorters.basesorter import BaseSorter
+import mlprocessors as mlpr
 import spikeextractors as se
+#from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+import os, time, random, string, shutil, sys, shlex, json
+from mountaintools import client as mt
+from subprocess import Popen, PIPE, CalledProcessError, call
 
 try:
     import tridesclous as tdc
@@ -13,37 +15,87 @@ except ImportError:
     HAVE_TDC = False
 
 
-class TridesclousSorter(BaseSorter):
+class Tridesclous(mlpr.Processor):
     """
     tridesclous is one of the more convinient, fast and elegant
     spike sorter.
-    Everyone should test it.
-    """
-
-    sorter_name = 'tridesclous'
-    installed = HAVE_TDC
-
-    _default_params = None  # later
-
-    installation_mesg = """
-       >>> pip install https://github.com/tridesclous/tridesclous/archive/master.zip
+    
+    Installation instruction
+        >>> pip install https://github.com/tridesclous/tridesclous/archive/master.zip
 
     More information on tridesclous at:
-      * https://github.com/tridesclous/tridesclous
-      * https://tridesclous.readthedocs.io
+    * https://github.com/tridesclous/tridesclous
+    * https://tridesclous.readthedocs.io
+
     """
 
-    def __init__(self, **kargs):
-        BaseSorter.__init__(self, **kargs)
+    NAME = 'Tridesclous'
+    VERSION = '0.0.1'  # wrapper VERSION
+    ADDITIONAL_FILES = []
+    ENVIRONMENT_VARIABLES = [
+        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
+    CONTAINER = None
+    CONTAINER_SHARE_ID = None
 
-    def _setup_recording(self, recording, output_folder):
-        # reset the output folder
-        if output_folder.is_dir():
-            shutil.rmtree(str(output_folder))
-        os.makedirs(str(output_folder))
+    recording_dir = mlpr.Input('Directory of recording', directory=True)
+    firings_out = mlpr.Output('Output firings file')
+    channels = mlpr.IntegerListParameter(optional=True, default=[],
+                                         description='List of channels to use.')
+    detect_sign = mlpr.FloatParameter(optional=True, default=-1, description='')
+    detection_threshold = mlpr.FloatParameter(optional=True, default=5.5, description='')
+    freq_min = mlpr.FloatParameter(optional=True, default=400, description='')
+    freq_max = mlpr.FloatParameter(optional=True, default=5000, description='')
+    waveforms_n_left = mlpr.IntegerParameter(description='', optional=True, default=-45)
+    waveforms_n_right = mlpr.IntegerParameter(description='', optional=True, default=60)
+    align_waveform = mlpr.BoolParameter(description='', optional=True, default=False)
+    common_ref_removal = mlpr.BoolParameter(description='', optional=True, default=False)
+    peak_span = mlpr.FloatParameter(optional=True, default=.0002, description='')
+    alien_value_threshold = mlpr.FloatParameter(optional=True, default=100, description='')
+
+    def run(self):
+        tmpdir = Path(_get_tmpdir('tdc'))
+        recording = SFMdaRecordingExtractor(self.recording_dir)
+
+        params = {
+            'fullchain_kargs': {
+                'duration': 300.,
+                'preprocessor': {
+                    'highpass_freq': self.freq_min,
+                    'lowpass_freq': self.freq_max,
+                    'smooth_size': 0,
+                    'chunksize': 1024,
+                    'lostfront_chunksize': 128,
+                    'signalpreprocessor_engine': 'numpy',
+                    'common_ref_removal':self.common_ref_removal,
+                },
+                'peak_detector': {
+                    'peakdetector_engine': 'numpy',
+                    'peak_sign': '-',
+                    'relative_threshold': self.detection_threshold,
+                    'peak_span': self.peak_span,
+                },
+                'noise_snippet': {
+                    'nb_snippet': 300,
+                },
+                'extract_waveforms': {
+                    'n_left': self.waveforms_n_left,
+                    'n_right': self.waveforms_n_right,
+                    'mode': 'rand',
+                    'nb_max': 20000,
+                    'align_waveform': self.align_waveform,
+                },
+                'clean_waveforms': {
+                    'alien_value_threshold': self.alien_value_threshold,
+                },
+            },
+            'feat_method': 'peak_max',
+            'feat_kargs': {},
+            'clust_method': 'sawchaincut',
+            'clust_kargs': {'kde_bandwith': 1.},
+        }    
 
         # save prb file:
-        probe_file = output_folder / 'probe.prb'
+        probe_file = tmpdir / 'probe.prb'
         se.save_probe_file(recording, probe_file, format='spyking_circus')
 
         # source file
@@ -54,10 +106,8 @@ class TridesclousSorter(BaseSorter):
             nb_chan = len(recording._channels)
             offset = recording._timeseries.offset
         else:
-            if self.debug:
-                print('Local copy of recording')
             # save binary file (chunk by hcunk) into a new file
-            raw_filename = output_folder / 'raw_signals.raw'
+            raw_filename = tmpdir / 'raw_signals.raw'
             n_chan = recording.get_num_channels()
             chunksize = 2**24// n_chan
             se.write_binary_dat_format(recording, raw_filename, time_axis=0, dtype='float32', chunksize=chunksize)
@@ -65,90 +115,76 @@ class TridesclousSorter(BaseSorter):
             offset = 0
 
         # initialize source and probe file
-        tdc_dataio = tdc.DataIO(dirname=str(output_folder))
+        tdc_dataio = tdc.DataIO(dirname=str(tmpdir))
         nb_chan = recording.get_num_channels()
 
         tdc_dataio.set_data_source(type='RawData', filenames=[str(raw_filename)],
                                    dtype=dtype, sample_rate=recording.get_sampling_frequency(),
                                    total_channel=nb_chan, offset=offset)
         tdc_dataio.set_probe_file(str(probe_file))
-        if self.debug:
-            print(tdc_dataio)
 
-    def _run(self, recording, output_folder):
-        nb_chan = recording.get_num_channels()
-
-        # check params and OpenCL when many channels
-        use_sparse_template = False
-        use_opencl_with_sparse = False
-        if nb_chan >64: # this limit depend on the platform of course
-            if tdc.cltools.HAVE_PYOPENCL:
-                # force opencl
-                self.params['fullchain_kargs']['preprocessor']['signalpreprocessor_engine'] = 'opencl'
-                use_sparse_template = True
-                use_opencl_with_sparse = True
-            else:
-                print('OpenCL is not available processing will be slow, try install it')
-
-        tdc_dataio = tdc.DataIO(dirname=str(output_folder))
-        # make catalogue
-        chan_grps = list(tdc_dataio.channel_groups.keys())
-        for chan_grp in chan_grps:
-            cc = tdc.CatalogueConstructor(dataio=tdc_dataio, chan_grp=chan_grp)
-            tdc.apply_all_catalogue_steps(cc, verbose=self.debug, **self.params)
-            if self.debug:
-                print(cc)
-            cc.make_catalogue_for_peeler()
-
-            # apply Peeler (template matching)
-            initial_catalogue = tdc_dataio.load_catalogue(chan_grp=chan_grp)
-            peeler = tdc.Peeler(tdc_dataio)
-            peeler.change_params(catalogue=initial_catalogue,
-                                 use_sparse_template=use_sparse_template,
-                                 sparse_threshold_mad=1.5,
-                                 use_opencl_with_sparse=use_opencl_with_sparse,)
-            peeler.run(duration=None, progressbar=self.debug)
-
-    @staticmethod
-    def get_result_from_folder(output_folder):
-        sorting = se.TridesclousSortingExtractor(output_folder)
-        return sorting
+        try:
+            sorting = tdc_helper(tmpdir=tmpdir, params=params, recording=recording)
+            SFMdaSortingExtractor.write_sorting(
+                sorting=sorting, save_path=self.firings_out)
+        except:
+            if os.path.exists(tmpdir):
+                if not getattr(self, '_keep_temp_files', False):
+                    shutil.rmtree(tmpdir)
+            raise
+        if not getattr(self, '_keep_temp_files', False):
+            shutil.rmtree(tmpdir)
 
 
-TridesclousSorter._default_params = {
-    'fullchain_kargs': {
-        'duration': 300.,
-        'preprocessor': {
-            'highpass_freq': 400.,
-            'lowpass_freq': 5000.,
-            'smooth_size': 0,
-            'chunksize': 1024,
-            'lostfront_chunksize': 128,
-            'signalpreprocessor_engine': 'numpy',
-            'common_ref_removal':False,
-        },
-        'peak_detector': {
-            'peakdetector_engine': 'numpy',
-            'peak_sign': '-',
-            'relative_threshold': 5.5,
-            'peak_span': 0.0002,
-        },
-        'noise_snippet': {
-            'nb_snippet': 300,
-        },
-        'extract_waveforms': {
-            'n_left': -45,
-            'n_right': 60,
-            'mode': 'rand',
-            'nb_max': 20000,
-            'align_waveform': False,
-        },
-        'clean_waveforms': {
-            'alien_value_threshold': 100.,
-        },
-    },
-    'feat_method': 'peak_max',
-    'feat_kargs': {},
-    'clust_method': 'sawchaincut',
-    'clust_kargs': {'kde_bandwith': 1.},
-}
+def tdc_helper(
+        *, 
+        tmpdir,
+        params,
+        recording):        
+    
+    nb_chan = recording.get_num_channels()
+
+    # check params and OpenCL when many channels
+    use_sparse_template = False
+    use_opencl_with_sparse = False
+    if nb_chan >64: # this limit depend on the platform of course
+        if tdc.cltools.HAVE_PYOPENCL:
+            # force opencl
+            self.params['fullchain_kargs']['preprocessor']['signalpreprocessor_engine'] = 'opencl'
+            use_sparse_template = True
+            use_opencl_with_sparse = True
+        else:
+            print('OpenCL is not available processing will be slow, try install it')
+
+    tdc_dataio = tdc.DataIO(dirname=str(tmpdir))
+    # make catalogue
+    chan_grps = list(tdc_dataio.channel_groups.keys())
+    for chan_grp in chan_grps:
+        cc = tdc.CatalogueConstructor(dataio=tdc_dataio, chan_grp=chan_grp)
+        tdc.apply_all_catalogue_steps(cc, verbose=True, **params)
+        cc.make_catalogue_for_peeler()
+
+        # apply Peeler (template matching)
+        initial_catalogue = tdc_dataio.load_catalogue(chan_grp=chan_grp)
+        peeler = tdc.Peeler(tdc_dataio)
+        peeler.change_params(catalogue=initial_catalogue,
+                                use_sparse_template=use_sparse_template,
+                                sparse_threshold_mad=1.5,
+                                use_opencl_with_sparse=use_opencl_with_sparse,)
+        peeler.run(duration=None, progressbar=False)
+
+    sorting = se.TridesclousSortingExtractor(tmpdir)
+    return sorting
+
+
+# To be shared across sorters (2019.05.05)
+def _get_tmpdir(sorter_name):
+    code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+    tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
+    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    # reset the output folder
+    if os.path.exists(tmpdir):
+        shutil.rmtree(str(tmpdir))
+    else:
+        os.makedirs(tmpdir)
+    return tmpdir

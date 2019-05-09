@@ -7,4 +7,4 @@ from .kilosort2 import KiloSort2
 from .herdingspikes2 import HerdingSpikes2
 from .jrclust import JRClust
 from .klusta import Klusta
-#from .tridesclous import Tridesclous
+from .tridesclous import Tridesclous
