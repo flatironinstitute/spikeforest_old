@@ -286,6 +286,7 @@ def _get_avg_accuracy(study_analysis_result, sorter_name, snr_thresh):
             return avg0, found0, missing0
     raise Exception('Sorting results not found for sorter: ' + sorter_name)
 
+
 class StudyAnalysisResults():
     def __init__(self, obj):
         self._obj = obj
