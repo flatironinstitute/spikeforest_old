@@ -8,14 +8,6 @@ import os, time, random, string, shutil, sys, shlex, json
 from mountaintools import client as mt
 from subprocess import Popen, PIPE, CalledProcessError, call
 
-try:
-    import klusta
-    import klustakwik2
-    HAVE_KLUSTA = True
-except ImportError:
-    HAVE_KLUSTA = False
-
-
 class Klusta(mlpr.Processor):
     """
 
@@ -51,6 +43,16 @@ class Klusta(mlpr.Processor):
     extract_s_after = mlpr.IntegerParameter(optional=True, default=32, description='')
 
     def run(self):
+        try:
+            import klusta
+            import klustakwik2
+            HAVE_KLUSTA = True
+        except ImportError:
+            HAVE_KLUSTA = False
+        
+        if not HAVE_KLUSTA:
+            raise Exception('Klusta kwik is not installed.')
+
         # alias to params
         p = {
             'probe_file': None,
