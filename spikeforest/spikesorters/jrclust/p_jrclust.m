@@ -7,7 +7,8 @@ S_mda = readmda_header_(vcFile_raw);
 % parameter name translation
 P = struct();
 P.evtDetectRad = get_(S_txt, 'adjacency_radius', 50); % name translation
-P.filterType = get_(S_txt, 'adjacency_radius', 'ndiff'); % name translation
+P.filterType = get_(S_txt, 'filter_type', 'ndiff'); % name translation
+P.nDiffOrder = get_(S_txt, 'nDiffOrder', 2); % name translation
 P.qqFactor = get_(S_txt, 'detect_threshold', 5); % name translation
 P.clusterFeature = get_(S_txt, 'feature_type', 'pca'); % name translation
 P.CARMode = get_(S_txt, 'common_ref_type', 'none');

@@ -2,8 +2,8 @@
     "analysis_name": "manual_franklab",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
-    "sorter_keys": ["irc", "ms4", "ks", "ks2", "yass", "sc"],
-    "sorter_keys_disable": ["ms4", "irc", "ks", "ks2-hanging", "yass", "sc"],
+    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta"],
+    "sorter_keys_disable": [],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
     "job_timeout":1200,
@@ -80,6 +80,30 @@
                 "adjacency_radius": 50
             },
             "compute_resource": "cpu"
-        }
+        },
+        "jrc": {
+            "name": "JRClust",
+            "processor_name": "JRClust",
+            "params": {},
+            "compute_resource": "gpu"
+        },        
+        "hs2": {
+            "name": "HerdingSpikes2",
+            "processor_name": "HerdingSpikes2",
+            "params": {},
+            "compute_resource": "cpu"
+        },
+        "klusta": {
+            "name": "Klusta",
+            "processor_name": "Klusta",
+            "params": {},
+            "compute_resource": "cpu"
+        },        
+        "tdc": {
+            "name": "Tridesclous",
+            "processor_name": "Tridesclous",
+            "params": {},
+            "compute_resource": "cpu"
+        }  
     }
 }

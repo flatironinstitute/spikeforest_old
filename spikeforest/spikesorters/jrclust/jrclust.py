@@ -45,23 +45,24 @@ class JRClust(mlpr.Processor):
     firings_out = mlpr.Output('Output firings file')
 
     detect_sign = mlpr.IntegerParameter(
-        'Use -1, 0, or 1, depending on the sign of the spikes in the recording')
+        optional=True, default=-1, description='Use -1, 0, or 1, depending on the sign of the spikes in the recording')
     adjacency_radius = mlpr.FloatParameter(
-        optional=True, default=75, description='Use -1 to include all channels in every neighborhood')
+        optional=True, default=50, description='')
     detect_threshold = mlpr.FloatParameter(
         optional=True, default=4.5, description='detection threshold')
     freq_min = mlpr.FloatParameter(
         optional=True, default=300, description='Use 0 for no bandpass filtering')
     freq_max = mlpr.FloatParameter(
-        optional=True, default=6000, description='Use 0 for no bandpass filtering')
+        optional=True, default=3000, description='Use 0 for no bandpass filtering')
     merge_thresh = mlpr.FloatParameter(
         optional=True, default=0.98, description='Threshold for automated merging')
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=2, description='Number of principal components per channel')
+        optional=True, default=1, description='Number of principal components per channel')
 
     # added in version 0.2.4
     filter_type = mlpr.StringParameter(
         optional=True, default='bandpass', description='{none, bandpass, wiener, fftdiff, ndiff}')
+    nDiffOrder = mlpr.FloatParameter(optional=True, default=2, description='')
     common_ref_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, mean, median}')
     min_count = mlpr.IntegerParameter(
@@ -81,11 +82,7 @@ class JRClust(mlpr.Processor):
         if not mdaio_path:
             raise Exception('Environment variable not set: MDAIO_PATH')
 
-        code = ''.join(random.choice(string.ascii_uppercase)
-                       for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/jrclust-tmp-' + code
-
-        print('------------------------------------- using', tmpdir)
+        tmpdir = _get_tmpdir('jrclust')
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -241,3 +238,16 @@ def read_dataset_params(dsdir):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:
         return json.load(f)
+
+
+# To be shared across sorters (2019.05.05)
+def _get_tmpdir(sorter_name):
+    code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+    tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
+    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    # reset the output folder
+    if os.path.exists(tmpdir):
+        shutil.rmtree(str(tmpdir))
+    else:
+        os.makedirs(tmpdir)
+    return tmpdir

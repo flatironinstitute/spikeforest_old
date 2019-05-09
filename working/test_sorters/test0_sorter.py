@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, Klusta
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Klusta, Tridesclous
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -12,6 +12,12 @@ neuropix32c_recdir = 'sha1dir://d446c8e74fc4ca3a0dab491fca6c10189b527709.neuropi
 boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c.1103_1_1'
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
+
+
+
+def main():
+    print('test_jrc_magland_c8')
+    test_jrc_magland_c8()
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4
@@ -133,7 +139,7 @@ def test_klusta_magland_c8():
 def test_tridesclous_magland_c4():
     sorter = Tridesclous
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
 
 
 @pytest.mark.spikeforest
@@ -142,7 +148,7 @@ def test_tridesclous_magland_c4():
 def test_tridesclous_magland_c8():
     sorter = Tridesclous
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
 
 
 @pytest.mark.spikeforest
@@ -151,7 +157,7 @@ def test_tridesclous_magland_c8():
 def test_hs2_magland_c8():
     sorter = HerdingSpikes2
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container=None)
 
 
 @pytest.mark.spikeforest
@@ -160,7 +166,7 @@ def test_hs2_magland_c8():
 def test_hs2_paired_mea64c():
     sorter = HerdingSpikes2
     params = dict()
-    do_sorting_test(sorter, params, paired_mea64c_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, paired_mea64c_recdir, assert_avg_accuracy=0.1, container=None)
 
 
 @pytest.mark.spikeforest
@@ -272,8 +278,11 @@ def test_irc_sqmea64c():
 @pytest.mark.exclude
 def test_jrc_magland_c8():
     sorter = JRClust
-    params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)    
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=75,
+    )
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5)    
 
 
 
@@ -320,7 +329,7 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
         units_true=[],
         json_out={'ext': '.json'},
         html_out={'ext': '.html'},
-        _container='default',
+        _container=None,
         _force_run=True
     )
 
@@ -331,3 +340,8 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
     print('Average accuracy: {}'.format(avg_accuracy))
 
     assert(avg_accuracy >= assert_avg_accuracy)
+
+
+
+if __name__=='__main__':
+    main()
