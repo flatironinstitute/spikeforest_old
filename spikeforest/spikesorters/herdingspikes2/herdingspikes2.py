@@ -75,10 +75,8 @@ class HerdingSpikes2(mlpr.Processor):
 
     def run(self):
         recording = SFMdaRecordingExtractor(self.recording_dir)
-        clustering_n_jobs = os.environ.get('NUM_WORKERS', None)
-
-        code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/herdingspikes2-tmp-' + code
+        clustering_n_jobs = int(os.environ.get('NUM_WORKERS', None))
+        tmpdir = _get_tmpdir('herdingspikes2')
 
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -186,3 +184,16 @@ def read_dataset_params(dsdir):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:
         return json.load(f)
+
+
+# To be shared across sorters (2019.05.05)
+def _get_tmpdir(sorter_name):
+    code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+    tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
+    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    # reset the output folder
+    if os.path.exists(tmpdir):
+        shutil.rmtree(str(tmpdir))
+    else:
+        os.makedirs(tmpdir)
+    return tmpdir
