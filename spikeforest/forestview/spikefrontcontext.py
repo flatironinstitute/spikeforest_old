@@ -37,7 +37,7 @@ class SpikeFrontContext():
 
         self._study_analysis_results_by_name = dict()
         for x in self._StudyAnalysisResults:
-            self._study_analysis_results_by_name[x['study_name']] = x
+            self._study_analysis_results_by_name[x['studyName']] = x
 
         self._sorters_by_name = dict()
         for x in self._Sorters:

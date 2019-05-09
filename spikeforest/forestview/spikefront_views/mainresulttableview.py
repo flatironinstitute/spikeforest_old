@@ -245,41 +245,46 @@ class _HeaderWidget(vd.Component):
 
 
 def _get_accuracy_count(study_analysis_result, sorter_name, accuracy_thresh):
-    # snrs = study_analysis_result['snrs']
-    accuracies = study_analysis_result['sorting_results'][sorter_name]['accuracies']
-    count0 = 0
-    found0 = 0
-    missing0 = 0
-    for acc in accuracies:
-        if acc is not None:
-            if acc >= accuracy_thresh:
-                count0 = count0 + 1
-            found0 = found0 + 1
-        else:
-            missing0 = missing0 + 1
-    return count0, found0, missing0
+    # snrs = study_analysis_result['trueSnrs']
+    for sr in study_analysis_result['sortingResults']:
+        if sr['sorterName'] == sorter_name:
+            accuracies = sr['accuracies']
+            count0 = 0
+            found0 = 0
+            missing0 = 0
+            for acc in accuracies:
+                if acc is not None:
+                    if acc >= accuracy_thresh:
+                        count0 = count0 + 1
+                    found0 = found0 + 1
+                else:
+                    missing0 = missing0 + 1
+            return count0, found0, missing0
+    raise Exception('Sorting results not found for sorter: ' + sorter_name)
 
 
 def _get_avg_accuracy(study_analysis_result, sorter_name, snr_thresh):
-    snrs = study_analysis_result['snrs']
-    accuracies = study_analysis_result['sorting_results'][sorter_name]['accuracies']
-    found0 = 0
-    missing0 = 0
-    to_use = []
-    for i, acc in enumerate(accuracies):
-        snr0 = snrs[i]
-        if snr0 >= snr_thresh:
-            if acc is not None:
-                to_use.append(acc)
-                found0 = found0 + 1
-            else:
-                to_use.append(0)
-                missing0 = missing0 + 1
-    avg0 = 0
-    if len(to_use) > 0:
-        avg0 = np.mean(to_use)
-    return avg0, found0, missing0
-
+    snrs = study_analysis_result['trueSnrs']
+    for sr in study_analysis_result['sortingResults']:
+        if sr['sorterName'] == sorter_name:
+            accuracies = sr['accuracies']
+            found0 = 0
+            missing0 = 0
+            to_use = []
+            for i, acc in enumerate(accuracies):
+                snr0 = snrs[i]
+                if snr0 >= snr_thresh:
+                    if acc is not None:
+                        to_use.append(acc)
+                        found0 = found0 + 1
+                    else:
+                        to_use.append(0)
+                        missing0 = missing0 + 1
+            avg0 = 0
+            if len(to_use) > 0:
+                avg0 = np.mean(to_use)
+            return avg0, found0, missing0
+    raise Exception('Sorting results not found for sorter: ' + sorter_name)
 
 class StudyAnalysisResults():
     def __init__(self, obj):

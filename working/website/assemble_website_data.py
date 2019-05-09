@@ -378,24 +378,25 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
     unit_ids = [x['unit_id'] for x in true_units_list]
 
     study_analysis_result = dict(
-        study_name=study_name,
-        recording_names=recording_names,
-        snrs=snrs,
-        firing_rates=firing_rates,
-        num_events=num_events,
-        recording_indices=recording_indices,
-        unit_ids=unit_ids,
-        sorting_results=dict()
+        studyName=study_name,
+        recordingNames=recording_names,
+        trueSnrs=snrs,
+        trueFiringRates=firing_rates,
+        trueNumEvents=num_events,
+        trueRecordingIndices=recording_indices,
+        trueUnitIds=unit_ids,
+        sortingResults=[]
     )
     for sorter_name in sorter_names:
         accuracies = [_round(x['sorting_results'].get(sorter_name, {}).get('accuracy'), 3) for x in true_units_list]
         precisions = [_round(x['sorting_results'].get(sorter_name, {}).get('precision'), 3) for x in true_units_list]
         recalls = [_round(x['sorting_results'].get(sorter_name, {}).get('recall'), 3) for x in true_units_list]
-        study_analysis_result['sorting_results'][sorter_name] = dict(
+        study_analysis_result['sortingResults'].append(dict(
+            sorterName=sorter_name,
             accuracies=accuracies,
             precisions=precisions,
             recalls=recalls
-        )
+        ))
 
     return study_analysis_result
 
