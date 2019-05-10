@@ -1,5 +1,5 @@
 ---
-label: ALG_KILOSORT2
+label: KILOSORT2
 dockerfile:
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/kilosort2/kilosort2.py
 website: https://github.com/MouseLand/Kilosort2
@@ -8,12 +8,10 @@ authors: Marius Pachitariu
 doi:
 ---
 _
-# ALG_KILOSORT2
+# KILOSORT2
 
 ## Description
 
-TODO
+From the KiloSort2 website: A Matlab package for spike sorting electrophysiological data up to 1024 channels. In many cases, and especially for Neuropixels probes, the automated output of Kilosort2 requires minimal manual curation.
 
 ## References
-
-TODO

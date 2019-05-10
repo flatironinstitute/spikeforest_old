@@ -344,6 +344,9 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
                     sorting_results=dict()
                 )
             irec = irec + 1
+    cpu_times_by_sorter = dict()
+    for sorter_name in sorter_names:
+        cpu_times_by_sorter[sorter_name] = []
     for sr in sorting_results:
         rec = sr['recording']
         if rec['study'] == study_name:
@@ -367,8 +370,11 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
                     true_units[study_name + '/' + rec['name'] + '/{}'.format(id0)]['sorting_results'][sorter_name] = dict(
                         accuracy=accuracy,
                         precision=precision,
-                        recall=recall
+                        recall=recall,
                     )
+                cpu_times_by_sorter[sorter_name].append(sr['execution_stats'].get('elapsed_sec', None))
+            else:
+                cpu_times_by_sorter[sorter_name].append(None)
 
     keys0 = sorted(true_units.keys())
     true_units_list = [true_units[key] for key in keys0]
@@ -397,8 +403,10 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
             sorterName=sorter_name,
             accuracies=accuracies,
             precisions=precisions,
-            recalls=recalls
+            recalls=recalls,
+            cpuTimesSec=cpu_times_by_sorter[sorter_name]
         ))
+    print(study_analysis_result['studyName'], study_analysis_result['sortingResults'][0]['cpuTimesSec'])
 
     return study_analysis_result
 

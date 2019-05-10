@@ -1,5 +1,5 @@
 ---
-label: ALG_IRONCLUST
+label: IRONCLUST
 dockerfile:
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/ironclust/ironclust.py
 website: https://github.com/jamesjun/ironclust
@@ -8,12 +8,11 @@ authors: James Jun
 doi:
 ---
 _
-# ALG_IRONCLUST
+# IRONCLUST
 
 ## Description
 
-TODO
+Spike sorting software developed at Flatiron Institute, based on JRCLUST (Janelia Rocket Cluster).
 
 ## References
 
-TODO

@@ -1,5 +1,5 @@
 ---
-label: ALG_SPYKING_CIRCUS
+label: SPYKING_CIRCUS
 processor_name: SpykingCircus
 dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/spyking_circus/container/Dockerfile
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/spyking_circus/spyking_circus.py
@@ -8,7 +8,7 @@ authors: Pierre Yger and Olivier Marre
 doi: 10.7554/eLife.34518
 ---
 _
-# ALG_SPYKING_CIRCUS
+# SPYKING_CIRCUS
 
 ## Description
 

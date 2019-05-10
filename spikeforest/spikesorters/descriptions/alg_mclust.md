@@ -1,5 +1,5 @@
 ---
-label: ALG_MCLUST
+label: MCLUST
 dockerfile:
 wrapper:
 notes: Not yet incorporated into SpikeForest
@@ -9,12 +9,8 @@ authors: A. David Redish
 doi:
 ---
 
-# ALG_MCLUST
+# MCLUST
 
 ## Description
 
-TODO
-
 ## References
-
-TODO

@@ -1,5 +1,5 @@
 ---
-label: ALG_KILOSORT
+label: KILOSORT
 dockerfile:
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/kilosort/kilosort.py
 website: https://github.com/cortex-lab/KiloSort
@@ -8,7 +8,7 @@ authors: Marius Pachitariu
 doi: 10.1101/061481
 ---
 _
-# ALG_KILOSORT
+# KILOSORT
 
 ## Description
 

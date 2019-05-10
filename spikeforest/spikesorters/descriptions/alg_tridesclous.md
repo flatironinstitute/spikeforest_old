@@ -1,20 +1,20 @@
 ---
-label: ALG_TRIDESCLOUS
+label: TRIDESCLOUS
 dockerfile:
-wrapper:
-notes: Not yet incorporated into SpikeForest
+wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/tridesclous/tridesclous.py
+notes:
 website: https://github.com/tridesclous/tridesclous
 source_code:
 authors: Samuel Garcia and Christophe Pouzat
 doi:
 ---
 _
-# ALG_TRIDESCLOUS
+# TRIDESCLOUS
 
 ## Description
 
-TODO
+From the Tridesclous website: The primary goal of tridesclous is to provide a toolkit to teach good practices in spike sorting techniques.
+This tools is now mature and can be used for experimental data.
 
 ## References
 
-TODO

@@ -1,5 +1,5 @@
 ---
-label: ALG_YASS
+label: YASS
 dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/yass/container/Dockerfile
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/yass/yass.py
 website: https://yass.readthedocs.io/en/latest/
@@ -8,7 +8,7 @@ authors: Peter Lee, Eduardo Blancas, Nishchal Dethe, Shenghao Wu, Hooshmand Shok
 doi: 10.1101/151928
 ---
 _
-# ALG_YASS
+# YASS
 
 ## Description
 
