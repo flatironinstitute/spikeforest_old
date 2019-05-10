@@ -328,7 +328,8 @@ def main():
 def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, sorter_names):
     true_units = dict()
     recording_names = []
-    for irec, rec in enumerate(recordings):
+    irec = 0
+    for rec in recordings:
         if rec['study'] == study_name:
             recording_names.append(rec['name'])
             true_units_info = mt.loadObject(path=rec['summary']['true_units_info'])
@@ -342,6 +343,7 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
                     num_events=unit_info['num_events'],
                     sorting_results=dict()
                 )
+            irec = irec + 1
     for sr in sorting_results:
         rec = sr['recording']
         if rec['study'] == study_name:

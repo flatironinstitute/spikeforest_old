@@ -2,11 +2,18 @@ from pathlib import Path
 
 import mlprocessors as mlpr
 import spikeextractors as se
-#from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-import os, time, random, string, shutil, sys, shlex, json
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+import os
+import time
+import random
+import string
+import shutil
+import sys
+import shlex
+import json
 from mountaintools import client as mt
 from subprocess import Popen, PIPE, CalledProcessError, call
+
 
 class Klusta(mlpr.Processor):
     """
@@ -36,7 +43,7 @@ class Klusta(mlpr.Processor):
     adjacency_radius = mlpr.FloatParameter(optional=True, default=None, description='')
     detect_sign = mlpr.FloatParameter(optional=True, default=-1, description='')
     threshold_strong_std_factor = mlpr.FloatParameter(optional=True, default=5, description='')
-    threshold_weak_std_factor = mlpr.FloatParameter(optional=True, default=2, description='')    
+    threshold_weak_std_factor = mlpr.FloatParameter(optional=True, default=2, description='')
     n_features_per_channel = mlpr.IntegerParameter(optional=True, default=3, description='')
     num_starting_clusters = mlpr.IntegerParameter(optional=True, default=3, description='')
     extract_s_before = mlpr.IntegerParameter(optional=True, default=16, description='')
@@ -49,7 +56,7 @@ class Klusta(mlpr.Processor):
             HAVE_KLUSTA = True
         except ImportError:
             HAVE_KLUSTA = False
-        
+
         if not HAVE_KLUSTA:
             raise Exception('Klusta kwik is not installed.')
 
@@ -58,7 +65,7 @@ class Klusta(mlpr.Processor):
             'probe_file': None,
             'pca_n_waveforms_max': 10000,
         }
-        for param0 in self.PARAMETERS:
+        for param0 in self.PARAMETERS:  # pylint: disable=no-member
             p[param0.name] = getattr(self, param0.name)
         source_dir = Path(__file__).parent
 
@@ -70,20 +77,20 @@ class Klusta(mlpr.Processor):
             recording = se.SubRecordingExtractor(
                 parent_recording=recording, channel_ids=self.channels)
 
-        if isinstance(recording, se.BinDatRecordingExtractor) and recording._frame_first and\
-                        recording._timeseries.offset==0:
-            # no need to copy
-            raw_filename = str(recording._datfile)
-            raw_filename = raw_filename.replace('.dat', '')
-            dtype = recording._timeseries.dtype.str
-            nb_chan = len(recording._channels)
-        else:
-            # save binary file (chunk by hcunk) into a new file
-            raw_filename = tmpdir / 'recording'
-            n_chan = recording.get_num_channels()
-            chunksize = 2**24// n_chan
-            dtype='int16'
-            se.write_binary_dat_format(recording, raw_filename, time_axis=0, dtype=dtype, chunksize=chunksize)
+        # if isinstance(recording, se.BinDatRecordingExtractor) and recording._frame_first and\
+        #                 recording._timeseries.offset == 0:
+        #     # no need to copy
+        #     raw_filename = str(recording._datfile)
+        #     raw_filename = raw_filename.replace('.dat', '')
+        #     dtype = recording._timeseries.dtype.str
+        #     nb_chan = len(recording._channels)
+        # else:
+        # save binary file (chunk by hcunk) into a new file
+        raw_filename = tmpdir / 'recording'
+        n_chan = recording.get_num_channels()
+        chunksize = 2**24 // n_chan
+        dtype = 'int16'
+        se.write_binary_dat_format(recording, raw_filename, time_axis=0, dtype=dtype, chunksize=chunksize)
 
         # save prb file:
         if p['probe_file'] is None:
@@ -103,14 +110,14 @@ class Klusta(mlpr.Processor):
 
         # Note: should use format with dict approach here
         klusta_config = ''.join(klusta_config).format(raw_filename,
-            p['probe_file'], float(recording.get_sampling_frequency()),
-            recording.get_num_channels(), "'{}'".format(dtype),
-            p['threshold_strong_std_factor'], p['threshold_weak_std_factor'], "'" + detect_sign + "'",
-            p['extract_s_before'], p['extract_s_after'], p['n_features_per_channel'],
-            p['pca_n_waveforms_max'], p['num_starting_clusters']
-        )
+                                                      p['probe_file'], float(recording.get_sampling_frequency()),
+                                                      recording.get_num_channels(), "'{}'".format(dtype),
+                                                      p['threshold_strong_std_factor'], p['threshold_weak_std_factor'], "'" + detect_sign + "'",
+                                                      p['extract_s_before'], p['extract_s_after'], p['n_features_per_channel'],
+                                                      p['pca_n_waveforms_max'], p['num_starting_clusters']
+                                                      )
 
-        with (tmpdir /'config.prm').open('w') as f:
+        with (tmpdir / 'config.prm').open('w') as f:
             f.writelines(klusta_config)
 
         try:
@@ -127,10 +134,10 @@ class Klusta(mlpr.Processor):
 
 
 def klusta_helper(*, tmpdir):  # all mlpr parameters
-    cmd = 'klusta {} --overwrite'.format(tmpdir /'config.prm')
+    cmd = 'klusta {} --overwrite'.format(tmpdir / 'config.prm')
 
     _call_command(cmd)
-    if not (tmpdir /  'recording.kwik').is_file():
+    if not (tmpdir / 'recording.kwik').is_file():
         raise Exception('Klusta did not run successfully')
     sorting = se.KlustaSortingExtractor(tmpdir / 'recording.kwik')
     return sorting
@@ -140,7 +147,7 @@ def klusta_helper(*, tmpdir):  # all mlpr parameters
 def _get_tmpdir(sorter_name):
     code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
     tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
-    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    tmpdir = os.path.join(tmpdir0, '{}-tmp-{}'.format(sorter_name, code))
     # reset the output folder
     if os.path.exists(tmpdir):
         shutil.rmtree(str(tmpdir))
