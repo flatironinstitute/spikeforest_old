@@ -26,8 +26,8 @@ class JRClust(mlpr.Processor):
     2. Activate conda environment for SpikeForest
     3. Create `JRCLUST_PATH` and `MDAIO_PATH`
 
-    See: James Jun, et al. Real-time spike sorting platform for 
-    high-density extracellular probes with ground-truth validation and drift correction    
+    See: James Jun, et al. Real-time spike sorting platform for
+    high-density extracellular probes with ground-truth validation and drift correction
     https://github.com/JaneliaSciComp/JRCLUST
     """
 
@@ -70,7 +70,7 @@ class JRClust(mlpr.Processor):
     fGpu = mlpr.BoolParameter(
         optional=True, default=False, description='Use GPU if available')
     fParfor = mlpr.BoolParameter(
-        optional=True, default=True, description='Use parfor if available')        
+        optional=True, default=True, description='Use parfor if available')
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
@@ -98,7 +98,7 @@ class JRClust(mlpr.Processor):
                 all_params[param0.name] = getattr(self, param0.name)
             sorting = jrclust_helper(
                 recording=recording,
-                tmpdir=tmpdir,                
+                tmpdir=tmpdir,
                 jrclust_path=jrclust_path,
                 mdaio_path=mdaio_path,
                 params=params,
@@ -126,7 +126,7 @@ def jrclust_helper(
     if jrclust_path is None:
         jrclust_path = os.getenv('JRCLUST_PATH', None)
     if mdaio_path is None:
-        mdaio_path = os.getenv('MDAIO_PATH', None)        
+        mdaio_path = os.getenv('MDAIO_PATH', None)
     if not jrclust_path:
         raise Exception(
             'You must either set the JRCLUST_PATH environment variable, or pass the jrclust_path parameter')
@@ -244,7 +244,7 @@ def read_dataset_params(dsdir):
 def _get_tmpdir(sorter_name):
     code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
     tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
-    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    tmpdir = os.path.join(tmpdir0, '{}-tmp-{}'.format(sorter_name, code))
     # reset the output folder
     if os.path.exists(tmpdir):
         shutil.rmtree(str(tmpdir))

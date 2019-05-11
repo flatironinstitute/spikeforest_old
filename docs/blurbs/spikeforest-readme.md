@@ -2,7 +2,7 @@
 
 ## Overview
 
- #marker:29426aa5-spikeforest-overview
+ <!--- #marker:29426aa5-spikeforest-overview -->
 
 SpikeForest is a reproducible, continuously updating platform which benchmarks the performance of spike sorting codes across a large curated database of electrophysiological recordings with ground truth. It consists of an interactive website that presents our up-to-date findings (front-end source code hosted elsewhere), this python package which contains the tools for running the SpikeForest analysis, and an expanding collection of electrophysiology recordings with ground-truth spiking information.
 
@@ -13,7 +13,7 @@ We make use of the [SpikeInterface](https://github.com/SpikeInterface/) project,
 
 ## Installation from PyPI
 
- #marker:a11c726a-spikeforest-pypi-installation
+ <!--- #marker:a11c726a-spikeforest-pypi-installation -->
 
 To install SpikeForest from PyPI, it is recommended that you start from a fresh conda environment with python (>= 3.6).
 
@@ -26,7 +26,7 @@ Test the installation by sorting one of the toy examples as described below.
 
 ## Development installation
 
- #marker:471ab3bd-spikeforest-development-installation
+ <!--- #marker:471ab3bd-spikeforest-development-installation -->
 
 To install SpikeForest for development on Linux, it is recommended that you start from a fresh conda environment with python (>= 3.6).
 
@@ -53,7 +53,7 @@ Test the installation by sorting one of the toy examples as described below.
 
 ## Spike sorting
 
- #marker:d78156d4-spikeforest-spike-sorting
+ <!--- #marker:d78156d4-spikeforest-spike-sorting -->
 
 To use the containerized versions of the spike sorters (recommended), you should [install singularity](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps). This will work for all of the non-Matlab spike sorters (in the future we will also containerize the Matlab packages).
 
@@ -107,14 +107,14 @@ SpykingCircus.execute(
 
 ## Preparing recordings in .mda format
 
- #marker:5ee480a5-spikeforest-preparing-recordings-mda
+ <!--- #marker:5ee480a5-spikeforest-preparing-recordings-mda -->
 
 To create a recording in .mda format (suitable for running SpikeForest sorters), use the SpikeExtractors package, which should be installed as part of the SpikeForest installation.
 
 
 ## Installing the spike sorters
 
- #marker:3c4647e4-spikeforest-sorter-installation
+ <!--- #marker:3c4647e4-spikeforest-sorter-installation -->
 
 If you choose not to use the singularity method, you can install the spike sorters individually as follows.
 

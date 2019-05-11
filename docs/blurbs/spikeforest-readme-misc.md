@@ -1,6 +1,6 @@
 ## For developers and testers: Opening in codepod (containerized VS Code IDE)
 
- #marker:7d3f190c-spikeforest-codepod
+ <!--- #marker:7d3f190c-spikeforest-codepod -->
 
 You can use and/or develop SpikeForest with codepod. Tested in Linux, should also work on a Mac but probably requires some tweaks.
 
@@ -35,7 +35,7 @@ code .
 
 ## Unit tests
 
- #marker:e1d2a5e0-spikeforest-unit-tests
+ <!--- #marker:e1d2a5e0-spikeforest-unit-tests -->
 
 Once in codepod, you may run the unit tests via
 
