@@ -1,13 +1,10 @@
 ## SpikeForest
-[![Build Status](https://travis-ci.org/flatironinstitute/spikeforest.svg?branch=master)](https://travis-ci.org/flatironinstitute/spikeforest)
-
-**Note**: *This project is in alpha stage of development*
 
 ## Overview
 
  #marker:29426aa5-spikeforest-overview
 
-SpikeForest is a continuously updating platform which benchmarks the performance of spike sorting codes across a large curated database of electrophysiological recordings with ground truth. It consists of an interactive website that presents our up-to-date findings (front-end source code hosted elsewhere), this python package which contains the tools for running the SpikeForest analysis, and an expanding collection of electrophysiology recordings with ground-truth spiking information.
+SpikeForest is a reproducible, continuously updating platform which benchmarks the performance of spike sorting codes across a large curated database of electrophysiological recordings with ground truth. It consists of an interactive website that presents our up-to-date findings (front-end source code hosted elsewhere), this python package which contains the tools for running the SpikeForest analysis, and an expanding collection of electrophysiology recordings with ground-truth spiking information.
 
 The repository is split into three main directories: `spikeforest`, `mountaintools`, and `working`. MountainTools is not spike-sorting specific and can be used for other applications or downstream analyses. It provides modules for batch processing, automatic caching of results, sharing data between labs (from a python interface), and processing on remote compute resources. The `spikeforest` directory (SpikeForest package) contains wrappers to the spike sorters, analysis routines, GUI components. The `working` directory contains the actual scripts used to prepare the data hosted on the website.
 
@@ -190,30 +187,6 @@ See the [Tridesclous website](https://github.com/tridesclous/tridesclous).
 
 See the [YASS website](https://yass.readthedocs.io/en/latest/) and the following [Dockerfile](https://github.com/flatironinstitute/spikeforest/blob/master/).
 
-## Running the full analysis (for the website)
 
-Instructions (work-in-progress) for running the full analysis for the website can be found at [full_analysis.md](docs/full_analysis.md).
-
-## Sorting batches of multiple recordings
-
-This section needs to be rewritten, and the following notebook may need to be updated: [Example notebook: `example_multi_recording.ipynb`](https://github.com/flatironinstitute/spikeforest/blob/master/docs/example_notebooks/example_multi_recording.ipynb)
-
-## Sorting using a remote compute resource
-
-This section needs to be written.
-
-## Visualization of recordings and sorting results
-
-This section needs to be written.
-
-## Data sharing
-
-This section needs to be written.
-
-## Authors
-
- #marker:f225123d-spikeforest-authors
-
-This section needs to be written
 
 
