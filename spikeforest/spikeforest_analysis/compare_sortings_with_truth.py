@@ -93,6 +93,7 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
             print(sorting)
             print('===================== res0.console_out')
             print(res0.console_out)
+            raise Exception('Problem generating sorting comparison table for sorting.')
 
     return sortings_out
 
