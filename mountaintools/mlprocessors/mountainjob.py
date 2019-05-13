@@ -246,36 +246,36 @@ class MountainJob():
                         run_sh_script.substitute('{env_vars}', '\n'.join(['export ' + env_var for env_var in env_vars]))
                         run_sh_script.write()
 
-                        singularity_sh_script = ShellScript("""
-                            #!/bin/bash
-                            set -e
+                        num_retries = 4
+                        for try_num in range(1, num_retries + 1):
+                            singularity_sh_script = ShellScript("""
+                                #!/bin/bash
+                                set -e
 
-                            singularity exec {singularity_opts} {container} {temp_path}/run.sh
-                        """, script_path=os.path.join(temp_path, 'singularity_run.sh'))
-                        singularity_sh_script.substitute('{temp_path}', '/run_in_container')
-                        singularity_sh_script.substitute('{singularity_opts}', ' '.join(singularity_opts))
-                        singularity_sh_script.substitute('{container}', container)
+                                singularity exec {singularity_opts} {container} {temp_path}/run.sh
+                            """, script_path=os.path.join(temp_path, 'singularity_run.sh'))
+                            singularity_sh_script.substitute('{temp_path}', '/run_in_container')
+                            singularity_sh_script.substitute('{singularity_opts}', ' '.join(singularity_opts))
+                            singularity_sh_script.substitute('{container}', container)
 
-                        shell_script = singularity_sh_script
+                            shell_script = singularity_sh_script
 
-                    mtlogging.sublog('running-script')
-                    num_retries = 4
-                    for try_num in range(1, num_retries + 1):
-                        shell_script.start()
-                        while shell_script.isRunning():
-                            shell_script.wait(5)
-                            if job_timeout:
-                                if shell_script.elapsedTimeSinceStart() > job_timeout:
-                                    print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
-                                    R.timed_out = True
-                                    shell_script.stop()
-                        retcode = shell_script.returnCode()
-                        if (retcode != 0) and (not os.path.exists(tmp_process_console_out_fname)):
-                            if try_num < num_retries:
-                                print('Got no console out for process - could be a singularity failure - retrying...')
-                                time.sleep(random.uniform(1, 2))
-                        else:
-                            break
+                            mtlogging.sublog('running-script')
+                            shell_script.start()
+                            while shell_script.isRunning():
+                                shell_script.wait(5)
+                                if job_timeout:
+                                    if shell_script.elapsedTimeSinceStart() > job_timeout:
+                                        print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
+                                        R.timed_out = True
+                                        shell_script.stop()
+                            retcode = shell_script.returnCode()
+                            if (retcode != 0) and (not os.path.exists(tmp_process_console_out_fname)):
+                                if try_num < num_retries:
+                                    print('Got no console out for process - could be a singularity failure - retrying...')
+                                    time.sleep(random.uniform(1, 2))
+                            else:
+                                break
                     mtlogging.sublog(None)
 
                 if os.path.exists(tmp_process_console_out_fname):
