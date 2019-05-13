@@ -29,11 +29,11 @@ class Klusta(mlpr.Processor):
     """
 
     NAME = 'Klusta'
-    VERSION = '0.0.1'  # wrapper VERSION
-    ADDITIONAL_FILES = []
+    VERSION = '0.1.0'  # wrapper VERSION
+    ADDITIONAL_FILES = ['*.prm']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    CONTAINER = None
+    CONTAINER = 'sha1://2c55973125519157b0c00212d1923ce1e121f559/2019-05-13/klusta.simg'
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)

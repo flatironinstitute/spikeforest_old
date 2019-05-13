@@ -2,24 +2,17 @@ from pathlib import Path
 
 import mlprocessors as mlpr
 import spikeextractors as se
-#from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
-from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os, time, random, string, shutil, sys, shlex, json
 from mountaintools import client as mt
 from subprocess import Popen, PIPE, CalledProcessError, call
 
-try:
-    import tridesclous as tdc
-    HAVE_TDC = True
-except ImportError:
-    HAVE_TDC = False
-
 
 class Tridesclous(mlpr.Processor):
     """
-    tridesclous is one of the more convinient, fast and elegant
-    spike sorter.
-    
+    tridesclous is one of the more convenient, fast and elegant
+    spike sorters.
+
     Installation instruction
         >>> pip install https://github.com/tridesclous/tridesclous/archive/master.zip
 
@@ -34,7 +27,7 @@ class Tridesclous(mlpr.Processor):
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    CONTAINER = None
+    CONTAINER = 'sha1://9fb4a9350492ee84c8ea5d8692434ecba3cf33da/2019-05-13/tridesclous.simg'
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -53,6 +46,8 @@ class Tridesclous(mlpr.Processor):
     alien_value_threshold = mlpr.FloatParameter(optional=True, default=100, description='')
 
     def run(self):
+        import tridesclous as tdc
+
         tmpdir = Path(_get_tmpdir('tdc'))
         recording = SFMdaRecordingExtractor(self.recording_dir)
 
@@ -66,7 +61,7 @@ class Tridesclous(mlpr.Processor):
                     'chunksize': 1024,
                     'lostfront_chunksize': 128,
                     'signalpreprocessor_engine': 'numpy',
-                    'common_ref_removal':self.common_ref_removal,
+                    'common_ref_removal': self.common_ref_removal,
                 },
                 'peak_detector': {
                     'peakdetector_engine': 'numpy',
@@ -92,7 +87,7 @@ class Tridesclous(mlpr.Processor):
             'feat_kargs': {},
             'clust_method': 'sawchaincut',
             'clust_kargs': {'kde_bandwith': 1.},
-        }    
+        }
 
         # save prb file:
         probe_file = tmpdir / 'probe.prb'
@@ -109,9 +104,9 @@ class Tridesclous(mlpr.Processor):
             # save binary file (chunk by hcunk) into a new file
             raw_filename = tmpdir / 'raw_signals.raw'
             n_chan = recording.get_num_channels()
-            chunksize = 2**24// n_chan
+            chunksize = 2**24 // n_chan
             se.write_binary_dat_format(recording, raw_filename, time_axis=0, dtype='float32', chunksize=chunksize)
-            dtype='float32'
+            dtype = 'float32'
             offset = 0
 
         # initialize source and probe file
@@ -137,17 +132,19 @@ class Tridesclous(mlpr.Processor):
 
 
 def tdc_helper(
-        *, 
+        *,
         tmpdir,
         params,
-        recording):        
-    
+        recording):
+
+    import tridesclous as tdc
+
     nb_chan = recording.get_num_channels()
 
     # check params and OpenCL when many channels
     use_sparse_template = False
     use_opencl_with_sparse = False
-    if nb_chan >64: # this limit depend on the platform of course
+    if nb_chan > 64:  # this limit depend on the platform of course
         if tdc.cltools.HAVE_PYOPENCL:
             # force opencl
             self.params['fullchain_kargs']['preprocessor']['signalpreprocessor_engine'] = 'opencl'

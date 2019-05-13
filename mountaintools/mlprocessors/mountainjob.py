@@ -199,6 +199,13 @@ class MountainJob():
                         #!/bin/bash
                         set -e
                         {env_vars}
+
+                        # Set the following variables if not already set
+                        # For example, this is important when Click is used
+                        # in python, in a singularity container.
+                        export LC_ALL=${LC_ALL:-C.UTF-8}
+                        export LANG=${LANG:-C.UTF-8}
+
                         python3 {temp_path}/run.py > {console_out_fname} 2>&1
                     """, script_path=os.path.join(temp_path, 'run.sh'))
 
