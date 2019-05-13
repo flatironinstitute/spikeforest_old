@@ -200,6 +200,10 @@ class MountainJob():
                         set -e
                         {env_vars}
 
+                        python3 {temp_path}/run.py > {console_out_fname} 2>&1
+                    """, script_path=os.path.join(temp_path, 'run.sh'))
+
+                    # The following was not needed after all -- better to set the locale in the docker/singularity image
                         # Set the following variables if not already set
                         # For example, this is important when Click is used
                         # in python, in a singularity container.
@@ -209,9 +213,6 @@ class MountainJob():
                         # if [ -z "$LANG" ]; then
                         #     export LANG=en_US.UTF-8
                         # fi
-
-                        python3 {temp_path}/run.py > {console_out_fname} 2>&1
-                    """, script_path=os.path.join(temp_path, 'run.sh'))
 
                     if not container:
                         run_sh_script.substitute('{temp_path}', temp_path)

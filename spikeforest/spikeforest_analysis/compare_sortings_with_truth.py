@@ -85,7 +85,7 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
             print(sorting)
             print('===================== res0.console_out')
             print(res0.console_out)
-            raise Exception("Problem generating sorting comparison table for sorting.")
+            raise Exception("Problem generating sorting comparison table for sorting (retcode = {}).".format(res0.retcode))
         comparison_with_truth['json'] = res0.outputs['json_out']
         comparison_with_truth['html'] = res0.outputs['html_out']
         sorting['comparison_with_truth'] = comparison_with_truth
@@ -97,7 +97,7 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
 
 
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION = '0.2.0'
+    VERSION = '0.2.1'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
     units_true = mlpr.IntegerListParameter('List of true units to consider')
