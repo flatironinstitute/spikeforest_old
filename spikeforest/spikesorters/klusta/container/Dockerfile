@@ -21,5 +21,8 @@ RUN pip install spikeextractors==0.4.2
 ### Other dependencies
 RUN pip install requests
 
-# this line belongs above in the "Klusta" section
+# the following belongs above in the "Klusta" section
 RUN pip install scipy
+
+ENV LANG C.UTF-8  
+ENV LC_ALL C.UTF-8 
