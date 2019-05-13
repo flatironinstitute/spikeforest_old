@@ -80,18 +80,21 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
     for ii, sorting in enumerate(sortings_valid):
         comparison_with_truth = dict()
         res0 = jobs_gen_table[ii].result
-        if res0.retcode != 0:
+        if res0.retcode == 0:
+            comparison_with_truth['json'] = res0.outputs['json_out']
+            comparison_with_truth['html'] = res0.outputs['html_out']
+            sorting['comparison_with_truth'] = comparison_with_truth
+            if upload_to:
+                mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
+                mt.createSnapshot(path=comparison_with_truth['html'], upload_to=upload_to)
+        else:
+            print("WARNING: Problem generating sorting comparison table for sorting (retcode = {}).".format(res0.retcode))
             print('===================== sorting')
             print(sorting)
             print('===================== res0.console_out')
             print(res0.console_out)
-            raise Exception("Problem generating sorting comparison table for sorting (retcode = {}).".format(res0.retcode))
-        comparison_with_truth['json'] = res0.outputs['json_out']
-        comparison_with_truth['html'] = res0.outputs['html_out']
-        sorting['comparison_with_truth'] = comparison_with_truth
-        if upload_to:
-            mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
-            mt.createSnapshot(path=comparison_with_truth['html'], upload_to=upload_to)
+            
+        
 
     return sortings_out
 
