@@ -23,7 +23,7 @@ class Tridesclous(mlpr.Processor):
     """
 
     NAME = 'Tridesclous'
-    VERSION = '0.0.1'  # wrapper VERSION
+    VERSION = '0.1.1'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
