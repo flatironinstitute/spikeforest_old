@@ -18,6 +18,7 @@ from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 import mtlogging
 import numpy as np
+import random
 
 local_client = MountainClient()
 
@@ -198,6 +199,7 @@ class MountainJob():
                     run_sh_script = ShellScript("""
                         #!/bin/bash
                         set -e
+
                         {env_vars}
 
                         python3 {temp_path}/run.py > {console_out_fname} 2>&1
@@ -257,15 +259,23 @@ class MountainJob():
                         shell_script = singularity_sh_script
 
                     mtlogging.sublog('running-script')
-                    shell_script.start()
-                    while shell_script.isRunning():
-                        shell_script.wait(5)
-                        if job_timeout:
-                            if shell_script.elapsedTimeSinceStart() > job_timeout:
-                                print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
-                                R.timed_out = True
-                                shell_script.stop()
-                    retcode = shell_script.returnCode()
+                    num_retries = 4
+                    for try_num in range(1, num_retries + 1):
+                        shell_script.start()
+                        while shell_script.isRunning():
+                            shell_script.wait(5)
+                            if job_timeout:
+                                if shell_script.elapsedTimeSinceStart() > job_timeout:
+                                    print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
+                                    R.timed_out = True
+                                    shell_script.stop()
+                        retcode = shell_script.returnCode()
+                        if (retcode != 0) and (not os.path.exists(tmp_process_console_out_fname)):
+                            if try_num < num_retries:
+                                print('Got no console out for process - could be a singularity failure - retrying...')
+                                time.sleep(random.uniform(1, 2))
+                        else:
+                            break
                     mtlogging.sublog(None)
 
                 if os.path.exists(tmp_process_console_out_fname):
