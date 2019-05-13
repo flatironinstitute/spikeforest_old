@@ -79,8 +79,15 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
 
     for ii, sorting in enumerate(sortings_valid):
         comparison_with_truth = dict()
-        comparison_with_truth['json'] = jobs_gen_table[ii].result.outputs['json_out']
-        comparison_with_truth['html'] = jobs_gen_table[ii].result.outputs['html_out']
+        res0 = jobs_gen_table[ii].result
+        if res0.retcode != 0:
+            print('===================== sorting')
+            print(sorting)
+            print('===================== res0')
+            print(res0)
+            raise Exception("Problem generating sorting comparison table for sorting.")
+        comparison_with_truth['json'] = res0.outputs['json_out']
+        comparison_with_truth['html'] = res0.outputs['html_out']
         sorting['comparison_with_truth'] = comparison_with_truth
         if upload_to:
             mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
