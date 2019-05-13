@@ -93,14 +93,12 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
             print(sorting)
             print('===================== res0.console_out')
             print(res0.console_out)
-            
-        
 
     return sortings_out
 
 
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION = '0.2.3'
+    VERSION = '0.2.4'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
     units_true = mlpr.IntegerListParameter('List of true units to consider')

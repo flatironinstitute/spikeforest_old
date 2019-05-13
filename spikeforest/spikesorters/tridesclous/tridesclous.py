@@ -139,19 +139,19 @@ def tdc_helper(
 
     import tridesclous as tdc
 
-    nb_chan = recording.get_num_channels()
+    # nb_chan = recording.get_num_channels()
 
     # check params and OpenCL when many channels
     use_sparse_template = False
     use_opencl_with_sparse = False
-    if nb_chan > 64:  # this limit depend on the platform of course
-        if tdc.cltools.HAVE_PYOPENCL:
-            # force opencl
-            self.params['fullchain_kargs']['preprocessor']['signalpreprocessor_engine'] = 'opencl'
-            use_sparse_template = True
-            use_opencl_with_sparse = True
-        else:
-            print('OpenCL is not available processing will be slow, try install it')
+    # if nb_chan > 64:  # this limit depend on the platform of course
+    #     if tdc.cltools.HAVE_PYOPENCL:
+    #         # force opencl
+    #         self.params['fullchain_kargs']['preprocessor']['signalpreprocessor_engine'] = 'opencl'
+    #         use_sparse_template = True
+    #         use_opencl_with_sparse = True
+    #     else:
+    #         print('OpenCL is not available processing will be slow, try install it')
 
     tdc_dataio = tdc.DataIO(dirname=str(tmpdir))
     # make catalogue
@@ -165,9 +165,9 @@ def tdc_helper(
         initial_catalogue = tdc_dataio.load_catalogue(chan_grp=chan_grp)
         peeler = tdc.Peeler(tdc_dataio)
         peeler.change_params(catalogue=initial_catalogue,
-                                use_sparse_template=use_sparse_template,
-                                sparse_threshold_mad=1.5,
-                                use_opencl_with_sparse=use_opencl_with_sparse,)
+                             use_sparse_template=use_sparse_template,
+                             sparse_threshold_mad=1.5,
+                             use_opencl_with_sparse=use_opencl_with_sparse,)
         peeler.run(duration=None, progressbar=False)
 
     sorting = se.TridesclousSortingExtractor(tmpdir)
@@ -178,7 +178,7 @@ def tdc_helper(
 def _get_tmpdir(sorter_name):
     code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
     tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
-    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    tmpdir = os.path.join(tmpdir0, '{}-tmp-{}'.format(sorter_name, code))
     # reset the output folder
     if os.path.exists(tmpdir):
         shutil.rmtree(str(tmpdir))
