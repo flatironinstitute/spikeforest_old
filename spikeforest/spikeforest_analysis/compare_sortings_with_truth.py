@@ -83,8 +83,8 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
         if res0.retcode != 0:
             print('===================== sorting')
             print(sorting)
-            print('===================== res0')
-            print(res0)
+            print('===================== res0.console_out')
+            print(res0.console_out)
             raise Exception("Problem generating sorting comparison table for sorting.")
         comparison_with_truth['json'] = res0.outputs['json_out']
         comparison_with_truth['html'] = res0.outputs['html_out']
