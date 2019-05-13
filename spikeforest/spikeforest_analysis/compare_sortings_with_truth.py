@@ -100,7 +100,7 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
 
 
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION = '0.2.1'
+    VERSION = '0.2.3'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
     units_true = mlpr.IntegerListParameter('List of true units to consider')
@@ -114,19 +114,13 @@ class GenSortingComparisonTable(mlpr.Processor):
         sorting_true = SFMdaSortingExtractor(firings_file=self.firings_true)
         if (self.units_true is not None) and (len(self.units_true) > 0):
             sorting_true = si.SubSortingExtractor(parent_sorting=sorting_true, unit_ids=self.units_true)
-        print('debug 1')
         SC = SortingComparison(sorting_true, sorting)
-        print('debug 2')
         df = get_comparison_data_frame(comparison=SC)
-        print('debug 3')
         # sw.SortingComparisonTable(comparison=SC).getDataframe()
         json = df.transpose().to_dict()
         html = df.to_html(index=False)
-        print('debug 4')
         _write_json_file(json, self.json_out)
-        print('debug 5')
         _write_json_file(html, self.html_out)
-        print('debug 6')
 
 
 def get_comparison_data_frame(*, comparison):
