@@ -54,7 +54,13 @@ class TableWidget(vd.Component):
             ))
         table = vd.table(*rows, class_='table tablewidget', id='table-' + self.componentId())
         if self._height:
-            return vd.div(ScrollArea(table, height=self._height))
+            if True:
+                return vd.div(                    
+                    ScrollArea(table, height=self._height*.98),
+                    HeaderArea(table)
+                )
+            else:
+                return vd.div(ScrollArea(table, height=self._height))
         else:
             return table
 
@@ -82,7 +88,6 @@ class TableWidget(vd.Component):
             js = js.replace('{current_row_index}', 'null')
         else:
             js = js.replace('{current_row_index}', str(self._current_row_index))
-
         return js
 
 _CSS = """
@@ -106,3 +111,12 @@ class ScrollArea(vd.Component):
 
     def render(self):
         return vd.div(self._child, style=dict(overflow='auto', height='{}px'.format(self._height)))
+
+
+class HeaderArea(vd.Component):
+    def __init__(self, child):
+        vd.Component.__init__(self)
+        self._child = child
+
+    def render(self):
+        return vd.div(self._child, style=dict(overflow='hidden', height='1.5em'))
