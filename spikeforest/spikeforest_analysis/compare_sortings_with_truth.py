@@ -78,9 +78,9 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
         sorting['comparison_with_truth'] = None
 
     for ii, sorting in enumerate(sortings_valid):
-        comparison_with_truth = dict()
         res0 = jobs_gen_table[ii].result
         if res0.retcode == 0:
+            comparison_with_truth = dict()
             comparison_with_truth['json'] = res0.outputs['json_out']
             comparison_with_truth['html'] = res0.outputs['html_out']
             sorting['comparison_with_truth'] = comparison_with_truth
@@ -93,8 +93,6 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
             print(sorting)
             print('===================== res0.console_out')
             print(res0.console_out)
-            
-        
 
     return sortings_out
 

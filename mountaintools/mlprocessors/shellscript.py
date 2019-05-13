@@ -51,10 +51,14 @@ class ShellScript():
             script_path = os.path.join(tempdir, 'script.sh')
             self._dirs_to_remove.append(tempdir)
         self.write(script_path)
+        print('---- DEBUG wrote script -----', self._script)
         cmd = script_path
         print('RUNNING SHELL SCRIPT: ' + cmd)
         self._start_time = time.time()
+        print('--- DEBUG Starting script...', cmd)
         self._process = subprocess.Popen(cmd)
+        if not self._process:
+            print('--- DEBUG process is null...')
 
     def wait(self, timeout=None):
         if not self.isRunning():
@@ -94,6 +98,7 @@ class ShellScript():
         if not self._process:
             return False
         retcode = self._process.poll()
+        print('---- DEBUG polling process', retcode)
         if retcode is None:
             return True
         return False
