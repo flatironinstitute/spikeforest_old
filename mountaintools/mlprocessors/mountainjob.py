@@ -204,10 +204,10 @@ class MountainJob():
                         # For example, this is important when Click is used
                         # in python, in a singularity container.
                         if [ -z "$LC_ALL" ]; then
-                            export LC_ALL=C.UTF-8
+                            export LC_ALL=en_US.UTF-8
                         fi
                         if [ -z "$LANG" ]; then
-                            export LANG=C.UTF-8
+                            export LANG=en_US.UTF-8
                         fi
 
                         python3 {temp_path}/run.py > {console_out_fname} 2>&1
