@@ -102,33 +102,34 @@ def main():
         # rx = SFMdaRecordingExtractor(dataset_directory=rec['directory'], download=True)
         # sx_true = SFMdaSortingExtractor(firings_file=os.path.join(rec['directory'], 'firings_true.mda'))
         # sx = SFMdaSortingExtractor(firings_file=mt.realizeFile(path=sr['firings']))
-        cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
+        if sr.get('comparison_with_truth', None) is not None:
+            cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
 
-        recording_id = rec['study'] + '/' + rec['name']
-        filtered_timeseries = filtered_timeseries_by_recid[recording_id]
+            recording_id = rec['study'] + '/' + rec['name']
+            filtered_timeseries = filtered_timeseries_by_recid[recording_id]
 
-        list0 = list(cwt.values())
-        for _, unit in enumerate(list0):
-            # print('')
-            # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
-            # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
+            list0 = list(cwt.values())
+            for _, unit in enumerate(list0):
+                # print('')
+                # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
+                # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
 
-            spike_spray_job_objects.append(dict(
-                args=dict(
-                    recording_directory=rec['directory'],
-                    filtered_timeseries=filtered_timeseries,
-                    firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
-                    firings_sorted=sr['firings'],
-                    unit_id_true=unit['unit_id'],
-                    unit_id_sorted=unit['best_unit'],
-                    json_out={'ext': '.json'},
-                    _container='default'
-                ),
-                study_name=study_name,
-                rec_name=rec_name,
-                sorter_name=sorter_name,
-                unit=unit
-            ))
+                spike_spray_job_objects.append(dict(
+                    args=dict(
+                        recording_directory=rec['directory'],
+                        filtered_timeseries=filtered_timeseries,
+                        firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
+                        firings_sorted=sr['firings'],
+                        unit_id_true=unit['unit_id'],
+                        unit_id_sorted=unit['best_unit'],
+                        json_out={'ext': '.json'},
+                        _container='default'
+                    ),
+                    study_name=study_name,
+                    rec_name=rec_name,
+                    sorter_name=sorter_name,
+                    unit=unit
+                ))
 
     spike_spray_jobs = CreateSpikeSprays.createJobs([
         obj['args']
