@@ -55,36 +55,50 @@ class MainResultTableWidget(vd.Component):
         snr_thresh = self._header_widget.snrThreshold()
         study_names = self._context.studyNames()
         sorter_names = self._context.sorterNames()
-        records = []
+        records = []        
+        vn_best_sorter = np.zeros(len(sorter_names))
         for study_name in study_names:
             rec0 = dict(
                 study_name=study_name
             )
             X = self._context.studyAnalysisResultObject(study_name)
-            for sn in sorter_names:
+            vr_val = np.zeros(len(sorter_names))
+            for i_sn, sn in enumerate(sorter_names):
+                _val = 0
                 if method == 'acc_thr':
                     count0, found0, missing0 = _get_accuracy_count(X, sorter_name=sn, accuracy_thresh=accuracy_thresh)
                     if found0 > 0:
                         val0 = str(count0)
+                        _val = count0
                         if missing0 > 0:
-                            val0 = val0 + ' *'
+                            val0 = val0 + '-'
                     else:
                         val0 = ''
                 elif method == 'snr_thr':
                     avg0, found0, missing0 = _get_avg_accuracy(X, sorter_name=sn, snr_thresh=snr_thresh)
                     if found0 > 0:
+                        _val = avg0
                         val0 = str(round(avg0, 2))
                         if missing0 > 0:
-                            val0 = val0 + ' *'
+                            val0 = val0 + '-'
                     else:
                         val0 = ''
                 else:
                     raise Exception('Unrecognized method: ' + method)
                 rec0['sorter-' + sn] = val0
+                vr_val[i_sn] = _val           
+            _imax_sorter = np.argmax(vr_val)
+            if _imax_sorter is not None:
+                _sorter_key = 'sorter-' + sorter_names[_imax_sorter]
+                #print('key:{}, rec:{}, val:{}, imax:{}'.format(_sorter_key, rec0[_sorter_key], vr_val[_imax_sorter], _imax_sorter))
+                rec0[_sorter_key] = '*' + rec0[_sorter_key]
+                vn_best_sorter[_imax_sorter] += 1
             records.append(rec0)
         columns0 = [
-            dict(label=sorter_name, name='sorter-' + sorter_name)
-            for sorter_name in sorter_names
+            #dict(label=sorter_name, name='sorter-{}'.format(sorter_name))
+            #for sorter_name in sorter_names       
+            dict(label='{}:{:0.0f}'.format(sorter_name,_n), name='sorter-'+sorter_name)
+            for _n, sorter_name in zip(vn_best_sorter.tolist(), sorter_names)
         ]
         columns = [dict(label='Study', name='study_name')] + columns0
 
