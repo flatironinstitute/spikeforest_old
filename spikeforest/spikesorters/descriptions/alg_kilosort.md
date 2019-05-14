@@ -5,6 +5,7 @@ wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikefores
 website: https://github.com/cortex-lab/KiloSort
 source_code: https://github.com/cortex-lab/KiloSort
 authors: Marius Pachitariu
+processor_name: KiloSort
 doi: 10.1101/061481
 ---
 _

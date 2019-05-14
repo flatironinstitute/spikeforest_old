@@ -6,6 +6,7 @@ notes:
 website: https://github.com/JaneliaSciComp/JRCLUST
 source_code:
 authors: James Jun and Alan Liddell
+processor_name: JRClust
 doi:
 ---
 

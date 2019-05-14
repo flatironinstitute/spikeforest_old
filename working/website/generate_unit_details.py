@@ -18,8 +18,8 @@ _CONTAINER = None
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate spike spray data for website')
-    parser.add_argument('--output_file', help='The output file for saving the spikespray info.', required=False, default=None)
+    parser = argparse.ArgumentParser(description='Generate unit detail data (including spikesprays) for website')
+    parser.add_argument('--output_file', help='The output file for saving the unit detail info (UnitDetails.json).', required=False, default=None)
     parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
     parser.add_argument('--upload_to', help='Optional kachery to upload to', required=False, default=None)
     parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
@@ -137,7 +137,7 @@ def main():
 
     spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default')
 
-    spike_sprays = []
+    unit_details = []
     for i, result in enumerate(spike_spray_results):
         obj0 = spike_spray_job_objects[i]
         if result.retcode != 0:
@@ -147,20 +147,20 @@ def main():
             raise Exception('Problem loading spikespray object output.')
         address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
         unit = obj0['unit']
-        spike_sprays.append(dict(
+        unit_details.append(dict(
             studyName=obj0['study_name'],
             recordingName=obj0['rec_name'],
             sorterName=obj0['sorter_name'],
             trueUnitId=unit['unit_id'],
             sortedUnitId=unit['best_unit'],
-            spikesprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
+            spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
             _container='default'
         ))
 
     if output_file is not None:
-        mt.saveObject(object=spike_sprays, dest_path=output_file)
+        mt.saveObject(object=unit_details, dest_path=output_file)
 
-    address = mt.saveObject(object=spike_sprays)
+    address = mt.saveObject(object=unit_details)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
 
 

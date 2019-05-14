@@ -5,6 +5,7 @@ wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikefores
 website: https://github.com/flatironinstitute/mountainsort_examples/blob/master/README.md
 source_code: https://github.com/magland/ml_ephys
 authors: Jeremy Magland, Alex Barnett, Jason Chung, Loren Frank, and Leslie Greengard
+processor_name: MountainSort4
 doi: 10.1016/j.neuron.2017.08.030
 ---
 _

@@ -147,6 +147,7 @@ def main():
 
     # ALGORITHMS
     print('******************************** ASSEMBLING ALGORITHMS...')
+    algorithms_by_processor_name = dict()
     Algorithms = []
     basepath = '../../spikeforest/spikesorters/descriptions'
     repo_base_url = 'https://github.com/flatironinstitute/spikeforest/blob/master'
@@ -156,6 +157,8 @@ def main():
             alg['markdown_link'] = repo_base_url + '/spikeforest/spikesorters/descriptions/' + item
             alg['markdown'] = alg['content']
             del alg['content']
+            if 'processor_name' in alg:
+                algorithms_by_processor_name[alg['processor_name']] = alg
             Algorithms.append(alg)
     print([alg['label'] for alg in Algorithms])
     if output_dir is not None:
@@ -267,16 +270,18 @@ def main():
         sorters_by_name[sr['sorter']['name']] = sr['sorter']
     Sorters = []
     for _, sorter in sorters_by_name.items():
+        alg = algorithms_by_processor_name.get(sorter['processor_name'], dict())
+        alg_label = alg.get('label', sorter['processor_name'])
         Sorters.append(dict(
             name=sorter['name'],
-            algorithm=sorter['processor_name'],  # right now the algorithm is the same as the processor name
+            algorithm=alg_label,
             processorName=sorter['processor_name'],
             processorVersion='0',  # jfm needs to provide this
             sorting_parameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
         ))
     if output_dir is not None:
         mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
-    print([S['name'] for S in Sorters])
+    print([S['name'] + ':' + S['algorithm'] for S in Sorters])
 
     # STUDY ANALYSIS RESULTS
     print('******************************** ASSEMBLING STUDY ANALYSIS RESULTS...')

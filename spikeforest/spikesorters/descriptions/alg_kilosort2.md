@@ -5,6 +5,7 @@ wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikefores
 website: https://github.com/MouseLand/Kilosort2
 source_code: https://github.com/MouseLand/Kilosort2
 authors: Marius Pachitariu
+processor_name: KiloSort2
 doi:
 ---
 _

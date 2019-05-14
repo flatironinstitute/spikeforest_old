@@ -5,6 +5,7 @@ wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikefores
 website: https://yass.readthedocs.io/en/latest/
 source_code: https://github.com/paninski-lab/yass
 authors: Peter Lee, Eduardo Blancas, Nishchal Dethe, Shenghao Wu, Hooshmand Shokri, Calvin Tong, Catalin Mitelut, Liam Paninski
+processor_name: Yass
 doi: 10.1101/151928
 ---
 _

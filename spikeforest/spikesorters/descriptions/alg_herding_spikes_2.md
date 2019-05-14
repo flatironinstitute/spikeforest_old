@@ -6,6 +6,7 @@ notes:
 website: https://github.com/mhhennig/HS2
 source_code: https://github.com/mhhennig/HS2
 authors: Matthias Hennig, Jano Horvath, Cole Hurwitz, Oliver Muthmann, Albert Puente Encinas, Martino Sorbaro, Cesar Juarez Ramirez, and Raimon Wintzer
+processor_name: HerdingSpikes2
 doi: 10.3389/fninf.2015.00028
 ---
 _

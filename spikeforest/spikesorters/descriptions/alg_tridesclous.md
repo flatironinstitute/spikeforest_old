@@ -6,6 +6,7 @@ notes:
 website: https://github.com/tridesclous/tridesclous
 source_code:
 authors: Samuel Garcia and Christophe Pouzat
+processor_name: Tridesclous
 doi:
 ---
 _

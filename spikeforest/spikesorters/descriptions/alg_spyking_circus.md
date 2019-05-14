@@ -5,6 +5,7 @@ dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikefo
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/spyking_circus/spyking_circus.py
 website: https://spyking-circus.readthedocs.io/en/latest/
 authors: Pierre Yger and Olivier Marre
+processor_name: SpykingCircus
 doi: 10.7554/eLife.34518
 ---
 _

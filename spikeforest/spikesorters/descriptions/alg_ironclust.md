@@ -5,6 +5,7 @@ wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikefores
 website: https://github.com/jamesjun/ironclust
 source_code: https://github.com/jamesjun/ironclust
 authors: James Jun
+processor_name: IronClust
 doi:
 ---
 _
