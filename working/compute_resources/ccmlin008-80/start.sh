@@ -18,7 +18,7 @@ KACHERY_NAME=kbucket
 compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME \
-        --srun_opts "-c 2 -n 80 -p ccm"
+        --srun_opts "-c 2 -n 80 -p ccm --time 120"
 
 #compute-resource-start ccmlin008-80 \
 #	--allow_uncontainerized  \

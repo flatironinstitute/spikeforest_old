@@ -24,7 +24,7 @@ KACHERY_NAME=kbucket
 compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME \
-        --srun_opts "-n 4 -c 2 -p gpu --gres=gpu:1 --constraint=v100" \
+        --srun_opts "-n 4 -c 2 -p gpu --gres=gpu:1 --constraint=v100 --time 120" \
         --parallel 2
 
 #compute-resource-start $RESOURCE_NAME \
