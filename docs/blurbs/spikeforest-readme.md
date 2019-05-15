@@ -2,7 +2,7 @@
 
 ## Overview
 
- <!--- #marker:29426aa5-spikeforest-overview -->
+ <!--- #barcode:29426aa5-spikeforest-overview -->
 
 SpikeForest is a reproducible, continuously updating platform which benchmarks the performance of spike sorting codes across a large curated database of electrophysiological recordings with ground truth. It consists of an interactive website that presents our up-to-date findings (front-end source code hosted elsewhere), this python package which contains the tools for running the SpikeForest analysis, and an expanding collection of electrophysiology recordings with ground-truth spiking information.
 

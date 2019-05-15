@@ -376,6 +376,9 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
                         accuracy=accuracy,
                         precision=precision,
                         recall=recall,
+                        numMatches=n_match,
+                        numFalsePositives=n_fp,
+                        numFalseNegatives=n_fn
                     )
                 cpu_times_by_sorter[sorter_name].append(sr['execution_stats'].get('elapsed_sec', None))
             else:
@@ -404,14 +407,20 @@ def _assemble_study_analysis_result(*, study_name, recordings, sorting_results, 
         accuracies = [_round(x['sorting_results'].get(sorter_name, {}).get('accuracy'), 3) for x in true_units_list]
         precisions = [_round(x['sorting_results'].get(sorter_name, {}).get('precision'), 3) for x in true_units_list]
         recalls = [_round(x['sorting_results'].get(sorter_name, {}).get('recall'), 3) for x in true_units_list]
+        numMatches = [_round(x['sorting_results'].get(sorter_name, {}).get('numMatches'), 3) for x in true_units_list]
+        numFalsePositives = [_round(x['sorting_results'].get(sorter_name, {}).get('numFalsePositives'), 3) for x in true_units_list]
+        numFalseNegatives = [_round(x['sorting_results'].get(sorter_name, {}).get('numFalseNegatives'), 3) for x in true_units_list]
         study_analysis_result['sortingResults'].append(dict(
             sorterName=sorter_name,
             accuracies=accuracies,
             precisions=precisions,
+            numMatches=numMatches,
+            numFalsePositives=numFalsePositives,
+            numFalseNegatives=numFalseNegatives,
             recalls=recalls,
             cpuTimesSec=cpu_times_by_sorter[sorter_name]
         ))
-    print(study_analysis_result['studyName'], study_analysis_result['sortingResults'][0]['cpuTimesSec'])
+    # print(study_analysis_result['studyName'], study_analysis_result['sortingResults'][0]['cpuTimesSec'])
 
     return study_analysis_result
 
