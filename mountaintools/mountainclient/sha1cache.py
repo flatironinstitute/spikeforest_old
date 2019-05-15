@@ -43,12 +43,15 @@ class Sha1Cache():
     def findFile(self, sha1):
         path, alternate_paths = self._get_path(
             sha1, create=False, return_alternates=True)
+        # if file is available return it
         if os.path.exists(path):
             return path
+        # return first alternate path that exists
         for altpath in alternate_paths:
             if os.path.exists(altpath):
                 return altpath
         hints_fname = path + '.hints.json'
+        # if path.hints.json exists then read it
         if os.path.exists(hints_fname):
             hints = _read_json_file(hints_fname, delete_on_error=True)
             if hints and ('files' in hints):
@@ -61,7 +64,7 @@ class Sha1Cache():
                         if stat_obj0:
                             if (_stat_objects_match(stat_obj0, file['stat'])):
                                 matching_files.append(file)
-                if len(matching_files) > 0:
+                if matching_files:
                     hints['files'] = matching_files
                     try:
                         _write_json_file(hints, hints_fname)

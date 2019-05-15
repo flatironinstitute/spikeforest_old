@@ -1,10 +1,10 @@
 FROM node
 MAINTAINER Jeremy Magland
 EXPOSE 24341
-VOLUME /cairioserver
+VOLUME /pairioserver
 
 ADD . /src
 RUN cd /src && \
   npm install .
-WORKDIR /cairioserver
+WORKDIR /pairioserver
 ENTRYPOINT [ "/src/docker_entry.sh" ]

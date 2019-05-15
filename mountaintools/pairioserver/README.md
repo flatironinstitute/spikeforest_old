@@ -1,20 +1,20 @@
-# cairioserver
+# pairioserver
 
 ## To run via docker:
 
 ```
-docker run -it --net=host magland/cairioserver [admin_token] [mongodb_url] [port]
+docker run -it --net=host magland/pairioserver [admin_token] [mongodb_url] [port]
 ```
 
 For example:
 
 ```
-docker run -it --net=host magland/cairioserver test_admin_token mongodb://localhost:27017 20001
+docker run -it --net=host magland/pairioserver test_admin_token mongodb://localhost:27017 20001
 ```
 
 ## To test a running server:
 
-First make sure cairio python module is available. You can do this by installing spikeforest2 or by running
+First make sure pairio python module is available. You can do this by installing spikeforest2 or by running
 
 ```
 cd mountaintools
@@ -42,7 +42,7 @@ print('okay!')
 ## To build and push the docker image:
 
 ```
-docker build -t magland/cairioserver .
-docker push magland/cairioserver
+docker build -t magland/pairioserver .
+docker push magland/pairioserver
 ```
 

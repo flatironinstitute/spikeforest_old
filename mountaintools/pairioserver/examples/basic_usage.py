@@ -75,4 +75,4 @@ print(txt)
 
 # REMOTE DATABASE
 
-# The interesting part comes when we connect to a remote cairio database
+# The interesting part comes when we connect to a remote pairio database

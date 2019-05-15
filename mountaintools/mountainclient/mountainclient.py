@@ -17,6 +17,8 @@ from getpass import getpass
 import shutil
 from .filelock import FileLock
 import mtlogging
+from .aux import _read_json_file, _read_text_file, _write_text_file, _sha1_of_object, _sha1_of_string, _create_temporary_fname
+from .aux import deprecated
 
 env_path = os.path.join(os.environ.get('HOME', ''), '.mountaintools', '.env')
 if os.path.exists(env_path):
@@ -156,6 +158,9 @@ class MountainClient():
     """
 
     def __init__(self):
+        """
+        Create a MountainClient object. Initializes pairio using environment variables.
+        """
         self._pairio_url = os.environ.get(
             'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443')))
         self._kachery_urls = dict()
@@ -171,14 +176,12 @@ class MountainClient():
         self._initialize_kacheries()
         self._read_pairio_tokens()
 
+    @deprecated("Warning: autoConfig() is deprecated and will no longer have any effect.")
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
-        """
-        Deprecated
-        """
-        print('WARNING: autoConfig() is deprecated and will no longer have any effect.')
+        pass
 
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
-        '''
+        """
         Log in to the mountain system. This acquires a collection of tokens that
         are used by the configRemoteReadWrite() function in order to gain
         read/write access to collections and kbucket shares. The default user
@@ -205,7 +208,7 @@ class MountainClient():
             Whether to interactively ask for user/password (see above)
         ask_password: bool
             Whether to ask for the password (see above)
-        '''
+        """
         if interactive:
             ask_password = True
 
@@ -262,43 +265,41 @@ class MountainClient():
         print('Logged in as {}'.format(user))
 
     def setPairioToken(self, collection, token):
+        """
+        Store a pairio token for a given collection.
+        """
         self._pairio_tokens[collection] = token
 
     def setKacheryUploadToken(self, kachery_name, token):
+        """
+        Store upload token for given kachery
+        """
         self._kachery_upload_tokens[kachery_name] = token
 
     def setKacheryDownloadToken(self, kachery_name, token):
+        """
+        Store download token for given kachery
+        """
         self._kachery_download_tokens[kachery_name] = token
 
+    @deprecated('WARNING: configLocal() is deprecated and will no longer have any effect.')
     def configLocal(self):
-        """
-        Deprecated
-        """
-        print('WARNING: configLocal() is deprecated and will no longer have any effect.')
+        pass
 
+    @deprecated('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect.')
     def configRemoteReadonly(self, *, collection=None, share_id='', alternate_share_ids=[]):
-        """
-        Deprecated
-        """
-        print('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect.')
+        pass
 
+    @deprecated('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect.')
     def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
-        """
-        Deprecated
-        """
-        print('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect.')
+        pass
 
+    @deprecated('WARNING: setRemoteConfig() is deprecated and will no longer have any effect.')
     def setRemoteConfig(self, *, url=0, collection=0, token=0, share_id=0, upload_token=0, alternate_share_ids=0):
-        """
-        Deprecated
-        """
-        print('WARNING: setRemoteConfig() is deprecated and will no longer have any effect.')
+        pass
 
+    @deprecated('WARNING: getRemoteConfig() is deprecated and only returns an empty dict.')
     def getRemoteConfig(self):
-        """
-        Deprecated
-        """
-        print('WARNING: getRemoteConfig() is deprecated and only returns an empty dict.')
         return dict()
 
     def addRemoteCollection(self, collection, token, admin_token):
@@ -328,6 +329,14 @@ class MountainClient():
         )
 
     def configDownloadFrom(self, kachery_names):
+        """
+        Configure uris to download entities from.
+
+        Parameters
+        ----------
+        kachery_names : str or iterable
+            Kachery names to enable
+        """
         if type(kachery_names) == str:
             kachery_names = [kachery_names]
         for kname in kachery_names:
@@ -446,7 +455,9 @@ class MountainClient():
         return list(self._get_sub_keys(key=key, collection=collection))
 
     @mtlogging.log(name='MountainClient:realizeFile')
-    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, local_first=False, show_progress=False, collection=None, download_from=None, local_only=False, remote_only=False):
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, 
+                          local_first=False, show_progress=False, collection=None, 
+                          download_from=None, local_only=False, remote_only=False):
         """
         Return a local path to the specified file, downloading the file from a
         remote server to the local SHA-1 cache if needed. In other words,
@@ -503,7 +514,19 @@ class MountainClient():
             to consult the local database first, prior to requesting the SHA-1
             hash from the remote collection. (The default is None, meaning that
             only the configured database is used)
-        
+        show_progress : bool, optonal
+            If True, displays information about the files being copied
+        collection : str, optional
+            The name of the collection to retrieve the value from, which may be
+            different from the collection specified in configRemoteReadonly()
+            configRemoteReadWrite() (the default is None, which means that the
+            configured collection is used)
+        download_from : str, optional
+            If present, points to the kachery server to download the file from
+        local_only : bool, optional
+            If True, only search for the file locally (default False)
+        remote_only : bool, optional
+            If True, only search for the file remotely (default False)
         Returns
         -------
         str or None
@@ -556,11 +579,18 @@ class MountainClient():
         subkey : str, optional
             The optional subkey as described in the docs for getValue() and
             setValue() (the default is None)
+        collection : str, optional
+            The name of the collection to retrieve the value from, which may be
+            different from the collection specified in configRemoteReadonly()
+            configRemoteReadWrite() (the default is None, which means that the
+            configured collection is used)
         basename : str, optional
             An optional basename to be used in constructing the SHA-1 URL.
         local_also : bool, optional
             Whether to also save locally, if configured to save remotely (the
             default is False)
+        upload_to : str, optional
+            Name of kachery server to upload the file to
         
         Returns
         -------
@@ -588,6 +618,31 @@ class MountainClient():
     # load object / save object
     @mtlogging.log(name='MountainClient:loadObject')
     def loadObject(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None, local_only=False, remote_only=False):
+        """
+        Return contents of a given JSON file as Python dictionary, downloading the file if necessary.
+
+        Parameters
+        ----------
+        key : str or dict
+            The key used to look up the value
+        subkey : str, optional
+            A subkey string (the default is None, which means that no subkey is
+            used). To retrieve values for all subkeys, use subkey='-'.
+        collection : str, optional
+            The name of the collection to retrieve the value from, which may be
+            different from the collection specified in configRemoteReadonly()
+            configRemoteReadWrite() (the default is None, which means that the
+            configured collection is used)
+        local_first : bool, optional
+            Whether to search the local database prior to searching any remote
+            collections (the default is False)
+        
+        Returns
+        -------
+        dict or None
+            Dictionary representing JSON object stored in the file 
+            or None if data could not be retrieved. 
+        """
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
@@ -595,15 +650,33 @@ class MountainClient():
 
         txt = self.loadText(key=key, path=path,
                             subkey=subkey, local_first=local_first, collection=collection, download_from=download_from, local_only=local_only, remote_only=remote_only)
-        if txt is None:
-            return None
         try:
-            return json.loads(txt)
+            if txt is not None:
+                return json.loads(txt)
         except:
             print('WARNING: unable to parse json in loadObject.', path, key, subkey)
-            return None
 
     def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, collection=None, upload_to=None):
+        """
+        Save object into a json file and/or upload it to a remote KBucket share.
+
+        Parameters
+        ----------
+        object : dict
+            Object to be saved.
+        key : str, optional
+            The key used for locating the file as described in the docs for
+            realizeFile()
+        subkey : str, optional
+            The optional subkey as described in the docs for getValue() and
+            setValue() (the default is None)
+
+        Returns
+        -------
+        str or None
+            A SHA-1 URL for the saved or uploaded file, or None if the file was
+            unable to be saved.         
+        """
         if object is None:
             self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None),
@@ -611,6 +684,9 @@ class MountainClient():
         return self.saveText(text=json.dumps(object), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
 
     def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
+        """
+        Create an immutable snapshot of a file or directory.
+        """
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
@@ -669,6 +745,19 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:loadObject')
     def resolveKeyPath(self, key_path):
+        """
+        Resolve keyed file path into its sha1 address.
+
+        Parameters
+        ----------
+            key_path : str
+                Object path with a 'key://' prefix.
+
+        Returns
+        -------
+        str or None
+            Resolved address of an object or None if it could not be resolved.
+        """
         if not key_path.startswith('key://'):
             return key_path
         location, collection, key, subkey, extra_path = self._parse_key_path(key_path)
@@ -729,6 +818,34 @@ class MountainClient():
     # load text / save text
     @mtlogging.log(name='MountainClient:loadText')
     def loadText(self, *, key=None, path=None, subkey=None, local_first=False, collection=None, download_from=None, local_only=False, remote_only=False):
+        """
+        Get content of a specified file, downloading the file from a remote server if needed.
+        For detailed info on what you can pass as path or key, see docs for realizeFile().
+
+        Parameters
+        ----------
+        path : str, optional
+            The path of a file to read. This could either be a local path,
+            a SHA-1 URL, or a kbucket URL as described in docs for realizeFile().
+            One of path or key must be provided
+        key : str, optional
+            The key used for locating the file as described in docs for realizeFile(). 
+            One of path or key must be provided
+        subkey : str, optional
+            The optional subkey as described in the docs for getValue() and
+            setValue() (the default is None)
+        local_first : bool, optional
+            In the case where key is used (rather than path), specifies whether
+            to consult the local database first, prior to requesting the SHA-1
+            hash from the remote collection. (The default is None, meaning that
+            only the configured database is used)
+
+        Returns
+        -------
+        str or None
+            Content of downloaded file or None if the file was not found or could
+            not be opened.
+        """
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
             if not path:
@@ -747,6 +864,28 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:saveText')
     def saveText(self, text, *, key=None, subkey=None, collection=None, basename='file.txt', local_also=False, dest_path=None, upload_to=None):
+        """
+        Save given text to a file, put that file in a local SHA-1 cache
+        and/or upload to a remote KBucket share. Return SHA-1 URL referring
+        to the file.
+
+        Parameters
+        ----------
+        text : str
+        key : str, optional
+        subkey : str, optional
+        collection : str
+        basename : str, optional
+        dest_path : str, optional
+            Local path to save the file to. If not provided the file will only
+            be uploaded to a remote repository without storing a local copy
+        upload_to : str, optional
+        Returns
+        -------
+        str or None
+            SHA-1 URL referring for the saved or uploaded file or None if the file
+            could not be saved.
+        """
         if text is None:
             self.setValue(key=key, subkey=subkey,
                           value=None, local_also=local_also, collection=collection)
@@ -827,14 +966,22 @@ class MountainClient():
             _global_kbucket_mem_dir_hash_cache[path] = ret
         return ret
 
+
+    def _maybe_resolve(self, path):
+        if not path or not path.startswith('key://'): 
+            return path
+        resolved_path = self.resolveKeyPath(path)
+        if not resolved_path: 
+            raise KeyError('{} could not be resolved'.format(path))
+        return resolved_path
+
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
-        if path and path.startswith('key://'):
-            path = self.resolveKeyPath(path)
-            if not path:
-                return None
-
-        return self._local_db.computeFileSha1(path=path)
+        try: 
+            path = self._maybe_resolve(path)
+            return self._local_db.computeFileSha1(path=path)
+        except KeyError:
+            return
 
     def sha1OfObject(self, obj):
         return _sha1_of_object(obj)
@@ -1329,6 +1476,8 @@ class MountainClientLocal():
 
     @mtlogging.log()
     def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None, show_progress=False):
+        """
+        """
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
@@ -1522,6 +1671,7 @@ class MountainClientLocal():
         return path
 
     def _realize_file_from_sha1(self, *, sha1, dest_path=None, show_progress=False):
+        # try to find the file in cache
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
             if (dest_path is not None) and (os.path.abspath(fname) != os.path.abspath(dest_path)):
@@ -1606,61 +1756,6 @@ class MountainClientLocal():
         url_download = kbucket_url + '/' + kbshare_id + '/download/' + path0
         return (sha1, size, url_download)
 
-
-def _db_load(path, *, count=0):
-    if count > 10:
-        raise Exception('Unexpected problem loading database file: ' + path)
-    if os.path.exists(path):
-        try:
-            db_txt = _read_text_file(path)
-        except:
-            if os.path.exists(path):
-                raise Exception('Unable to read database file: ' + path)
-            else:
-                return dict()
-        try:
-            db = json.loads(db_txt)
-        except:
-            if os.path.exists(path + '.save'):
-                print('Warning: Problem parsing json in database file (restoring saved file): ' + path)
-                try:
-                    os.rename(path + '.save', path)
-                except:
-                    print('Warning: problem renaming .save file. Deleting')
-                    try:
-                        os.unlink(path + '.save')
-                    except:
-                        pass
-                    try:
-                        os.unlink(path)
-                    except:
-                        pass
-            else:
-                print('Warning: Problem parsing json in database file (deleting): ' + path)
-                try:
-                    os.unlink(path)
-                except:
-                    pass
-            return _db_load(path, count=count + 1)
-        return db
-    else:
-        return dict()
-
-
-def _db_save(path, db):
-    # create a backup first
-    if os.path.exists(path):
-        try:
-            # make sure it is good before doing the backup
-            _read_json_file(path)  # if not good, we get an exception
-            if os.path.exists(path + '.save'):
-                os.unlink(path + '.save')
-            shutil.copyfile(path, path + '.save')
-        except:
-            # worst case, let's just proceed
-            pass
-    _write_json_file(db, path)
-
 # def _db_acquire_lock(path, count=0):
 #     if count>5:
 #         # If we have failed to acquire the lock after this many retries,
@@ -1731,26 +1826,6 @@ def _db_save(path, db):
 #     print('Unlocked!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',path)
 
 
-def _read_json_file(path):
-    with open(path) as f:
-        return json.load(f)
-
-
-def _read_text_file(path):
-    with open(path) as f:
-        return f.read()
-
-
-def _write_json_file(obj, path):
-    with open(path, 'w') as f:
-        return json.dump(obj, f)
-
-
-def _write_text_file(fname, txt):
-    with open(fname, 'w') as f:
-        f.write(txt)
-
-
 def _get_default_local_db_path():
     dir_old = str(pathlib.Path.home()) + '/.cairio'
     dir_new = str(pathlib.Path.home()) + '/.mountain'
@@ -1770,10 +1845,6 @@ def _get_default_local_db_path():
     return ret
 
 
-def _is_http_url(url):
-    return url.startswith('http://') or url.startswith('https://')
-
-
 def _get_default_alternate_local_db_paths():
     val = os.environ.get('MOUNTAIN_DIR_ALT', None)
     if not val:
@@ -1788,33 +1859,11 @@ def _hash_of_key(key):
     return _sha1_of_string(key)
 
 
-def _sha1_of_string(txt):
-    hh = hashlib.sha1(txt.encode('utf-8'))
-    ret = hh.hexdigest()
-    return ret
-
-
-def _sha1_of_object(obj):
-    txt = json.dumps(obj, sort_keys=True, separators=(',', ':'))
-    return _sha1_of_string(txt)
-
-
 def _create_temporary_file_for_text(*, text):
     tmp_fname = _create_temporary_fname('.txt')
     with open(tmp_fname, 'w') as f:
         f.write(text)
     return tmp_fname
-
-
-def _create_temporary_fname(ext):
-    tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())
-    if not os.path.exists(tempdir):
-        os.makedirs(tempdir)
-    return tempdir + '/tmp_mountainclient_' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10)) + ext
-
-
-def _random_string(num):
-    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
 
 
 def _test_url_accessible(url, timeout):
@@ -1838,7 +1887,7 @@ _global_client = MountainClient()
 client = _global_client
 
 # if os.environ.get('CAIRIO_CONFIG'):
-#     print('configuring cairio...')
+#     print('configuring pairio...')
 #     a = os.environ.get('CAIRIO_CONFIG').split('.')
 #     password = os.environ.get('CAIRIO_CONFIG_PASSWORD', None)
 #     client.autoConfig(collection=a[0], key=a[1], password=password)

@@ -3,4 +3,4 @@ from mountainclient import MountainClient
 from mlprocessors import executeBatch
 
 # legacy
-CairioClient = MountainClient
+PairioClient = MountainClient

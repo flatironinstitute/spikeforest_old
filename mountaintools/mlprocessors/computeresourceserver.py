@@ -18,7 +18,7 @@ class ComputeResourceServer():
         self._srun_opts_string = ''
 
     # def mountainClient(self):
-    #     return self._cairio_client
+    #     return self._pairio_client
 
     def setNumParallel(self, num):
         self._num_parallel = num
