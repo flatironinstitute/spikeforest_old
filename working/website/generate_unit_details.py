@@ -142,6 +142,8 @@ def main():
     for i, result in enumerate(spike_spray_results):
         obj0 = spike_spray_job_objects[i]
         if result.retcode != 0:
+            print('Error creating spike sprays for job:')
+            print(spike_spray_jobs[i])
             raise Exception('Error creating spike sprays')
         ssobj = mt.loadObject(path=result.outputs['json_out'])
         if ssobj is None:
