@@ -25,26 +25,27 @@ class IronClust(mlpr.Processor):
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
-    channels = mlpr.IntegerListParameter(
-        description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
-
-    detect_sign = mlpr.IntegerParameter(
-        'Use -1, 0, or 1, depending on the sign of the spikes in the recording')
-    adjacency_radius = mlpr.FloatParameter(
-        optional=True, default=75, description='Use -1 to include all channels in every neighborhood')
-    detect_threshold = mlpr.FloatParameter(
-        optional=True, default=4.5, description='detection threshold')
-    prm_template_name = mlpr.StringParameter(
-        optional=True, description='.prm template file name')
-    freq_min = mlpr.FloatParameter(
-        optional=True, default=300, description='Use 0 for no bandpass filtering')
-    freq_max = mlpr.FloatParameter(
-        optional=True, default=6000, description='Use 0 for no bandpass filtering')
-    merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.98, description='Threshold for automated merging')
-    pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=2, description='Number of principal components per channel')
+    channels = mlpr.IntegerListParameter(optional=True, default=[],
+        description='List of channels to use.')
+    detect_sign = mlpr.IntegerParameter(optional=True, default=-1,
+        description='Use -1, 0, or 1, depending on the sign of the spikes in the recording')
+    adjacency_radius = mlpr.FloatParameter(optional=True, default=50, 
+        description='Use -1 to include all channels in every neighborhood')
+    adjacency_radius_out = mlpr.FloatParameter(optional=True, default=75,
+        description='Use -1 to include all channels in every neighborhood')        
+    detect_threshold = mlpr.FloatParameter(optional=True, default=4.5, 
+        description='detection threshold')
+    prm_template_name = mlpr.StringParameter(optional=True, default='',
+        description='.prm template file name')
+    freq_min = mlpr.FloatParameter(optional=True, default=300, 
+        description='Use 0 for no bandpass filtering')
+    freq_max = mlpr.FloatParameter(optional=True, default=6000, 
+        description='Use 0 for no bandpass filtering')
+    merge_thresh = mlpr.FloatParameter(optional=True, default=0.99, 
+        description='Threshold for automated merging')
+    pc_per_chan = mlpr.IntegerParameter(optional=True, default=2, 
+        description='Number of principal components per channel')
 
     # added in version 0.2.4
     whiten = mlpr.BoolParameter(
@@ -56,7 +57,7 @@ class IronClust(mlpr.Processor):
     common_ref_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, mean, median}')
     nTime_clu = mlpr.IntegerParameter(
-        optional=True, default=4, description='Number of time periods to cluster together')
+        optional=True, default=2, description='Number of time periods to cluster together')
     nTime_drift = mlpr.IntegerParameter(
         optional=True, default=64, description='Number of time segments for drift correction')
     knn = mlpr.IntegerParameter(
