@@ -26,10 +26,8 @@
         "irc": {
             "name":"IronClust",
             "processor_name":"IronClust",
-            "params": {
-                "detect_sign": -1
-            },
-            "compute_resource": "cpu"
+            "params": {},
+            "compute_resource": "gpu"
         },
         "irc-s": {
             "name":"IronClust-s",

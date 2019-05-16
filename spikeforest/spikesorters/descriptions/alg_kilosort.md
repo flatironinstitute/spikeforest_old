@@ -14,7 +14,7 @@ _
 
 ## Description
 
-From the KiloSort website: Implements an integrated template matching framework for detecting and clustering spikes from multi-channel electrophysiological recordings.
+*From the KiloSort website*: Fast spike sorting for hundreds of channels. Implements an integrated template matching framework for detecting and clustering spikes from multi-channel electrophysiological recordings.
 
 ## References
 

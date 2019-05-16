@@ -1,20 +1,20 @@
 {
-    "analysis_name": "paired_kampff",
-    "output":"key://pairio/spikeforest/spikeforest_analysis_results.paired_kampff.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.paired_kampff.json"],
+    "analysis_name": "hybrid_drift",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.hybrid_drift.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.hybrid_drift.json"],
     "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc"],
     "sorter_keys_disable": ["klusta"],
-    "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
-    "upload_to": "spikeforest.kbucket",
+    "download_from": ["spikeforest.spikeforest2", "kbucket"],
     "job_timeout":1200,
+    "test":false,
     "compute_resources": {
-        "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
+        "default":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"},
+        "cpu":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"},
+        "gpu":{"resource_name":"ccmlin000-gpu", "collection":"spikeforest","share_id":"spikeforest.spikeforest2"}
     },
     "sorters":{
         "ms4": {
-            "name": "MountainSort4",
+            "name": "MountainSort4-thr3",
             "processor_name": "MountainSort4",
             "params": {
                 "detect_sign": -1,
@@ -34,7 +34,7 @@
             "processor_name":"IronClust",
             "params": {
                 "detect_sign": -1,
-                "adjacency_radius": 50,
+                "adjacency_radius": 75,
                 "prm_template_name": "drift2_template.prm",
                 "detect_threshold": 4.5
             },
@@ -99,6 +99,6 @@
             "processor_name": "Tridesclous",
             "params": {},
             "compute_resource": "cpu"
-        }  
+        }       
     }
 }
