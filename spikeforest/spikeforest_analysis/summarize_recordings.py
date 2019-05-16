@@ -12,7 +12,7 @@ import mtlogging
 
 
 @mtlogging.log()
-def summarize_recordings(recordings, compute_resource=None, label=None):
+def summarize_recordings(recordings, compute_resource=None, label=None, upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'summarize recordings'))
 
@@ -57,6 +57,9 @@ def summarize_recordings(recordings, compute_resource=None, label=None):
 
         result0 = jobs_units_info[ii].result
         summary['true_units_info'] = mt.getSha1Url(path=result0.outputs['json_out'], basename='true_units_info.json')
+
+        if upload_to:
+            mt.saveFile(path=summary['true_units_info'], upload_to=upload_to)
 
         summarized_recordings[ii]['summary'] = summary
 
