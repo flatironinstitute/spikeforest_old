@@ -1,7 +1,6 @@
 ---
 label: KLUSTA
 dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/klusta/container/Dockerfile
-environment: Python
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/klusta/klusta.py
 notes: It uses Masked KlustaKwik for automated clustering
 website: https://github.com/kwikteam/klusta
