@@ -29,7 +29,7 @@ def prepare_hybrid_janelia_studies(*, basedir):
     recordings = []
     names = ['drift', 'static']
     for name in names:
-        study_name = 'hybrid_janelia_' + name
+        study_name = 'hybrid_' + name
         print('PREPARING: ' + study_name)
         study_dir = '{}/{}'.format(study_set_dir, name)
         study0 = dict(
