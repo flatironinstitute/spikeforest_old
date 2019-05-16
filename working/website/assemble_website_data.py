@@ -123,7 +123,8 @@ def main():
             'manual_franklab',
             'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
-            'synth_visapy'
+            'synth_visapy',
+            'hybrid_janelia'
         ]
     print('Using output ids: ', output_ids)
 
