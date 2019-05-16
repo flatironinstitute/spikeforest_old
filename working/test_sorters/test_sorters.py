@@ -13,6 +13,7 @@ boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 
+
 @pytest.mark.spikeforest
 @pytest.mark.ms4
 @pytest.mark.exclude
@@ -205,18 +206,30 @@ def test_ks2_neuropix32c():
         detect_sign=-1,
         adjacency_radius=50
     )
-    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
+    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.2)
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_boyden32c
 @pytest.mark.exclude
-def test_ks2_boydenc():
+def test_ks2_boyden32c():
     sorter = KiloSort2
     params = dict(
         detect_sign=-1,
         adjacency_radius=50
     )
-    do_sorting_test(sorter, params, boyden32c_recdir, assert_avg_accuracy=0.5)
+    do_sorting_test(sorter, params, boyden32c_recdir, assert_avg_accuracy=0.2)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_sqmea64c
+@pytest.mark.exclude
+def test_ks2_sqmea64c():
+    sorter = KiloSort2
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
+    do_sorting_test(sorter, params, sqmea64c_recdir, assert_avg_accuracy=0.2)
 
 
 @pytest.mark.spikeforest
@@ -224,11 +237,8 @@ def test_ks2_boydenc():
 @pytest.mark.exclude
 def test_irc_neuropix32c():
     sorter = IronClust
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50,
-    )
-    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
+    params = dict()
+    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.2)
 
 
 @pytest.mark.spikeforest
@@ -236,11 +246,8 @@ def test_irc_neuropix32c():
 @pytest.mark.exclude
 def test_irc_magland_c8():
     sorter = IronClust
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=75,
-    )
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5)
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.2)
 
 
 @pytest.mark.spikeforest
@@ -248,11 +255,8 @@ def test_irc_magland_c8():
 @pytest.mark.exclude
 def test_irc_magland_c4():
     sorter = IronClust
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=75,
-    )
-    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.5)
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.2)
 
 
 @pytest.mark.spikeforest
@@ -260,10 +264,7 @@ def test_irc_magland_c4():
 @pytest.mark.exclude
 def test_irc_sqmea64c():
     sorter = IronClust
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50,
-    )
+    params = dict()
     do_sorting_test(sorter, params, sqmea64c_recdir, assert_avg_accuracy=0.1)
 
 
