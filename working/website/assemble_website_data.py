@@ -180,6 +180,8 @@ def main():
     TrueUnits = []
     for recording in recordings:
         true_units_info = mt.loadObject(path=recording['summary']['true_units_info'])
+        if not true_units_info:
+            raise Exception('Unable to load true_units_info for recording {}'.format(recording['name']))
         for unit_info in true_units_info:
             TrueUnits.append(dict(
                 unitId=unit_info['unit_id'],

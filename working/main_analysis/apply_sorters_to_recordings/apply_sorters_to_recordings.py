@@ -12,7 +12,8 @@ def apply_sorters_to_recordings(*, label, sorters, recordings, studies, study_se
     recordings = sa.summarize_recordings(
         recordings=recordings,
         compute_resource='default',
-        label='Summarize recordings ({})'.format(label)
+        label='Summarize recordings ({})'.format(label),
+        upload_to=upload_to
     )
 
     # Run the spike sorting
