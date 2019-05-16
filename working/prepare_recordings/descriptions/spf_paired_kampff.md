@@ -1,6 +1,6 @@
 ---
 # This is YAML front matter
-label: SPF_PAIRED_KAMPFF
+label: PAIRED_KAMPFF
 electrode_type: silicon-probe
 doi:
   - 10.1101/370080
@@ -12,7 +12,7 @@ labels:
   - in-vivo
 ---
 
-# SPF_PAIRED_KAMPFF
+# PAIRED_KAMPFF
 
 ## Paired juxtacellular and silicon probe recording
 - Recordings were contributed from Adam [Kampff lab](http://www.kampff-lab.org/validating-electrodes)

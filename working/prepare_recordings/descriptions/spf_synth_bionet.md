@@ -1,6 +1,6 @@
 ---
 # This is YAML front matter
-label: SPF_SYNTH_BIONET
+label: SYNTH_BIONET
 electrode_type: silicon-probe
 doi: 
   - 10.1371/journal.pone.0201630
@@ -12,7 +12,7 @@ labels:
   - in-silico
 ---
 
-# SPF_SYNTH_BIONET
+# SYNTH_BIONET
 
 ## Synthetic groundtruth generated using Bionet simulator
 - Bionet is a neuron-based network simulator

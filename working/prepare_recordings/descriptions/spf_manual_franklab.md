@@ -1,6 +1,6 @@
 ---
 # This is YAML front matter
-label: SPF_MANUAL_FRANKLAB
+label: MANUAL_FRANKLAB
 electrode_type: tetrode
 doi: 10.1016/j.neuron.2017.08.030
 ground_truth: manual
@@ -8,7 +8,7 @@ recording_type: in-vivo
 organism: rat
 ---
 
-# SPF_MANUAL_FRANKLAB
+# MANUAL_FRANKLAB
 
 - Tetrode manual sorting by three human sorters. Dataset prepared by Jason Chung from Loren Frank's lab.
 - Three human sorters sorted identical recordings, and the data is divided to three time durations (600s, 1200s, 2400s).

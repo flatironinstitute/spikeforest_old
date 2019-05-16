@@ -1,6 +1,6 @@
 ---
 # This is YAML front matter
-label: SPF_HYBRID_JANELIA
+label: HYBRID_JANELIA
 electrode_type: silicon-probe
 doi: 
 ground_truth: hybrid
@@ -10,7 +10,7 @@ labels:
   - hybrid
 ---
 
-# SPF_HYBRID_JANELIA
+# HYBRID_JANELIA
 - Hybrid recording with a sinusoidal probe drift
 - Drift was generated using 2D interpolation (Modified Akima)
 - Waveform templates were recorded using 5 um spaced electrodes, see [Kampff lab Ultradense Survey](http://www.kampff-lab.org/ultra-dense-survey), and later subsampled to match the Neuropixels electrode spacing
