@@ -65,7 +65,7 @@ class IronClust(mlpr.Processor):
     min_count = mlpr.IntegerParameter(
         optional=True, default=30, description='Minimum cluster size')
     fGpu = mlpr.BoolParameter(
-        optional=True, default=False, description='Use GPU if available')
+        optional=True, default=True, description='Use GPU if available')
     fft_thresh = mlpr.FloatParameter(
         optional=True, default=0, description='FFT-based noise peak threshold')
     nSites_whiten = mlpr.IntegerParameter(

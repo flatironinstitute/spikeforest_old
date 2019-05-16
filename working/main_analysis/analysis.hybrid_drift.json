@@ -26,13 +26,8 @@
         "irc": {
             "name":"IronClust",
             "processor_name":"IronClust",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 75,
-                "prm_template_name": "",
-                "detect_threshold": 4.5
-            },
-            "compute_resource": "cpu"
+            "params": {},
+            "compute_resource": "gpu"
         },
         "irc-d2": {
             "name":"IronClust-drift2",

@@ -1,6 +1,7 @@
 ---
 label: YASS
 dockerfile: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/yass/container/Dockerfile
+environment: Python
 wrapper: https://github.com/flatironinstitute/spikeforest/blob/master/spikeforest/spikesorters/yass/yass.py
 website: https://yass.readthedocs.io/en/latest/
 source_code: https://github.com/paninski-lab/yass
