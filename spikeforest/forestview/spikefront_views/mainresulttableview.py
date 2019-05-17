@@ -178,7 +178,7 @@ class _HeaderWidget(vd.Component):
 
         self._snr_method_button = vd.components.RadioButton(checked=True)
         self._snr_method_button.onChange(self._on_snr_method)
-        self._snr_threshold = 6
+        self._snr_threshold = 8
         self._snr_thr_select_box = vd.components.SelectBox(style={'width': '100px'})
         self._snr_thr_select_box.onChange(self._on_selection_changed)
 
