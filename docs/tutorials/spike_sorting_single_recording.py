@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 
+import os
+import shutil
+from spikeforest import example_datasets
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-from mountaintools import client as mt
 
-# Configure to download from the public spikeforest kachery node
-mt.configDownloadFrom('spikeforest.public')
+recording, sorting_true = example_datasets.toy_example1() 
 
-# Load an example tetrode recording with its ground truth
-recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
+recdir = 'toy_example1'
 
-print('Load recording...')
-recording = SFMdaRecordingExtractor(dataset_directory=recdir, download=True)
-sorting_true = SFMdaSortingExtractor(firings_file=recdir + '/firings_true.mda')
+# remove the toy recording directory if it exists
+if os.path.exists(recdir):
+    shutil.rmtree(recdir)
+
+print('Preparing toy recording...')
+SFMdaRecordingExtractor.write_recording(recording=recording, save_path=recdir)
+SFMdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=recdir + '/firings_true.mda')
+
+
 
 # import a spike sorter from the spikesorters module of spikeforest
 from spikesorters import MountainSort4

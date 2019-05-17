@@ -1,0 +1,50 @@
+# Spike sorting a single recording
+
+Here we describe how to run spike sorting on a single recording.
+
+After installation, the below code may be run via [this python file](spike_sorting_single_recording.py).
+
+## Prerequisites
+
+{% include 'j2templates/prerequisites.md' %}
+
+## Installation
+
+{% include 'j2templates/install_spikeforest_pypi.md' %}
+
+## Preparing a recording
+
+<!--- #marker:5ee480a5-spikeforest-preparing-recordings-mda -->
+
+To create a recording in .mda format (suitable for running SpikeForest sorters),
+use the SpikeExtractors package, which will be installed as part of the
+SpikeForest installation. For more information, see
+[SpikeInterface](https://github.com/SpikeInterface/).
+
+For purpose of illustration here is a quick way to generate a test recording in .mda format:
+
+```python
+{% include 'j2templates/prepare_toy_recording.py' %}
+```
+
+## Running the sorting
+
+In the future we will be able to perform the following operations directly using the
+extractor objects. But at this point, we operate on directories.
+
+```python
+{% include 'j2templates/run_spike_sorting.py' %}
+```
+
+{% include 'j2templates/explain_force_run.md' %}
+
+As mentioned in the comments above, you can use any of the SpikeForest-wrapped
+sorting algorithms in place of MountainSort4.
+
+## Comparison with ground truth
+
+Next, we can compare the result with ground truth
+
+```python
+{% include 'j2templates/compare_with_truth.py' %}
+```

@@ -1,10 +1,8 @@
-# Spike sorting a SpikeForest recording
+# Spike sorting a single recording
 
-A subset of the recordings featured on the SpikeForest website are available for
-public download using our Python interface. Here we describe how to download and
-perform spike sorting on one of these recordings.
+Here we describe how to run spike sorting on a single recording.
 
-After installation, the below code may be run via [this python file](spike_sorting_spikeforest_recording.py).
+After installation, the below code may be run via [this python file](spike_sorting_single_recording.py).
 
 ## Prerequisites
 
@@ -28,39 +26,42 @@ singularity](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-
 This will work for all of the non-Matlab spike sorters (in the future we will
 also containerize the Matlab packages).
 
-## Downloading a recording
+## Preparing a recording
 
-To download a SpikeForest recording, you will first need to know its `sha1dir://` URI. Presently there
-is no method for obtaining this via the website, although we will provide this feature in an upcoming
-release. However, we provide some test examples here.
+<!--- #marker:5ee480a5-spikeforest-preparing-recordings-mda -->
 
-Making use of [SpikeInterface](https://github.com/SpikeInterface/), we can load the recording and the ground truth sorting in Python:
+To create a recording in .mda format (suitable for running SpikeForest sorters),
+use the SpikeExtractors package, which will be installed as part of the
+SpikeForest installation. For more information, see
+[SpikeInterface](https://github.com/SpikeInterface/).
+
+For purpose of illustration here is a quick way to generate a test recording in .mda format:
 
 ```python
+import os
+import shutil
+from spikeforest import example_datasets
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-from mountaintools import client as mt
 
-# Configure to download from the public spikeforest kachery node
-mt.configDownloadFrom('spikeforest.public')
+recording, sorting_true = example_datasets.toy_example1() 
 
-# Load an example tetrode recording with its ground truth
-recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
+recdir = 'toy_example1'
 
-print('Load recording...')
-recording = SFMdaRecordingExtractor(dataset_directory=recdir, download=True)
-sorting_true = SFMdaSortingExtractor(firings_file=recdir + '/firings_true.mda')
+# remove the toy recording directory if it exists
+if os.path.exists(recdir):
+    shutil.rmtree(recdir)
+
+print('Preparing toy recording...')
+SFMdaRecordingExtractor.write_recording(recording=recording, save_path=recdir)
+SFMdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=recdir + '/firings_true.mda')
+
+
 ```
-
-This will automatically download the necessary files and you now have objects
-representing the recording and ground truth sorting which you can manipulate
-using the tools of [SpikeInterface](https://github.com/SpikeInterface/).
 
 ## Running the sorting
 
-For our purposes, we will operate directly on the recording directory in order
-to take advantage of the MountainTools caching and container capabilities. But
-in the future we will be able to perform these operations directly using the
-extractor objects.
+In the future we will be able to perform the following operations directly using the
+extractor objects. But at this point, we operate on directories.
 
 ```python
 # import a spike sorter from the spikesorters module of spikeforest

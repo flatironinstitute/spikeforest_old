@@ -8,23 +8,11 @@ After installation, the below code may be run via [this python file](spike_sorti
 
 ## Prerequisites
 
-At this point, SpikeForest has only been tested in Linux. It should be straightforward to adapt
-to OS X. It is also possible to use Linux within Windows.
+{% include 'j2templates/prerequisites.md' %}
 
 ## Installation
 
-The first step is to install spikeforest and mountaintools. The easiest way is to use
-the PyPI packages as follows.
-
-```
-{% include 'j2templates/install_spikeforest_pypi.sh' %}
-```
-
-To use the containerized versions of the spike sorters (recommended), you should
-[install
-singularity](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps).
-This will work for all of the non-Matlab spike sorters (in the future we will
-also containerize the Matlab packages).
+{% include 'j2templates/install_spikeforest_pypi.md' %}
 
 ## Downloading a recording
 
@@ -42,6 +30,8 @@ This will automatically download the necessary files and you now have objects
 representing the recording and ground truth sorting which you can manipulate
 using the tools of [SpikeInterface](https://github.com/SpikeInterface/).
 
+## Running the sorting
+
 For our purposes, we will operate directly on the recording directory in order
 to take advantage of the MountainTools caching and container capabilities. But
 in the future we will be able to perform these operations directly using the
@@ -51,11 +41,12 @@ extractor objects.
 {% include 'j2templates/run_spike_sorting.py' %}
 ```
 
-Note that when using MountainTools processors (via `execute()`), results are
-automatically cached. To force rerun, use the `_force_run=True` option.
+{% include 'j2templates/explain_force_run.md' %}
 
 As mentioned in the comments above, you can use any of the SpikeForest-wrapped
 sorting algorithms in place of MountainSort4.
+
+## Comparison with ground truth
 
 Next, we can compare the result with ground truth
 

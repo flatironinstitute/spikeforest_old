@@ -117,7 +117,7 @@ for running spike sorting on your own computer to reproduce the results featured
 
  <!--- #marker:5ee480a5-spikeforest-preparing-recordings-mda -->
 
-To create a recording in .mda format (suitable for running SpikeForest sorters), use the SpikeExtractors package, which should be installed as part of the SpikeForest installation. For more information, see [SpikeInterface](https://github.com/SpikeInterface/). (More details are needed here. We should provide an explicit example.)
+To create a recording in .mda format (suitable for running SpikeForest sorters), use the SpikeExtractors package, which will be installed as part of the SpikeForest installation. For more information, see [SpikeInterface](https://github.com/SpikeInterface/). (More details are needed here. We should provide an explicit example.)
 
 
 ## Installing the spike sorters
