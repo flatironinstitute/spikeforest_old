@@ -455,8 +455,8 @@ class MountainClient():
         return list(self._get_sub_keys(key=key, collection=collection))
 
     @mtlogging.log(name='MountainClient:realizeFile')
-    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None, 
-                          local_first=False, show_progress=False, collection=None, 
+    def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None,
+                          local_first=False, show_progress=False, collection=None,
                           download_from=None, local_only=False, remote_only=False):
         """
         Return a local path to the specified file, downloading the file from a
@@ -565,7 +565,7 @@ class MountainClient():
 
         The file is specified using either path or key, as described in the
         documentation for realizeFile().
-        
+
         Parameters
         ----------
         path : str, optional
@@ -591,7 +591,7 @@ class MountainClient():
             default is False)
         upload_to : str, optional
             Name of kachery server to upload the file to
-        
+
         Returns
         -------
         str or None
@@ -636,7 +636,7 @@ class MountainClient():
         local_first : bool, optional
             Whether to search the local database prior to searching any remote
             collections (the default is False)
-        
+
         Returns
         -------
         dict or None
@@ -966,18 +966,17 @@ class MountainClient():
             _global_kbucket_mem_dir_hash_cache[path] = ret
         return ret
 
-
     def _maybe_resolve(self, path):
-        if not path or not path.startswith('key://'): 
+        if not path or not path.startswith('key://'):
             return path
         resolved_path = self.resolveKeyPath(path)
-        if not resolved_path: 
+        if not resolved_path:
             raise KeyError('{} could not be resolved'.format(path))
         return resolved_path
 
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path):
-        try: 
+        try:
             path = self._maybe_resolve(path)
             return self._local_db.computeFileSha1(path=path)
         except KeyError:
@@ -1169,6 +1168,12 @@ class MountainClient():
                 return ret
         if local_only:
             return None
+        if path.startswith('sha1dir://'):
+            sha1 = self.computeFileSha1(path)
+            if not sha1:
+                return None
+            path = 'sha1://' + sha1
+            # the proceed
         download_froms = []
         if download_from is not None:
             download_froms.append(download_from)
