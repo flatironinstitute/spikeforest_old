@@ -18,11 +18,14 @@ a single recording publically available via:
 
 ```
 kb-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public
+kb-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikeforest.public
 ```
 
 This will upload the contents of this recording directory to a kachery node that
 is configured to be publically accessible for downloads. The `--ur` and `--dr`
-flags are documented via the `--help` switch.
+flags are documented via the `--help` switch. The second line is needed to also
+upload the index of the higher-level directory. (In the future we should do this
+automatically - @wysota)
 
 Now, anyone can download this dataset via
 
