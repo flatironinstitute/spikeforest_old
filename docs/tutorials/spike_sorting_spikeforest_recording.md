@@ -4,6 +4,8 @@ A subset of the recordings featured on the SpikeForest website are available for
 public download using our Python interface. Here we describe how to download and
 perform spike sorting on one of these recordings.
 
+After installation, the below code may be run via [this python file](spike_sorting_spikeforest_recording.py).
+
 ## Prerequisites
 
 At this point, SpikeForest has only been tested in Linux. It should be straightforward to adapt
@@ -127,5 +129,3 @@ sa.ComputeUnitsInfo.execute(
 # and outputs/true_units_info.json
 
 ```
-
-The above code may be run via [this python file](spike_sorting_spikeforest_recording.py).
