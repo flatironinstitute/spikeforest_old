@@ -18,7 +18,7 @@ the PyPI packages as follows.
 
 ```
 pip install --upgrade spikeforest==0.6.1
-pip install --upgrade mountaintools==0.3.0
+pip install --upgrade mountaintools==0.3.1
 ```
 
 To use the containerized versions of the spike sorters (recommended), you should
