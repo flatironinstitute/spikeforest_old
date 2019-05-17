@@ -108,11 +108,16 @@ SpykingCircus.execute(
 )
 ```
 
+## Spike sorting recordings featured on the website
+
+We have prepared a [full tutorial](docs/tutorials/spike_sorting_spikeforest_recording.md)
+for running spike sorting on your own computer to reproduce the results featured on our comparison website.
+
 ## Preparing recordings in .mda format
 
  <!--- #marker:5ee480a5-spikeforest-preparing-recordings-mda -->
 
-To create a recording in .mda format (suitable for running SpikeForest sorters), use the SpikeExtractors package, which should be installed as part of the SpikeForest installation.
+To create a recording in .mda format (suitable for running SpikeForest sorters), use the SpikeExtractors package, which should be installed as part of the SpikeForest installation. For more information, see [SpikeInterface](https://github.com/SpikeInterface/). (More details are needed here. We should provide an explicit example.)
 
 
 ## Installing the spike sorters
@@ -192,7 +197,7 @@ See the [YASS website](https://yass.readthedocs.io/en/latest/) and the following
 
 ## Running the full analysis (for the website)
 
-Instructions (work-in-progress) for running the full analysis for the website can be found at [full_analysis.md](docs/full_analysis.md).
+Interal instructions (work-in-progress) for running the full analysis for the website can be found at [full_analysis.md](docs/full_analysis.md).
 
 ## Sorting batches of multiple recordings
 
@@ -214,6 +219,12 @@ This section needs to be written.
 
  <!--- #marker:f225123d-spikeforest-authors -->
 
-This section needs to be written
+This section needs to be updated.
+
+Jeremy Magland, James Jun, Liz Lovero, Alex Barnett
+
+Alex Morley, Witold Wysota
+
+
 
 
