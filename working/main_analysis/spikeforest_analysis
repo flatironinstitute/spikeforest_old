@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
+    parser.add_argument('--compute_resources', help='path to a .json file specifying the compute resources to use', required=True)
 
     args = parser.parse_args()
 
@@ -38,6 +39,8 @@ def main():
 
     if args.job_timeout is not None:
         analysis_obj['job_timeout'] = float(args.job_timeout)
+
+    analysis_obj['compute_resources'] = mt.loadObject(path=args.compute_resources)['compute_resources']
 
     analysis_name = analysis_obj['analysis_name']
     print('ANALYSIS: {}'.format(analysis_name))

@@ -2,16 +2,10 @@
     "analysis_name": "synth_mearec_neuronexus",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuronexus.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuronexus.json"],
-    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc"],
-    "sorter_keys_disable": ["klusta"],
+    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
     "job_timeout":1200,
-    "compute_resources": {
-        "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
-    },
     "sorters":{
         "ms4": {
             "name": "MountainSort4",

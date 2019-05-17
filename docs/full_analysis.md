@@ -7,8 +7,8 @@ You need to add two key files containing security tokens. Contact Jeremy Magland
 - Create a file `~/.mountaintools/kachery_tokens`
   - Add a line `spikeforest.kbucket upload XXXX`
   - Add a line `spikeforest.kbucket download YYYY`
-  - Add a line `spikeforest upload XXXX`
-  - Add a line `spikeforest download YYYY`
+  - Add a line `kbucket upload XXXX`
+  - Add a line `kbucket download YYYY`
   
 - Create a file `~/.mountaintools/pairio_tokens`
   - Add a line `spikeforest XXXXXX`

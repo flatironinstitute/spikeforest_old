@@ -1,0 +1,7 @@
+{
+    "compute_resources": {
+        "default":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
+        "cpu":{"resource_name":"ccmlin000-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
+        "gpu":{"resource_name":"ccmlin000-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
+    }
+}
