@@ -1,5 +1,7 @@
 # SpikeForest topics
 
+**Note: this markdown document is outdated. Please see the other docs.**
+
 ![Basic flow chart - SpikeForest](basic_flow_chart_spikeforest.jpg?raw=true "Basic flow chart - SpikeForest")
 
 ## Codepod
