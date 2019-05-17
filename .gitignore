@@ -3,6 +3,7 @@ test_output
 cairio.env
 spikesprays
 run1.sh
+outputs
 
 working/website/website_data*
 .vscode
