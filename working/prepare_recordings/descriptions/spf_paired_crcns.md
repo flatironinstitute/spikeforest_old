@@ -4,7 +4,7 @@ label: PAIRED_CRCNS_HC1
 electrode_type:
   - tetrode
   - silicon-probe
-doi: TODO
+doi: 10.1152/jn.2000.84.1.401
 ground_truth: intracellular
 organism: rat
 source: Buzsaki lab
