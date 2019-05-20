@@ -126,7 +126,7 @@ To create a recording in .mda format (suitable for running SpikeForest sorters),
 
 If you choose not to use the singularity method, you can install the spike sorters individually as follows.
 
-## HerdingSpikes2
+### HerdingSpikes2
 
 See the [HerdingSpikes2 website](https://github.com/mhhennig/HS2) and the following [Dockerfile](https://github.com/flatironinstitute/spikeforest/blob/master/).
 
@@ -137,7 +137,7 @@ To use IronClust with SpikeForest, you must have MATLAB and git installed. You a
   - Statistics and Machine Learning Toolbox
   - Parallel Computing Toolbox
 
-SpikeForest will automatically clone the repo (from https://github.com/jamesjun/ironclust) as needed. However, if you would like to manually point SpikeForest to use a particular repo, you should set the `IRONCLUST_PATH_DEV` environment variable to point to the source location.
+SpikeForest will automatically clone the repo (from https://github.com/jamesjun/ironclust) as needed. However, if you would like to manually point SpikeForest to use a particular source directory on your local machine, you should set the `IRONCLUST_PATH_DEV` environment variable to point to this directory.
 
 ### JRClust
 
@@ -163,7 +163,7 @@ Compilation instructions may be found on the KiloSort website.
 
 To use Kilosort2 with SpikeForest, you must have MATLAB and git installed, as well as any MATLAB toolboxes required by Kilosort2.
 
-SpikeForest will automatically clone the source repo as needed. However, if you would like to manually point SpikeForest to use a particular Kilosort2 repo on your local machine, you should set the `KILOSORT2_PATH_DEV` environment variable to point to the local source directory.
+SpikeForest will automatically clone the source repo as needed. However, if you would like to manually point SpikeForest to use a particular Kilosort2 source directory on your local machine, you should set the `KILOSORT2_PATH_DEV` environment variable to point to this directory.
 
 Note that we encountered some issues with Kilosort2 on tetrodes and are presently using a forked version (more details will be provided later).
 
