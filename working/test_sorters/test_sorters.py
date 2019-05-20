@@ -12,8 +12,8 @@ neuropix32c_recdir = 'sha1dir://d446c8e74fc4ca3a0dab491fca6c10189b527709.neuropi
 boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c.1103_1_1'
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
-#neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
-neurocube1c_recdir = '/mnt/home/jjun/ceph/groundtruth/waveclus_synth/sim2_c1/simulation_1'
+neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
+#neurocube1c_recdir = '/mnt/home/jjun/ceph/groundtruth/waveclus_synth/sim2_c1/simulation_1'
 
 @pytest.mark.spikeforest
 @pytest.mark.waveclus_neurocube1c
