@@ -2,7 +2,7 @@
 
 20 May 2019
 
-The MATLAB sorting algorithms are not as rigorously repeatable since they do not utilize singularity containers. To remedy this, I am building in auto-install scripts for these processors. For IronClust, the install script just clones the IronClulst repo at a particular commit. For KiloSort and Kilosort2, a GPU/CUDA compilation step is also part of the auto-install.
+The MATLAB sorting algorithms are not as rigorously repeatable since they do not utilize singularity containers. To remedy this, I am building in auto-install scripts for these processors. For IronClust, the install script just clones the IronClust repo at a particular commit. For KiloSort and Kilosort2, a GPU/CUDA compilation step is also part of the auto-install.
 
 Thus far I have implemented this auto-installer for the following algs:
 
@@ -24,5 +24,5 @@ For example,
 
 The wrappers include hard-coded commits for the repos.
 
-
+In this way, it is possible to update the commit (e.g., bug fix) without incrementing the wrapper version.
 
