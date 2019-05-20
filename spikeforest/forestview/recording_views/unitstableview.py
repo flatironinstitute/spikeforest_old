@@ -31,6 +31,7 @@ class UnitsTableView(vd.Component):
         sorting_context = context
         recording_context = context.recordingContext()
         try:
+            recording_context.initialize()
             sorting_context.initialize()
             print('***** Preparing efficient access recording extractor...')
             earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())

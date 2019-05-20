@@ -35,6 +35,7 @@ class TemplatesView(vd.Component):
     def prepareView(context, opts):
         sorting_context = context
         recording_context = context.recordingContext()
+        recording_context.initialize()
         sorting_context.initialize()
         earx = EfficientAccessRecordingExtractor(recording=recording_context.recordingExtractor())
         sorting = sorting_context.sortingExtractor()
