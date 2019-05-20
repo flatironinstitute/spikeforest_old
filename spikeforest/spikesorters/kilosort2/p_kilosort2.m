@@ -1,5 +1,4 @@
-function p_kilosort2(kilosort_src, ironclust_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
-% cmdstr2 = sprintf("p_ironclust('$(tempdir)','$timeseries$','$geom$','$firings_out$','$(argfile)');");
+function p_kilosort2(kilosort_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
 
 if exist(temp_path, 'dir') ~= 7
     mkdir(temp_path);
@@ -7,7 +6,6 @@ end
 
 % prepare for kilosort execution
 addpath(genpath(kilosort_src));
-addpath(fullfile(ironclust_src, 'matlab'), fullfile(ironclust_src, 'matlab/mdaio'), fullfile(ironclust_src, 'matlab/npy-matlab'));    
 ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 
 % Run kilosort

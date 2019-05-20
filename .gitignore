@@ -6,6 +6,7 @@ run1.sh
 outputs
 test_outputs
 toy_*
+tmp*
 
 working/website/website_data*
 .vscode
