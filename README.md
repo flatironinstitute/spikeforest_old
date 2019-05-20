@@ -132,14 +132,12 @@ See the [HerdingSpikes2 website](https://github.com/mhhennig/HS2) and the follow
 
 ### IronClust
 
-IronClust is a Matlab project. To use it with SpikeForest, first clone the repo and then set an environment variable pointing to the source location:
+To use IronClust with SpikeForest, you must have MATLAB and git installed. You also need the following MATLAB toolboxes:
 
-```
-git clone https://github.com/jamesjun/ironclust
-export IRONCLUST_PATH=<source location>
-```
+  - Statistics and Machine Learning Toolbox
+  - Parallel Computing Toolbox
 
-It is recommended that you add the `export` line to your `.bashrc` file.
+SpikeForest will automatically clone the repo (from https://github.com/jamesjun/ironclust) as needed. However, if you would like to manually point SpikeForest to use a particular repo, you should set the `IRONCLUST_PATH_DEV` environment variable to point to the source location.
 
 ### JRClust
 
@@ -152,7 +150,7 @@ export JRCLUST_PATH=<source location>
 
 ### KiloSort
 
-Installation is similar to IronClust, except you also need to compile the CUDA code.
+Installation is similar to JRClust, except you also need to compile the CUDA code.
 
 ```
 git clone https://github.com/cortex-lab/KiloSort
@@ -161,19 +159,13 @@ export KILOSORT_PATH=<source location>
 
 Compilation instructions may be found on the KiloSort website.
 
-### KiloSort2
+### Kilosort2
 
-Installation is similar to IronClust, except you also need to compile the CUDA code.
+To use Kilosort2 with SpikeForest, you must have MATLAB and git installed, as well as any MATLAB toolboxes required by Kilosort2.
 
-```
-git clone https://github.com/MouseLand/Kilosort2
-export KILOSORT2_PATH=<source location>
-```
+SpikeForest will automatically clone the source repo as needed. However, if you would like to manually point SpikeForest to use a particular Kilosort2 repo on your local machine, you should set the `KILOSORT2_PATH_DEV` environment variable to point to the local source directory.
 
-Compilation instructions may be found on the KiloSort website.
-
-Note that we encountered some issues with KiloSort2 and are presently using a forked version (more details will be provided later).
-
+Note that we encountered some issues with Kilosort2 on tetrodes and are presently using a forked version (more details will be provided later).
 
 ### MountainSort4
 
