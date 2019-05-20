@@ -16,7 +16,7 @@ neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
 #neurocube1c_recdir = '/mnt/home/jjun/ceph/groundtruth/waveclus_synth/sim2_c1/simulation_1'
 
 @pytest.mark.spikeforest
-@pytest.mark.waveclus_neurocube1c
+@pytest.mark.e
 @pytest.mark.exclude
 def test_waveclus_neurocube1c():
     sorter = Waveclus
@@ -108,11 +108,8 @@ def test_sc():
 @pytest.mark.exclude
 def test_ks2_magland_c4():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
-    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
@@ -120,11 +117,8 @@ def test_ks2_magland_c4():
 @pytest.mark.exclude
 def test_ks2_magland_c8():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
@@ -225,10 +219,7 @@ def test_hs2_sqmea64c():
 @pytest.mark.exclude
 def test_ks2_neuropix32c():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
+    params = dict()
     do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.2)
 
 @pytest.mark.spikeforest
@@ -236,10 +227,7 @@ def test_ks2_neuropix32c():
 @pytest.mark.exclude
 def test_ks2_boyden32c():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
+    params = dict()
     do_sorting_test(sorter, params, boyden32c_recdir, assert_avg_accuracy=0.2)
 
 
@@ -248,10 +236,7 @@ def test_ks2_boyden32c():
 @pytest.mark.exclude
 def test_ks2_sqmea64c():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
+    params = dict()
     do_sorting_test(sorter, params, sqmea64c_recdir, assert_avg_accuracy=0.2)
 
 
@@ -318,10 +303,7 @@ def test_jrc_neuropix32c():
 @pytest.mark.exclude
 def test_ks2_kampff():
     sorter = KiloSort2
-    params = dict(
-        detect_sign=-1,
-        adjacency_radius=50
-    )
+    params = dict()
     do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
 
 

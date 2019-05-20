@@ -62,9 +62,10 @@ end %func
 %--------------------------------------------------------------------------
 function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
-S_txt = irc('call', 'meta2struct', {arg_fname});
+S_txt = meta2struct_(arg_fname);
 useGPU = 1;
-[freq_min, pc_per_chan, sRateHz, spkTh] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold');
+[freq_min, pc_per_chan, sRateHz, spkTh, minFR, adjacency_radius] = ...
+    struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold', 'minFR', 'adjacency_radius');
 spkTh = -abs(spkTh);
 
 % convert to binary file (int16)
@@ -77,7 +78,7 @@ vcFile_chanMap = fullfile(fpath, 'chanMap.mat');
 createChannelMapFile_(vcFile_chanMap, Nchannels, mrXY_site(:,1), mrXY_site(:,2));
 nChans = size(mrXY_site,1);
 
-S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min);
+S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min, minFR, adjacency_radius);
 ops = config_kilosort2_(S_ops); %obtain ops
 
 end %func
@@ -159,7 +160,7 @@ ops.fshigh = S_opt.freq_min;
 ops.minfr_goodchannels = 0.1; 
 
 % threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
-ops.Th = [10 4];  
+ops.Th = [6, 2];  
 
 % how important is the amplitude penalty (like in Kilosort1, 0 means not used, 10 is average, 50 is a lot) 
 ops.lam = 10;  
@@ -168,13 +169,13 @@ ops.lam = 10;
 ops.AUCsplit = 0.9; 
 
 % minimum spike rate (Hz), if a cluster falls below this for too long it gets removed
-ops.minFR = 1/50; 
+ops.minFR = S_opt.minFR; 
 
 % number of samples to average over (annealed from first to second value) 
 ops.momentum = [20 400]; 
 
 % spatial constant in um for computing residual variance of spike
-ops.sigmaMask = 30; 
+ops.sigmaMask = S_opt.adjacency_radius; 
 
 % threshold crossings for pre-clustering (in PCA projection space)
 ops.ThPre = 8;
@@ -230,3 +231,59 @@ for iArg=1:nargout
     end
 end %for
 end %func
+
+
+%--------------------------------------------------------------------------
+% 8/2/17 JJJ: Documentation and test
+function S = meta2struct_(vcFile)
+    % Convert text file to struct
+    S = struct();
+    if ~exist_file_(vcFile, 1), return; end
+    
+    fid = fopen(vcFile, 'r');
+    mcFileMeta = textscan(fid, '%s%s', 'Delimiter', '=',  'ReturnOnError', false);
+    fclose(fid);
+    csName = mcFileMeta{1};
+    csValue = mcFileMeta{2};
+    for i=1:numel(csName)
+        vcName1 = csName{i};
+        if vcName1(1) == '~', vcName1(1) = []; end
+        try         
+            eval(sprintf('%s = ''%s'';', vcName1, csValue{i}));
+            eval(sprintf('num = str2double(%s);', vcName1));
+            if ~isnan(num)
+                eval(sprintf('%s = num;', vcName1));
+            end
+            eval(sprintf('S = setfield(S, ''%s'', %s);', vcName1, vcName1));
+        catch
+            fprintf('%s = %s error\n', csName{i}, csValue{i});
+        end
+    end
+    end %func
+    
+    
+    %--------------------------------------------------------------------------
+    % 7/21/2018 JJJ: rejecting directories, strictly search for flies
+    % 9/26/17 JJJ: Created and tested
+    function flag = exist_file_(vcFile, fVerbose)
+    if nargin<2, fVerbose = 0; end
+    if isempty(vcFile)
+        flag = false; 
+    elseif iscell(vcFile)
+        flag = cellfun(@(x)exist_file_(x, fVerbose), vcFile);
+        return;
+    else
+        S_dir = dir(vcFile);
+        if numel(S_dir) == 1
+            flag = ~S_dir.isdir;
+        else
+            flag = false;
+        end
+    end
+    if fVerbose && ~flag
+        fprintf(2, 'File does not exist: %s\n', vcFile);
+    end
+    end %func
+    
+    
+    

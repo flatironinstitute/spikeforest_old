@@ -3,7 +3,7 @@ set -e
 
 declare -a list=("neurocube_single")
 
-OPTS="--skip_failing --compute_resources compute_resources_ccmlin000.json"
+OPTS="--compute_resources compute_resources_ccmlin000.json"
 
 for item in "${list[@]}"
 do 

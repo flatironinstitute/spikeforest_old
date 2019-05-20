@@ -55,10 +55,7 @@
         "ks2": {
             "name": "KiloSort2",
             "processor_name": "KiloSort2",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50
-            },
+            "params": {},
             "compute_resource": "gpu"
         },
         "yass": {

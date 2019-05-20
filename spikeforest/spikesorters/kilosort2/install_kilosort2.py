@@ -49,6 +49,7 @@ def install_kilosort2(repo, commit):
         run('mexGPUall.m');
     catch
         disp('Problem running mexGPUall.');
+        disp(lasterr());
         exit(-1)
     end;
     exit(0)

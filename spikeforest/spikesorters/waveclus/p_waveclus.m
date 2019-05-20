@@ -8,10 +8,11 @@ function p_waveclus(vcDir_temp, vcFile_raw, vcFile_mda, sRateHz)
 % convert input to matlab format. flip polarity for positive detection
 vcFile_mat = fullfile(vcDir_temp, 'raw.mat');
 data = double(readmda(vcFile_raw) * -1);
+sr = sRateHz;
 try
-    save(vcFile_mat, 'data', '-v7.3', '-nocompression'); %faster    
+    save(vcFile_mat, 'data', 'sr', '-v7.3', '-nocompression'); %faster    
 catch
-    save(vcFile_mat, 'data');
+    save(vcFile_mat, 'data', 'sr');
 end
 
 % Run waveclus batch mode. supply parameter file (set sampling rate)
