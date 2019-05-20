@@ -2,11 +2,17 @@
     "analysis_name": "neurocube_single",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.neurocube_single.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.neurocube_single.json"],
-    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta"],
+    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta", "waveclus"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
     "job_timeout":1200,
     "sorters":{
+        "waveclus": {
+            "name": "Waveclus",
+            "processor_name": "Waveclus",
+            "params": {},
+            "compute_resource":"cpu"
+        },        
         "ms4": {
             "name": "MountainSort4",
             "processor_name": "MountainSort4",

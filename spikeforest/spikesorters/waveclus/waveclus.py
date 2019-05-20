@@ -85,9 +85,9 @@ class Waveclus(mlpr.Processor):
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
             params = read_dataset_params(self.recording_dir)
-            if len(self.channels) > 0:
-                recording = se.SubRecordingExtractor(
-                    parent_recording=recording, channel_ids=self.channels)
+            # if len(self.channels) > 0:
+            #     recording = se.SubRecordingExtractor(
+            #         parent_recording=recording, channel_ids=self.channels)
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
 
@@ -107,9 +107,11 @@ class Waveclus(mlpr.Processor):
         except:
             if os.path.exists(tmpdir):
                 if not getattr(self, '_keep_temp_files', False):
+                    print('erased temp file 1')
                     shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
+            print('erased temp file 2')
             shutil.rmtree(tmpdir)
 
 

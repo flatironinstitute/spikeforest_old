@@ -6,7 +6,7 @@ function p_waveclus(vcDir_temp, vcFile_raw, vcFile_mda, sRateHz)
 % vcFile_mda: output .mda file (firings.mda)
 
 % convert input to matlab format. flip polarity for positive detection
-vcFile_mat = strrep(vcFile_raw, '.mda', '.mat');
+vcFile_mat = fullfile(vcDir_temp, 'raw.mat');
 data = double(readmda(vcFile_raw) * -1);
 try
     save(vcFile_mat, 'data', '-v7.3', '-nocompression'); %faster    
@@ -30,10 +30,11 @@ mr_waveclus = S0.cluster_class;
 viSpk_keep = find(mr_waveclus(:,1)>0);
 nSpikes = numel(viSpk_keep);
 mr_mda = ones(nSpikes, 3, 'double');
-mr_mda(:,2) = mr_waveclus(viSpk_keep,1); % cluster
-mr_mda(:,3) = mr_waveclus(viSpk_keep,2)/1000 * sRateHz; % time
+mr_mda(:,2) = mr_waveclus(viSpk_keep,2)/1000 * sRateHz; % time
+mr_mda(:,3) = mr_waveclus(viSpk_keep,1); % cluster
 
 writemda(mr_mda', vcFile_mda, 'float64');
+fprintf('p_waveclus: wrote to %s\n', vcFile_mda);
 end %func
 
 

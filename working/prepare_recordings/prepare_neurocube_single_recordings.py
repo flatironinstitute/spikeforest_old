@@ -27,7 +27,7 @@ def prepare_neurocube_single_studies(*, basedir):
     print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
-    names = ['sim2_c1']
+    names = ['sim2_2K10', 'sim2_11K20']
     for name in names:
         study_name = 'neurocube_' + name
         print('PREPARING: ' + study_name)

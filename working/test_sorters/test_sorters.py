@@ -18,20 +18,22 @@ neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
 @pytest.mark.spikeforest
 @pytest.mark.waveclus_neurocube1c
 @pytest.mark.exclude
-def test_waveclus():
+def test_waveclus_neurocube1c():
     sorter = Waveclus
     params = dict()
-    # do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
-    do_sorting_test(sorter, params, neurocube1c_recdir, assert_avg_accuracy=0.1)
-    # do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8) # jfm laptop: ~220 seconds
+    do_sorting_test(sorter, params, neurocube1c_recdir, assert_avg_accuracy=0.1, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4_neurocube1c
 @pytest.mark.exclude
-def test_ms4():
+def test_ms4_neurocube1c():
     sorter = MountainSort4
-    params = dict()
+    sorter = MountainSort4
+    params = dict(
+        detect_sign=-1,
+        adjacency_radius=50
+    )
     do_sorting_test(sorter, params, neurocube1c_recdir, assert_avg_accuracy=0.2)
 
 
@@ -323,7 +325,7 @@ def test_ks2_kampff():
     do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
 
 
-def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy, container='default'):
+def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy, container='default', _keep_temp_files=False):
     mt.configDownloadFrom('spikeforest.kbucket')
 
     recdir = recording_dir
@@ -333,7 +335,8 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
         firings_out={'ext': '.mda'},
         **params,
         _container=container,
-        _force_run=True
+        _force_run=True,
+        _keep_temp_files=_keep_temp_files
     )
 
     comparison = sa.GenSortingComparisonTable.execute(
