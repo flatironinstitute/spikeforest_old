@@ -5,9 +5,7 @@ import shutil
 
 
 def install_ironclust(commit):
-    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', None)
-    if not spikeforest_alg_install_path:
-        raise Exception('Environment variable not set: SPIKEFOREST_ALG_INSTALL_PATH')
+    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', os.getenv('HOME') + '/spikeforest_algs')
     repo = 'https://github.com/jamesjun/ironclust'
     key = dict(
         alg='ironclust',

@@ -5,9 +5,7 @@ import shutil
 
 
 def install_kilosort2(repo, commit):
-    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', None)
-    if not spikeforest_alg_install_path:
-        raise Exception('Environment variable not set: SPIKEFOREST_ALG_INSTALL_PATH')
+    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', os.getenv('HOME') + '/spikeforest_algs')
     key = dict(
         alg='kilosort2',
         repo=repo,
@@ -15,10 +13,18 @@ def install_kilosort2(repo, commit):
     )
     source_path = spikeforest_alg_install_path + '/kilosort2_' + commit
     if os.path.exists(source_path):
-        hash0 = mt.computeDirHash(source_path)
-        if hash0 == mt.getValue(key=key):
-            print('Kilosort2 is already auto-installed.')
-            return source_path
+        # The dir hash method does not seem to be working for some reason here
+        # hash0 = mt.computeDirHash(source_path)
+        # if hash0 == mt.getValue(key=key):
+        #     print('Kilosort2 is already auto-installed.')
+        #     return source_path
+
+        a = mt.loadObject(source_path+'/spikeforest.json')
+        if a:
+            if mt.sha1OfObject(a) == mt.sha1OfObject(key):
+                print('Kilosort2 is already auto-installed.')
+                return source_path
+
         print('Removing directory: {}'.format(source_path))
         shutil.rmtree(source_path)
 
@@ -62,7 +68,9 @@ def install_kilosort2(repo, commit):
     if retcode != 0:
         raise Exception('Compute gpu script returned a non-zero exit code.')
 
-    hash0 = mt.computeDirHash(source_path)
-    mt.setValue(key=key, value=hash0)
+    # The dir hash method does not seem to be working for some reason here
+    # hash0 = mt.computeDirHash(source_path)
+    # mt.setValue(key=key, value=hash0)
+    mt.saveObject(object=key, dest_path=source_path+'/spikeforest.json')
 
     return source_path
