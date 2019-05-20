@@ -16,5 +16,13 @@ _
 
 Spike sorting software developed at Flatiron Institute, based on JRCLUST (Janelia Rocket Clust).
 
+## Installation notes
+
+**Prerequisites:**
+
+* MATLAB with the following
+  - Statistics and Machine Learning Toolbox
+  - Parallel Computing Toolbox
+
 ## References
 

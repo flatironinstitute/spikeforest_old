@@ -13,6 +13,8 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from mountaintools import client as mt
 import json
+import traceback
+from .install_ironclust import install_ironclust
 
 
 class IronClust(mlpr.Processor):
@@ -26,26 +28,46 @@ class IronClust(mlpr.Processor):
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
-    channels = mlpr.IntegerListParameter(optional=True, default=[],
-        description='List of channels to use.')
-    detect_sign = mlpr.IntegerParameter(optional=True, default=-1,
-        description='Use -1, 0, or 1, depending on the sign of the spikes in the recording')
-    adjacency_radius = mlpr.FloatParameter(optional=True, default=50, 
-        description='Use -1 to include all channels in every neighborhood')
-    adjacency_radius_out = mlpr.FloatParameter(optional=True, default=75,
-        description='Use -1 to include all channels in every neighborhood')        
-    detect_threshold = mlpr.FloatParameter(optional=True, default=4.5, 
-        description='detection threshold')
-    prm_template_name = mlpr.StringParameter(optional=True, default='',
-        description='.prm template file name')
-    freq_min = mlpr.FloatParameter(optional=True, default=300, 
-        description='Use 0 for no bandpass filtering')
-    freq_max = mlpr.FloatParameter(optional=True, default=6000, 
-        description='Use 0 for no bandpass filtering')
-    merge_thresh = mlpr.FloatParameter(optional=True, default=0.99, 
-        description='Threshold for automated merging')
-    pc_per_chan = mlpr.IntegerParameter(optional=True, default=2, 
-        description='Number of principal components per channel')
+    channels = mlpr.IntegerListParameter(
+        optional=True, default=[],
+        description='List of channels to use.'
+    )
+    detect_sign = mlpr.IntegerParameter(
+        optional=True, default=-1,
+        description='Use -1, 0, or 1, depending on the sign of the spikes in the recording'
+    )
+    adjacency_radius = mlpr.FloatParameter(
+        optional=True, default=50,
+        description='Use -1 to include all channels in every neighborhood'
+    )
+    adjacency_radius_out = mlpr.FloatParameter(
+        optional=True, default=75,
+        description='Use -1 to include all channels in every neighborhood'
+    )
+    detect_threshold = mlpr.FloatParameter(
+        optional=True, default=4.5,
+        description='detection threshold'
+    )
+    prm_template_name = mlpr.StringParameter(
+        optional=True, default='',
+        description='.prm template file name'
+    )
+    freq_min = mlpr.FloatParameter(
+        optional=True, default=300,
+        description='Use 0 for no bandpass filtering'
+    )
+    freq_max = mlpr.FloatParameter(
+        optional=True, default=6000,
+        description='Use 0 for no bandpass filtering'
+    )
+    merge_thresh = mlpr.FloatParameter(
+        optional=True, default=0.99,
+        description='Threshold for automated merging'
+    )
+    pc_per_chan = mlpr.IntegerParameter(
+        optional=True, default=2,
+        description='Number of principal components per channel'
+    )
 
     # added in version 0.2.4
     whiten = mlpr.BoolParameter(
@@ -74,9 +96,17 @@ class IronClust(mlpr.Processor):
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
     def run(self):
-        ironclust_path = os.environ.get('IRONCLUST_PATH', None)
-        if not ironclust_path:
-            raise Exception('Environment variable not set: IRONCLUST_PATH')
+        ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
+        if ironclust_path:
+            print('Using ironclust from IRONCLUST_PATH_DEV directory: {}'.format(ironclust_path))
+        else:
+            try:
+                print('Auto-installing ironclust.')
+                ironclust_path = install_ironclust(commit='042b600b014de13f6d11d3b4e50e849caafb4709')
+            except:
+                traceback.print_exc()
+                raise Exception('Problem installing ironclust. You can set the IRONCLUST_PATH_DEV to force to use a particular path.')
+        print('Using ironclust from: {}'.format(ironclust_path))
 
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
@@ -98,7 +128,7 @@ class IronClust(mlpr.Processor):
                 all_params[param0.name] = getattr(self, param0.name)
             sorting = ironclust_helper(
                 recording=recording,
-                tmpdir=tmpdir,                
+                tmpdir=tmpdir,
                 ironclust_path=ironclust_path,
                 params=params,
                 **all_params)
@@ -118,15 +148,10 @@ def ironclust_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        ironclust_path=None,
         params=dict(),
+        ironclust_path,
         **kwargs):
-    if ironclust_path is None:
-        ironclust_path = os.environ.get('IRONCLUST_PATH', None)
-    if not ironclust_path:
-        raise Exception(
-            'You must either set the ironclust_path environment variable, or pass the ironclust_path parameter')
-    # source_dir=os.path.dirname(os.path.realpath(__file__))
+    source_dir = os.path.dirname(os.path.realpath(__file__))
 
     dataset_dir = tmpdir + '/ironclust_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
@@ -176,6 +201,7 @@ def ironclust_helper(
     # new method
     print('Running ironclust in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
+        addpath('{source_dir}');
         addpath('{ironclust_path}', '{ironclust_path}/matlab', '{ironclust_path}/matlab/mdaio');
         try
             p_ironclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '', '', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
@@ -186,7 +212,7 @@ def ironclust_helper(
         end
         quit(0);
     '''
-    cmd = cmd.format(ironclust_path=ironclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir)
+    cmd = cmd.format(ironclust_path=ironclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir, source_dir=source_dir)
 
     matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_ironclust.m', keep_temp_files=True)
     matlab_cmd.write()
@@ -224,21 +250,6 @@ def _read_text_file(fname):
 def _write_text_file(fname, str):
     with open(fname, 'w') as f:
         f.write(str)
-
-
-def _run_command_and_print_output(command):
-    with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
-        while True:
-            output_stdout = process.stdout.readline()
-            output_stderr = process.stderr.readline()
-            if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
-                break
-            if output_stdout:
-                print(output_stdout.decode())
-            if output_stderr:
-                print(output_stderr.decode())
-        rc = process.poll()
-        return rc
 
 
 def read_dataset_params(dsdir):

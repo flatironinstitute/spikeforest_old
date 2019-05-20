@@ -13,6 +13,9 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
+import traceback
+from .install_kilosort2 import install_kilosort2
+from ..ironclust.install_ironclust import install_ironclust
 # import h5py
 
 
@@ -34,8 +37,8 @@ class KiloSort2(mlpr.Processor):
       Original Kilosort2 code can be obtained from `https://github.com/MouseLand/Kilosort2.git`
     2. (optional) If Alex Morley's latest version doesn't work with SpikeForest, run
         `git checkout 43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956`
-    3. In Matlab, run `CUDA\mexGPUall` to compile all CUDA codes
-    4. Add `KILOSORT2_PATH=...` in your .bashrc file.    
+    3. In Matlab, run `CUDA/mexGPUall` to compile all CUDA codes
+    4. Add `KILOSORT2_PATH=...` in your .bashrc file.
     """
         
     NAME = 'KiloSort2'
@@ -68,6 +71,8 @@ class KiloSort2(mlpr.Processor):
         optional=True, default=3, description='TODO')
 
     def run(self):
+        _keep_temp_files = True
+        
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-tmp-' + code
@@ -94,10 +99,12 @@ class KiloSort2(mlpr.Processor):
                 sorting=sorting, save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
-                shutil.rmtree(tmpdir)
+                if not _keep_temp_files:
+                    shutil.rmtree(tmpdir)
             raise
-        if not getattr(self, '_keep_temp_files', False):
+        if not _keep_temp_files:
             shutil.rmtree(tmpdir)
+
 
 def kilosort2_helper(*,
                      recording,  # Recording object
@@ -108,21 +115,36 @@ def kilosort2_helper(*,
                      merge_thresh=.98,  # Cluster merging threhold 0..1
                      freq_min=150,  # Lower frequency limit for band-pass filter
                      freq_max=6000,  # Upper frequency limit for band-pass filter
-                     pc_per_chan=3,  # Number of pc per channel
-                     KILOSORT2_PATH=None,  # github kilosort2
-                     IRONCLUST_PATH=None  # github ironclust
+                     pc_per_chan=3
                      ):
-    if KILOSORT2_PATH is None:
-        KILOSORT2_PATH = os.getenv('KILOSORT2_PATH', None)
-    if not KILOSORT2_PATH:
-        raise Exception(
-            'You must either set the KILOSORT2_PATH environment variable, or pass the KILOSORT2_PATH parameter')
 
-    if IRONCLUST_PATH is None:
-        IRONCLUST_PATH = os.getenv('IRONCLUST_PATH', None)
-    if not IRONCLUST_PATH:
-        raise Exception(
-            'You must either set the IRONCLUST_PATH environment variable, or pass the IRONCLUST_PATH parameter')
+    # TODO: do not require ks2 to depend on irc -- rather, put all necessary .m code in the spikeforest repo
+    ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
+    if ironclust_path:
+        print('Using ironclust from IRONCLUST_PATH_DEV directory: {}'.format(ironclust_path))
+    else:
+        try:
+            print('Auto-installing ironclust.')
+            ironclust_path = install_ironclust(commit='042b600b014de13f6d11d3b4e50e849caafb4709')
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing ironclust. You can set the IRONCLUST_PATH_DEV to force to use a particular path.')
+    print('For kilosort2, using ironclust utility functions from: {}'.format(ironclust_path))
+
+    kilosort2_path = os.environ.get('KILOSORT2_PATH_DEV', None)
+    if kilosort2_path:
+        print('Using kilosort2 from KILOSORT2_PATH_DEV directory: {}'.format(kilosort2_path))
+    else:
+        try:
+            print('Auto-installing kilosort2.')
+            kilosort2_path = install_kilosort2(
+                repo='https://github.com/alexmorley/Kilosort2',
+                commit='43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956'
+            )
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing kilosort2. You can set the KILOSORT2_PATH_DEV to force to use a particular path.')
+    print('Using kilosort2 from: {}'.format(kilosort2_path))
 
     source_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -156,23 +178,25 @@ def kilosort2_helper(*,
     print('Running Kilosort2 in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
         addpath('{source_dir}');
+        addpath('{source_dir}/mdaio')
+        addpath('{ironclust_path}/matlab');
         try
-            p_kilosort2('{ksort}', '{iclust}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
+            p_kilosort2('{ksort}', '{tmpdir}', '{raw}', '{geom}', '{firings}', '{arg}');
         catch
             quit(1);
         end
         quit(0);
         '''
-    cmd = cmd.format(source_dir=source_dir, ksort=KILOSORT2_PATH, iclust=IRONCLUST_PATH,
+    cmd = cmd.format(source_dir=source_dir, ksort=kilosort2_path,
                      tmpdir=tmpdir, raw=dataset_dir + '/raw.mda', geom=dataset_dir + '/geom.csv',
-                     firings=tmpdir + '/firings.mda', arg=dataset_dir + '/argfile.txt')
+                     firings=tmpdir + '/firings.mda', arg=dataset_dir + '/argfile.txt', ironclust_path=ironclust_path)
     matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_kilosort2.m', keep_temp_files=True)
     matlab_cmd.write()
     shell_cmd = '''
         #!/bin/bash
         cd {tmpdir}
-        echo '=====================' `date` '=====================' >> run_kilosort2.log
-        matlab -nosplash -nodisplay -r run_kilosort2 &>> run_kilosort2.log
+        echo '=====================' `date` '====================='
+        matlab -nosplash -nodisplay -r run_kilosort2
     '''.format(tmpdir=tmpdir)
     shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_kilosort2.sh', keep_temp_files=True)
     shell_cmd.write(tmpdir + '/run_kilosort2.sh')
@@ -201,18 +225,3 @@ def _read_text_file(fname):
 def _write_text_file(fname, str):
     with open(fname, 'w') as f:
         f.write(str)
-
-
-def _run_command_and_print_output(command):
-    with Popen(shlex.split(command), stdout=PIPE, stderr=PIPE) as process:
-        while True:
-            output_stdout = process.stdout.readline()
-            output_stderr = process.stderr.readline()
-            if (not output_stdout) and (not output_stderr) and (process.poll() is not None):
-                break
-            if output_stdout:
-                print(output_stdout.decode())
-            if output_stderr:
-                print(output_stderr.decode())
-        rc = process.poll()
-        return rc

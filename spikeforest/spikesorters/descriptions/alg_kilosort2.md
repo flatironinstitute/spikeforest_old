@@ -18,4 +18,8 @@ _
 
 A Matlab package for spike sorting electrophysiological data up to 1024 channels. In many cases, and especially for Neuropixels probes, the automated output of Kilosort2 requires minimal manual curation.
 
+## Installation notes
+
+Requires CUDA toolkit to be installed
+
 ## References
