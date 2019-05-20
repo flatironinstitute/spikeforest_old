@@ -111,7 +111,7 @@ class ComputeUnitTemplates(mlpr.Processor):
 
     def run(self):
         templates = compute_unit_templates(recording=self.recording, sorting=self.sorting, unit_ids=self.sorting.get_unit_ids())  # pylint: disable=no-member
-        print('Saving templates...')
+        print('Saving templates...', self.templates_out)
         np.save(self.templates_out, templates)
 
 

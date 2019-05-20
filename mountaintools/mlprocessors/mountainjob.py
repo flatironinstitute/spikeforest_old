@@ -307,14 +307,14 @@ class MountainJob():
                         raise Exception('Unexpected: output file {} does not exist: {}'.format(output_name, fname), os.path.exists(fname))
                     R.outputs[output_name] = local_client.saveFile(path=fname)
 
-            if (retcode == 0):
-                R = self._post_process_result(R)
-
             if use_cache:
                 # We will now store the result regardless of what the retcode was
                 # For retrieval we will then decide whether to repeat based on options
                 # specified (i.e., skip_failing)
                 self._store_result_in_cache(R)
+
+            if (retcode == 0):
+                R = self._post_process_result(R)
 
             return R
 
