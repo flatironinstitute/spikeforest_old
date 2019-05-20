@@ -19,7 +19,7 @@ def install_kilosort2(repo, commit):
         #     print('Kilosort2 is already auto-installed.')
         #     return source_path
 
-        a = mt.loadObject(source_path+'/spikeforest.json')
+        a = mt.loadObject(path=source_path+'/spikeforest.json')
         if a:
             if mt.sha1OfObject(a) == mt.sha1OfObject(key):
                 print('Kilosort2 is already auto-installed.')
