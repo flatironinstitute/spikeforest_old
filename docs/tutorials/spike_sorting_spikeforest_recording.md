@@ -45,7 +45,7 @@ from mountaintools import client as mt
 mt.configDownloadFrom('spikeforest.public')
 
 # Load an example tetrode recording with its ground truth
-# You can also substitute any of the other available recordings listed below.
+# You can also substitute any of the other available recordings
 recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
 
 print('Load recording...')
