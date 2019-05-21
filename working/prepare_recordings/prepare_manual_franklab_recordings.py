@@ -67,15 +67,18 @@ for rec in recordings:
         rec['public'] = True
 
 print('Saving object...')
-address = mt.saveObject(
-    object=dict(
-        studies=studies,
-        recordings=recordings,
-        study_sets=study_sets
-    ),
-    key=dict(name='spikeforest_recording_group', group_name=group_name),
-    upload_to=upload_to
-)
+for ut in [upload_to, upload_public_to]:
+    address = mt.saveObject(
+        object=dict(
+            studies=studies,
+            recordings=recordings,
+            study_sets=study_sets
+        ),
+        key=dict(name='spikeforest_recording_group', group_name=group_name),
+        upload_to=ut
+    )
+    if not address:
+        raise Exception('Problem uploading object to {}'.format(ut))
 if not address:
     raise Exception('Problem saving object.')
 

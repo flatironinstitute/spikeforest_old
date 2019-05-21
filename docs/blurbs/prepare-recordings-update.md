@@ -21,3 +21,14 @@ to kachery, so that no longer needs to be a separate step.
 Another change is that, with the exception of boyden32c, the first recording in each
 study is also uploaded to spikeforest.public, and is therefore publicly accessible.
 
+For example, the following should be found:
+
+```
+kb-find sha1dir://dfa14b76d7b51fa6e0dafe1bdda22685ff6796d7.hybrid_janelia/static/rec_4c_600s_11/raw.mda --download-from spikeforest.public
+```
+
+whereas this one is not found (but would be found on spikeforest.kbucket):
+
+```
+kb-find sha1dir://dfa14b76d7b51fa6e0dafe1bdda22685ff6796d7.hybrid_janelia/static/rec_4c_600s_31/raw.mda --download-from spikeforest.public
+```
