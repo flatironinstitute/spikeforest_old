@@ -30,9 +30,10 @@ also containerize the Matlab packages).
 
 ## Downloading a recording
 
-To download a SpikeForest recording, you will first need to know its `sha1dir://` URI. Presently there
-is no method for obtaining this via the website, although we will provide this feature in an upcoming
-release. However, we provide some test examples here.
+To download a SpikeForest recording, you will first need to know its
+`sha1dir://` address. For testing purposes we provide a subset of recordings that
+are available for public download via `sha1dir://...`. See the bottom of this
+file for the list of such recordings available for testing.
 
 Making use of [SpikeInterface](https://github.com/SpikeInterface/), we can load the recording and the ground truth sorting in Python:
 
@@ -44,6 +45,7 @@ from mountaintools import client as mt
 mt.configDownloadFrom('spikeforest.public')
 
 # Load an example tetrode recording with its ground truth
+# You can also substitute any of the other available recordings listed below.
 recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
 
 print('Load recording...')
@@ -137,3 +139,39 @@ sa.ComputeUnitsInfo.execute(
 # and test_outputs/true_units_info.json
 
 ```
+
+## Recordings publicly available for testing
+
+The following recordings are publicly available for testing and may
+be substituted in the script above.
+
+- PAIRED_CRCNS_HC1/paired_crcns/d15121_d1512101: `sha1dir://d0a36d52a8f35b0f4c5afb0018c729d83e4f3a70.paired_crcns/d15121_d1512101`
+- PAIRED_MEA64C_YGER/paired_mea64c/20170622_patch2: `sha1dir://52da935827d48d7509567d987bbbd07f7cfbce5b.paired_mea64c/20170622_patch2`
+- PAIRED_KAMPFF/paired_kampff/2015_09_03_Pair_9_0B: `sha1dir://72b0516623c0204641f7d08522bfe9a3bf606d45.paired_kampff/2015_09_03_Pair_9_0B`
+- SYNTH_BIONET/synth_bionet_static/static_8x_A_2B: `sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_A_2B`
+- SYNTH_BIONET/synth_bionet_drift/drift_8x_A_2A: `sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_drift/drift_8x_A_2A`
+- SYNTH_BIONET/synth_bionet_shuffle/shuffle_8x_C_4A: `sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_shuffle/shuffle_8x_C_4A`
+- SYNTH_MAGLAND/synth_magland_noise10_K10_C4/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise10_K10_C8/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C8/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise10_K20_C4/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K20_C4/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise10_K20_C8/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K20_C8/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise20_K10_C4/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise20_K10_C4/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise20_K10_C8/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise20_K10_C8/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise20_K20_C4/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise20_K20_C4/009_synth`
+- SYNTH_MAGLAND/synth_magland_noise20_K20_C8/009_synth: `sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise20_K20_C8/009_synth`
+- MANUAL_FRANKLAB/manual_tetrode_600s/sorter1_1: `sha1dir://b1618868a12e92d8fb5df2b60b34dc0716a40552.manual_franklab/tetrode_600s/sorter1_1`
+- MANUAL_FRANKLAB/manual_tetrode_1200s/sorter1_1: `sha1dir://b1618868a12e92d8fb5df2b60b34dc0716a40552.manual_franklab/tetrode_1200s/sorter1_1`
+- MANUAL_FRANKLAB/manual_tetrode_2400s/sorter1_1: `sha1dir://b1618868a12e92d8fb5df2b60b34dc0716a40552.manual_franklab/tetrode_2400s/sorter1_1`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise10_K10_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise10_K10_C32/009_synth`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise10_K20_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise10_K20_C32/009_synth`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise10_K40_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise10_K40_C32/009_synth`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise20_K10_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise20_K10_C32/009_synth`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise20_K20_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise20_K20_C32/009_synth`
+- SYNTH_MEAREC_NEURONEXUS/synth_mearec_neuronexus_noise20_K40_C32/009_synth: `sha1dir://10b2e53b6b3aa0731b763db42daa692c4e1564b0.synth_mearec_neuronexus/datasets_noise20_K40_C32/009_synth`
+- SYNTH_MEAREC_TETRODE/synth_mearec_tetrode_noise10_K10_C4/009_synth: `sha1dir://e20f566a0a47a3b11a4767519e72cfe7ce1427d9.synth_mearec_tetrode/datasets_noise10_K10_C4/009_synth`
+- SYNTH_MEAREC_TETRODE/synth_mearec_tetrode_noise10_K20_C4/009_synth: `sha1dir://e20f566a0a47a3b11a4767519e72cfe7ce1427d9.synth_mearec_tetrode/datasets_noise10_K20_C4/009_synth`
+- SYNTH_MEAREC_TETRODE/synth_mearec_tetrode_noise20_K10_C4/009_synth: `sha1dir://e20f566a0a47a3b11a4767519e72cfe7ce1427d9.synth_mearec_tetrode/datasets_noise20_K10_C4/009_synth`
+- SYNTH_MEAREC_TETRODE/synth_mearec_tetrode_noise20_K20_C4/009_synth: `sha1dir://e20f566a0a47a3b11a4767519e72cfe7ce1427d9.synth_mearec_tetrode/datasets_noise20_K20_C4/009_synth`
+- SYNTH_VISAPY/mea_c30/set1: `sha1dir://ed0fe4de4ef2c54b7c9de420c87f9df200721b24.synth_visapy/mea_c30/set1`
+- HYBRID_JANELIA/hybrid_drift/rec_4c_600s_11: `sha1dir://dfa14b76d7b51fa6e0dafe1bdda22685ff6796d7.hybrid_janelia/drift/rec_4c_600s_11`
+- HYBRID_JANELIA/hybrid_static/rec_4c_600s_11: `sha1dir://dfa14b76d7b51fa6e0dafe1bdda22685ff6796d7.hybrid_janelia/static/rec_4c_600s_11`

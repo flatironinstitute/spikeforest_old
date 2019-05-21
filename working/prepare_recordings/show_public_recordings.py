@@ -63,7 +63,7 @@ def main():
     for rec in recordings:
         if rec.get('public', False):
             study_set = study_sets_by_study.get(rec.get('study', ''), '')
-            print('{}/{}/{}: {}'.format(study_set, rec.get('study', ''), rec.get('name', ''), rec.get('directory', '')))
+            print('- {}/{}/{}: `{}`'.format(study_set, rec.get('study', ''), rec.get('name', ''), rec.get('directory', '')))
 
 if __name__ == "__main__":
     main()
