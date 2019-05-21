@@ -693,11 +693,13 @@ class MountainClient():
                 print('Unable to resolve key path.', file=sys.stderr)
                 return None
 
+        if path.startswith('sha1dir://'):
+            # be sure to also snapshot the directory object that would also be needed
+            dirsha1 = '/'.join(path.split('/')[2])
+            dirsha1 = dirsha1.split('.')[0]
+            self.createSnapshot(path='sha1://'+dirsha1, upload_to=upload_to, download_recursive=False, upload_recursive=False, dest_path=None)
+
         if self.isFile(path):
-            if path.startswith('sha1dir://'):
-                # be sure to also snapshot the directory object that would also be needed
-                sha1dirpath = '/'.join(path.split('/')[:3])
-                self.createSnapshot(path=sha1dirpath, upload_to=upload_to, download_recursive=False, upload_recursive=False, dest_path=None)
             address = client.saveFile(path=path)
             if not address:
                 print('Unable to read or save file', file=sys.stderr)
