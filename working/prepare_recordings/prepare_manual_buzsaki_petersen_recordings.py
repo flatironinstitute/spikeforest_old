@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
+import os
 from mountaintools import client as mt
 from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
 upload_to = 'spikeforest.kbucket'
 
-
 # The base directory used below
-basedir = 'kbucket://15734439d8cf/groundtruth'
+# basedir = 'kbucket://15734439d8cf/groundtruth'
+basedir = os.getenv('GROUNDTRUTH_PATH', '/mnt/home/jjun/ceph/groundtruth')
 
 group_name = 'manual_buzsaki_petersen'
 
@@ -58,6 +59,11 @@ def prepare_manual_buzsaki_petersen_studies(*, basedir):
 
 # Prepare the studies
 studies, recordings, study_sets = prepare_manual_buzsaki_petersen_studies(basedir=basedir)
+
+print('Uploading files to kachery...')
+for rec in recordings:
+    mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
+
 print('Saving object...')
 address = mt.saveObject(
     object=dict(

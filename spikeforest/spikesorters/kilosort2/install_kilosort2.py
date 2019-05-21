@@ -19,7 +19,7 @@ def install_kilosort2(repo, commit):
         #     print('Kilosort2 is already auto-installed.')
         #     return source_path
 
-        a = mt.loadObject(path=source_path+'/spikeforest.json')
+        a = mt.loadObject(path=source_path + '/spikeforest.json')
         if a:
             if mt.sha1OfObject(a) == mt.sha1OfObject(key):
                 print('Kilosort2 is already auto-installed.')
@@ -72,6 +72,6 @@ def install_kilosort2(repo, commit):
     # The dir hash method does not seem to be working for some reason here
     # hash0 = mt.computeDirHash(source_path)
     # mt.setValue(key=key, value=hash0)
-    mt.saveObject(object=key, dest_path=source_path+'/spikeforest.json')
+    mt.saveObject(object=key, dest_path=source_path + '/spikeforest.json')
 
     return source_path

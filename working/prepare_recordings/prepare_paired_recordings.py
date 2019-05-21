@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
+import os
 from mountaintools import client as mt
 from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
 upload_to = 'spikeforest.kbucket'
+upload_public_to = 'spikeforest.public'
 
 # The base directory used below
-basedir = 'kbucket://15734439d8cf/groundtruth'
+# basedir = 'kbucket://15734439d8cf/groundtruth'
+basedir = os.getenv('GROUNDTRUTH_PATH', '/mnt/home/jjun/ceph/groundtruth')
 
 
 def prepare_paired_studies(*, basedir, name):
@@ -57,6 +60,15 @@ for name in names:
     group_name = 'paired_' + name
     print('PREPARING {}'.format(name))
     studies, recordings, study_sets = prepare_paired_studies(basedir=basedir, name=name)
+
+    print('Uploading files to kachery...')
+    for rec in recordings:
+        mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
+        if name != 'boyden32c':
+            if rec['index_within_study'] == 0:
+                mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
+                rec['public'] = True
+
     print('Saving object...')
     address = mt.saveObject(
         object=dict(

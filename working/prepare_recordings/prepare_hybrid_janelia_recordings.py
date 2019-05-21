@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
+import os
 import sfdata as sf
 from mountaintools import client as mt
 from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
 upload_to = 'spikeforest.kbucket'
+upload_public_to = 'spikeforest.public'
 
 # The base directory used below
-basedir = 'kbucket://15734439d8cf/groundtruth'
+# basedir = 'kbucket://15734439d8cf/groundtruth'
+basedir = os.getenv('GROUNDTRUTH_PATH', '/mnt/home/jjun/ceph/groundtruth')
 
 group_name = 'hybrid_janelia'
 
@@ -40,13 +43,14 @@ def prepare_hybrid_janelia_studies(*, basedir):
         )
         studies.append(study0)
         dd = mt.readDir(study_dir)
-        for dsname in dd['dirs']:
+        for i, dsname in enumerate(dd['dirs']):
             dsdir = '{}/{}'.format(study_dir, dsname)
             recordings.append(dict(
                 name=dsname,
                 study=study_name,
                 directory=dsdir,
                 firings_true=dsdir + '/firings_true.mda',
+                index_within_study=i,
                 description='One of the recordings in the {} study'.format(
                     study_name)
             ))
@@ -55,6 +59,14 @@ def prepare_hybrid_janelia_studies(*, basedir):
 
 # Prepare the studies
 studies, recordings, study_sets = prepare_hybrid_janelia_studies(basedir=basedir)
+
+print('Uploading files to kachery...')
+for rec in recordings:
+    mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
+    if rec['index_within_study'] == 0:
+        mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
+        rec['public'] = True
+
 print('Saving object...')
 address = mt.saveObject(
     object=dict(

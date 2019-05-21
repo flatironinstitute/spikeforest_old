@@ -7,10 +7,11 @@ from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
 upload_to = 'spikeforest.kbucket'
-
+upload_public_to = 'spikeforest.public'
 
 # The base directory used below
-basedir = 'kbucket://15734439d8cf/groundtruth'
+# basedir = 'kbucket://15734439d8cf/groundtruth'
+basedir = os.getenv('GROUNDTRUTH_PATH', '/mnt/home/jjun/ceph/groundtruth')
 
 group_name = 'synth_magland'
 
@@ -63,6 +64,14 @@ def prepare_synth_magland_studies(*, basedir):
 
 # Prepare the studies
 studies, recordings, study_sets = prepare_synth_magland_studies(basedir=basedir)
+
+print('Uploading files to kachery...')
+for rec in recordings:
+    mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
+    if rec['index_within_study'] == 0:
+        mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
+        rec['public'] = True
+
 print('Saving object...')
 address = mt.saveObject(
     object=dict(
