@@ -695,9 +695,10 @@ class MountainClient():
 
         if path.startswith('sha1dir://'):
             # be sure to also snapshot the directory object that would also be needed
-            dirsha1 = '/'.join(path.split('/')[2])
-            dirsha1 = dirsha1.split('.')[0]
-            self.createSnapshot(path='sha1://'+dirsha1, upload_to=upload_to, download_recursive=False, upload_recursive=False, dest_path=None)
+            list0 = path.split('/')
+            if len(list0) > 3:
+                sha1dirpath = '/'.join(list0[:3])
+                self.createSnapshot(path=sha1dirpath, upload_to=upload_to, download_recursive=False, upload_recursive=False, dest_path=None)
 
         if self.isFile(path):
             address = client.saveFile(path=path)
