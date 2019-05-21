@@ -456,8 +456,8 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:realizeFile')
     def realizeFile(self, path=None, *, key=None, subkey=None, dest_path=None,
-                          local_first=False, show_progress=False, collection=None,
-                          download_from=None, local_only=False, remote_only=False):
+                    local_first=False, show_progress=False, collection=None,
+                    download_from=None, local_only=False, remote_only=False):
         """
         Return a local path to the specified file, downloading the file from a
         remote server to the local SHA-1 cache if needed. In other words,
@@ -640,8 +640,8 @@ class MountainClient():
         Returns
         -------
         dict or None
-            Dictionary representing JSON object stored in the file 
-            or None if data could not be retrieved. 
+            Dictionary representing JSON object stored in the file
+            or None if data could not be retrieved.
         """
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
@@ -675,7 +675,7 @@ class MountainClient():
         -------
         str or None
             A SHA-1 URL for the saved or uploaded file, or None if the file was
-            unable to be saved.         
+            unable to be saved.
         """
         if object is None:
             self.setValue(key=key, subkey=subkey, collection=collection,
@@ -697,7 +697,7 @@ class MountainClient():
             if path.startswith('sha1dir://'):
                 # be sure to also snapshot the directory object that would also be needed
                 sha1dirpath = '/'.join(path.split('/')[:3])
-                self.createSnapshot(path=sha1dirpath, upload_to=upload_to, download_recursive=download_recursive, upload_recursive=upload_recursive, dest_path=None)
+                self.createSnapshot(path=sha1dirpath, upload_to=upload_to, download_recursive=False, upload_recursive=False, dest_path=None)
             address = client.saveFile(path=path)
             if not address:
                 print('Unable to read or save file', file=sys.stderr)
@@ -715,10 +715,10 @@ class MountainClient():
                 if not self._create_snapshot_helper_save_dd(basepath=path, dd=dd, upload_to=None):
                     print('Problem saving files to local cache.')
                     return None
-                if upload_to and upload_recursive:
-                    if not self._create_snapshot_helper_save_dd(basepath=path, dd=dd, upload_to=upload_to):
-                        print('Problem saving files to local cache.')
-                        return None
+            if upload_to and upload_recursive:
+                if not self._create_snapshot_helper_save_dd(basepath=path, dd=dd, upload_to=upload_to):
+                    print('Problem saving files to local cache.')
+                    return None
 
             address = self.saveObject(dd, basename='')
             address = address.replace('sha1://', 'sha1dir://')
@@ -833,7 +833,7 @@ class MountainClient():
             a SHA-1 URL, or a kbucket URL as described in docs for realizeFile().
             One of path or key must be provided
         key : str, optional
-            The key used for locating the file as described in docs for realizeFile(). 
+            The key used for locating the file as described in docs for realizeFile().
             One of path or key must be provided
         subkey : str, optional
             The optional subkey as described in the docs for getValue() and
