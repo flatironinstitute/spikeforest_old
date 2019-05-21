@@ -72,8 +72,18 @@ sa.ComputeUnitsInfo.execute(
     json_out='test_outputs/true_units_info.json'
 )
 
-# Now you may inspect test_outputs/comparison.html (in a browser)
-# and test_outputs/true_units_info.json
+# Load and consolidate the outputs
+true_units_info = mt.loadObject(path='test_outputs/true_units_info.json')
+comparison = mt.loadObject(path='test_outputs/comparison.json')
+true_units_info_by_unit_id = dict()
+for unit in true_units_info:
+  true_units_info_by_unit_id[unit['unit_id']] = unit
+for unit in comparison.values():
+  unit['true_unit_info'] = true_units_info_by_unit_id[unit['unit_id']]
+  
+# Print SNRs and accuracies
+for unit in comparison.values():
+  print('Unit {}: SNR={}, accuracy={}'.format(unit['unit_id'], unit['true_unit_info']['snr'], unit['accuracy']))
 
 
-print('Done. See outputs/')
+print('Done. See test_outputs/')
