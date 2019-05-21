@@ -77,6 +77,8 @@ sa.ComputeUnitsInfo.execute(
     json_out='test_outputs/true_units_info.json'
 )
 
+import numpy as np
+
 # Load and consolidate the outputs
 true_units_info = mt.loadObject(path='test_outputs/true_units_info.json')
 comparison = mt.loadObject(path='test_outputs/comparison.json')
@@ -89,6 +91,11 @@ for unit in comparison.values():
 # Print SNRs and accuracies
 for unit in comparison.values():
   print('Unit {}: SNR={}, accuracy={}'.format(unit['unit_id'], unit['true_unit_info']['snr'], unit['accuracy']))
+  
+# Report number of units found
+snrthresh = 8
+units_above = [unit for unit in comparison.values() if float(unit['true_unit_info']['snr'] > snrthresh)]
+print('Avg. accuracy for units with snr >= {}: {}'.format(snrthresh, np.mean([float(unit['accuracy']) for unit in units_above])))
 
 
 print('Done. See test_outputs/')
