@@ -23,6 +23,7 @@ def prepare_hybrid_janelia_studies(*, basedir):
     study_set_name = study_sets[0]['name']
 
     study_set_dir0 = basedir + '/hybrid_synth'
+    print('Creating snapshot of {}'.format(study_set_dir0))
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
@@ -45,6 +46,7 @@ def prepare_hybrid_janelia_studies(*, basedir):
         dd = mt.readDir(study_dir)
         for i, dsname in enumerate(dd['dirs']):
             dsdir = '{}/{}'.format(study_dir, dsname)
+            print(dsdir)
             recordings.append(dict(
                 name=dsname,
                 study=study_name,
