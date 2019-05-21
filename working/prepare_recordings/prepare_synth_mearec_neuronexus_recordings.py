@@ -35,7 +35,7 @@ def prepare_synth_mearec_neuronexus_studies(*, basedir):
     for name in names:
         study_name = 'synth_mearec_neuronexus_' + name
         print('PREPARING: ' + study_name)
-        study_dir = study_set_dir0 + '/datasets_' + name
+        study_dir = study_set_dir + '/datasets_' + name
         study0 = dict(
             name=study_name,
             study_set=study_set_name,
