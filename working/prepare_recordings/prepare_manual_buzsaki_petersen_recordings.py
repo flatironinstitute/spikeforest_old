@@ -43,13 +43,14 @@ def prepare_manual_buzsaki_petersen_studies(*, basedir):
     )
     studies.append(study0)
     dd = mt.readDir(study_dir)
-    for dsname in dd['dirs']:
+    for i, dsname in enumerate(dd['dirs']):
         dsdir = '{}/{}'.format(study_dir, dsname)
         recordings.append(dict(
             name=dsname,
             study=study_name,
             directory=dsdir,
             firings_true=dsdir + '/firings_true.mda',
+            index_within_study=i,
             description='One of the recordings in the {} study'.format(
                 study_name)
         ))

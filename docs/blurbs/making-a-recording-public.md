@@ -1,7 +1,7 @@
 ## Making a SpikeForest recording public
 
 For testing purposes, we would like to make a subset of our recordings
-publically available. Here we show the procedure for accomplishing this.
+publicly available. Here we show the procedure for accomplishing this.
 
 The first step is to get a `sha1dir://` URI associated with the recording. This is done
 by taking a kb-snapshot using mountaintools. For example,
@@ -14,7 +14,7 @@ kb-snapshot datasets_noise10_K10_C4
 This will print something like `sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e`.
 
 After configuring the appropriate upload kachery upload token, we can then make
-a single recording publically available via:
+a single recording publicly available via:
 
 ```
 kb-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public
@@ -22,7 +22,7 @@ kb-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikefor
 ```
 
 This will upload the contents of this recording directory to a kachery node that
-is configured to be publically accessible for downloads. The `--ur` and `--dr`
+is configured to be publicly accessible for downloads. The `--ur` and `--dr`
 flags are documented via the `--help` switch. The second line is needed to also
 upload the index of the higher-level directory. (In the future we should do this
 automatically - @wysota)

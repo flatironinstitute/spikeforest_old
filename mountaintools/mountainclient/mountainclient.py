@@ -694,6 +694,10 @@ class MountainClient():
                 return None
 
         if self.isFile(path):
+            if path.startswith('sha1dir://'):
+                # be sure to also snapshot the directory object that would also be needed
+                sha1dirpath = '/'.join(path.split('/')[:3])
+                self.createSnapshot(path=sha1dirpath, upload_to=upload_to, download_recursive=download_recursive, upload_recursive=upload_recursive, dest_path=None)
             address = client.saveFile(path=path)
             if not address:
                 print('Unable to read or save file', file=sys.stderr)
@@ -1005,6 +1009,11 @@ class MountainClient():
             return os.path.isfile(path)
         if path.startswith('sha1://'):
             return True
+        elif path.startswith('sha1dir://'):
+            if len(path.split('/')) <= 3:
+                return False
+            else:
+                return (self.computeFileSha1(path) is not None)
         elif path.startswith('kbucket://') or path.startswith('sha1dir://') or path.startswith('key://'):
             return (self.computeFileSha1(path) is not None)
         else:
