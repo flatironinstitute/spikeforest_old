@@ -1,4 +1,4 @@
-function p_kilosort(kilosort_src, ironclust_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
+function p_kilosort(kilosort_path, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
 % cmdstr2 = sprintf("p_ironclust('$(tempdir)','$timeseries$','$geom$','$firings_out$','$(argfile)');");
 
 if exist(temp_path, 'dir') ~= 7
@@ -6,8 +6,7 @@ if exist(temp_path, 'dir') ~= 7
 end
 
 % prepare for kilosort execution
-addpath(genpath(kilosort_src));
-addpath(fullfile(ironclust_src, 'matlab'), fullfile(ironclust_src, 'matlab/mdaio'), fullfile(ironclust_src, 'matlab/npy-matlab'));    
+addpath(genpath(kilosort_path));
 ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 
 % Run kilosort
@@ -44,7 +43,7 @@ end %func
 %--------------------------------------------------------------------------
 function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
-S_txt = irc('call', 'meta2struct', {arg_fname});
+S_txt = meta2struct_(arg_fname);
 [spkTh, useGPU] = deal(-abs(S_txt.detect_threshold), 1);
 
 % convert to binary file (int16)
@@ -183,3 +182,57 @@ ops.epu     = Inf;
 ops.ForceMaxRAMforDat   = 20e9; % maximum RAM the algorithm will try to use; on Windows it will autodetect.
 
 end % func
+
+
+%--------------------------------------------------------------------------
+% 8/2/17 JJJ: Documentation and test
+function S = meta2struct_(vcFile)
+    % Convert text file to struct
+    S = struct();
+    if ~exist_file_(vcFile, 1), return; end
+    
+    fid = fopen(vcFile, 'r');
+    mcFileMeta = textscan(fid, '%s%s', 'Delimiter', '=',  'ReturnOnError', false);
+    fclose(fid);
+    csName = mcFileMeta{1};
+    csValue = mcFileMeta{2};
+    for i=1:numel(csName)
+        vcName1 = csName{i};
+        if vcName1(1) == '~', vcName1(1) = []; end
+        try         
+            eval(sprintf('%s = ''%s'';', vcName1, csValue{i}));
+            eval(sprintf('num = str2double(%s);', vcName1));
+            if ~isnan(num)
+                eval(sprintf('%s = num;', vcName1));
+            end
+            eval(sprintf('S = setfield(S, ''%s'', %s);', vcName1, vcName1));
+        catch
+            fprintf('%s = %s error\n', csName{i}, csValue{i});
+        end
+    end
+    end %func
+    
+    
+    %--------------------------------------------------------------------------
+    % 7/21/2018 JJJ: rejecting directories, strictly search for flies
+    % 9/26/17 JJJ: Created and tested
+    function flag = exist_file_(vcFile, fVerbose)
+    if nargin<2, fVerbose = 0; end
+    if isempty(vcFile)
+        flag = false; 
+    elseif iscell(vcFile)
+        flag = cellfun(@(x)exist_file_(x, fVerbose), vcFile);
+        return;
+    else
+        S_dir = dir(vcFile);
+        if numel(S_dir) == 1
+            flag = ~S_dir.isdir;
+        else
+            flag = false;
+        end
+    end
+    if fVerbose && ~flag
+        fprintf(2, 'File does not exist: %s\n', vcFile);
+    end
+    end %func
+    

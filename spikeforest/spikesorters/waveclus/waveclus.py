@@ -12,25 +12,27 @@ from spikeforest import mdaio
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from mountaintools import client as mt
+import traceback
 import json
+from .install_waveclus import install_waveclus
 
 
 class Waveclus(mlpr.Processor):
     """
     Wave_clus wrapper
-      written by J. James Jun, May 17, 2019
+      written by J. James Jun, May 21, 2019
 
-    [Installation instruction in SpikeForest environment]
+    [Optional: Installation instruction in SpikeForest environment]
     1. Run `git clone https://github.com/csn-le/wave_clus.git`
     2. Activate conda environment for SpikeForest
-    3. Create `WAVECLUS_PATH` and `MDAIO_PATH`
+    3. Create `WAVECLUS_PATH_DEV`
 
     Algorithm website: 
     https://github.com/csn-le/wave_clus/wiki
     """
 
     NAME = 'waveclus'
-    VERSION = '0.0.1'
+    VERSION = '0.0.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -38,48 +40,9 @@ class Waveclus(mlpr.Processor):
     CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
-    # channels = mlpr.IntegerListParameter(
-    #     description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
 
-    # detect_sign = mlpr.IntegerParameter(
-    #     optional=True, default=-1, description='Use -1, 0, or 1, depending on the sign of the spikes in the recording')
-    # adjacency_radius = mlpr.FloatParameter(
-    #     optional=True, default=50, description='')
-    # detect_threshold = mlpr.FloatParameter(
-    #     optional=True, default=4.5, description='detection threshold')
-    # freq_min = mlpr.FloatParameter(
-    #     optional=True, default=300, description='Use 0 for no bandpass filtering')
-    # freq_max = mlpr.FloatParameter(
-    #     optional=True, default=3000, description='Use 0 for no bandpass filtering')
-    # merge_thresh = mlpr.FloatParameter(
-    #     optional=True, default=0.98, description='Threshold for automated merging')
-    # pc_per_chan = mlpr.IntegerParameter(
-    #     optional=True, default=1, description='Number of principal components per channel')
-
-    # # added in version 0.2.4
-    # filter_type = mlpr.StringParameter(
-    #     optional=True, default='bandpass', description='{none, bandpass, wiener, fftdiff, ndiff}')
-    # nDiffOrder = mlpr.FloatParameter(optional=True, default=2, description='')
-    # common_ref_type = mlpr.StringParameter(
-    #     optional=True, default='none', description='{none, mean, median}')
-    # min_count = mlpr.IntegerParameter(
-    #     optional=True, default=30, description='Minimum cluster size')
-    # fGpu = mlpr.BoolParameter(
-    #     optional=True, default=False, description='Use GPU if available')
-    # fParfor = mlpr.BoolParameter(
-    #     optional=True, default=True, description='Use parfor if available')
-    # feature_type = mlpr.StringParameter(
-    #     optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
-
     def run(self):
-        waveclus_path = os.environ.get('WAVECLUS_PATH', None)
-        if not waveclus_path:
-            raise Exception('Environment variable not set: WAVECLUS_PATH')
-        mdaio_path = os.environ.get('MDAIO_PATH', None)
-        if not mdaio_path:
-            raise Exception('Environment variable not set: MDAIO_PATH')
-
         tmpdir = _get_tmpdir('waveclus')
 
         try:
@@ -97,8 +60,6 @@ class Waveclus(mlpr.Processor):
             sorting = waveclus_helper(
                 recording=recording,
                 tmpdir=tmpdir,
-                waveclus_path=waveclus_path,
-                mdaio_path=mdaio_path,
                 params=params,
                 **all_params,
             )
@@ -119,20 +80,25 @@ def waveclus_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        waveclus_path=None,
-        mdaio_path=None,
         params=dict(),
         **kwargs):
-    if waveclus_path is None:
-        waveclus_path = os.getenv('WAVECLUS_PATH', None)
-    if mdaio_path is None:
-        mdaio_path = os.getenv('MDAIO_PATH', None)
-    if not waveclus_path:
-        raise Exception(
-            'You must either set the WAVECLUS_PATH environment variable, or pass the waveclus_path parameter')
-    if not mdaio_path:
-        raise Exception(
-            'You must either set the MDAIO_PATH environment variable, or pass the mdaio_path parameter')
+
+    waveclus_path = os.environ.get('WAVECLUS_PATH_DEV', None)
+    if waveclus_path:
+        print('Using waveclus from WAVECLUS_PATH_DEV directory: {}'.format(waveclus_path))
+    else:
+        try:
+            print('Auto-installing waveclus.')
+            waveclus_path = install_waveclus(
+                repo='https://github.com/csn-le/wave_clus.git',
+                commit='248d15c7eaa2b45b15e4488dfb9b09bfe39f5341'
+            )
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing waveclus. You can set the WAVECLUS_PATH_DEV to force to use a particular path.')
+    print('Using waveclus from: {}'.format(waveclus_path))
+
+    source_dir = os.path.dirname(os.path.realpath(__file__))
 
     dataset_dir = os.path.join(tmpdir, 'waveclus_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
@@ -150,20 +116,11 @@ def waveclus_helper(
     print('Num. channels = {}, Num. timepoints = {}, duration = {} minutes'.format(
         num_channels, num_timepoints, duration_minutes))
 
-    # print('Creating argfile.txt...')
-    # txt = ''
-    # for key0, val0 in kwargs.items():
-    #     txt += '{}={}\n'.format(key0, val0)
-    # if 'scale_factor' in params:
-    #     txt += 'bitScaling={}\n'.format(params["scale_factor"])
-    # txt += 'sampleRate={}\n'.format(samplerate)
-    # _write_text_file(dataset_dir + '/argfile.txt', txt)
-
     # new method
     source_path = os.path.dirname(os.path.realpath(__file__))
     print('Running waveclus in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
-        addpath(genpath('{waveclus_path}'), '{mdaio_path}', '{source_path}');
+        addpath(genpath('{waveclus_path}'), '{source_path}', '{source_path}/mdaio');
         try
             p_waveclus('{tmpdir}', '{dataset_dir}/raw.mda', '{tmpdir}/firings.mda', {samplerate});
         catch
@@ -173,7 +130,7 @@ def waveclus_helper(
         end
         quit(0);
     '''
-    cmd = cmd.format(waveclus_path=waveclus_path, tmpdir=tmpdir, dataset_dir=dataset_dir, mdaio_path=mdaio_path, source_path=source_path, samplerate=samplerate)
+    cmd = cmd.format(waveclus_path=waveclus_path, tmpdir=tmpdir, dataset_dir=dataset_dir, source_path=source_path, samplerate=samplerate)
 
     matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_waveclus.m', keep_temp_files=True)
     matlab_cmd.write()

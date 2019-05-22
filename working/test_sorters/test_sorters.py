@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, Klusta, Waveclus
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, Klusta, Waveclus, YASS, YASS1
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -13,10 +13,33 @@ boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
-#neurocube1c_recdir = '/mnt/home/jjun/ceph/groundtruth/waveclus_synth/sim2_c1/simulation_1'
+visapy30c_recdir='sha1dir://97253adc2581b1acbf9a9fffcbc00247d8088a1d.mea_c30.set1'
+
 
 @pytest.mark.spikeforest
-@pytest.mark.e
+@pytest.mark.yass1_visapy30c
+@pytest.mark.exclude
+def test_yass1_visapy30c():
+    sorter = YASS1
+    params = dict(
+        detect_sign=-1,
+    )
+    do_sorting_test(sorter, params, visapy30c_recdir, assert_avg_accuracy=0.1, _keep_temp_files=True, container='default')
+
+
+@pytest.mark.spikeforest
+@pytest.mark.yass_visapy30c
+@pytest.mark.exclude
+def test_yass_visapy30c():
+    sorter = YASS
+    params = dict(
+        detect_sign=-1,
+    )
+    do_sorting_test(sorter, params, visapy30c_recdir, assert_avg_accuracy=0.1, _keep_temp_files=True)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.waveclus_neurocube1c
 @pytest.mark.exclude
 def test_waveclus_neurocube1c():
     sorter = Waveclus
@@ -117,6 +140,15 @@ def test_ks2_magland_c4():
 @pytest.mark.exclude
 def test_ks2_magland_c8():
     sorter = KiloSort2
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.ks_magland_c8
+@pytest.mark.exclude
+def test_ks_magland_c8():
+    sorter = KiloSort
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
 

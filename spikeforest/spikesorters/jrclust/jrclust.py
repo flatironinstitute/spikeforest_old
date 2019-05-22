@@ -13,6 +13,8 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from mountaintools import client as mt
 import json
+import traceback
+from .install_jrclust import install_jrclust
 
 
 class JRClust(mlpr.Processor):
@@ -32,7 +34,7 @@ class JRClust(mlpr.Processor):
     """
 
     NAME = 'JRClust'
-    VERSION = '0.0.2'
+    VERSION = '0.1.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -75,13 +77,6 @@ class JRClust(mlpr.Processor):
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
     def run(self):
-        jrclust_path = os.environ.get('JRCLUST_PATH', None)
-        if not jrclust_path:
-            raise Exception('Environment variable not set: JRCLUST_PATH')
-        mdaio_path = os.environ.get('MDAIO_PATH', None)
-        if not mdaio_path:
-            raise Exception('Environment variable not set: MDAIO_PATH')
-
         tmpdir = _get_tmpdir('jrclust')
 
         try:
@@ -99,8 +94,6 @@ class JRClust(mlpr.Processor):
             sorting = jrclust_helper(
                 recording=recording,
                 tmpdir=tmpdir,
-                jrclust_path=jrclust_path,
-                mdaio_path=mdaio_path,
                 params=params,
                 **all_params,
             )
@@ -119,20 +112,25 @@ def jrclust_helper(
         *,
         recording,  # Recording object
         tmpdir,  # Temporary working directory
-        jrclust_path=None,
-        mdaio_path=None,
         params=dict(),
         **kwargs):
-    if jrclust_path is None:
-        jrclust_path = os.getenv('JRCLUST_PATH', None)
-    if mdaio_path is None:
-        mdaio_path = os.getenv('MDAIO_PATH', None)
-    if not jrclust_path:
-        raise Exception(
-            'You must either set the JRCLUST_PATH environment variable, or pass the jrclust_path parameter')
-    if not mdaio_path:
-        raise Exception(
-            'You must either set the MDAIO_PATH environment variable, or pass the mdaio_path parameter')
+
+    jrclust_path = os.environ.get('JRCLUST_PATH_DEV', None)
+    if jrclust_path:
+        print('Using jrclust from JRCLUST_PATH_DEV directory: {}'.format(jrclust_path))
+    else:
+        try:
+            print('Auto-installing jrclust.')
+            jrclust_path = install_jrclust(
+                repo='https://github.com/JaneliaSciComp/JRCLUST.git',
+                commit='68ffb3ef064f97aca7043b7faac49c34a58997d9'
+            )
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing jrclust. You can set the JRCLUST_PATH_DEV to force to use a particular path.')
+    print('Using jrclust from: {}'.format(jrclust_path))
+
+
 
     dataset_dir = os.path.join(tmpdir, 'jrclust_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
@@ -163,7 +161,7 @@ def jrclust_helper(
     source_path = os.path.dirname(os.path.realpath(__file__))
     print('Running jrclust in {tmpdir}...'.format(tmpdir=tmpdir))
     cmd = '''
-        addpath('{jrclust_path}', '{mdaio_path}', '{source_path}');
+        addpath('{jrclust_path}', '{source_path}', '{source_path}/mdaio');
         try
             p_jrclust('{tmpdir}', '{dataset_dir}/raw.mda', '{dataset_dir}/geom.csv', '{tmpdir}/firings.mda', '{dataset_dir}/argfile.txt');
         catch
@@ -173,7 +171,7 @@ def jrclust_helper(
         end
         quit(0);
     '''
-    cmd = cmd.format(jrclust_path=jrclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir, mdaio_path=mdaio_path, source_path=source_path)
+    cmd = cmd.format(jrclust_path=jrclust_path, tmpdir=tmpdir, dataset_dir=dataset_dir, source_path=source_path)
 
     matlab_cmd = mlpr.ShellScript(cmd, script_path=tmpdir + '/run_jrclust.m', keep_temp_files=True)
     matlab_cmd.write()
