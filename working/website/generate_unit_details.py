@@ -68,7 +68,6 @@ def main():
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
-    sorting_results = sorting_results[0:20] # for testing
     print('Determining sorting results to process ({} total)...'.format(len(sorting_results)))
     sorting_results_to_process = []
     for sr in sorting_results:
