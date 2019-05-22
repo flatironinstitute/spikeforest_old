@@ -19,7 +19,7 @@ import spikeextractors as se
 
 class YASS(mlpr.Processor):
     NAME = 'YASS'
-    VERSION = '0.1.0'
+    VERSION = '0.1.1'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -39,11 +39,12 @@ class YASS(mlpr.Processor):
     firings_out = mlpr.Output('Output firings file')
     # paramfile_out = mlpr.Output('YASS yaml config file')
 
-    detect_sign = mlpr.IntegerParameter(description='-1, 1, or 0')
-    adjacency_radius = mlpr.FloatParameter(
-        optional=True, default=100, description='Channel neighborhood adjacency radius corresponding to geom file')
+    detect_sign = mlpr.IntegerParameter(optional=True, default=-1, 
+        description='-1, 1, or 0')
+    adjacency_radius = mlpr.FloatParameter(optional=True, default=70, 
+        description='Channel neighborhood adjacency radius corresponding to geom file')
     template_width_ms = mlpr.FloatParameter(
-        optional=True, default=3, description='Spike width in milliseconds')
+        optional=True, default=1, description='Spike width in milliseconds')
     filter = mlpr.BoolParameter(optional=True, default=True)
 
     def run(self):

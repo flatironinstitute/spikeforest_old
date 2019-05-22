@@ -30,7 +30,7 @@ def prepare_neurocube_single_studies(*, basedir):
     print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
-    names = ['sim2_2K10', 'sim2_11K20']
+    names = ['sim2_2K10', 'sim2_11K20', 'quiroga_easy1', 'quiroga_easy2', 'quiroga_difficult1', 'quiroga_difficult2']
     for name in names:
         study_name = 'neurocube_' + name
         print('PREPARING: ' + study_name)
@@ -63,12 +63,13 @@ studies, recordings, study_sets = prepare_neurocube_single_studies(basedir=based
 print('Uploading files to kachery...')
 for rec in recordings:
     mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
-    if rec['index_within_study'] == 0:
-        mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
-        rec['public'] = True
+    # if rec['index_within_study'] == 0:
+    #     mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
+    #     rec['public'] = True
 
 print('Saving object...')
-for ut in [upload_to, upload_public_to]:
+# for ut in [upload_to, upload_public_to]:
+for ut in [upload_to]:
     address = mt.saveObject(
         object=dict(
             studies=studies,
