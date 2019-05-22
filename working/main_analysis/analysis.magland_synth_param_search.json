@@ -74,10 +74,7 @@
         "ks": {
             "name": "KiloSort",
             "processor_name": "KiloSort",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50
-            },
+            "params": {},
             "compute_resource": "gpu"
         },
         "ks2": {
@@ -89,10 +86,7 @@
         "yass": {
             "name": "Yass",
             "processor_name": "Yass",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50
-            },
+            "params": {},
             "compute_resource": "cpu"
         }
     }

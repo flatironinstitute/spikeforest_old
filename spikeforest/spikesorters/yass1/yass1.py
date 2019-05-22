@@ -39,7 +39,8 @@ class YASS1(mlpr.Processor):
     firings_out = mlpr.Output('Output firings file')
     # paramfile_out = mlpr.Output('YASS yaml config file')
 
-    detect_sign = mlpr.IntegerParameter(description='-1, 1, or 0')
+    detect_sign = mlpr.IntegerParameter(optional=True, default=-1, 
+        description='-1, 1, or 0')
     adjacency_radius = mlpr.FloatParameter(
         optional=True, default=70, description='Channel neighborhood adjacency radius corresponding to geom file')
     template_width_ms = mlpr.FloatParameter(
