@@ -73,25 +73,46 @@ def main():
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
-    print('******************************** Filtering recordings...')
+    sorting_results = sorting_results[0:20] # for testing
+    print('Determining sorting results to process ({} total)...'.format(len(sorting_results)))
+    sorting_results_to_process = []
+    for sr in sorting_results:
+        print('{}/{} {}'.format(sr['recording']['study'], sr['recording']['name'], sr['sorter']['name']))
+        key = dict(
+            name='unit-details-v1',
+            recording_directory=sr['recording']['directory'],
+            firings_true=sr['firings_true'],
+            firings=sr['firings']
+        )
+        val = mt.getValue(key=key, collection='spikeforest')
+        if not val:
+            sr['key'] = key
+            sorting_results_to_process.append(sr)
+    
+    print('Need to process {} of {} sorting results'.format(len(sorting_results_to_process), len(sorting_results)))
+
+    recording_directories_to_process = sorted(list(set([sr['recording']['directory'] for sr in sorting_results_to_process])))
+    print('{} recording directories to process'.format(len(recording_directories_to_process)))
+
+    print('Filtering recordings...')
     filter_jobs = FilterTimeseries.createJobs([
         dict(
-            recording_directory=rec['directory'],
+            recording_directory=recdir,
             timeseries_out={'ext': '.mda'}
         )
-        for rec in recordings
+        for recdir in recording_directories_to_process
     ])
-    filter_results = mlpr.executeBatch(jobs=filter_jobs, compute_resource='default')
-    filtered_timeseries_by_recid = dict()
-    for i, rec in enumerate(recordings):
-        result0 = filter_results[i]
-        recording_id = rec['study'] + '/' + rec['name']
-        if result0.retcode != 0:
-            raise Exception('Problem computing filtered timeseries for recording: {}'.format(recording_id))
-        filtered_timeseries_by_recid[recording_id] = result0.outputs['timeseries_out']
+    filter_results = mlpr.executeBatch(jobs=filter_jobs, compute_resource='default', download_outputs=False)
 
-    spike_spray_job_objects = []
-    for sr in sorting_results:
+    filtered_timeseries_by_recdir = dict()
+    for i, recdir in enumerate(recording_directories_to_process):
+        result0 = filter_results[i]
+        if result0.retcode != 0:
+            raise Exception('Problem computing filtered timeseries for recording: {}'.format(recdir))
+        filtered_timeseries_by_recdir[recdir] = result0.outputs['timeseries_out']
+
+    print('Creating spike sprays...')
+    for sr in sorting_results_to_process:
         rec = sr['recording']
         study_name = rec['study']
         rec_name = rec['name']
@@ -105,9 +126,9 @@ def main():
         if sr.get('comparison_with_truth', None) is not None:
             cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
 
-            recording_id = rec['study'] + '/' + rec['name']
-            filtered_timeseries = filtered_timeseries_by_recid[recording_id]
+            filtered_timeseries = filtered_timeseries_by_recdir[rec['directory']]
 
+            spike_spray_job_objects = []
             list0 = list(cwt.values())
             for _, unit in enumerate(list0):
                 # print('')
@@ -130,41 +151,43 @@ def main():
                     sorter_name=sorter_name,
                     unit=unit
                 ))
+            spike_spray_jobs = CreateSpikeSprays.createJobs([
+                obj['args']
+                for obj in spike_spray_job_objects
+            ])
+            spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default', download_outputs=False)
 
-    spike_spray_jobs = CreateSpikeSprays.createJobs([
-        obj['args']
-        for obj in spike_spray_job_objects
-    ])
+            unit_details = []
+            for i, result in enumerate(spike_spray_results):
+                obj0 = spike_spray_job_objects[i]
+                if result.retcode != 0:
+                    print('Error creating spike sprays for job:')
+                    print(spike_spray_jobs[i])
+                    raise Exception('Error creating spike sprays')
+                ssobj = mt.loadObject(path=result.outputs['json_out'])
+                if ssobj is None:
+                    raise Exception('Problem loading spikespray object output.')
+                address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
+                unit = obj0['unit']
+                unit_details.append(dict(
+                    studyName=obj0['study_name'],
+                    recordingName=obj0['rec_name'],
+                    sorterName=obj0['sorter_name'],
+                    trueUnitId=unit['unit_id'],
+                    sortedUnitId=unit['best_unit'],
+                    spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
+                    _container='default'
+                ))
+            print('Saving object to key:')
+            print(json.dumps(sr['key'], indent=4))
+            mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details)
+            raise Exception('test1')
 
-    spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default')
+    # if output_file is not None:
+    #     mt.saveObject(object=unit_details, dest_path=output_file)
 
-    unit_details = []
-    for i, result in enumerate(spike_spray_results):
-        obj0 = spike_spray_job_objects[i]
-        if result.retcode != 0:
-            print('Error creating spike sprays for job:')
-            print(spike_spray_jobs[i])
-            raise Exception('Error creating spike sprays')
-        ssobj = mt.loadObject(path=result.outputs['json_out'])
-        if ssobj is None:
-            raise Exception('Problem loading spikespray object output.')
-        address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
-        unit = obj0['unit']
-        unit_details.append(dict(
-            studyName=obj0['study_name'],
-            recordingName=obj0['rec_name'],
-            sorterName=obj0['sorter_name'],
-            trueUnitId=unit['unit_id'],
-            sortedUnitId=unit['best_unit'],
-            spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
-            _container='default'
-        ))
-
-    if output_file is not None:
-        mt.saveObject(object=unit_details, dest_path=output_file)
-
-    address = mt.saveObject(object=unit_details)
-    mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+    # address = mt.saveObject(object=unit_details)
+    # mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
 
 
 class FilterTimeseries(mlpr.Processor):

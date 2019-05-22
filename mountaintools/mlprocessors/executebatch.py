@@ -44,7 +44,7 @@ def configComputeResources(obj):
 
 
 @mtlogging.log()
-def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None, cached_results_only=False):
+def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None, cached_results_only=False, download_outputs=True):
     all_kwargs = locals()
 
     if len(jobs) == 0:
@@ -165,20 +165,21 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
 
         mtlogging.sublog('realizing-outputs')
         # Download outputs to local computer
-        download_from = compute_resource.get('kachery_name', None)
-        for ii, result in enumerate(results):
-            if result and (result.retcode == 0):
-                for output_name, output_path in result.outputs.items():
-                    if not local_client.realizeFile(path=output_path):
-                        print('Downloading output {} {} ...'.format(output_name, output_path))
-                        local_path = mt.realizeFile(path=output_path, download_from=download_from)
+        if download_outputs:
+            download_from = compute_resource.get('kachery_name', None)
+            for ii, result in enumerate(results):
+                if result and (result.retcode == 0):
+                    for output_name, output_path in result.outputs.items():
+                        if not local_client.realizeFile(path=output_path):
+                            print('Downloading output {} {} ...'.format(output_name, output_path))
+                            local_path = mt.realizeFile(path=output_path, download_from=download_from)
+                            if not local_path:
+                                raise Exception('Unable to realize output {} from {}'.format(output_name, output_path))
+                    if not local_client.realizeFile(path=result.console_out):
+                        print('Downloading console output {}...'.format(result.console_out))
+                        local_path = mt.realizeFile(path=result.console_out, download_from=download_from)
                         if not local_path:
-                            raise Exception('Unable to realize output {} from {}'.format(output_name, output_path))
-                if not local_client.realizeFile(path=result.console_out):
-                    print('Downloading console output {}...'.format(result.console_out))
-                    local_path = mt.realizeFile(path=result.console_out, download_from=download_from)
-                    if not local_path:
-                        raise Exception('Unable to realize console output from {}'.format(output_name))
+                            raise Exception('Unable to realize console output from {}'.format(output_name))
 
         mtlogging.sublog('caching-results-locally')
         # save results to local cache

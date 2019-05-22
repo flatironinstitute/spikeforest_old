@@ -4,6 +4,7 @@ import re
 import io
 from copy import deepcopy
 import numbers
+import json
 
 
 class VDOM(object):
@@ -61,6 +62,8 @@ class VDOM(object):
                         out.write(escape(safe_unicode(c)))
                     elif isinstance(c, numbers.Number):
                         out.write(escape(safe_unicode(str(c))))
+                    elif isinstance(c, dict):
+                        out.write(json.dumps(c))
                     else:
                         out.write(c._repr_html_())
                 else:
