@@ -19,10 +19,7 @@ _CONTAINER = None
 
 def main():
     parser = argparse.ArgumentParser(description='Generate unit detail data (including spikesprays) for website')
-    parser.add_argument('--output_file', help='The output file for saving the unit detail info (UnitDetails.json).', required=False, default=None)
     parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
-    parser.add_argument('--upload_to', help='Optional kachery to upload to', required=False, default=None)
-    parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
     parser.add_argument('--compute_resources', help='Optional path to a .json file specifying the "default" compute resource', required=False, default=None)
     parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
@@ -30,8 +27,6 @@ def main():
 
     if args.login:
         mt.login(ask_password=True)
-
-    output_file = args.output_file
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
 
@@ -79,7 +74,7 @@ def main():
     for sr in sorting_results:
         print('{}/{} {}'.format(sr['recording']['study'], sr['recording']['name'], sr['sorter']['name']))
         key = dict(
-            name='unit-details-v1',
+            name='unit-details-v0.1.0',
             recording_directory=sr['recording']['directory'],
             firings_true=sr['firings_true'],
             firings=sr['firings']
@@ -167,7 +162,7 @@ def main():
                 ssobj = mt.loadObject(path=result.outputs['json_out'])
                 if ssobj is None:
                     raise Exception('Problem loading spikespray object output.')
-                address = mt.saveObject(object=ssobj, upload_to=args.upload_to)
+                address = mt.saveObject(object=ssobj, upload_to='spikeforest.kbucket')
                 unit = obj0['unit']
                 unit_details.append(dict(
                     studyName=obj0['study_name'],
@@ -175,19 +170,12 @@ def main():
                     sorterName=obj0['sorter_name'],
                     trueUnitId=unit['unit_id'],
                     sortedUnitId=unit['best_unit'],
-                    spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from=args.upload_to),
+                    spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from='spikeforest.kbucket'),
                     _container='default'
                 ))
             print('Saving object to key:')
             print(json.dumps(sr['key'], indent=4))
-            mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details)
-            raise Exception('test1')
-
-    # if output_file is not None:
-    #     mt.saveObject(object=unit_details, dest_path=output_file)
-
-    # address = mt.saveObject(object=unit_details)
-    # mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+            mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
 
 
 class FilterTimeseries(mlpr.Processor):
