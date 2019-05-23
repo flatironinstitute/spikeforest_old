@@ -118,6 +118,8 @@ def main():
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
+            'paired_monotrode',
+            # 'synth_monotrode',
             'synth_bionet',
             'synth_magland',
             'manual_franklab',
@@ -127,6 +129,19 @@ def main():
             'hybrid_janelia'
         ]
     print('Using output ids: ', output_ids)
+
+    sorters = [
+        'HerdingSpikes2',
+        'IronClust',
+        'JRClust',
+        'KiloSort',
+        'KiloSort2',
+        'Klusta',
+        'MountainSort4',
+        'SpykingCircus',
+        'Tridesclous',
+        # 'Yass'
+    ]
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
     studies = []

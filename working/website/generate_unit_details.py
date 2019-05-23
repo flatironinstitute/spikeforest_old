@@ -152,12 +152,14 @@ def main():
             spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default', download_outputs=False)
 
             unit_details = []
+            ok = True
             for i, result in enumerate(spike_spray_results):
                 obj0 = spike_spray_job_objects[i]
                 if result.retcode != 0:
-                    print('Error creating spike sprays for job:')
+                    print('WARNING: Error creating spike sprays for job:')
                     print(spike_spray_jobs[i])
-                    raise Exception('Error creating spike sprays')
+                    ok = False
+                    break
                 ssobj = mt.loadObject(path=result.outputs['json_out'])
                 if ssobj is None:
                     raise Exception('Problem loading spikespray object output.')
@@ -172,9 +174,10 @@ def main():
                     spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from='spikeforest.kbucket'),
                     _container='default'
                 ))
-            print('Saving object to key:')
-            print(json.dumps(sr['key'], indent=4))
-            mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
+            if ok:
+                print('Saving object to key:')
+                print(json.dumps(sr['key'], indent=4))
+                mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
 
 
 class FilterTimeseries(mlpr.Processor):
