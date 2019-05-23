@@ -1873,6 +1873,9 @@ def _get_default_alternate_local_db_paths():
 def _hash_of_key(key):
     if (type(key) == dict) or (type(key) == list):
         key = json.dumps(key, sort_keys=True, separators=(',', ':'))
+    else:
+        if key.startswith('~'):
+            return key[1:]
     return _sha1_of_string(key)
 
 

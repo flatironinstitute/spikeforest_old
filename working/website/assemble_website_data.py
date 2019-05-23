@@ -198,6 +198,7 @@ def main():
             name=recording['name'],
             study=recording['study'],
             directory=recording['directory'],
+            firingsTrue=recording['firings_true'],
             description=recording['description'],
             sampleRateHz=recording['summary']['computed_info']['samplerate'],
             numChannels=recording['summary']['computed_info']['num_channels'],
@@ -223,6 +224,9 @@ def main():
                 recording=sr['recording']['name'],
                 study=sr['recording']['study'],
                 sorter=sr['sorter']['name'],
+                recordingDirectory=sr['recording']['directory'],
+                firingsTrue=sr['recording']['firings_true'],
+                firings=sr['firings'],
                 cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
             ))
             comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
