@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-declare -a list=("hybrid_janelia" "neurocube_single" "paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus")
+declare -a list=("hybrid_janelia" "synth_monotrode" "paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus")
 
 OPTS="--skip_failing --compute_resources compute_resources_ccmlin000.json"
 

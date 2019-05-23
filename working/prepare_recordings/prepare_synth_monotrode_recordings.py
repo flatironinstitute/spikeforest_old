@@ -13,12 +13,12 @@ upload_public_to = 'spikeforest.public'
 # basedir = 'kbucket://15734439d8cf/groundtruth'
 basedir = os.getenv('GROUNDTRUTH_PATH', '/mnt/home/jjun/ceph/groundtruth')
 
-group_name = 'neurocube_single'
+group_name = 'synth_monotrode'
 
 
-def prepare_neurocube_single_studies(*, basedir):
+def prepare_synth_monotrode_studies(*, basedir):
     study_sets = [
-        load_study_set_from_md('descriptions/spf_neurocube_single.md')
+        load_study_set_from_md('descriptions/spf_synth_monotrode.md')
     ]
     study_set_name = study_sets[0]['name']
 
@@ -26,7 +26,7 @@ def prepare_neurocube_single_studies(*, basedir):
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
-    study_set_dir = study_set_dir + '.neurocube_single'
+    study_set_dir = study_set_dir + '.synth_monotrode'
     print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
@@ -58,7 +58,7 @@ def prepare_neurocube_single_studies(*, basedir):
 
 
 # Prepare the studies
-studies, recordings, study_sets = prepare_neurocube_single_studies(basedir=basedir)
+studies, recordings, study_sets = prepare_synth_monotrode_studies(basedir=basedir)
 
 print('Uploading files to kachery...')
 for rec in recordings:

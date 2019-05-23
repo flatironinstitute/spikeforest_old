@@ -1,6 +1,6 @@
 ---
 # This is YAML front matter
-label: NEUROCUBE_SINGLE
+label: SYNTH_MONOTRODE
 electrode_type: monotrode
 doi: 10.1016/j.jneumeth.2012.07.010
 ground_truth: simulation
@@ -10,7 +10,7 @@ labels:
   - hybrid
 ---
 
-# NEUROCUBE_SINGLE
+# SYNTH_MONOTRODE
 ## Description
 *From the author description*:
 Simulated dataset used in Pedreira et al., J Neurosci Methods, 2012
