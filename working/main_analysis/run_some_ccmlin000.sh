@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-declare -a list=("neurocube_single")
+declare -a list=("paired_monotrode")
 
 OPTS="--compute_resources compute_resources_ccmlin000.json"
 
