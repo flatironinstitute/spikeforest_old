@@ -130,7 +130,7 @@ def main():
         ]
     print('Using output ids: ', output_ids)
 
-    sorters = [
+    sorters_to_include = set([
         'HerdingSpikes2',
         'IronClust',
         'JRClust',
@@ -141,7 +141,7 @@ def main():
         'SpykingCircus',
         'Tridesclous',
         # 'Yass'
-    ]
+    ])
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
     studies = []
@@ -235,46 +235,47 @@ def main():
     sorter_names_by_study = dict()
     for sr in sorting_results:
         if sr.get('comparison_with_truth', None):
-            SortingResults.append(dict(
-                recording=sr['recording']['name'],
-                study=sr['recording']['study'],
-                sorter=sr['sorter']['name'],
-                recordingDirectory=sr['recording']['directory'],
-                firingsTrue=sr['recording']['firings_true'],
-                firings=sr['firings'],
-                cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
-            ))
-            comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
-            if comparison_with_truth is None:
-                print(sr)
-                raise Exception('Unable to retrieve comparison with truth object for sorting result.')
-            for unit_result in comparison_with_truth.values():
-                study_name = sr['recording']['study']
-                sorter_name = sr['sorter']['name']
-                if study_name not in sorter_names_by_study:
-                    sorter_names_by_study[study_name] = set()
-                sorter_names_by_study[study_name].add(sorter_name)
-                n_match = unit_result['num_matches']
-                n_fp = unit_result['num_false_positives']
-                n_fn = unit_result['num_false_negatives']
-                if n_match + n_fp > 0:
-                    precision = n_match / (n_match + n_fp)
-                else:
-                    precision = 0
-                UnitResults.append(dict(
-                    unitId=unit_result['unit_id'],
+            if sr['sorter']['name'] in sorters_to_include:
+                SortingResults.append(dict(
                     recording=sr['recording']['name'],
-                    recordingExt=sr['recording']['study'] + ':' + sr['recording']['name'],
-                    study=study_name,
-                    sorter=sorter_name,
-                    numMatches=n_match,
-                    numFalsePositives=n_fp,
-                    numFalseNegatives=n_fn,
-                    checkAccuracy=n_match / (n_match + n_fp + n_fn),
-                    checkPrecision=precision,
-                    checkRecall=n_match / (n_match + n_fn),
-                    bestSortedUnitId=unit_result['best_unit']
+                    study=sr['recording']['study'],
+                    sorter=sr['sorter']['name'],
+                    recordingDirectory=sr['recording']['directory'],
+                    firingsTrue=sr['recording']['firings_true'],
+                    firings=sr['firings'],
+                    cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
                 ))
+                comparison_with_truth = mt.loadObject(path=sr['comparison_with_truth']['json'])
+                if comparison_with_truth is None:
+                    print(sr)
+                    raise Exception('Unable to retrieve comparison with truth object for sorting result.')
+                for unit_result in comparison_with_truth.values():
+                    study_name = sr['recording']['study']
+                    sorter_name = sr['sorter']['name']
+                    if study_name not in sorter_names_by_study:
+                        sorter_names_by_study[study_name] = set()
+                    sorter_names_by_study[study_name].add(sorter_name)
+                    n_match = unit_result['num_matches']
+                    n_fp = unit_result['num_false_positives']
+                    n_fn = unit_result['num_false_negatives']
+                    if n_match + n_fp > 0:
+                        precision = n_match / (n_match + n_fp)
+                    else:
+                        precision = 0
+                    UnitResults.append(dict(
+                        unitId=unit_result['unit_id'],
+                        recording=sr['recording']['name'],
+                        recordingExt=sr['recording']['study'] + ':' + sr['recording']['name'],
+                        study=study_name,
+                        sorter=sorter_name,
+                        numMatches=n_match,
+                        numFalsePositives=n_fp,
+                        numFalseNegatives=n_fn,
+                        checkAccuracy=n_match / (n_match + n_fp + n_fn),
+                        checkPrecision=precision,
+                        checkRecall=n_match / (n_match + n_fn),
+                        bestSortedUnitId=unit_result['best_unit']
+                    ))
         else:
             print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
             print('Console output is here: ' + sr['console_out'])
@@ -295,13 +296,14 @@ def main():
     for _, sorter in sorters_by_name.items():
         alg = algorithms_by_processor_name.get(sorter['processor_name'], dict())
         alg_label = alg.get('label', sorter['processor_name'])
-        Sorters.append(dict(
-            name=sorter['name'],
-            algorithm=alg_label,
-            processorName=sorter['processor_name'],
-            processorVersion='0',  # jfm needs to provide this
-            sorting_parameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
-        ))
+        if sorter['name'] in sorters_to_include:
+            Sorters.append(dict(
+                name=sorter['name'],
+                algorithm=alg_label,
+                processorName=sorter['processor_name'],
+                processorVersion='0',  # jfm needs to provide this
+                sorting_parameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
+            ))
     if output_dir is not None:
         mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] + ':' + S['algorithm'] for S in Sorters])
