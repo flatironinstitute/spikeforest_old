@@ -6,7 +6,7 @@
     "sorter_keys_disable": [],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
-    "job_timeout":1200,
+    "job_timeout":3600,
     "sorters":{
         "ms4": {
             "name": "MountainSort4",

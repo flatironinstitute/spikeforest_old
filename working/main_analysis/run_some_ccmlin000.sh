@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-declare -a list=("paired_monotrode")
+declare -a list=("test_reliability")
 
 OPTS="--compute_resources compute_resources_ccmlin000.json"
 
