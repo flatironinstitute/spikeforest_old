@@ -3,12 +3,11 @@
 Here we provide instructions for running the SpikeForest analysis from start to finish.
 
 ## Step 0. Configure security tokens to connect to the SpikeForest storage system (kbucket)
-You need to add two key files containing security tokens. Contact Jeremy Magland to acquire tokens.
+You need to add two key files containing security tokens. Contact Jeremy Magland to obtain tokens.
 - Create a file `~/.mountaintools/kachery_tokens`
   - Add a line `spikeforest.kbucket upload XXXX`
   - Add a line `spikeforest.kbucket download YYYY`
-  - Add a line `kbucket upload XXXX`
-  - Add a line `kbucket download YYYY`
+  - Add a line `spikeforest.public upload XXXX`
   
 - Create a file `~/.mountaintools/pairio_tokens`
   - Add a line `spikeforest XXXXXX`
@@ -35,6 +34,8 @@ You can then view these recordings (from any computer) using ForestView
 forestview key://pairio/spikeforest/spikeforest_recording_group.visapy_synth.json
 ```
 
+To prepare all, run `./prepare_all.sh`
+
 ## Step 2. Run the main analysis
 
 The SpikeForest processing is split into multiple `analysis.*.json` files found in the `working/main_analysis` directory. These files specify the input files (recordings prepared above), the spike sorters and parameters to run, compute resources to use, and where to put the output. For example, to run the visapy_synth analysis (authorization is required):
@@ -49,6 +50,8 @@ If successful, the results of this analysis can be viewed (from any computer) us
 ```
 forestview key://pairio/spikeforest/spikeforest_analysis_results.visapy_synth.json
 ```
+
+To run all, use `./run_all.sh`
 
 ## Step 3. Assemble data for the website
 

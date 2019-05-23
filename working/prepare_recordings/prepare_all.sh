@@ -11,3 +11,4 @@ prepare_synth_mearec_neuronexus_recordings.py
 # prepare_synth_mearec_sqmea64c_recordings.py
 prepare_synth_mearec_tetrode_recordings.py
 prepare_synth_visapy_recordings.py
+prepare_synth_monotrode_recordings.py
