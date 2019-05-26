@@ -14,6 +14,7 @@ import mlprocessors as mlpr
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 # _CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+# _CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg' #MAY26JJJ
 _CONTAINER = None
 
 
