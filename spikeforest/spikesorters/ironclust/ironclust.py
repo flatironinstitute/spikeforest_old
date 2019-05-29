@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.3.1'
+    VERSION = '0.3.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -61,7 +61,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.99,
+        optional=True, default=0.975,
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
@@ -79,7 +79,7 @@ class IronClust(mlpr.Processor):
     common_ref_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, mean, median}')
     batch_sec_drift = mlpr.FloatParameter(
-        optional=True, default=240, description='batch duration in seconds. clustering time duration')
+        optional=True, default=600, description='batch duration in seconds. clustering time duration')
     step_sec_drift = mlpr.FloatParameter(
         optional=True, default=20, description='compute anatomical similarity every n sec')
     knn = mlpr.IntegerParameter(
