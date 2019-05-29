@@ -39,7 +39,8 @@ def _create_job_for_sorting(sorting, container):
 def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, label=None, upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    container = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    #container = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    container = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg' #MAY26JJJ
 
     sortings_out = deepcopy(sortings)
     sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
@@ -99,13 +100,14 @@ def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, la
 
 
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION = '0.2.4'
+    VERSION = '0.2.6'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
     units_true = mlpr.IntegerListParameter('List of true units to consider')
     json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
-    CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    #CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg' #MAY26JJJ
 
     def run(self):
         print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))
@@ -113,7 +115,8 @@ class GenSortingComparisonTable(mlpr.Processor):
         sorting_true = SFMdaSortingExtractor(firings_file=self.firings_true)
         if (self.units_true is not None) and (len(self.units_true) > 0):
             sorting_true = si.SubSortingExtractor(parent_sorting=sorting_true, unit_ids=self.units_true)
-        SC = SortingComparison(sorting_true, sorting)
+        
+        SC = SortingComparison(sorting_true, sorting, delta_tp=30)
         df = get_comparison_data_frame(comparison=SC)
         # sw.SortingComparisonTable(comparison=SC).getDataframe()
         json = df.transpose().to_dict()

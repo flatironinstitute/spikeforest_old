@@ -53,3 +53,6 @@ Neuron  Condition                       Filename        Target Layer    Mean uV 
 915_17  anesth. gratings                915_17_1        II/III  57      128
 915_18  anesth. gratings                915_18_1        II/III  64      128
 ```
+
+## References
+https://www.physiology.org/doi/10.1152/jn.00650.2017

@@ -1,18 +1,18 @@
 {
-    "analysis_name": "manual_franklab",
-    "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab.json",
-    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
-    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta"],
-    "sorter_keys_disable": [],
+    "analysis_name": "paired_monotrode",
+    "output":"key://pairio/spikeforest/spikeforest_analysis_results.paired_monotrode.json",
+    "recordings":["key://pairio/spikeforest/spikeforest_recording_group.paired_monotrode.json"],
+    "sorter_keys": ["irc", "ms4", "yass", "sc", "hs2", "tdc", "klusta", "waveclus"],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
     "job_timeout":3600,
-    "compute_resources": {
-        "default":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "cpu":{"resource_name":"ccmlin008-80", "collection":"spikeforest","share_id":"spikeforest.kbucket"},
-        "gpu":{"resource_name":"ccmlin008-gpu", "collection":"spikeforest","share_id":"spikeforest.kbucket"}
-    },
     "sorters":{
+        "waveclus": {
+            "name": "Waveclus",
+            "processor_name": "Waveclus",
+            "params": {},
+            "compute_resource":"cpu"
+        },        
         "ms4": {
             "name": "MountainSort4",
             "processor_name": "MountainSort4",
