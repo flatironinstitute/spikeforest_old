@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-declare -a list=("test_reliability")
+#declare -a list=("test_reliability" "test_samplerate")
+declare -a list=("paired_monotrode" "synth_monotrode")
 
 OPTS="--compute_resources compute_resources_ccmlin000.json"
 
