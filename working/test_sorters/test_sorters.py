@@ -331,6 +331,15 @@ def test_jrc_neuropix32c():
 
 
 @pytest.mark.spikeforest
+@pytest.mark.jrc_visapy30c
+@pytest.mark.exclude
+def test_jrc_visapy30c():
+    sorter = JRClust
+    params = dict()
+    do_sorting_test(sorter, params, visapy30c_recdir, assert_avg_accuracy=0.1, _keep_temp_files=True, container='default')
+
+
+@pytest.mark.spikeforest
 @pytest.mark.ks2_kampff
 @pytest.mark.exclude
 def test_ks2_kampff():
