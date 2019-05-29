@@ -7,7 +7,7 @@ The first step is to get a `sha1dir://` URI associated with the recording. This 
 by taking a kb-snapshot using mountaintools. For example,
 
 ```
-cd /path/to/synth_magland
+cd /path/to/synth_maglandc
 kb-snapshot datasets_noise10_K10_C4
 ```
 
@@ -17,8 +17,8 @@ After configuring the appropriate upload kachery upload token, we can then make
 a single recording publicly available via:
 
 ```
-kb-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public
-kb-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikeforest.public
+kb-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public1
+kb-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikeforest.public1
 ```
 
 This will upload the contents of this recording directory to a kachery node that
@@ -30,7 +30,7 @@ automatically - @wysota)
 Now, anyone can download this dataset via
 
 ```
-kb-download sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth 001_synth --download-from spikeforest.public
+kb-download sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth 001_synth --download-from spikeforest.public1
 ```
 
 If it is already cached on their machine it will not need to download (saving us
@@ -41,7 +41,7 @@ Alternatively, from Python:
 ```python
 from mountaintools import client as mt
 
-mt.configDownloadFrom('spikeforest.public')
+mt.configDownloadFrom('spikeforest.public1')
 
 local_path = mt.realizeFile(path='sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth/raw.mda')
 ```
@@ -51,7 +51,7 @@ Or via SpikeExtractors
 ```python
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
-mt.configDownloadFrom('spikeforest.public')
+mt.configDownloadFrom('spikeforest.public1')
 
 # Load an example tetrode recording with its ground truth
 recdir = 'sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth'

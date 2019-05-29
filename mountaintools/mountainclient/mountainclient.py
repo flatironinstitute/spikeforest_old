@@ -1213,14 +1213,17 @@ class MountainClient():
         if not ret:
             return None
         if upload_to:
-            sha1 = self.computeFileSha1(path=ret)
-            kachery_url = self._resolve_kachery_url(upload_to)
-            if not kachery_url:
-                raise Exception('Unable to resolve kachery url for: {}'.format(upload_to))
-            if upload_to not in self._kachery_upload_tokens.keys():
-                raise Exception('Kachery upload token not found for: {}'.format(upload_to))
-            kachery_upload_token = self._kachery_upload_tokens[upload_to]
-            self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=kachery_upload_token)
+            if type(upload_to) == str:
+                upload_to = [upload_to]
+            for ut in upload_to:
+                sha1 = self.computeFileSha1(path=ret)
+                kachery_url = self._resolve_kachery_url(ut)
+                if not kachery_url:
+                    raise Exception('Unable to resolve kachery url for: {}'.format(ut))
+                if ut not in self._kachery_upload_tokens.keys():
+                    raise Exception('Kachery upload token not found for: {}'.format(ut))
+                kachery_upload_token = self._kachery_upload_tokens[ut]
+                self._upload_to_kachery(path=path, sha1=sha1, kachery_url=kachery_url, upload_token=kachery_upload_token)
         return ret
 
     def _resolve_kachery_url(self, name):

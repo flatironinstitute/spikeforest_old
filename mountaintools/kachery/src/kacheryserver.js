@@ -87,7 +87,7 @@ const fs = require('fs');
 const fse = require("fs-extra");
 var path = require('path');
 
-const MAX_FILE_SIZE = Number(process.env['KACHERY_UPLOAD_MAX_SIZE']) || (1024 * 1024 * 100);
+const MAX_FILE_SIZE = Number(process.env['KACHERY_UPLOAD_MAX_SIZE']) || (1024 * 1024 * 1024 * 100);
 const TEST_SIGNATURE = process.env['KACHERY_TEST_SIGNATURE'] || null;
 
 process.on('SIGINT', function () {

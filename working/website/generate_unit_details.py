@@ -178,7 +178,7 @@ def main():
             if ok:
                 print('Saving object to key:')
                 print(json.dumps(sr['key'], indent=4))
-                mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
+                mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public1')
 
 
 class FilterTimeseries(mlpr.Processor):
