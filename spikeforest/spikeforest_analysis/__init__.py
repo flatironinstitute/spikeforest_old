@@ -10,3 +10,4 @@ from .whiten import whiten
 from .sortingcomparison import SortingComparison
 # from .sort_recordings import IronClust
 # from .sort_recordings import KiloSort
+from .autoscale_recording import autoScaleRecordingToNoiseLevel, estimateRecordingNoiseLevel

@@ -10,6 +10,7 @@ import sys
 import shlex
 import json
 from mountaintools import client as mt
+from .autoscale import autoScaleRecordingToNoiseLevel
 
 try:
     import herdingspikes as hs
@@ -43,7 +44,7 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.0.5'  # wrapper VERSION
+    VERSION = '0.1.0'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
@@ -75,6 +76,7 @@ class HerdingSpikes2(mlpr.Processor):
 
     def run(self):
         recording = SFMdaRecordingExtractor(self.recording_dir)
+        recording = autoScaleRecordingToNoiseLevel(recording, 32)
         clustering_n_jobs = int(os.environ.get('NUM_WORKERS', None))
         tmpdir = _get_tmpdir('herdingspikes2')
 
@@ -190,7 +192,7 @@ def read_dataset_params(dsdir):
 def _get_tmpdir(sorter_name):
     code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
     tmpdir0 = os.environ.get('TEMPDIR', '/tmp')
-    tmpdir = os.path.join(tmpdir0,  '{}-tmp-{}'.format(sorter_name, code))
+    tmpdir = os.path.join(tmpdir0, '{}-tmp-{}'.format(sorter_name, code))
     # reset the output folder
     if os.path.exists(tmpdir):
         shutil.rmtree(str(tmpdir))

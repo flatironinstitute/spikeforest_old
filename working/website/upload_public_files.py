@@ -38,7 +38,7 @@ def main():
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
         for ii, sr in enumerate(obj['sorting_results']):
-            print('{}: sorting result {} of {}'.format(output_id, ii+1, len(obj['sorting_results'])))
+            print('{}: sorting result {} of {}'.format(output_id, ii + 1, len(obj['sorting_results'])))
             if 'console_out' in sr:
                 mt.createSnapshot(path=sr['console_out'], upload_to='spikeforest.public1')
 

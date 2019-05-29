@@ -31,7 +31,7 @@ def prepare_test_reliability_studies(*, basedir):
     print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
-    names = ['001_synth','002_synth','003_synth','004_synth','005_synth','006_synth','007_synth','008_synth','009_synth','010_synth']
+    names = ['001_synth', '002_synth', '003_synth', '004_synth', '005_synth', '006_synth', '007_synth', '008_synth', '009_synth', '010_synth']
     # description = mt.loadText(path=study_set_dir + '/readme.txt')
     for name in names:
         print('PREPARING: ' + name)
