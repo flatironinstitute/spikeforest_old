@@ -1,7 +1,7 @@
 ---
 # This is YAML front matter
 label: PAIRED_BOYDEN
-electrode_type: silicon_probe
+electrode_type: silicon-probe
 doi: 10.1152/jn.00650.2017
 ground_truth: intracellular
 organism: mouse

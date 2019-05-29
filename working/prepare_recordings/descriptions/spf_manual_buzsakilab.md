@@ -1,7 +1,7 @@
 ---
 # This is YAML front matter
 label: MANUAL_BUZSAKILAB
-electrode_type: silicon probe
+electrode_type: silicon-probe
 doi: 
 ground_truth: manual
 recording_type: in-vivo

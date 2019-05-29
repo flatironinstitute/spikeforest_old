@@ -656,7 +656,7 @@ class MountainClient():
         except:
             print('WARNING: unable to parse json in loadObject.', path, key, subkey)
 
-    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, collection=None, upload_to=None):
+    def saveObject(self, object, *, key=None, subkey=None, basename='object.json', local_also=False, dest_path=None, collection=None, upload_to=None, indent=None):
         """
         Save object into a json file and/or upload it to a remote KBucket share.
 
@@ -681,7 +681,7 @@ class MountainClient():
             self.setValue(key=key, subkey=subkey, collection=collection,
                           value=None),
             return None
-        return self.saveText(text=json.dumps(object), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
+        return self.saveText(text=json.dumps(object, indent=indent), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
 
     def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
         """

@@ -1,7 +1,7 @@
 ---
 # This is YAML front matter
 label: SYNTH_MEAREC_NEURONEXUS
-electrode_type: silicon_probe
+electrode_type: silicon-probe
 doi: 10.1152/jn.00210.2018
 ground_truth_type: simulation
 recording_type: in-silico
