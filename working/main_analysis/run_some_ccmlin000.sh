@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e
 
-#declare -a list=("test_reliability" "test_samplerate")
-declare -a list=("paired_monotrode" "synth_monotrode")
+declare -a list=("paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus" "hybrid_janelia")
 
-OPTS="--compute_resources compute_resources_ccmlin000.json"
+OPTS="--skip_failing --compute_resources compute_resources_ccmlin000.json"
 
 for item in "${list[@]}"
 do 
