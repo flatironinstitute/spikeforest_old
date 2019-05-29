@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-module load matlab
+#module load matlab
 
 export MLPROCESSORS_FORCE_RUN=FALSE
 

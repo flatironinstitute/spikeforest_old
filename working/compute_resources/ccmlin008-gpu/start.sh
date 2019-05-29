@@ -4,7 +4,7 @@ set -e
 # default name otherwise specified
 RESOURCE_NAME=${1:-ccmlin008-gpu} 
 
-module load matlab
+#module load matlab
 module load cuda
 
 export NUM_WORKERS=2
