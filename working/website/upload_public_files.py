@@ -22,10 +22,12 @@ def main():
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
-            # 'synth_bionet',
-            # 'synth_magland',
+            'paired_monotrode',
+            'synth_bionet',
+            'synth_magland',
+            'synth_monotrode',
             'manual_franklab',
-            #  'synth_mearec_neuronexus',
+            'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
             'synth_visapy'
         ]

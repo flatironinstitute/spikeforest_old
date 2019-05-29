@@ -508,6 +508,7 @@ def main():
 
 
 def _assemble_study_analysis_result(*, study_name, study_set_name, recordings, sorting_results, sorter_names):
+    print('Assembling {} {}'.format(study_set_name, study_name))
     true_units = dict()
     recording_names = []
     irec = 0
