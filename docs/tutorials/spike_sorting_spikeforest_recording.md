@@ -8,8 +8,7 @@ After installation, the below code may be run via [this python file](spike_sorti
 
 ## Prerequisites
 
-At this point, SpikeForest has only been tested in Linux. It is also possible to use Linux within Windows.
--  `singularity` must be installed to run the example below. Mac OSX is not currently supported at this point. 
+At this point, SpikeForest has only been tested in Linux. In the future we will support OSX. It is also possible to use Linux within Windows.
 
 
 ## Installation

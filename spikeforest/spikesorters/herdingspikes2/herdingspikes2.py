@@ -77,7 +77,9 @@ class HerdingSpikes2(mlpr.Processor):
     def run(self):
         recording = SFMdaRecordingExtractor(self.recording_dir)
         recording = autoScaleRecordingToNoiseLevel(recording, 32)
-        clustering_n_jobs = int(os.environ.get('NUM_WORKERS', None))
+        clustering_n_jobs = os.environ.get('NUM_WORKERS', None)
+        if clustering_n_jobs is not None:
+            clustering_n_jobs = int(clustering_n_jobs)
         tmpdir = _get_tmpdir('herdingspikes2')
 
         try:
