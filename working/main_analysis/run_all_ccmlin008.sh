@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-declare -a list=("test_samplerate" "test_reliability" "hybrid_janelia" "synth_monotrode" "paired_monotrode" "paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus")
+declare -a list=("hybrid_janelia" "paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus")
 
-OPTS="--skip_failing --compute_resources compute_resources_ccmlin008.json"
+OPTS="--skip_failing --compute_resources compute_resources_ccmlin008.json --job_timeout 1200"
 
 for item in "${list[@]}"
 do 

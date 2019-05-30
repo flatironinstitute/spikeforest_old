@@ -152,6 +152,14 @@ def test_ks_magland_c8():
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
 
+@pytest.mark.spikeforest
+@pytest.mark.ks_boyden32c
+@pytest.mark.exclude
+def test_ks_boyden32c():
+    sorter = KiloSort
+    params = dict()
+    do_sorting_test(sorter, params, boyden32c_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
+
 
 @pytest.mark.spikeforest
 @pytest.mark.klusta_magland_c4
