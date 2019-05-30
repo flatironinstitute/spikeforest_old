@@ -1,7 +1,5 @@
 import mlprocessors as mlpr
-import spikeextractors as se
 import os
-import time
 import random
 import string
 import shutil
@@ -10,31 +8,11 @@ import shlex
 import json
 from mountaintools import client as mt
 
-try:
-    import herdingspikes as hs
-    HAVE_HS = True
-except ImportError:
-    HAVE_HS = False
-
 
 class HerdingSpikes2(mlpr.Processor):
     """
     HerdingSpikes2 wrapper for SpikeForest framework
-      written by J. James Jun, May 3, 2019
-      modified from `spiketoolkit/sorters/HerdingSpikesSorter`
-      to be made compatible with SpikeForest
-
-    [Installation instruction in SpikeForest environment]
-    1. Run `git clone https://github.com/jamesjun/hs2`
-      Note that James Jun forked a new version to make it compatible with singularity container.
-      Original code was creating folders under its source directory which is ready-only in SpikeForest containers.
-    2. Activate conda environment for SpikeForest
-    3. Run `pip install joblib`
-    4. Run `python setup.py develop` in herdingspikes2 doretory
-    5. Create `herdingspikes/probes` and `herdingspikes/probe_info` folders
-
-    HerdingSpikes is a sorter based on estimated spike location, developed by
-    researchers at the University of Edinburgh. It's a fast and scalable choice.
+    Calls hs2 wrapper in SpikeInterface/SpikeToolkit
 
     See: HILGEN, Gerrit, et al. Unsupervised spike sorting for large-scale,
     high-density multielectrode arrays. Cell reports, 2017, 18.10: 2521-2532.
