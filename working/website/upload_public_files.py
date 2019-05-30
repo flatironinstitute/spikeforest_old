@@ -22,15 +22,17 @@ def main():
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
-            'paired_monotrode',
+            # 'paired_monotrode',
+            # 'synth_monotrode',
             'synth_bionet',
             'synth_magland',
-            'synth_monotrode',
             'manual_franklab',
             'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
-            'synth_visapy'
+            'synth_visapy',
+            'hybrid_janelia'
         ]
+
     print('Using output ids: ', output_ids)
 
     for output_id in output_ids:
