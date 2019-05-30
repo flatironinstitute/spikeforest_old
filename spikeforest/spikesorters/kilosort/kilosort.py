@@ -39,6 +39,7 @@ class KiloSort(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     CONTAINER = None
+    LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(

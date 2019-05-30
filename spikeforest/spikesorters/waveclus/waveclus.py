@@ -37,6 +37,7 @@ class Waveclus(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
     CONTAINER = None
+    LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')

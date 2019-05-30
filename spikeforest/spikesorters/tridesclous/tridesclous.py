@@ -2,7 +2,7 @@ from pathlib import Path
 
 import mlprocessors as mlpr
 import spikeextractors as se
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os, time, random, string, shutil, sys, shlex, json
 from mountaintools import client as mt
 from subprocess import Popen, PIPE, CalledProcessError, call
@@ -28,6 +28,7 @@ class Tridesclous(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER = 'sha1://9fb4a9350492ee84c8ea5d8692434ecba3cf33da/2019-05-13/tridesclous.simg'
+    LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')

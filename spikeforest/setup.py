@@ -14,8 +14,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_dir={
         'spikesorters': 'spikesorters',
-        'spikeforestwidgets': 'spikeforestwidgets',
-        'forestview': 'forestview'
+        'forestview': 'forestview',
+        'spikeforest_analysis': 'spikeforest_analysis',
+        'spikeforest_common': 'spikeforest_common'
     },
     include_package_data=True,
     install_requires=[

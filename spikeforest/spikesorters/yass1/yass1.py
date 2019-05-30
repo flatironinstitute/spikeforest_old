@@ -11,7 +11,7 @@ import string
 import shutil
 from .yasssortingextractor1 import yassSortingExtractor1
 from .tools import saveProbeFile
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import spikeextractors as se
 
 # yass uses negative polarity by default
@@ -30,6 +30,7 @@ class YASS1(mlpr.Processor):
 
     # this one uses python 3
     CONTAINER = 'sha1://85f443e414ac454f2057553bf6436131d0eb6245/yass1.simg'
+    LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(

@@ -217,9 +217,11 @@ class MountainJob():
                     # fi
 
                     if not container:
+                        env_vars = []
+                        env_vars.append('PYTHONPATH={}/processor_source/_local_modules'.format(temp_path))
                         run_sh_script.substitute('{temp_path}', temp_path)
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname)
-                        run_sh_script.substitute('{env_vars}', '')
+                        run_sh_script.substitute('{env_vars}', '\n'.join(['export ' + env_var for env_var in env_vars]))
                         shell_script = run_sh_script
                     else:
                         print('Realizing container file: {}'.format(container))
@@ -239,7 +241,7 @@ class MountainJob():
                             val = os.environ.get(v, '')
                             if val:
                                 env_vars.append('{}={}'.format(v, val))
-                        env_vars.append('PYTHONPATH=/python/mountaintools')
+                        env_vars.append('PYTHONPATH=/python/mountaintools:/run_in_container/processor_source/_local_modules')
 
                         run_sh_script.substitute('{temp_path}', '/run_in_container')
                         run_sh_script.substitute('{console_out_fname}', tmp_process_console_out_fname_in_container)
@@ -255,6 +257,7 @@ class MountainJob():
                             singularity exec {singularity_opts} {container} {temp_path}/run.sh
                         """, script_path=os.path.join(temp_path, 'singularity_run.sh'))
                         singularity_sh_script.substitute('{temp_path}', '/run_in_container')
+                        singularity_sh_script.substitute('{temp_path_host}', temp_path)
                         singularity_sh_script.substitute('{singularity_opts}', ' '.join(singularity_opts))
                         singularity_sh_script.substitute('{container}', container)
 

@@ -1,6 +1,6 @@
 import mlprocessors as mlpr
 import spikeextractors as se
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import os
 import time
 import random
@@ -10,7 +10,6 @@ import sys
 import shlex
 import json
 from mountaintools import client as mt
-from .autoscale import autoScaleRecordingToNoiseLevel
 
 try:
     import herdingspikes as hs
@@ -50,6 +49,7 @@ class HerdingSpikes2(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER = 'sha1://d140fc9b43b98a5f70a538970bc037b5b35fefd8/2019-05-08/herdingspikes2.simg'
     # CONTAINER = None
+    LOCAL_MODULES = ['../../spikeforest_common', '../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
@@ -74,6 +74,8 @@ class HerdingSpikes2(mlpr.Processor):
             [0, 0, .05, 1]]
 
     def run(self):
+        from spikeforest_common import autoScaleRecordingToNoiseLevel
+
         recording = SFMdaRecordingExtractor(self.recording_dir)
         recording = autoScaleRecordingToNoiseLevel(recording, 32)
         clustering_n_jobs = os.environ.get('NUM_WORKERS', None)

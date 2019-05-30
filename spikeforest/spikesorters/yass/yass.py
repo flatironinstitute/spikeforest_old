@@ -11,7 +11,7 @@ import string
 import shutil
 from .yasssortingextractor import yassSortingExtractor
 from .tools import saveProbeFile
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import spikeextractors as se
 
 # yass uses negative polarity by default
@@ -24,6 +24,7 @@ class YASS(mlpr.Processor):
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.yaml']
+    LOCAL_MODULES = ['../../spikeforest']
 
     # The following container uses python 2
     # CONTAINER = 'sha1://087767605e10761331699dda29519444bbd823f4/02-12-2019/yass.simg'

@@ -35,6 +35,20 @@ def createJobs(proc, argslist, verbose=None):
             content='from .{} import {}'.format(
                 processor_source_basename_noext, proc.__name__)
         ))
+        if hasattr(proc, 'LOCAL_MODULES'):
+            code['dirs'].append(dict(
+                name='_local_modules',
+                content=dict(
+                    files=[],
+                    dirs=[
+                        dict(
+                            name=os.path.basename(local_module_path),
+                            content=_read_python_code_of_directory(os.path.join(processor_source_dirname, local_module_path), exclude_init=False)
+                        )
+                        for local_module_path in proc.LOCAL_MODULES
+                    ]
+                )
+            ))
         code = local_client.saveObject(object=code)
     else:
         code = None
@@ -296,7 +310,7 @@ def createJob(
     return jobs[0]
 
 
-def _read_python_code_of_directory(dirname, additional_files=[], exclude_init=True):
+def _read_python_code_of_directory(dirname, exclude_init, additional_files=[]):
     patterns = ['*.py'] + additional_files
     files = []
     dirs = []

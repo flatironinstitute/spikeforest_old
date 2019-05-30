@@ -1,5 +1,4 @@
 import time
-from PIL import Image
 import os
 from copy import deepcopy
 from mountaintools import client as mt

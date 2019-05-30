@@ -10,7 +10,7 @@ import string
 import shutil
 import spikeextractors as se
 from .tools import saveProbeFile
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from .spykingcircussortingextractor import SpykingCircusSortingExtractor
 
 
@@ -21,6 +21,7 @@ class SpykingCircus(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
     CONTAINER = 'sha1://8958530b960522d529163344af2faa09ea805716/2019-05-06/spyking_circus.simg'
+    LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
