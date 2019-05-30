@@ -56,7 +56,7 @@ mt.configDownloadFrom('spikeforest.public')
 # Load an example tetrode recording with its ground truth
 recdir = 'sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth'
 
-print('Load recording...')
+print('loading recording...')
 recording = SFMdaRecordingExtractor(dataset_directory=recdir, download=True)
 sorting_true = SFMdaSortingExtractor(firings_file=recdir + '/firings_true.mda')
 ```

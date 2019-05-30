@@ -62,6 +62,14 @@ class KiloSort(mlpr.Processor):
     pc_per_chan = mlpr.IntegerParameter(
         optional=True, default=3, description='TODO')
 
+    @staticmethod
+    def install():
+        print('Auto-installing kilosort.')
+        return install_kilosort(
+            repo='https://github.com/cortex-lab/KiloSort.git',
+            commit='3f33771f8fdf8c3846a7f8a75cc8c318b44ed48c'
+        )
+
     def run(self):
         keep_temp_files = False
         code = ''.join(random.choice(string.ascii_uppercase)
@@ -113,11 +121,7 @@ def kilosort_helper(*,
         print('Using kilosort from KILOSORT_PATH_DEV directory: {}'.format(kilosort_path))
     else:
         try:
-            print('Auto-installing kilosort.')
-            kilosort_path = install_kilosort(
-                repo='https://github.com/cortex-lab/KiloSort.git',
-                commit='3f33771f8fdf8c3846a7f8a75cc8c318b44ed48c'
-            )
+            kilosort_path = KiloSort.install()
         except:
             traceback.print_exc()
             raise Exception('Problem installing kilosort. You can set the KILOSORT_PATH_DEV to force to use a particular path.')

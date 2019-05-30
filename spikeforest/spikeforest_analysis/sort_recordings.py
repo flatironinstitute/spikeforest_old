@@ -126,6 +126,9 @@ def multi_sort_recordings(*, sorters, recordings, num_workers=None, disable_cont
         else:
             raise Exception('No such sorter: ' + processor_name)
 
+        if hasattr(SS, 'install'):
+            SS.install()
+
         if SS_container:
             if SS_container == 'default':
                 SS_container = SS.CONTAINER

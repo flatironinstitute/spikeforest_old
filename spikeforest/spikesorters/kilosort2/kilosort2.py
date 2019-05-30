@@ -72,6 +72,14 @@ class KiloSort2(mlpr.Processor):
     minFR = mlpr.FloatParameter(default=1/50, optional=True, 
         description='minimum spike rate (Hz), if a cluster falls below this for too long it gets removed')
 
+    @staticmethod
+    def install():
+        print('Auto-installing kilosort.')
+        return install_kilosort2(
+            repo='https://github.com/alexmorley/Kilosort2',
+            commit='43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956'
+        )
+
     def run(self):
         _keep_temp_files = True
         
@@ -143,10 +151,7 @@ def kilosort2_helper(*,
     else:
         try:
             print('Auto-installing kilosort2.')
-            kilosort2_path = install_kilosort2(
-                repo='https://github.com/alexmorley/Kilosort2',
-                commit='43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956'
-            )
+            kilosort2_path = KiloSort2.install()
         except:
             traceback.print_exc()
             raise Exception('Problem installing kilosort2. You can set the KILOSORT2_PATH_DEV to force to use a particular path.')

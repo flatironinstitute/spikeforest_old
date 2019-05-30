@@ -6,7 +6,6 @@ the PyPI packages as follows.
 ```
 
 To use the containerized versions of the spike sorters (recommended), you should
-[install
-singularity](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps).
+[install singularity 2.6.1](https://www.sylabs.io/guides/2.6/user-guide/quick_start.html#quick-installation-steps).
 This will work for all of the non-Matlab spike sorters (in the future we will
 also containerize the Matlab packages).

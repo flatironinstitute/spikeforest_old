@@ -22,8 +22,7 @@ pip install --upgrade mountaintools==0.3.3
 ```
 
 To use the containerized versions of the spike sorters (recommended), you should
-[install
-singularity](https://www.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps).
+[install singularity 2.6.1](https://www.sylabs.io/guides/2.6/user-guide/quick_start.html#quick-installation-steps).
 This will work for all of the non-Matlab spike sorters (in the future we will
 also containerize the Matlab packages).
 
@@ -47,7 +46,7 @@ mt.configDownloadFrom('spikeforest.public')
 # You can also substitute any of the other available recordings
 recdir = 'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/datasets_noise10_K10_C4/001_synth'
 
-print('Load recording...')
+print('loading recording...')
 recording = SFMdaRecordingExtractor(dataset_directory=recdir, download=True)
 sorting_true = SFMdaSortingExtractor(firings_file=recdir + '/firings_true.mda')
 ```

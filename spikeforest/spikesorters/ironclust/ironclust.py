@@ -95,14 +95,18 @@ class IronClust(mlpr.Processor):
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
+    @staticmethod
+    def install():
+        print('Auto-installing ironclust.')
+        return install_ironclust(commit='785712be88bbb2cc03e26d96a43249a46a0f0ed3')
+
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
         if ironclust_path:
             print('Using ironclust from IRONCLUST_PATH_DEV directory: {}'.format(ironclust_path))
         else:
             try:
-                print('Auto-installing ironclust.')
-                ironclust_path = install_ironclust(commit='785712be88bbb2cc03e26d96a43249a46a0f0ed3')
+                ironclust_path = IronClust.install()
             except:
                 traceback.print_exc()
                 raise Exception('Problem installing ironclust. You can set the IRONCLUST_PATH_DEV to force to use a particular path.')
