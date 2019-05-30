@@ -27,7 +27,7 @@ class Waveclus(mlpr.Processor):
     2. Activate conda environment for SpikeForest
     3. Create `WAVECLUS_PATH_DEV`
 
-    Algorithm website: 
+    Algorithm website:
     https://github.com/csn-le/wave_clus/wiki
     """
 
@@ -37,7 +37,6 @@ class Waveclus(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
     CONTAINER = None
-    CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
@@ -98,7 +97,7 @@ def waveclus_helper(
             raise Exception('Problem installing waveclus. You can set the WAVECLUS_PATH_DEV to force to use a particular path.')
     print('Using waveclus from: {}'.format(waveclus_path))
 
-    source_dir = os.path.dirname(os.path.realpath(__file__))
+    # source_dir = os.path.dirname(os.path.realpath(__file__))
 
     dataset_dir = os.path.join(tmpdir, 'waveclus_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json

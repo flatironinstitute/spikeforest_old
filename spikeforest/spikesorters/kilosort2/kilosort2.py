@@ -15,7 +15,7 @@ import sys
 import shlex
 import traceback
 from .install_kilosort2 import install_kilosort2
-#from ..ironclust.install_ironclust import install_ironclust
+# from ..ironclust.install_ironclust import install_ironclust
 # import h5py
 
 
@@ -40,24 +40,23 @@ class KiloSort2(mlpr.Processor):
     3. In Matlab, run `CUDA/mexGPUall` to compile all CUDA codes
     4. Add `KILOSORT2_PATH=...` in your .bashrc file.
     """
-        
+
     NAME = 'KiloSort2'
     VERSION = '0.3.2'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     CONTAINER = None
-    CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
         description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
 
-    detect_sign = mlpr.IntegerParameter(default=-1, optional=True, 
-        description='Use -1 or 1, depending on the sign of the spikes in the recording')
-    adjacency_radius = mlpr.FloatParameter(default=30, optional=True, 
-        description='Use -1 to include all channels in every neighborhood')
+    detect_sign = mlpr.IntegerParameter(default=-1, optional=True,
+                                        description='Use -1 or 1, depending on the sign of the spikes in the recording')
+    adjacency_radius = mlpr.FloatParameter(default=30, optional=True,
+                                           description='Use -1 to include all channels in every neighborhood')
     detect_threshold = mlpr.FloatParameter(
         optional=True, default=6, description='')
     # prm_template_name=mlpr.StringParameter(optional=False,description='TODO')
@@ -69,8 +68,8 @@ class KiloSort2(mlpr.Processor):
         optional=True, default=0.98, description='TODO')
     pc_per_chan = mlpr.IntegerParameter(
         optional=True, default=3, description='TODO')
-    minFR = mlpr.FloatParameter(default=1/50, optional=True, 
-        description='minimum spike rate (Hz), if a cluster falls below this for too long it gets removed')
+    minFR = mlpr.FloatParameter(default=1 / 50, optional=True,
+                                description='minimum spike rate (Hz), if a cluster falls below this for too long it gets removed')
 
     @staticmethod
     def install():
@@ -82,7 +81,7 @@ class KiloSort2(mlpr.Processor):
 
     def run(self):
         _keep_temp_files = True
-        
+
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-tmp-' + code
@@ -114,7 +113,7 @@ class KiloSort2(mlpr.Processor):
                     print('removing tmpdir1')
                     shutil.rmtree(tmpdir)
             raise
-        if not _keep_temp_files:            
+        if not _keep_temp_files:
             print('removing tmpdir2')
             shutil.rmtree(tmpdir)
 
@@ -128,8 +127,8 @@ def kilosort2_helper(*,
                      merge_thresh=.98,  # Cluster merging threhold 0..1
                      freq_min=150,  # Lower frequency limit for band-pass filter
                      freq_max=6000,  # Upper frequency limit for band-pass filter
-                     pc_per_chan=3, # number of PC per chan
-                     minFR=1/50
+                     pc_per_chan=3,  # number of PC per chan
+                     minFR=1 / 50
                      ):
 
     # # TODO: do not require ks2 to depend on irc -- rather, put all necessary .m code in the spikeforest repo
