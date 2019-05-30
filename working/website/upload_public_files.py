@@ -42,7 +42,7 @@ def main():
         for ii, sr in enumerate(obj['sorting_results']):
             print('{}: sorting result {} of {}'.format(output_id, ii + 1, len(obj['sorting_results'])))
             if 'console_out' in sr:
-                mt.createSnapshot(path=sr['console_out'], upload_to='spikeforest.public1')
+                mt.createSnapshot(path=sr['console_out'], upload_to='spikeforest.public')
 
 if __name__ == "__main__":
     main()

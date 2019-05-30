@@ -7,7 +7,7 @@ pkg_name = "spikeforest"
 
 setuptools.setup(
     name=pkg_name,
-    version="0.6.2",
+    version="0.7.0",
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",

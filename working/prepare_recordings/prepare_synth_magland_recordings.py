@@ -7,7 +7,7 @@ from load_study_set_from_md import load_study_set_from_md
 
 # mt.login()
 upload_to = 'spikeforest.kbucket'
-upload_public_to = 'spikeforest.public1'
+upload_public_to = 'spikeforest.public'
 
 # The base directory used below
 # basedir = 'kbucket://15734439d8cf/groundtruth'

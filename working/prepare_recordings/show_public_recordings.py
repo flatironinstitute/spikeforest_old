@@ -12,7 +12,7 @@ def main():
 
     args = parser.parse_args()
 
-    mt.configDownloadFrom(['spikeforest.public1'])
+    mt.configDownloadFrom(['spikeforest.public'])
 
     if args.group_names is not None:
         group_names = args.output_ids.split(',')
