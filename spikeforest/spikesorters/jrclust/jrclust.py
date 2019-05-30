@@ -39,7 +39,6 @@ class JRClust(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
     CONTAINER = None
-    CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
@@ -129,8 +128,6 @@ def jrclust_helper(
             traceback.print_exc()
             raise Exception('Problem installing jrclust. You can set the JRCLUST_PATH_DEV to force to use a particular path.')
     print('Using jrclust from: {}'.format(jrclust_path))
-
-
 
     dataset_dir = os.path.join(tmpdir, 'jrclust_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json

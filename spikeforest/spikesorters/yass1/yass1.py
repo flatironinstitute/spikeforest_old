@@ -31,16 +31,14 @@ class YASS1(mlpr.Processor):
     # this one uses python 3
     CONTAINER = 'sha1://85f443e414ac454f2057553bf6436131d0eb6245/yass1.simg'
 
-    # CONTAINER_SHARE_ID = '69432e9201d0'  # place to look for container
-
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
         description='List of channels to use.', optional=True, default=[])
     firings_out = mlpr.Output('Output firings file')
     # paramfile_out = mlpr.Output('YASS yaml config file')
 
-    detect_sign = mlpr.IntegerParameter(optional=True, default=-1, 
-        description='-1, 1, or 0')
+    detect_sign = mlpr.IntegerParameter(optional=True, default=-1,
+                                        description='-1, 1, or 0')
     adjacency_radius = mlpr.FloatParameter(
         optional=True, default=70, description='Channel neighborhood adjacency radius corresponding to geom file')
     template_width_ms = mlpr.FloatParameter(

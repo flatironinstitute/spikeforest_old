@@ -32,14 +32,13 @@ class KiloSort(mlpr.Processor):
     3. In Matlab, run `CUDA/mexGPUall` to compile all CUDA codes
     4. Add `KILOSORT_PATH_DEV=...` in your .bashrc file.
     """
-            
+
     NAME = 'KiloSort'
     VERSION = '0.2.1'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     CONTAINER = None
-    CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     channels = mlpr.IntegerListParameter(
@@ -47,9 +46,9 @@ class KiloSort(mlpr.Processor):
     firings_out = mlpr.Output('Output firings file')
 
     detect_sign = mlpr.IntegerParameter(optional=True, default=-1,
-        description='Use -1 or 1, depending on the sign of the spikes in the recording')
+                                        description='Use -1 or 1, depending on the sign of the spikes in the recording')
     adjacency_radius = mlpr.FloatParameter(optional=True, default=-1,
-        description='Currently unused')
+                                           description='Currently unused')
     detect_threshold = mlpr.FloatParameter(
         optional=True, default=3, description='')
     # prm_template_name=mlpr.StringParameter(optional=False,description='TODO')

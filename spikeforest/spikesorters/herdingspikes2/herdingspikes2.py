@@ -50,7 +50,6 @@ class HerdingSpikes2(mlpr.Processor):
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER = 'sha1://d140fc9b43b98a5f70a538970bc037b5b35fefd8/2019-05-08/herdingspikes2.simg'
     # CONTAINER = None
-    CONTAINER_SHARE_ID = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
