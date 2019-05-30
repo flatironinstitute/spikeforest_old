@@ -2,7 +2,7 @@
     "analysis_name": "manual_franklab",
     "output":"key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab.json",
     "recordings":["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
-    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "hs2", "tdc", "jrc", "klusta"],
+    "sorter_keys": ["ks2", "irc", "ks", "ms4", "yass", "sc", "tdc", "jrc", "klusta"],
     "sorter_keys_disable": [],
     "download_from": ["spikeforest.kbucket", "spikeforest.spikeforest2"],
     "upload_to": "spikeforest.kbucket",
