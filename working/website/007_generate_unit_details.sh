@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-./upload_public_files.py
+./generate_unit_details.py

@@ -162,7 +162,7 @@ class MountainClient():
         Create a MountainClient object. Initializes pairio using environment variables.
         """
         self._pairio_url = os.environ.get(
-            'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443')))
+            'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org')))
         self._kachery_urls = dict()
         self._kachery_upload_tokens = dict()
         self._kachery_download_tokens = dict()
