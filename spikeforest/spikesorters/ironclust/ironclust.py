@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.3.4'
+    VERSION = '0.3.5'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -60,7 +60,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.975,
+        optional=True, default=0.985,
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
@@ -97,7 +97,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='785712be88bbb2cc03e26d96a43249a46a0f0ed3')
+        return install_ironclust(commit='5d72a0bf871fae5f166175dd52c63ea2274e2b3c')
 
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
