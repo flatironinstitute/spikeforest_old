@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Right now the central pairio server is hosted on https://pairio.org
+# Right now the central pairio server is hosted on http://pairio.org
 
 # This is a linode server
 
