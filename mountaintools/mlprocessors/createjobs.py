@@ -19,7 +19,7 @@ def createJobs(proc, argslist, verbose=None):
     try:
         processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     except:
-        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource.'.format(proc.NAME))
+        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource or in a container.'.format(proc.NAME))
         processor_source_fname = None
     if processor_source_fname is not None:
         processor_source_dirname = os.path.dirname(processor_source_fname)
@@ -133,17 +133,22 @@ def createJobs(proc, argslist, verbose=None):
                 elif type(val0) == bool:
                     if output0.is_array:
                         outputs[name0] = dict(ext='.npy')
+                    elif output0.is_dict:
+                        outputs[name0] = dict(ext='.json')
                     else:
                         outputs[name0] = dict(ext='.dat')
                 else:
                     raise Exception('Type of output {} cannot be {}'.format(name0, str(type(val0))))
                 if output0.is_array:
                     outputs[name0]['is_array'] = True
+                if output0.is_array:
+                    outputs[name0]['is_dict'] = True
             else:
                 if not output0.optional:
                     raise Exception('Missing required output: {}'.format(name0))
 
         parameters = dict()
+        parameters_to_hash = dict()
         for param0 in proc.PARAMETERS:
             name0 = param0.name
             if name0 not in args:
@@ -154,6 +159,8 @@ def createJobs(proc, argslist, verbose=None):
             else:
                 val0 = args[name0]
             parameters[name0] = val0
+            if not param0.environment:
+                parameters_to_hash[name0] = val0
 
         if hasattr(proc, 'ENVIRONMENT_VARIABLES'):
             environment_variables = proc.ENVIRONMENT_VARIABLES
@@ -169,6 +176,7 @@ def createJobs(proc, argslist, verbose=None):
             inputs=inputs,  # hashes are computed below
             outputs=outputs,  # signatures are computed below
             parameters=parameters,
+            parameters_to_hash=parameters_to_hash,
             container=_container,
             force_run=_force_run,
             use_cache=_use_cache,
@@ -258,21 +266,21 @@ def createJobs(proc, argslist, verbose=None):
                 processor_name=proc.NAME,
                 processor_version=proc.VERSION,
                 inputs=job_object['inputs'],
-                parameters=job_object['parameters'],
+                parameters=job_object['parameters_to_hash'],
                 output_name=output_name
             )
         job_object['runtime_info_signature'] = _compute_mountain_job_output_signature(
             processor_name=proc.NAME,
             processor_version=proc.VERSION,
             inputs=job_object['inputs'],
-            parameters=job_object['parameters'],
+            parameters=job_object['parameters_to_hash'],
             output_name='--runtime-info--'
         )
         job_object['console_out_signature'] = _compute_mountain_job_output_signature(
             processor_name=proc.NAME,
             processor_version=proc.VERSION,
             inputs=job_object['inputs'],
-            parameters=job_object['parameters'],
+            parameters=job_object['parameters_to_hash'],
             output_name='--console-out--'
         )
     if verbose:
