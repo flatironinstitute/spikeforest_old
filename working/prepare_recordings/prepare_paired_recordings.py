@@ -21,6 +21,7 @@ def prepare_paired_studies(*, basedir, name):
 
     study_dir0 = basedir + '/paired_recordings/' + name
     study_dir = mt.createSnapshot(study_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
+    mt.createSnapshot(study_dir0, upload_to=upload_public_to, upload_recursive=False, download_recursive=False)
     if not study_dir:
         raise Exception('Failed to create snapshot of directory: ' + study_dir0)
     study_dir = study_dir + '.paired_' + name
