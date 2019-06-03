@@ -41,33 +41,31 @@ def main():
         output_ids = args.output_ids.split(',')
     else:
         output_ids = [
+            'synth_monotrode',
+            'paired_monotrode',
             'paired_boyden32c',
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
-            # 'synth_bionet',
-            # 'synth_magland',
+            'synth_magland',
             'manual_franklab',
-            #  'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
-            'synth_visapy'
+            'synth_visapy',
+            'synth_mearec_neuronexus',
+            'synth_bionet'
         ]
     print('Using output ids: ', output_ids)
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
-    studies = []
-    study_sets = []
-    recordings = []
-    sorting_results = []
     for output_id in output_ids:
+        print('=============================================', output_id)
         print('Loading output object: {}'.format(output_id))
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
-        studies = studies + obj['studies']
-        print(obj.keys())
-        study_sets = study_sets + obj.get('study_sets', [])
-        recordings = recordings + obj['recordings']
-        sorting_results = sorting_results + obj['sorting_results']
+        studies = obj['studies']
+        study_sets = obj.get('study_sets', [])
+        recordings = obj['recordings']
+        sorting_results = obj['sorting_results']
 
     print('Determining sorting results to process ({} total)...'.format(len(sorting_results)))
     sorting_results_to_process = []
