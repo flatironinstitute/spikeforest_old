@@ -4,6 +4,7 @@ import argparse
 from mountaintools import client as mt
 import os
 import frontmatter
+from datetime import datetime
 
 help_txt = """
 This script assembles collections of data
@@ -431,6 +432,12 @@ def main():
         for study in studies
     ]
 
+    # GENERAL
+    print('******************************** ASSEMBLING GENERAL INFO...')
+    General = [dict(
+        dateUpdated=datetime.now().isoformat()
+    )]
+
     obj = dict(
         mode='spike-front',
         StudySets=StudySets,
@@ -439,7 +446,8 @@ def main():
         SortingResults=SortingResults,
         Sorters=Sorters,
         Algorithms=Algorithms,
-        StudyAnalysisResults=StudyAnalysisResults
+        StudyAnalysisResults=StudyAnalysisResults,
+        General=General
     )
     address = mt.saveObject(object=obj)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)

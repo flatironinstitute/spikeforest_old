@@ -20,7 +20,7 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.2.0'  # wrapper VERSION
+    VERSION = '0.2.1'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
@@ -48,8 +48,9 @@ class HerdingSpikes2(mlpr.Processor):
                 os.mkdir(tmpdir)
             
             recording = SFMdaRecordingExtractor(self.recording_dir)
-            print('Auto scaling...')
-            recording = autoScaleRecordingToNoiseLevel(recording, noise_level=32)
+            print('Auto scaling via normalize_by_quantile...')
+            recording = st.preprocessing.normalize_by_quantile(recording=recording, scale=200.0)
+            # recording = autoScaleRecordingToNoiseLevel(recording, noise_level=32)
 
             print('Running HerdingspikesSorter...')
             os.environ['HS2_PROBE_PATH'] = tmpdir
