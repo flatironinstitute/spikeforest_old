@@ -45,7 +45,8 @@ def prepare_hybrid_janelia_studies(*, basedir):
         )
         studies.append(study0)
         dd = mt.readDir(study_dir)
-        for i, dsname in enumerate(dd['dirs']):
+        dirnames = sorted(list(dd['dirs'].keys()))
+        for i, dsname in enumerate(dirnames):
             dsdir = '{}/{}'.format(study_dir, dsname)
             print(dsdir)
             recordings.append(dict(
