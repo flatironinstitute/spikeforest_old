@@ -1076,7 +1076,6 @@ class MountainClient():
     def _initialize_kacheries(self):
         kacheries_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kacheries')
         kachery_upload_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_upload_tokens')
-        kachery_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_tokens')
         kachery_urls = dict()
         kachery_upload_tokens = dict()
         kachery_download_tokens = dict()
@@ -1100,21 +1099,10 @@ class MountainClient():
                         print('WARNING: problem parsing kachery_upload_tokens file.')
                     else:
                         kachery_upload_tokens[vals[0]] = vals[1]
-        if os.path.exists(kachery_tokens_fname):
-            txt = _read_text_file(kachery_tokens_fname)
-            lines = txt.splitlines()
-            for line in lines:
-                if (not line.startswith('#')) and (len(line.strip()) > 0):
-                    vals = line.strip().split()
-                    if len(vals) != 3:
-                        print('WARNING: problem parsing kachery_tokens file.')
-                    else:
-                        if vals[1] == 'upload':
-                            kachery_upload_tokens[vals[0]] = vals[2]
-                        elif vals[1] == 'download':
-                            kachery_download_tokens[vals[0]] = vals[2]
-                        else:
-                            print('WARNING: problem parsing kachery_tokens file (*).')
+        from .kachery_tokens import KacheryTokens
+        db = KacheryTokens()
+        kachery_upload_tokens = { name: token for name, type, token in db.entries() if type == 'upload' }
+        kachery_download_tokens = { name: token for name, type, token in db.entries() if type == 'download' }
         for name, url in kachery_urls.items():
             self._kachery_urls[name] = url
         for name, token in kachery_upload_tokens.items():

@@ -100,18 +100,50 @@ def createJobs(proc, argslist, verbose=None):
                         inputs[name0] = dict(
                             path=fname0
                         )
+                    elif type(fname0) == list:
+                        inputs[name0] = []
+                        for a in fname0:
+                            if type(a) == str:
+                                inputs[name0].append(dict(
+                                    path=a
+                                ))
+                            elif (type(a) == dict) and ('hash' in a):
+                                inputs[name0].append(dict(
+                                    path=None,
+                                    object=a,
+                                    hash=a['hash']
+                                ))
+                            elif hasattr(a, 'hash'):
+                                if callable(a.hash):
+                                    hash0 = a.hash()
+                                else:
+                                    hash0 = a.hash
+                                inputs[name0].append(dict(
+                                    path=None,
+                                    object=a,
+                                    hash=hash0
+                                ))
+                            else:
+                                raise Exception('Input {} is a list and one of the members is not a string and does not have hash attribute.'.format(name0))
                     else:
-                        if not hasattr(fname0, 'hash'):
-                            raise Exception('Input {} is not a string and does not have hash attribute.'.format(name0))
-                        if callable(fname0.hash):
-                            hash0 = fname0.hash()
+                        if (type(fname0) == dict) and ('hash' in fname0):
+                            inputs[name0] = dict(
+                                path=None,
+                                object=fname0,
+                                hash=fname0['hash']
+                            )
+                        elif hasattr(fname0, 'hash'):
+                            if callable(fname0.hash):
+                                hash0 = fname0.hash()
+                            else:
+                                hash0 = fname0.hash
+                            inputs[name0] = dict(
+                                path=None,
+                                object=fname0,
+                                hash=hash0
+                            )
                         else:
-                            hash0 = fname0.hash
-                        inputs[name0] = dict(
-                            path=None,
-                            object=fname0,
-                            hash=hash0
-                        )
+                            raise Exception('Input {} is not a string and does not have hash attribute.'.format(name0))
             else:
                 if not input0.optional:
                     raise Exception('Missing required input: {}'.format(name0))
@@ -196,21 +228,40 @@ def createJobs(proc, argslist, verbose=None):
     all_sha1_file_inputs = []
     all_local_file_inputs = []
     for job_object in job_objects:
-        for _, input0 in job_object['inputs'].items():
-            path0 = input0.get('path', None)
-            if path0:
-                if input0.get('directory', False):
-                    if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
-                        all_kbucket_dir_inputs.append(input0)
+        for input_name, input0 in job_object['inputs'].items():
+            if type(input0) == dict:
+                path0 = input0.get('path', None)
+                if path0:
+                    if input0.get('directory', False):
+                        if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
+                            all_kbucket_dir_inputs.append(input0)
+                        else:
+                            all_local_dir_inputs.append(input0)
                     else:
-                        all_local_dir_inputs.append(input0)
-                else:
-                    if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
-                        all_kbucket_file_inputs.append(input0)
-                    elif path0.startswith('sha1://'):
-                        all_sha1_file_inputs.append(input0)
-                    else:
-                        all_local_file_inputs.append(input0)
+                        if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
+                            all_kbucket_file_inputs.append(input0)
+                        elif path0.startswith('sha1://'):
+                            all_sha1_file_inputs.append(input0)
+                        else:
+                            all_local_file_inputs.append(input0)
+            elif type(input0) == list:
+                for a in input0:
+                    path0 = a.get('path', None)
+                    if path0:
+                        if a.get('directory', False):
+                            if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
+                                all_kbucket_dir_inputs.append(a)
+                            else:
+                                all_local_dir_inputs.append(a)
+                        else:
+                            if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
+                                all_kbucket_file_inputs.append(a)
+                            elif path0.startswith('sha1://'):
+                                all_sha1_file_inputs.append(a)
+                            else:
+                                all_local_file_inputs.append(a)
+            else:
+                raise Exception('Unexpected type for input {}'.format(input_name))
 
     # Prepare the local file inputs
     if len(all_local_file_inputs) > 0:
@@ -355,13 +406,26 @@ def _read_python_code_of_directory(dirname, exclude_init, additional_files=[]):
 def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
     input_hashes = dict()
     for input_name, input0 in inputs.items():
-        if input0.get('directory', False):
-            hash0 = input0.get('hash', None)
+        if type(input0) == dict:
+            if input0.get('directory', False):
+                hash0 = input0.get('hash', None)
+            else:
+                hash0 = input0.get('sha1', input0.get('hash', None))
+            if not hash0:
+                raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+            input_hashes[input_name] = hash0
+        elif type(input0) == list:
+            input_hashes[input_name] = []
+            for a in input0:
+                if a.get('directory', False):
+                    hash0 = a.get('hash', None)
+                else:
+                    hash0 = a.get('sha1', a.get('hash', None))
+                if not hash0:
+                    raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+                input_hashes[input_name].append(hash0)
         else:
-            hash0 = input0.get('sha1', input0.get('hash', None))
-        if not hash0:
-            raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
-        input_hashes[input_name] = hash0
+            raise Exception('Unexpected type for input {}'.format(input_name))
 
     signature_obj = dict(
         processor_name=processor_name,

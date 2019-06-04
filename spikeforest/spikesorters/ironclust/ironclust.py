@@ -115,8 +115,6 @@ class IronClust(mlpr.Processor):
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/ironclust-tmp-' + code
 
-        print('------------------------------------- using', tmpdir)
-
         try:
             recording = SFMdaRecordingExtractor(self.recording_dir)
             params = read_dataset_params(self.recording_dir)

@@ -39,6 +39,8 @@ def log(*, name=None, root=False):
 
 def sublog(name):
     parent_node = _global['current_node']
+    if not parent_node:
+        return
     if name is None:
         parent_node.endSubNode()
         return

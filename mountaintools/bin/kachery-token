@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from mountainclient import KacheryTokens
+import argparse
+import sys
+
+def print_columns(data, sep=' '):
+    colsizes = {}
+    for row in data:
+        for i in range(0, len(row)):
+            colsize = colsizes.get(i, 0)
+            if len(row[i]) > colsize: colsize = len(row[i])
+            colsizes[i] = colsize
+    for row in data:
+        line = ''
+        for i in range(0, len(row)):
+            if i>0: line = line+sep
+            pad = colsizes[i]-len(row[i])
+            line = line + row[i] + (' '*pad)
+        print(line)
+
+def ListCmd(args):
+    kt = KacheryTokens()
+    print_columns(list(kt.entries()), '\t')
+    sys.exit(0)
+
+def AddCmd(args):
+    kt = KacheryTokens()
+    kt.add(args.name, args.type, args.token)
+    kt.commit()
+    sys.exit(0)
+
+def RemoveCmd(args):
+    kt = KacheryTokens()
+    kt.remove(args.name, args.type)
+    kt.commit()
+    sys.exit(0)
+
+def main():
+    parser = argparse.ArgumentParser(description='Manage kachery tokens database')
+
+    subparsers = parser.add_subparsers(dest='command')
+
+    parser_list = subparsers.add_parser('list', help='List tokens')
+
+    parser_add = subparsers.add_parser('add', help='Add or update token')
+    parser_add.add_argument('name')
+    parser_add.add_argument('type', choices=['download', 'upload'])
+    parser_add.add_argument('token')
+
+    parser_remove = subparsers.add_parser('remove', help='Remove token')
+    parser_remove.add_argument('name')
+    parser_remove.add_argument('type', choices=['download', 'upload'], nargs='?')
+    
+    args = parser.parse_args()
+    command = args.command
+
+    cmds = {
+        'list': ListCmd,
+        'add': AddCmd,
+        'remove': RemoveCmd,
+    }
+    fnc = cmds.get(command, None)
+    if fnc: fnc(args)
+
+
+if __name__ == "__main__":
+    main()

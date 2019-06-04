@@ -42,9 +42,8 @@ def combine_subsampled_mandelbrot(X_list):
         X[offset::subsampling_factor, :] = X0
     return X
 
+
 # Display the mandelbrot set
-
-
 def show_mandelbrot(X):
     fig = plt.figure(frameon=False)
     dpi = 96
@@ -56,12 +55,11 @@ def show_mandelbrot(X):
     # fig.savefig('test1.png', dpi=dpi)
     # plt.close()
 
+
 # Wrap it in a MountainTools processor
-
-
 class ComputeMandelbrot(mlpr.Processor):
     NAME = 'ComputeMandelbrot'
-    VERSION = '0.1.3'
+    VERSION = '0.1.4'
 
     xmin = mlpr.IntegerParameter('The minimum x value', optional=True, default=-2)
     xmax = mlpr.IntegerParameter('The maximum x value', optional=True, default=0.5)
@@ -93,8 +91,8 @@ class ComputeMandelbrot(mlpr.Processor):
 
 
 class ComputeMandelbrotWithError(mlpr.Processor):
-    NAME = 'ComputeMandelbrot'
-    VERSION = '0.1.3'
+    NAME = 'ComputeMandelbrotWithError'
+    VERSION = '0.1.4'
 
     xmin = mlpr.IntegerParameter('The minimum x value', optional=True, default=-2)
     xmax = mlpr.IntegerParameter('The maximum x value', optional=True, default=0.5)
@@ -130,6 +128,24 @@ class ComputeMandelbrotWithError(mlpr.Processor):
         np.save(self.output_npy, X)
 
 
+class CombineSubsampledMandelbrot(mlpr.Processor):
+    NAME = 'CombineSubsampledMandelbrot'
+    VERSION = '0.1.1'
+
+    X_list = mlpr.Input(multi=True)
+    X_out = mlpr.Output()
+    num_x = mlpr.IntegerParameter()
+
+    def run(self):
+        self.X_list
+        arrays = []
+        for X0 in self.X_list:
+            arrays.append(np.load(X0))
+        X = combine_subsampled_mandelbrot(arrays)
+        X = X[:self.num_x, :]
+        np.save(self.X_out, X)
+
+
 def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False, _container=None, srun_opts=None):
     subsampling_factor = num_parallel
     jobs = []
@@ -149,11 +165,30 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
 
     jobs = ComputeMandelbrot.createJobs(job_args)
 
-    results = mlpr.executeBatch(jobs=jobs, compute_resource=compute_resource, srun_opts=srun_opts)
+    with mlpr.ParallelJobHandler(num_workers=num_parallel), mlpr.QueueJobHandler():
+        results = []
+        for job in jobs:
+            result0 = job.execute()
+            results.append(result0)
 
-    X_list = []
-    for result0 in results:
-        X0 = np.load(mt.realizeFile(result0.outputs['output_npy']))
-        X_list.append(X0)
-    X = combine_subsampled_mandelbrot(X_list)
-    return X
+        # results = mlpr.executeBatch(jobs=jobs, compute_resource=compute_resource, srun_opts=srun_opts)
+
+        X_list = []
+        for result0 in results:
+            # result0.wait()
+            # X0 = np.load(mt.realizeFile(result0.outputs['output_npy']))
+            # X_list.append(X0)
+            X_list.append(result0.outputs['output_npy'])
+        # X = combine_subsampled_mandelbrot(X_list)
+        A = CombineSubsampledMandelbrot.execute(
+            num_x=num_x,
+            X_list=X_list,
+            X_out={'ext': '.npy'},
+            _force_run=_force_run,
+            _container=_container
+        )
+    
+        A.wait()
+        X_path = A.outputs['X_out']
+        X = np.load(mt.realizeFile(X_path))
+        return X

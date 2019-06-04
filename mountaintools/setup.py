@@ -12,7 +12,7 @@ setuptools.setup(
     author_email="jmagland@flatironinstitute.org",
     description="Tools for reproducible scientific research",
     packages=setuptools.find_packages(),
-    scripts=['bin/kb-cat', 'bin/kb-ls', 'bin/kb-download', 'bin/kb-snapshot', 'bin/kb-resolve-key-path', 'bin/kb-find', 'bin/compute-resource-start'],
+    scripts=['bin/kb-cat', 'bin/kb-ls', 'bin/kb-download', 'bin/kb-snapshot', 'bin/kb-resolve-key-path', 'bin/kb-find', 'bin/compute-resource-start', 'bin/kachery-token'],
     install_requires=[
         'matplotlib', 'requests', 'ipython', 'simple-crypt', 'python-dotenv'
         #        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'

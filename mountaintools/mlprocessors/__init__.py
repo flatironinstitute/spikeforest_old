@@ -8,6 +8,8 @@ from .mountainjob import MountainJob
 from .shellscript import ShellScript
 from .localcomputeresource import LocalComputeResource
 from .temporarydirectory import TemporaryDirectory
+from .queuejobhandler import QueueJobHandler
+from .paralleljobhandler import ParallelJobHandler
 
 __all__ = [
     "Input", "Output",

@@ -9,7 +9,7 @@ from .computeresourceclient import ComputeResourceClient
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 from .mountainjob import MountainJob
-from .mountainjob import MountainJobResult
+from .mountainjobresult import MountainJobResult
 import mtlogging
 from copy import deepcopy
 
@@ -44,7 +44,7 @@ def configComputeResources(obj):
 
 
 @mtlogging.log()
-def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None, cached_results_only=False, download_outputs=True):
+def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, halt_key=None, job_status_key=None, job_result_key=None, srun_opts=None, job_index_file=None, cached_results_only=False, download_outputs=True, _job_handler=None):
     all_kwargs = locals()
 
     if len(jobs) == 0:
@@ -96,9 +96,9 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         all_complete = True
         num_found = 0
         for ii, job in enumerate(jobs):
-            if results0[ii]:
+            if results0[ii].retcode is not None:
                 num_found = num_found + 1
-                job.result = results0[ii]
+                job.result.fromObject(results0[ii].getObject())
             else:
                 all_complete = False
         if num_found > 0:
@@ -107,11 +107,15 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             return results0
         mtlogging.sublog(None)
 
-    jobs2 = [job for job in jobs if (not job.result)]
+    jobs2 = [job for job in jobs if job.result.retcode is None]
 
     if compute_resource:
         for job in jobs2:
             job.useRemoteUrlsForInputFiles()
+
+    if _job_handler is not None:
+        for job in jobs2:
+            setattr(job, 'job_handler', _job_handler)
 
     files_to_realize = []
     for job in jobs2:
@@ -159,7 +163,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
         for i, job2 in enumerate(jobs2):
             result0 = results[i]
             if result0:
-                job2.result = result0
+                job2.result.fromObject(result0.getObject())
             else:
                 raise Exception('Unexpected: Unable to find result for job {}'.format(i))
 
@@ -228,7 +232,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 return None
 
         for i, job in enumerate(jobs2):
-            job.result = results2[i]
+            job.result.fromObject(results2[i].getObject())
     else:
         # using srun
         keep_temp_files = True
@@ -334,7 +338,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
                 result_objects.append(result_object)
             results2 = [MountainJobResult(result_object=obj) for obj in result_objects]
             for i, job in enumerate(jobs2):
-                job.result = results2[i]
+                job.result.fromObject(results2[i].getObject())
 
     return [job.result for job in jobs]
 
@@ -407,7 +411,10 @@ def _execute_job(job):
 
     _set_job_status(job, 'running')
 
-    result = job.execute()
+    if hasattr(job, 'job_handler'):
+        result = job.job_handler.executeJob(job)
+    else:
+        result = job.execute()
 
     if result:
         if result.retcode == 0:
