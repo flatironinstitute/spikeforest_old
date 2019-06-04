@@ -4,15 +4,16 @@ import argparse
 from mountaintools import client as mt
 import os
 import frontmatter
+from datetime import datetime
 
 help_txt = """
-This script saves collections in the following .json files in an output directory
+This script assembles collections of data
 
-Algorithms.json
-Sorters.json
-SortingResults.json
-StudySets.json
-StudyAnalysisResults.json
+Algorithms
+Sorters
+SortingResults
+StudySets
+StudyAnalysisResults
 
 ## Schema
 
@@ -235,18 +236,11 @@ const studyAnalysisResultSchema = new mongoose.Schema(
 
 def main():
     parser = argparse.ArgumentParser(description=help_txt, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--output_dir', help='The output directory for saving the files.', required=False, default=None)
     parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
     parser.add_argument('--upload_to', help='Optional kachery to upload to', required=False, default=None)
     parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
 
     args = parser.parse_args()
-
-    output_dir = args.output_dir
-
-    if output_dir is not None:
-        if os.path.exists(output_dir):
-            raise Exception('Output directory already exists: {}'.format(output_dir))
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
 
@@ -299,9 +293,6 @@ def main():
         recordings = recordings + obj['recordings']
         sorting_results = sorting_results + obj['sorting_results']
 
-    if output_dir is not None:
-        os.mkdir(output_dir)
-
     # ALGORITHMS
     print('******************************** ASSEMBLING ALGORITHMS...')
     algorithms_by_processor_name = dict()
@@ -318,8 +309,6 @@ def main():
                 algorithms_by_processor_name[alg['processor_name']] = alg
             Algorithms.append(alg)
     print([alg['label'] for alg in Algorithms])
-    if output_dir is not None:
-        mt.saveObject(object=Algorithms, dest_path=os.path.abspath(os.path.join(output_dir, 'Algorithms.json')), indent=4)
 
     # # STUDIES
     # print('******************************** ASSEMBLING STUDIES...')
@@ -344,8 +333,6 @@ def main():
             # the following can be obtained from the other collections
             # numRecordings, sorters, etc...
         ))
-    if output_dir is not None:
-        mt.saveObject(object=Studies, dest_path=os.path.abspath(os.path.join(output_dir, 'Studies.json')), indent=4)
     print([S['name'] for S in Studies])
 
     print('******************************** ASSEMBLING STUDY SETS...')
@@ -383,48 +370,7 @@ def main():
     StudySets = []
     for study_set in study_sets:
         StudySets.append(study_set)
-    if output_dir is not None:
-        mt.saveObject(object=StudySets, dest_path=os.path.abspath(os.path.join(output_dir, 'StudySets.json')), indent=4)
     print(StudySets)
-
-    # # RECORDINGS and TRUE UNITS
-    # print('******************************** ASSEMBLING RECORDINGS and TRUE UNITS...')
-    # Recordings = []
-    # TrueUnits = []
-    # for recording in recordings:
-    #     true_units_info = mt.loadObject(path=recording['summary']['true_units_info'])
-    #     if not true_units_info:
-    #         print(recording['summary']['true_units_info'])
-    #         raise Exception('Unable to load true_units_info for recording {}'.format(recording['name']))
-    #     for unit_info in true_units_info:
-    #         TrueUnits.append(dict(
-    #             unitId=unit_info['unit_id'],
-    #             recording=recording['name'],
-    #             recordingExt=recording['study'] + ':' + recording['name'],
-    #             study=recording['study'],
-    #             meanFiringRateHz=unit_info['firing_rate'],
-    #             numEvents=unit_info['num_events'],
-    #             peakChannel=unit_info['peak_channel'],
-    #             snr=unit_info['snr'],
-    #         ))
-    #     Recordings.append(dict(
-    #         name=recording['name'],
-    #         study=recording['study'],
-    #         directory=recording['directory'],
-    #         firingsTrue=recording['firings_true'],
-    #         description=recording['description'],
-    #         sampleRateHz=recording['summary']['computed_info']['samplerate'],
-    #         numChannels=recording['summary']['computed_info']['num_channels'],
-    #         durationSec=recording['summary']['computed_info']['duration_sec'],
-    #         numTrueUnits=len(true_units_info),
-    #         spikeSign=-1
-    #     ))
-    # # if output_dir is not None:
-    # #     mt.saveObject(object=Recordings, dest_path=os.path.abspath(os.path.join(output_dir, 'Recordings.json')), indent=4)
-    # #     mt.saveObject(object=TrueUnits, dest_path=os.path.abspath(os.path.join(output_dir, 'TrueUnits.json')), indent=4)
-    # print('Num recordings:', len(Recordings))
-    # print('Num true units:', len(TrueUnits))
-    # print('studies for recordings:', set([recording['study'] for recording in Recordings]))
 
     # SORTING RESULTS
     print('******************************** SORTING RESULTS...')
@@ -449,9 +395,6 @@ def main():
             print('Warning: firings not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
             print('Console output is here: ' + sr['console_out'])
         SortingResults.append(SR)
-    if output_dir is not None:
-        # mt.saveObject(object=UnitResults, dest_path=os.path.abspath(os.path.join(output_dir, 'UnitResults.json')), indent=4)
-        mt.saveObject(object=SortingResults, dest_path=os.path.abspath(os.path.join(output_dir, 'SortingResults.json')), indent=4)
     # print('Num unit results:', len(UnitResults))
 
     # SORTERS
@@ -474,8 +417,6 @@ def main():
                 processorVersion='0',  # jfm needs to provide this
                 sortingParameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
             ))
-    if output_dir is not None:
-        mt.saveObject(object=Sorters, dest_path=os.path.abspath(os.path.join(output_dir, 'Sorters.json')))
     print([S['name'] + ':' + S['algorithmName'] for S in Sorters])
 
     # STUDY ANALYSIS RESULTS
@@ -490,8 +431,12 @@ def main():
         )
         for study in studies
     ]
-    if output_dir is not None:
-        mt.saveObject(object=StudyAnalysisResults, dest_path=os.path.abspath(os.path.join(output_dir, 'StudyAnalysisResults.json')), indent=4)
+
+    # GENERAL
+    print('******************************** ASSEMBLING GENERAL INFO...')
+    General = [dict(
+        dateUpdated=datetime.now().isoformat()
+    )]
 
     obj = dict(
         mode='spike-front',
@@ -501,7 +446,8 @@ def main():
         SortingResults=SortingResults,
         Sorters=Sorters,
         Algorithms=Algorithms,
-        StudyAnalysisResults=StudyAnalysisResults
+        StudyAnalysisResults=StudyAnalysisResults,
+        General=General
     )
     address = mt.saveObject(object=obj)
     mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)

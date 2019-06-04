@@ -7,6 +7,7 @@ import sys
 import traceback
 from .execute import execute
 from .createjobs import createJob, createJobs
+import json
 
 
 class ParserError(ValueError):
@@ -38,17 +39,24 @@ class Input(InOutBase):
 
 
 class Output(InOutBase):
-    def __init__(self, description=None, optional=False, multi=False, validators=None, is_array=False, *args, **kwargs):
+    def __init__(self, description=None, optional=False, multi=False, validators=None, is_array=False, is_dict=False, *args, **kwargs):
         directory = False
         super().__init__(description, optional, multi,
                          directory, validators, *args, **kwargs)
         self.is_array = is_array
+        self.is_dict = is_dict
 
 
 class OutputArray(Output):
     def __init__(self, description=None, optional=False, multi=False, validators=None, *args, **kwargs):
         super().__init__(description, optional, multi,
                          validators, is_array=True, *args, **kwargs)
+
+
+class OutputDict(Output):
+    def __init__(self, description=None, optional=False, multi=False, validators=None, *args, **kwargs):
+        super().__init__(description, optional, multi,
+                         validators, is_dict=True, *args, **kwargs)
 
 
 class StreamInput(Input):
@@ -83,13 +91,14 @@ class StreamOutput(Output):
 
 
 class Parameter():
-    def __init__(self, **kwargs):
+    def __init__(self, environment=False, **kwargs):
         self.default = kwargs.get('default', None)
         self.description = kwargs.get('description', '')
         self.optional = kwargs.get('optional', False)
         self.multi = kwargs.get('multi', False)
         self.choices = kwargs['choices'] if 'choices' in kwargs else []
         self.validators = kwargs.get('validators', [])
+        self.environment = environment
 
     def __repr__(self):
         if hasattr(self, 'name'):
@@ -115,6 +124,8 @@ class Parameter():
              'datatype': dt, 'optional': self.optional}
         if self.optional or self.default:
             s['default_value'] = str(self.default)
+        if self.environment:
+            s['environment'] = True
         return s
 
 
@@ -182,6 +193,22 @@ class IntegerListParameter(StringParameter):
         if not vals:
             return []
         return [int(x) for x in vals]
+
+
+class DictParameter(StringParameter):
+    def __init__(self, description='', **kwargs):
+        super().__init__(description, **kwargs)
+        self.datatype = dict
+
+        def validate(value):
+            try:
+                json.loads(value)
+            except:
+                raise ValidationError("Input data incorrect for DictParameter")
+        self.validators.append(validate)
+
+    def clean(self, value):
+        return json.loads(value)
 
 
 class FloatListParameter(StringParameter):

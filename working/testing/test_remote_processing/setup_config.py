@@ -38,11 +38,11 @@ config = dict(
     upload_token=upload_token
 )
 
-mt.setRemoteConfig(url='https://pairio.org:20443')
+mt.setRemoteConfig(url='http://pairio.org')
 mt.addRemoteCollection(collection='test_collection1', token='test_token1', admin_token=os.environ['CAIRIO_ADMIN_TOKEN'])
 
 config = dict(
-    url='https://pairio.org:20443',
+    url='http://pairio.org',
     collection='test_collection1',
     token='test_token1',
     share_id=share_id,

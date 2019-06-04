@@ -162,7 +162,7 @@ class MountainClient():
         Create a MountainClient object. Initializes pairio using environment variables.
         """
         self._pairio_url = os.environ.get(
-            'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'https://pairio.org:20443')))
+            'MOUNTAIN_URL', os.environ.get('PAIRIO_URL', os.environ.get('CAIRIO_URL', 'http://pairio.org')))
         self._kachery_urls = dict()
         self._kachery_upload_tokens = dict()
         self._kachery_download_tokens = dict()
@@ -682,6 +682,14 @@ class MountainClient():
                           value=None),
             return None
         return self.saveText(text=json.dumps(object, indent=indent), key=key, collection=collection, subkey=subkey, basename=basename, local_also=local_also, dest_path=dest_path, upload_to=upload_to)
+
+    def createSnapshots(self, paths, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_paths=None):
+        if dest_paths is None:
+            dest_paths = [None for path in paths]
+        return [
+            self.createSnapshot(path=path, upload_to=upload_to, download_recursive=download_recursive, upload_recursive=upload_recursive, dest_path=dest_paths[ii])
+            for ii, path in enumerate(paths)
+        ]
 
     def createSnapshot(self, path, *, upload_to=None, download_recursive=False, upload_recursive=False, dest_path=None):
         """

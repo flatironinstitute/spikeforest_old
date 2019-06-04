@@ -334,7 +334,14 @@ class MountainJob():
                     R.outputs[output_name] = np.load(out_fname)
                 except:
                     print('Error loading output array', output_name, out_fname)
-                    R.retcode == -1
+                    R.retcode = -1
+            elif out_obj.get('is_dict', False):
+                obj = mt.loadObject(path=out_fname)
+                if obj:
+                    R.outputs[output_name] = obj
+                else:
+                    print('Error loading output dict', output_name, out_fname)
+                    R.retcode = -1
         return R
 
     def _realize_input(self, fname):

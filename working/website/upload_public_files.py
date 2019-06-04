@@ -22,8 +22,8 @@ def main():
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
-            # 'paired_monotrode',
-            # 'synth_monotrode',
+            'paired_monotrode',
+            'synth_monotrode',
             'synth_bionet',
             'synth_magland',
             'manual_franklab',
@@ -39,10 +39,12 @@ def main():
         print('Loading output object: {}'.format(output_id))
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
-        for ii, sr in enumerate(obj['sorting_results']):
-            print('{}: sorting result {} of {}'.format(output_id, ii + 1, len(obj['sorting_results'])))
-            if 'console_out' in sr:
-                mt.createSnapshot(path=sr['console_out'], upload_to='spikeforest.public')
+        paths = [
+            sr['console_out']
+            for sr in obj['sorting_results'] if 'console_out' in sr
+        ]
+        print('{}: {} sorting results - {} with console_out'.format(output_id, len(obj['sorting_results']), len(paths)))
+        mt.createSnapshots(paths=paths, upload_to='spikeforest.public')
 
 if __name__ == "__main__":
     main()

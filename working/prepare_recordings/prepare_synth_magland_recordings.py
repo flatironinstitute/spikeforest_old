@@ -25,6 +25,7 @@ def prepare_synth_magland_studies(*, basedir):
     study_set_dir0 = basedir + '/magland_synth'
     print('Creating snapshot of study set directory...')
     study_set_dir = mt.createSnapshot(study_set_dir0, upload_to=upload_to, upload_recursive=False, download_recursive=False)
+    mt.createSnapshot(study_set_dir0, upload_to=upload_public_to, upload_recursive=False, download_recursive=False)
     if not study_set_dir:
         raise Exception('Failed to create snapshot of study set directory: ' + study_set_dir0)
     study_set_dir = study_set_dir + '.synth_magland'
@@ -49,7 +50,8 @@ def prepare_synth_magland_studies(*, basedir):
         )
         studies.append(study0)
         dd = mt.readDir(study_dir)
-        for i, dsname in enumerate(dd['dirs']):
+        dirnames = sorted(list(dd['dirs'].keys()))
+        for i, dsname in enumerate(dirnames):
             dsdir = '{}/{}'.format(study_dir, dsname)
             recordings.append(dict(
                 name=dsname,

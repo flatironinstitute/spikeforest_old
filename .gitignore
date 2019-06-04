@@ -7,6 +7,7 @@ outputs
 test_outputs
 toy_*
 tmp*
+spikeforest.env
 
 working/website/website_data*
 .vscode
