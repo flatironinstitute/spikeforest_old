@@ -48,8 +48,8 @@ class HerdingSpikes2(mlpr.Processor):
                 os.mkdir(tmpdir)
             
             recording = SFMdaRecordingExtractor(self.recording_dir)
-            print('Auto scaling via normalize_by_quantile...')
-            recording = st.preprocessing.normalize_by_quantile(recording=recording, scale=200.0)
+            #print('Auto scaling via normalize_by_quantile...')
+            #recording = st.preprocessing.normalize_by_quantile(recording=recording, scale=200.0)
             # recording = autoScaleRecordingToNoiseLevel(recording, noise_level=32)
 
             print('Running HerdingspikesSorter...')
@@ -58,6 +58,11 @@ class HerdingSpikes2(mlpr.Processor):
                 recording=recording,
                 output_folder=tmpdir + '/hs2_sorting_output'
             )
+            print('Using builtin bandpass and normalisation')
+            hs2_par = st_sorter.default_params()
+            hs2_par['filter'] = True
+            hs2_par['pre_scale'] = True
+            st_sorter.set_params(**hs2_par)
             if clustering_n_jobs is not None:
                 st_sorter.set_params(clustering_n_jobs=clustering_n_jobs)
             st_sorter.run()
