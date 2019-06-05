@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.3.8'
+    VERSION = '0.3.9'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -97,7 +97,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='80c735d42d5898c63e86f6525e34333811fa64a7')
+        return install_ironclust(commit='238d151b5407fda7bf2a779c1105638c1c9e8292')
 
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
