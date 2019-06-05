@@ -161,7 +161,7 @@ The following recordings are publicly available for testing and may
 be substituted in the script above.
 
 - PAIRED_CRCNS_HC1/paired_crcns/d11221_d11221.001: `sha1dir://779d96521176077ec260ef99573dea3b772c74e6.paired_crcns/d11221_d11221.001`
-- PAIRED_MEA64C_YGER/paired_mea64c/20160415_patch2: `sha1dir://217e065d4093b86b6846615d3e04a4dd0b76debc.paired_mea64c/20160415_patch2`
+- PAIRED_MEA64C_YGER/paired_mea64c/20160415_patch2: `sha1dir://cd5ba0215df92e1b9309d89f89590013276116cc.paired_mea64c/20160415_patch2`
 - PAIRED_KAMPFF/paired_kampff/2014_11_25_Pair_3_0: `sha1dir://51570fce195942dcb9d6228880310e1f4ca1395b.paired_kampff/2014_11_25_Pair_3_0`
 - SYNTH_BIONET/synth_bionet_static/static_8x_A_2A: `sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_A_2A`
 - SYNTH_BIONET/synth_bionet_drift/drift_8x_A_2A: `sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_drift/drift_8x_A_2A`
