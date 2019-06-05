@@ -42,7 +42,7 @@ class KiloSort2(mlpr.Processor):
     """
 
     NAME = 'KiloSort2'
-    VERSION = '0.3.2'  # wrapper VERSION
+    VERSION = '0.3.3'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -161,7 +161,7 @@ def kilosort2_helper(*,
     dataset_dir = tmpdir + '/kilosort2_dataset'
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.write_recording(
-        recording=recording, save_path=dataset_dir)
+        recording=recording, save_path=dataset_dir, _preserve_dtype=True)
 
     samplerate = recording.get_sampling_frequency()
 
