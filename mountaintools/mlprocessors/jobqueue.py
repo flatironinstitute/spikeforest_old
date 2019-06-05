@@ -1,10 +1,12 @@
+import time
 import mlprocessors as mlpr
 from .jobhandler import JobHandler
 from .mountainjob import currentJobHandler
+from .mountainjob import currentJobQueue, _setCurrentJobQueue
 from .mountainjobresult import MountainJobResult
 
 
-class QueueJobHandler(JobHandler):
+class JobQueue():
     def __init__(self):
         super().__init__()
 
@@ -14,9 +16,10 @@ class QueueJobHandler(JobHandler):
         self._finished_jobs = dict()
         self._last_job_id = 0
         self._halted = False
+        self._parent_job_queue = None
         # self._job_manager = None
 
-    def executeJob(self, job):
+    def queueJob(self, job):
         job_id = self._last_job_id + 1
         self._last_job_id = job_id
         self._queued_jobs[job_id] = job
@@ -36,13 +39,24 @@ class QueueJobHandler(JobHandler):
         )
         result0 = MountainJobResult(result_object=obj0, job_handler=self)
         setattr(job, 'result', result0)
+        setattr(job, '_job_handler', currentJobHandler())
         return result0
 
     def iterate(self):
         if self._halted:
             return
 
-        self.parentJobHandler().iterate()
+        job_handlers_to_iterate = []
+        for job in self._running_jobs.values():
+            jh = job._job_handler
+            found = False
+            for x in job_handlers_to_iterate:
+                if x is jh:
+                    found = True
+            if not found:
+                job_handlers_to_iterate.append(jh)
+        for jh in job_handlers_to_iterate:
+            jh.iterate()
         self._check_for_finished_jobs()
 
         queued_job_ids = sorted(list(self._queued_jobs.keys()))
@@ -60,10 +74,22 @@ class QueueJobHandler(JobHandler):
             self._running_jobs[id] = job
             job.result._status = 'running'
             # self._job_manager.addJob(job)
-            self._parent_job_handler.executeJob(job)
+            job._job_handler.executeJob(job)
 
-        self.parentJobHandler().iterate()
+        for jh in job_handlers_to_iterate:
+            jh.iterate()
         self._check_for_finished_jobs()
+    
+    def wait(self, timeout=-1):
+        timer = time.time()
+        while not self.isFinished():
+            self.iterate()
+            elapsed = time.time() - timer
+            if (timeout >= 0) and (elapsed > timeout):
+                return False
+            if not self.isFinished():
+                time.sleep(0.2)
+        return True
 
     def _check_for_finished_jobs(self):
         finished_job_ids = []
@@ -104,8 +130,9 @@ class QueueJobHandler(JobHandler):
         self._halted = True
 
     def __enter__(self):
-        # self._job_manager = _JobManager(parent_job_handler=currentJobHandler(), num_workers=self._num_workers)
-        return super().__enter__()
+        self._parent_job_queue = currentJobQueue()
+        _setCurrentJobQueue(self)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        super().__exit__(exc_type, exc_val, exc_tb)
+        _setCurrentJobQueue(self._parent_job_queue)

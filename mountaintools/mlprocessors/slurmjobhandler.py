@@ -11,12 +11,15 @@ from mountainclient import FileLock
 from mountainclient import client as mt
 import json
 
+DEFAULT_JOB_TIMEOUT = 1200
+
 
 class SlurmJobHandler(JobHandler):
     def __init__(
         self,
         working_dir,
         workers_per_batch=12,
+        time_limit_per_batch=3600,  # seconds
         max_simultaneous_batches=4,
         use_slurm=True,
         srun_opts=[]
@@ -29,7 +32,8 @@ class SlurmJobHandler(JobHandler):
             workers_per_batch=workers_per_batch,
             max_simultaneous_batches=max_simultaneous_batches,
             srun_opts=srun_opts,
-            use_slurm=use_slurm
+            use_slurm=use_slurm,
+            time_limit_per_batch=time_limit_per_batch
         )
         self._running_batches = dict()
         self._halted = False
@@ -37,6 +41,12 @@ class SlurmJobHandler(JobHandler):
         self._working_dir = working_dir
 
     def executeJob(self, job):
+        print('------ executeJob', self._working_dir)
+        job_timeout = job.getObject().get('timeout', None)
+        if job_timeout is None:
+            job_timeout = DEFAULT_JOB_TIMEOUT
+        if job_timeout + 30 > self._opts['time_limit_per_batch']:
+            raise Exception('Cannot execute job. Job timeout exceeds time limit: {} + 30 > {}'.format(job_timeout, self._opts['time_limit_per_batch']))
         batch_ids = sorted(list(self._running_batches.keys()))
         for id in batch_ids:
             b = self._running_batches[id]
@@ -46,7 +56,7 @@ class SlurmJobHandler(JobHandler):
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # important to put a random string in the working directory so we don't have a chance of interference from previous runs
-        nb = _Batch(num_workers=self._opts['workers_per_batch'], working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)), srun_opts=self._opts['srun_opts'], use_slurm=self._opts['use_slurm'])
+        nb = _Batch(num_workers=self._opts['workers_per_batch'], working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)), srun_opts=self._opts['srun_opts'], use_slurm=self._opts['use_slurm'], time_limit=self._opts['time_limit_per_batch'])
         if not nb.canAddJob(job):
             raise Exception('Cannot add job to new batch.')
         self._running_batches[batch_id] = nb
@@ -98,17 +108,22 @@ class SlurmJobHandler(JobHandler):
 
 
 class _Batch():
-    def __init__(self, num_workers, working_dir, srun_opts, use_slurm):
+    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit):
         os.mkdir(working_dir)
         self._status = 'pending'
         self._working_dir = working_dir
         self._num_workers = num_workers
         self._srun_opts = srun_opts
         self._use_slurm = use_slurm
+        self._time_started = None
+        self._time_limit = time_limit
         self._workers = []
         for i in range(self._num_workers):
             self._workers.append(_Worker(base_path=self._working_dir + '/worker_{}'.format(i)))
-        self._slurm_process = _SlurmProcess(working_dir=self._working_dir, num_workers=self._num_workers, srun_opts=self._srun_opts, use_slurm=self._use_slurm)
+        self._slurm_process = _SlurmProcess(
+            working_dir=self._working_dir, num_workers=self._num_workers, srun_opts=self._srun_opts, use_slurm=self._use_slurm,
+            time_limit=time_limit
+        )
 
     def isPending(self):
         return self._status == 'pending'
@@ -118,6 +133,14 @@ class _Batch():
 
     def isFinished(self):
         return self._status == 'finished'
+
+    def timeStarted(self):
+        return self._time_started
+    
+    def elapsedSinceStarted(self):
+        if not self._time_started:
+            return 0
+        return time.time() - self._time_started
 
     def iterate(self):
         if self.isPending():
@@ -138,6 +161,11 @@ class _Batch():
     def canAddJob(self, job):
         if self.isFinished():
             return False
+        job_timeout = job.getObject().get('timeout', None)
+        if job_timeout is None:
+            job_timeout = DEFAULT_JOB_TIMEOUT
+        if job_timeout + self.elapsedSinceStarted() + 30 > self._time_limit:
+            return False
         for w in self._workers:
             if not w.hasJob():
                 return True
@@ -155,8 +183,10 @@ class _Batch():
         with open(self._working_dir + '/running.txt', 'w') as f:
             f.write('batch is running.')
         self._status = 'running'
+        self._time_started = time.time()
 
     def halt(self):
+        print('------------------------- halting batch')
         os.remove(self._working_dir + '/running.txt')
         self._slurm_process.halt()
 
@@ -205,12 +235,13 @@ class _Worker():
 
 
 class _SlurmProcess():
-    def __init__(self, working_dir, num_workers, srun_opts, use_slurm):
+    def __init__(self, working_dir, num_workers, srun_opts, use_slurm, time_limit):
         self._working_dir = working_dir
         self._num_workers = num_workers
         self._num_cpus_per_worker = 2
         self._srun_opts = srun_opts
         self._use_slurm = use_slurm
+        self._time_limit = time_limit
 
     def start(self):
         srun_py_script = ShellScript("""
@@ -273,6 +304,7 @@ class _SlurmProcess():
         srun_opts.extend(self._srun_opts)
         srun_opts.append('-n {}'.format(self._num_workers))
         srun_opts.append('-c {}'.format(self._num_cpus_per_worker))
+        srun_opts.append('--time {}'.format(self._time_limit / 60))
         if self._use_slurm:
             srun_sh_script = ShellScript("""
                 #!/bin/bash
@@ -281,29 +313,27 @@ class _SlurmProcess():
                 srun {srun_opts} {srun_py_script}
             """, keep_temp_files=False)
             srun_sh_script.substitute('{srun_opts}', ' '.join(srun_opts))
+            srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
+
+            srun_sh_script.start()
+            self._srun_sh_scripts = [srun_sh_script]
         else:
-            srun_sh_script = ShellScript("""
-                #!/bin/bash
-                set -e
+            self._srun_sh_scripts = []
+            for _ in range(self._num_workers):
+                srun_sh_script = ShellScript("""
+                    #!/bin/bash
+                    set -e
 
-                for i in {1..{num_workers}}; do
-                    {srun_py_script} &
-                done
+                    {srun_py_script}
+                """, keep_temp_files=False)
+                srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
 
-                while :
-                do
-                    sleep 1
-                done
-            """, keep_temp_files=False)
-            srun_sh_script.substitute('{num_workers}', self._num_workers)
-
-        srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
-
-        self._srun_sh_script = srun_sh_script
-        self._srun_sh_script.start()
+                srun_sh_script.start()
+                self._srun_sh_scripts.append(srun_sh_script)
 
     def halt(self):
-        self._srun_sh_script.stop()
+        for x in self._srun_sh_scripts:
+            x.stop()
 
 
 def _random_string(num):

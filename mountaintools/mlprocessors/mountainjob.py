@@ -24,6 +24,7 @@ local_client = MountainClient()
 
 _internal = dict(
     current_job_handler=None,
+    current_job_queue=None
 )
 
 
@@ -33,6 +34,15 @@ def currentJobHandler():
 
 def _setCurrentJobHandler(handler):
     _internal['current_job_handler'] = handler
+
+
+def currentJobQueue():
+    return _internal['current_job_queue']
+
+
+def _setCurrentJobQueue(jqueue):
+    _internal['current_job_queue'] = jqueue
+
 
 from .defaultjobhandler import DefaultJobHandler
 from .mountainjobresult import MountainJobResult
@@ -114,7 +124,11 @@ class MountainJob():
 
     @mtlogging.log(name='MountainJob:execute')
     def execute(self):
-        return _internal['current_job_handler'].executeJob(self)
+        jq = _internal['current_job_queue']
+        if jq:
+            return jq.queueJob(self)
+        else:
+            return _internal['current_job_handler'].executeJob(self)
 
     def _execute(self):
         if self._job_object is None:
@@ -328,13 +342,16 @@ class MountainJob():
 
                     mtlogging.sublog('running-script')
                     shell_script.start()
-                    while shell_script.isRunning():
-                        shell_script.wait(5)
-                        if job_timeout:
-                            if shell_script.elapsedTimeSinceStart() > job_timeout:
-                                print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
-                                R.timed_out = True
-                                shell_script.stop()
+                    try:
+                        while shell_script.isRunning():
+                            shell_script.wait(5)
+                            if job_timeout:
+                                if shell_script.elapsedTimeSinceStart() > job_timeout:
+                                    print('Elapsed time exceeded timeout for process: {} > {} sec'.format(shell_script.elapsedTimeSinceStart(), job_timeout))
+                                    R.timed_out = True
+                                    shell_script.stop()
+                    except:
+                        shell_script.stop()
                     retcode = shell_script.returnCode()
                     # if (retcode != 0) and (not os.path.exists(tmp_process_console_out_fname)):
                     #     if try_num < num_retries:

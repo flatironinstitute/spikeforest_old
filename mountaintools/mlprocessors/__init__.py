@@ -8,7 +8,7 @@ from .mountainjob import MountainJob
 from .shellscript import ShellScript
 from .localcomputeresource import LocalComputeResource
 from .temporarydirectory import TemporaryDirectory
-from .queuejobhandler import QueueJobHandler
+from .jobqueue import JobQueue
 from .paralleljobhandler import ParallelJobHandler
 from .slurmjobhandler import SlurmJobHandler
 

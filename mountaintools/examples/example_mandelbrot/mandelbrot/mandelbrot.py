@@ -174,8 +174,8 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
     if use_slurm:
         H = mlpr.SlurmJobHandler(use_slurm=False, working_dir=working_dir)
     else:
-        H = mlpr.ParallelJobHandler(num_workers=num_parallel) 
-    with H, mlpr.QueueJobHandler():
+        H = mlpr.ParallelJobHandler(num_workers=num_parallel)
+    with H, mlpr.JobQueue():
         results = []
         for job in jobs:
             result0 = job.execute()

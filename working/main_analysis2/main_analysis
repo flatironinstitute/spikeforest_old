@@ -1,0 +1,313 @@
+#!/usr/bin/env python
+
+from mountaintools import client as mt
+import os
+import sys
+import shutil
+import json
+import mlprocessors as mlpr
+import mtlogging
+import argparse
+from copy import deepcopy
+import spikeforest_analysis as sa
+import numpy as np
+
+
+@mtlogging.log(root=True)
+def main():
+
+    parser = argparse.ArgumentParser(description='Run the SpikeForest main analysis')
+    parser.add_argument('analysis_file', help='Path to the analysis specification file (.json format).')
+    parser.add_argument('--analyses', help='Comma-separated names of analyses to run', required=True)
+    parser.add_argument('--job_timeout', help='Job timeout in seconds. Default is 20 minutes = 1200 seconds.', required=False, default=1200)
+    parser.add_argument('--skip_failing', help='Use cached version of failing processes.', action='store_true')
+    parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
+    parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
+    parser.add_argument('--compute_opts', help='path to a .json file specifying the compute options', required=False, default=None)
+
+    args = parser.parse_args()
+
+    print(args)
+
+    mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
+    upload_to = 'spikeforest.kbucket'
+
+    print('Configuring the compute resources...')
+    analysis_obj = mt.loadObject(path=args.analysis_file)
+    if not analysis_obj:
+        raise Exception('Unable to load analysis file: {}'.format(args.analysis_file))
+
+    job_timeout = args.job_timeout
+
+    if args.compute_opts:
+        compute_opts = mt.loadObject(path=args.compute_opts)
+    else:
+        compute_opts = {
+            "default": {
+                "workers_per_batch": 12,
+                "time_limit_per_batch": 4800,
+                "max_simultaneous_batches": 1,
+                "use_slurm": False,
+                "srun_opts": []
+            },
+            "cpu": {
+                "workers_per_batch": 12,
+                "time_limit_per_batch": 4800,
+                "max_simultaneous_batches": 1,
+                "use_slurm": False,
+                "srun_opts": []
+            },
+            "gpu": {
+                "workers_per_batch": 12,
+                "time_limit_per_batch": 4800,
+                "max_simultaneous_batches": 1,
+                "use_slurm": False,
+                "srun_opts": []
+            }
+        }
+
+    job_handlers = dict()
+    for key, opts in compute_opts.items():
+        slurm_working_dir = 'tmp_slurm_job_handler_{}'.format(key)
+        if os.path.exists(slurm_working_dir):
+            shutil.rmtree(slurm_working_dir)
+        JH = mlpr.SlurmJobHandler(
+            working_dir=slurm_working_dir,
+            workers_per_batch=opts.get('workers_per_batch', 12),
+            max_simultaneous_batches=opts.get('max_simultaneous_batches', 1),
+            use_slurm=opts.get('use_slurm', False),
+            srun_opts=opts.get('srun_opts', [])
+        )
+        job_handlers[key] = JH
+
+    analysis_names = args.analyses.split(',')
+
+    sorter_definitions = analysis_obj['sorters']
+    analysis_definitions = analysis_obj['analyses']
+    
+    for aname in analysis_names:
+        if aname not in analysis_definitions:
+            raise Exception('Analysis {} not found in analysis file'.format(aname))
+        A = analysis_definitions[aname]
+        recordings = A['recordings']
+        output_path = A['output']
+        sorter_keys = A['sorter_keys']
+        sorters = [sorter_definitions[skey] for skey in sorter_keys]
+        sorters = _expand_sorters(sorters)
+
+        # Grab the recordings
+        print('Loading the recordings for {}...'.format(aname))
+        recordings = []
+        studies = []
+        study_sets = []
+        for recordings_path in A['recordings']:
+            obj = mt.loadObject(path=recordings_path)
+            if obj is None:
+                raise Exception('Unable to load recordings from: ' + recordings_path)
+            recordings = recordings + obj['recordings']
+            studies = studies + obj['studies']
+            study_sets = study_sets + obj['study_sets']
+        print('Found {} recordings in {} studies'.format(len(recordings), len(studies)))
+
+        print('Using output path: {}'.format(output_path))
+
+        print('Using sorters: ', [sorter['name'] for sorter in sorters])
+
+        print('Using job timeout (sec): {}'.format(job_timeout))
+
+        if args.test:
+            print('Test mode... so only retaining a couple recordings and one study and not storing output.')
+            recordings = recordings[0:2]
+            studies = studies[0:1]
+            output_path = None
+        
+        with mlpr.JobQueue() as JQ:
+            # Summarize the recordings
+            mtlogging.sublog('summarize-recordings')
+            jobs_info = sa.ComputeRecordingInfo.createJobs([
+                dict(
+                    recording_dir=recording['directory'],
+                    channels=recording.get('channels', []),
+                    json_out={'ext': '.json', 'upload': True},
+                    _container='default',
+                    _label='Summarize recording: ' + recording.get('name', '')
+                )
+                for recording in recordings
+            ])
+            with job_handlers['default']:
+                jobs_units_info = sa.ComputeUnitsInfo.createJobs([
+                    dict(
+                        recording_dir=recording['directory'],
+                        firings=recording['directory'] + '/firings_true.mda',
+                        unit_ids=recording.get('units_true', None),
+                        channel_ids=recording.get('channels', None),
+                        json_out={'ext': '.json', 'upload': True},
+                        _container='default',
+                        _label='Compute units info for recording: ' + recording.get('name', '')
+                    )
+                    for recording in recordings
+                ])
+                for i, recording in enumerate(recordings):
+                    recording['results'] = dict()
+                    recording['results']['info'] = jobs_info[i].execute()
+                    recording['results']['units_info'] = jobs_units_info[i].execute()
+                    recording['results']['sorting'] = dict()
+                    recording['results']['comparison'] = dict()
+
+                # Sort the recordings
+                mtlogging.sublog('summarize-recordings')
+                for sorter in sorters:
+                    sorter_name = sorter['name']
+                    sorting_params = sorter['params']
+                    processor_name = sorter['processor_name']
+                    SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+                    with job_handlers[sorter['compute_requirement']]:
+                        sorting_jobs = SORTER.createJobs([
+                            dict(
+                                _container=CONTAINER,
+                                _timeout=job_timeout,
+                                _label='Sort recording {}/{} using {}'.format(recording.get('study', ''), recording.get('name', ''), sorter.get('name', '')),
+                                _additional_files_to_realize=[recording['directory'] + '/raw.mda'],
+                                recording_dir=recording['directory'],
+                                channels=recording.get('channels', []),
+                                firings_out=dict(ext='.mda'),
+                                _force_run=True,
+                                **sorting_params
+                            )
+                            for recording in recordings
+                        ])
+                        for i, recording in enumerate(recordings):
+                            print('------ executing sorting job')
+                            recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
+
+                    with job_handlers['default']:
+                        comparison_jobs = sa.GenSortingComparisonTable.createJobs([
+                            dict(
+                                firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
+                                firings_true=recording['directory'] + '/firings_true.mda',
+                                units_true=recording.get('units', []),
+                                json_out={'ext': '.json'},
+                                html_out={'ext': '.html'},
+                                _container='default'
+                            )
+                            for recording in recordings
+                        ])
+                        for i, recording in enumerate(recordings):
+                            recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()
+
+            JQ.wait()
+
+            for recording in recordings:
+                recording['summary'] = dict(
+                    plots=dict(),
+                    computed_info=mt.loadObject(path=recording['results']['info'].outputs['json_out']),
+                    true_units_info=recording['results']['units_info'].outputs['json_out']
+                )
+                if upload_to:
+                    mt.createSnapshot(path=recording['summary']['true_units_info'], upload_to=upload_to)
+
+            sorting_results = []
+            for sorter in sorters:
+                print('Collecting results for {} {}'.format(aname, sorter['name']))
+                sorter_name = sorter['name']
+                sorting_params = sorter['params']
+                processor_name = sorter['processor_name']
+                SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+                for recording in recordings:
+                    sorting_result = recording['results']['sorting'][sorter_name]
+                    comparison_result = recording['results']['comparison'][sorter_name]
+                    sr = dict(
+                        recording=recording,
+                        sorter=sorter,
+                        firings_true=recording['directory'] + '/firings_true.mda',
+                        processor_name=processor_name,
+                        processor_version=SORTER.VERSION,
+                        execution_stats=sorting_result.runtime_info,
+                        console_out=sorting_result.console_out,
+                        container=CONTAINER,
+                    )
+                    if upload_to:
+                        mt.createSnapshot(path=sr['console_out'], upload_to=upload_to)
+                    if sorting_result.retcode == 0:
+                        sr['firings'] = sorting_result.outputs['firings_out']
+                        sr['comparison_with_truth'] = dict(
+                            json=comparison_result.outputs['json_out'],
+                            html=comparison_result.outputs['html_out']
+                        )
+                        if upload_to:
+                            mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
+                            mt.createSnapshot(path=sr['comparison_with_truth']['json'], upload_to=upload_to)
+                    else:
+                        sr['firings'] = None
+                        sr['comparison_with_truth'] = None
+                    sorting_results.append(sr)
+
+            for recording in recordings:
+                del recording['results']
+
+            # Aggregate the results
+            mtlogging.sublog('aggregate')
+            aggregated_sorting_results = sa.aggregate_sorting_results(
+                studies, recordings, sorting_results)
+
+            output_object = dict(
+                studies=studies,
+                recordings=recordings,
+                study_sets=study_sets,
+                sorting_results=sorting_results,
+                aggregated_sorting_results=mt.saveObject(
+                    object=aggregated_sorting_results, upload_to=upload_to)
+            )
+
+            if output_path:
+                print('Saving the output to {}'.format(output_path))
+                mtlogging.sublog('save-output-path')
+                address = mt.saveObject(output_object, upload_to=upload_to)
+                if not address:
+                    raise Exception('Problem saving output object.')
+                if not mt.createSnapshot(path=address, dest_path=output_path):
+                    raise Exception('Problem saving output to {}'.format(output_path))
+
+            mtlogging.sublog('show-output-summary')
+            for sr in aggregated_sorting_results['study_sorting_results']:
+                study_name = sr['study']
+                sorter_name = sr['sorter']
+                n1 = np.array(sr['num_matches'])
+                n2 = np.array(sr['num_false_positives'])
+                n3 = np.array(sr['num_false_negatives'])
+                accuracies = n1 / (n1 + n2 + n3)
+                avg_accuracy = np.mean(accuracies)
+                txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(study_name, sorter_name, avg_accuracy)
+                print(txt)
+
+
+def _expand_sorters(sorters):
+    ret = []
+    for sorter in sorters:
+        a = _expand_sorter(sorter)
+        ret = ret + a
+    return ret
+
+
+def _expand_sorter(sorter):
+    params = sorter['params']
+    for pname, pval in params.items():
+        if type(pval) == dict:
+            if '_list' in pval:
+                plist = pval['_list']
+            elif '_range' in pval:
+                plist = list(range(pval['_range'][0], pval['_range'][1], pval['_range'][2]))
+            else:
+                plist = None
+            if plist:
+                ret = []
+                for ii, lval in enumerate(plist):
+                    sorter2 = deepcopy(sorter)
+                    sorter2['params'][pname] = lval
+                    sorter2['name'] = sorter2['name'] + '-{}'.format(ii)
+                    ret = ret + _expand_sorter(sorter2)
+                return ret
+    return [sorter]
+
+if __name__ == "__main__":
+    main()
