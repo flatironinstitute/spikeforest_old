@@ -32,8 +32,8 @@ def main():
 def test_irc_bionet_static1():
     sorter = IronClust
     params = dict()
-    do_sorting_test(sorter, params, synth_bionet_static1_recdir, 
-        assert_avg_accuracy=0.5,_keep_temp_files=True)
+    do_sorting_test(sorter, params, synth_bionet_static1_recdir,
+                    assert_avg_accuracy=0.5, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
@@ -125,7 +125,7 @@ def test_ms4_magland_c8():
     )
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5)
 
-    
+
 @pytest.mark.spikeforest
 @pytest.mark.ms4_neuropix32c
 @pytest.mark.test_all
@@ -183,6 +183,7 @@ def test_ks_magland_c8():
     sorter = KiloSort
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.5, _keep_temp_files=True)
+
 
 @pytest.mark.spikeforest
 @pytest.mark.ks_boyden32c
@@ -271,6 +272,7 @@ def test_hs2_neuropix32c():
     )
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
 
+
 @pytest.mark.spikeforest
 @pytest.mark.hs2_visapy30c
 @pytest.mark.test_all
@@ -313,6 +315,7 @@ def test_ks2_neuropix32c():
     sorter = KiloSort2
     params = dict()
     do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.2)
+
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_boyden32c
@@ -381,8 +384,7 @@ def test_irc_sqmea64c():
 def test_jrc_magland_c8():
     sorter = JRClust
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)    
-
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
 
 
 @pytest.mark.spikeforest
@@ -395,7 +397,7 @@ def test_jrc_neuropix32c():
         detect_sign=-1,
         adjacency_radius=75,
     )
-    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)   
+    do_sorting_test(sorter, params, neuropix32c_recdir, assert_avg_accuracy=0.5)
 
 
 @pytest.mark.spikeforest
