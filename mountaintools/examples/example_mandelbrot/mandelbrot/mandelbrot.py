@@ -1,4 +1,6 @@
 import numpy as np
+import shutil
+import os
 from matplotlib import pyplot as plt
 import mlprocessors as mlpr
 from mountaintools import client as mt
@@ -76,7 +78,7 @@ class ComputeMandelbrot(mlpr.Processor):
         mlpr.Processor.__init__(self)
 
     def run(self):
-        print('=== ComputeMandelbrot ===')
+        print('=== ComputeMandelbrot ===', self.subsampling_factor, self.subsampling_offset)
         if self.subsampling_factor > 1:
             print('Using subsampling factor {}, offset {}'.format(self.subsampling_factor, self.subsampling_offset))
         X = compute_mandelbrot(
@@ -137,6 +139,7 @@ class CombineSubsampledMandelbrot(mlpr.Processor):
     num_x = mlpr.IntegerParameter()
 
     def run(self):
+        print('=== CombineSubsampledMandelbrot ===', self.num_x)
         self.X_list
         arrays = []
         for X0 in self.X_list:
@@ -146,7 +149,7 @@ class CombineSubsampledMandelbrot(mlpr.Processor):
         np.save(self.X_out, X)
 
 
-def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False, _container=None, srun_opts=None):
+def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False, _container=None, srun_opts=None, use_slurm=False):
     subsampling_factor = num_parallel
     jobs = []
 
@@ -165,7 +168,14 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
 
     jobs = ComputeMandelbrot.createJobs(job_args)
 
-    with mlpr.ParallelJobHandler(num_workers=num_parallel), mlpr.QueueJobHandler():
+    working_dir = 'tmp_slurm_working_dir'
+    if os.path.exists(working_dir):
+        shutil.rmtree(working_dir)
+    if use_slurm:
+        H = mlpr.SlurmJobHandler(use_slurm=False, working_dir=working_dir)
+    else:
+        H = mlpr.ParallelJobHandler(num_workers=num_parallel) 
+    with H, mlpr.QueueJobHandler():
         results = []
         for job in jobs:
             result0 = job.execute()

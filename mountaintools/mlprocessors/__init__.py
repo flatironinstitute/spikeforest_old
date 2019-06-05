@@ -10,6 +10,7 @@ from .localcomputeresource import LocalComputeResource
 from .temporarydirectory import TemporaryDirectory
 from .queuejobhandler import QueueJobHandler
 from .paralleljobhandler import ParallelJobHandler
+from .slurmjobhandler import SlurmJobHandler
 
 __all__ = [
     "Input", "Output",

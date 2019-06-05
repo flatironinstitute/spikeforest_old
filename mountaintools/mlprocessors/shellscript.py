@@ -31,7 +31,7 @@ class ShellScript():
         self.cleanup()
 
     def substitute(self, old, new):
-        self._script = self._script.replace(old, new)
+        self._script = self._script.replace(old, '{}'.format(new))
 
     def write(self, script_path=None):
         if script_path is None:
