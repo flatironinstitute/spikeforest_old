@@ -20,12 +20,13 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.2.2'  # wrapper VERSION
+    VERSION = '0.2.3'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     # CONTAINER = 'sha1://d140fc9b43b98a5f70a538970bc037b5b35fefd8/2019-05-08/herdingspikes2.simg'
-    CONTAINER = 'sha1://b3209735e078abe212dfa508e267786382d28473/2019-05-30/herdingspikes2.simg'
+    # CONTAINER = 'sha1://b3209735e078abe212dfa508e267786382d28473/2019-05-30/herdingspikes2.simg'
+    CONTAINER = 'sha1://57b5bf971d44c5333a07cae1a8c188df6eb0e9a1/2019-06-05/herdingspikes2.simg'
     LOCAL_MODULES = ['../../spikeforest', '../../spikeforest_common']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
