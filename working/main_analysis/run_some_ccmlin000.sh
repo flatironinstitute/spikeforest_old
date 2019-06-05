@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
-declare -a list=("paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_bionet" "synth_mearec_neuronexus" "hybrid_janelia")
+COMPUTE_RESOURCE=${1:-ccmlin000}
+JOB_TIMEOUT_SEC=${2:-2400}
 
-OPTS="--skip_failing --compute_resources compute_resources_ccmlin000.json"
+#declare -a list=("hybrid_janelia" "paired_boyden32c" "paired_crcns" "paired_kampff" "paired_mea64c" "synth_visapy" "synth_magland" "synth_mearec_tetrode" "manual_franklab" "synth_mearec_neuronexus" "synth_bionet")
+declare -a list=("synth_monotrode" "paired_monotrode")
+
+OPTS="--skip_failing --compute_resources compute_resources_$COMPUTE_RESOURCE.json --job_timeout $JOB_TIMEOUT_SEC"
 
 for item in "${list[@]}"
 do 

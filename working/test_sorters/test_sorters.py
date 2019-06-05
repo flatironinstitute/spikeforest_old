@@ -14,11 +14,20 @@ sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
 visapy30c_recdir='sha1dir://97253adc2581b1acbf9a9fffcbc00247d8088a1d.mea_c30.set1'
-synth_bionet_static1_recdir = 'sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_C_4B'
+#synth_bionet_static1_recdir = 'sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_C_4B'
+#synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/recordings/bionet_static_rec1'
+#synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_A_4A'
+synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_C_4B'
+
+
+def main():
+    print('test_irc_bionet_static1')
+    test_irc_bionet_static1()
 
 
 @pytest.mark.spikeforest
 @pytest.mark.irc_bionet_static1
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_irc_bionet_static1():
     sorter = IronClust
@@ -29,6 +38,7 @@ def test_irc_bionet_static1():
 
 @pytest.mark.spikeforest
 @pytest.mark.yass1_visapy30c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_yass1_visapy30c():
     sorter = YASS1
@@ -40,6 +50,7 @@ def test_yass1_visapy30c():
 
 @pytest.mark.spikeforest
 @pytest.mark.yass_visapy30c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_yass_visapy30c():
     sorter = YASS
@@ -51,6 +62,7 @@ def test_yass_visapy30c():
 
 @pytest.mark.spikeforest
 @pytest.mark.waveclus_neurocube1c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_waveclus_neurocube1c():
     sorter = Waveclus
@@ -60,6 +72,7 @@ def test_waveclus_neurocube1c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4_neurocube1c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ms4_neurocube1c():
     sorter = MountainSort4
@@ -73,6 +86,7 @@ def test_ms4_neurocube1c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ms4():
     sorter = MountainSort4
@@ -88,6 +102,7 @@ def test_ms4():
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4_magland_c4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ms4_magland_c4():
     sorter = MountainSort4
@@ -100,6 +115,7 @@ def test_ms4_magland_c4():
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ms4_magland_c8():
     sorter = MountainSort4
@@ -112,6 +128,7 @@ def test_ms4_magland_c8():
     
 @pytest.mark.spikeforest
 @pytest.mark.ms4_neuropix32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ms4_neuropix32c():
     sorter = MountainSort4
@@ -124,6 +141,7 @@ def test_ms4_neuropix32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.sc
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_sc():
     sorter = SpykingCircus
@@ -139,6 +157,7 @@ def test_sc():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_magland_c4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_magland_c4():
     sorter = KiloSort2
@@ -148,6 +167,7 @@ def test_ks2_magland_c4():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_magland_c8():
     sorter = KiloSort2
@@ -157,6 +177,7 @@ def test_ks2_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks_magland_c8():
     sorter = KiloSort
@@ -165,6 +186,7 @@ def test_ks_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks_boyden32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks_boyden32c():
     sorter = KiloSort
@@ -174,6 +196,7 @@ def test_ks_boyden32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.klusta_magland_c4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_klusta_magland_c4():
     sorter = Klusta
@@ -186,6 +209,7 @@ def test_klusta_magland_c4():
 
 @pytest.mark.spikeforest
 @pytest.mark.klusta_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_klusta_magland_c8():
     sorter = Klusta
@@ -198,6 +222,7 @@ def test_klusta_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.tridesclous_magland_c4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_tridesclous_magland_c4():
     sorter = Tridesclous
@@ -207,6 +232,7 @@ def test_tridesclous_magland_c4():
 
 @pytest.mark.spikeforest
 @pytest.mark.tridesclous_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_tridesclous_magland_c8():
     sorter = Tridesclous
@@ -216,6 +242,7 @@ def test_tridesclous_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_magland_c8():
     sorter = HerdingSpikes2
@@ -225,6 +252,7 @@ def test_hs2_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_paired_mea64c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_paired_mea64c():
     sorter = HerdingSpikes2
@@ -234,6 +262,7 @@ def test_hs2_paired_mea64c():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_neuropix32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_neuropix32c():
     sorter = HerdingSpikes2
@@ -244,6 +273,7 @@ def test_hs2_neuropix32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_visapy30c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_visapy30c():
     sorter = HerdingSpikes2
@@ -253,6 +283,7 @@ def test_hs2_visapy30c():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_boyden32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_boyden32c():
     sorter = HerdingSpikes2
@@ -264,6 +295,7 @@ def test_hs2_boyden32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.hs2_sqmea64c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_hs2_sqmea64c():
     sorter = HerdingSpikes2
@@ -275,6 +307,7 @@ def test_hs2_sqmea64c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_neuropix32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_neuropix32c():
     sorter = KiloSort2
@@ -283,6 +316,7 @@ def test_ks2_neuropix32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_boyden32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_boyden32c():
     sorter = KiloSort2
@@ -292,6 +326,7 @@ def test_ks2_boyden32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_sqmea64c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_sqmea64c():
     sorter = KiloSort2
@@ -301,6 +336,7 @@ def test_ks2_sqmea64c():
 
 @pytest.mark.spikeforest
 @pytest.mark.irc_neuropix32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_irc_neuropix32c():
     sorter = IronClust
@@ -310,6 +346,7 @@ def test_irc_neuropix32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.irc_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_irc_magland_c8():
     sorter = IronClust
@@ -319,6 +356,7 @@ def test_irc_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.irc_magland_c4
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_irc_magland_c4():
     sorter = IronClust
@@ -328,6 +366,7 @@ def test_irc_magland_c4():
 
 @pytest.mark.spikeforest
 @pytest.mark.irc_sqmea64c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_irc_sqmea64c():
     sorter = IronClust
@@ -337,6 +376,7 @@ def test_irc_sqmea64c():
 
 @pytest.mark.spikeforest
 @pytest.mark.jrc_magland_c8
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_jrc_magland_c8():
     sorter = JRClust
@@ -347,6 +387,7 @@ def test_jrc_magland_c8():
 
 @pytest.mark.spikeforest
 @pytest.mark.jrc_neuropix32c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_jrc_neuropix32c():
     sorter = JRClust
@@ -359,6 +400,7 @@ def test_jrc_neuropix32c():
 
 @pytest.mark.spikeforest
 @pytest.mark.jrc_visapy30c
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_jrc_visapy30c():
     sorter = JRClust
@@ -368,6 +410,7 @@ def test_jrc_visapy30c():
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_kampff
+@pytest.mark.test_all
 @pytest.mark.exclude
 def test_ks2_kampff():
     sorter = KiloSort2
@@ -406,3 +449,7 @@ def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accurac
     print('Average accuracy: {}'.format(avg_accuracy))
 
     assert(avg_accuracy >= assert_avg_accuracy)
+
+
+if __name__ == "__main__":
+    main()

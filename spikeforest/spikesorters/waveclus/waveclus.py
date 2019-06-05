@@ -32,7 +32,7 @@ class Waveclus(mlpr.Processor):
     """
 
     NAME = 'waveclus'
-    VERSION = '0.0.2'
+    VERSION = '0.0.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -103,7 +103,7 @@ def waveclus_helper(
     dataset_dir = os.path.join(tmpdir, 'waveclus_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.write_recording(
-        recording=recording, save_path=dataset_dir, params=params)
+        recording=recording, save_path=dataset_dir, params=params, _preserve_dtype=True)
 
     samplerate = recording.get_sampling_frequency()
 

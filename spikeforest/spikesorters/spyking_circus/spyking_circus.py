@@ -16,7 +16,7 @@ from .spykingcircussortingextractor import SpykingCircusSortingExtractor
 
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
-    VERSION = '0.2.2'
+    VERSION = '0.2.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
@@ -126,8 +126,9 @@ def spyking_circus(
         file_name = 'recording'
     elif file_name.endswith('.npy'):
         file_name = file_name[file_name.find('.npy')]
+    raw = recording.get_traces()
     np.save(join(output_folder, file_name),
-            recording.get_traces().astype('float32', order='F'))
+            raw.astype(raw.dtype, order='F'))
 
     if detect_sign < 0:
         detect_sign = 'negative'

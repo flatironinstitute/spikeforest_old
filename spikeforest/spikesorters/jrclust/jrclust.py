@@ -34,7 +34,7 @@ class JRClust(mlpr.Processor):
     """
 
     NAME = 'JRClust'
-    VERSION = '0.1.0'
+    VERSION = '0.1.1'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -132,7 +132,7 @@ def jrclust_helper(
     dataset_dir = os.path.join(tmpdir, 'jrclust_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
     SFMdaRecordingExtractor.write_recording(
-        recording=recording, save_path=dataset_dir, params=params)
+        recording=recording, save_path=dataset_dir, params=params, _preserve_dtype=True)
 
     samplerate = recording.get_sampling_frequency()
 

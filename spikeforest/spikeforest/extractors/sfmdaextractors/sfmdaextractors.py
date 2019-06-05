@@ -3,7 +3,7 @@ from spikeextractors import SortingExtractor
 
 import json
 import numpy as np
-from .mdaio import DiskReadMda, readmda, writemda32, writemda64
+from .mdaio import DiskReadMda, readmda, writemda32, writemda64, writemda
 import os
 import mtlogging
 import mlprocessors as mlpr
@@ -110,7 +110,8 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         return recordings
 
     @staticmethod
-    def write_recording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json'):
+    def write_recording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json', 
+            _preserve_dtype=False):
         # ca = _load_required_modules()
         channel_ids = recording.get_channel_ids()
         M = len(channel_ids)
@@ -124,7 +125,10 @@ class SFMdaRecordingExtractor(RecordingExtractor):
             geom[ii, :] = list(location_ii)
         if not os.path.isdir(save_path):
             os.mkdir(save_path)
-        writemda32(raw, save_path + '/' + raw_fname)
+        if _preserve_dtype:
+            writemda(raw, save_path + '/' + raw_fname, dtype=raw.dtype)
+        else:
+            writemda32(raw, save_path + '/' + raw_fname)
         params["samplerate"] = recording.get_sampling_frequency()
         with open(save_path + '/' + params_fname, 'w') as f:
             json.dump(params, f)
