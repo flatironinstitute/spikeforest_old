@@ -19,6 +19,7 @@ class SlurmJobHandler(JobHandler):
         self,
         working_dir,
         workers_per_batch=12,
+        gpu_workers_per_batch=2,
         time_limit_per_batch=None,  # number of seconds or none
         max_simultaneous_batches=4,
         use_slurm=True,
@@ -30,6 +31,7 @@ class SlurmJobHandler(JobHandler):
         os.mkdir(working_dir)
         self._opts = dict(
             workers_per_batch=workers_per_batch,
+            gpu_workers_per_batch=gpu_workers_per_batch,
             max_simultaneous_batches=max_simultaneous_batches,
             srun_opts=srun_opts,
             use_slurm=use_slurm,
@@ -53,11 +55,17 @@ class SlurmJobHandler(JobHandler):
             if b.canAddJob(job):
                 b.addJob(job)
                 return
+        compute_requirements = job.getObject().get('compute_requirements', {})
+        gpu_job = compute_requirements.get('gpu', False)
+        if gpu_job:
+            num_workers = self._opts['gpu_workers_per_batch']
+        else:
+            num_workers = self._opts['workers_per_batch']
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # important to put a random string in the working directory so we don't have a chance of interference from previous runs
         nb = _Batch(
-            num_workers=self._opts['workers_per_batch'],
+            num_workers=num_workers,
             working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
             srun_opts=self._opts['srun_opts'],
             use_slurm=self._opts['use_slurm'],
@@ -332,7 +340,7 @@ class _SlurmProcess():
         srun_opts.append('-c {}'.format(self._num_cores_per_job))
         if self._is_gpu:
             # TODO: this needs to be configured somewhere
-            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100'])
+            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100-32gb'])
         if self._time_limit is not None:
             srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:
