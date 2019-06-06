@@ -67,7 +67,7 @@ class JobQueue():
             R0 = job._execute_check_cache()
             if R0 is not None:
                 # we got the result from the cache
-                pass
+                job.result._status = 'finished'
             else:
                 self._job_handler.executeJob(job)
 
