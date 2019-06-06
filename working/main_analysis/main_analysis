@@ -46,7 +46,7 @@ def main():
         workers_per_batch = 14
         gpu_workers_per_batch = 4
         use_slurm = True
-        time_limit_per_batch = job_timeout * 2
+        time_limit_per_batch = job_timeout * 3
     else:
         workers_per_batch = multiprocessing.cpu_count()
         gpu_workers_per_batch = 2
@@ -174,7 +174,7 @@ def main():
                         units_true=recording.get('units', []),
                         json_out={'ext': '.json'},
                         html_out={'ext': '.html'},
-                        _timeout=job_timeout,
+                        _timeout=job_timeout * 2,
                         _label='Compare with truth {} {}/{}'.format(sorter_name, recording.get('study', ''), recording.get('name', '')),
                         _container='default',
                         _compute_requirements=dict(num_cores=2, gpu=False)
