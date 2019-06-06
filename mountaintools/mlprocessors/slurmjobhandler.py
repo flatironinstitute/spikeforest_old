@@ -368,8 +368,10 @@ class _SlurmProcess():
 
     def halt(self):
         for x in self._srun_sh_scripts:
-            if not x.stopWithSignal(sig=signal.SIGTERM, timeout=1):
-                print('Warning: unable to stop slurm script.')
+            if not x.stopWithSignal(sig=signal.SIGTERM, timeout=0.4):
+                # slurm requires two terminations within a second
+                if not x.stopWithSignal(sig=signal.SIGTERM, timeout=1):
+                    print('Warning: unable to stop slurm script.')
             x.wait()
 
 
