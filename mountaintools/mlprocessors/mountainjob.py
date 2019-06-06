@@ -484,10 +484,26 @@ class MountainJob():
 
         run_py_script.write(os.path.join(temp_path, 'run.py'))
 
+    def runtimeInfoSignature(self):
+        return self.outputSignature('--runtime-info--')
+
+    def consoleOutSignature(self):
+        return self.outputSignature('--console-out--')
+    
+    def outputSignature(self, output_name):
+        return _compute_mountain_job_output_signature(
+            processor_name=self._job_object['processor_name'],
+            processor_version=self._job_object['processor_version'],
+            inputs=self._job_object['inputs'],
+            parameters=self._job_object['parameters_to_hash'],
+            output_name=output_name
+        )
+
     def _find_result_in_cache(self):
         output_paths = dict()
 
-        runtime_info_signature = self._job_object['runtime_info_signature']
+        runtime_info_signature = self.runtimeInfoSignature()
+        assert runtime_info_signature
         output_paths['--runtime-info--'] = local_client.getValue(key=runtime_info_signature, check_alt=True)
         if not output_paths['--runtime-info--']:
             return None
@@ -499,14 +515,16 @@ class MountainJob():
 
         retcode = runtime_info.get('retcode', 0)  # for now default is 0, but that should be unnecessary later
 
-        console_out_signature = self._job_object['console_out_signature']
+        console_out_signature = self.consoleOutSignature()
+        assert console_out_signature
         output_paths['--console-out--'] = local_client.getValue(key=console_out_signature, check_alt=True)
         if not output_paths['--console-out--']:
             return None
 
         if retcode == 0:
-            for output_name, output0 in self._job_object['outputs'].items():
-                signature0 = output0['signature']
+            for output_name in self._job_object['outputs'].keys():
+                signature0 = self.outputSignature(output_name)
+                assert signature0
                 output_path = local_client.getValue(key=signature0, check_alt=True)
                 if not output_path:
                     return None
@@ -537,18 +555,22 @@ class MountainJob():
 
     def _store_result_in_cache(self, result):
         if result.retcode == 0:
-            for output_name, output0 in self._job_object['outputs'].items():
+            for output_name in self._job_object['outputs'].keys():
                 output_path = local_client.getSha1Url(result.outputs[output_name])
                 if output_path:
-                    local_client.setValue(key=output0['signature'], value=output_path)
+                    output_signature = self.outputSignature(output_name)
+                    assert output_signature is not None
+                    local_client.setValue(key=output_signature, value=output_path)
                 else:
                     raise Exception('Unable to store output in cache', output_name, result.outputs[output_name])
 
-        runtime_info_signature = self._job_object['runtime_info_signature']
+        runtime_info_signature = self.runtimeInfoSignature()
+        assert runtime_info_signature is not None
         runtime_info_path = local_client.saveObject(object=result.runtime_info)
         local_client.setValue(key=runtime_info_signature, value=runtime_info_path)
 
-        console_out_signature = self._job_object['console_out_signature']
+        console_out_signature = self.consoleOutSignature()
+        assert console_out_signature is not None
         console_out_path = result.console_out
         local_client.setValue(key=console_out_signature, value=console_out_path)
 
@@ -710,3 +732,43 @@ def _make_remote_url_for_file(fname):
 #                 print(output_stderr.decode())
 #         rc = process.poll()
 #         return rc
+
+
+def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
+    input_hashes = dict()
+    for input_name, input0 in inputs.items():
+        if type(input0) == dict:
+            if input0.get('directory', False):
+                hash0 = input0.get('hash', None)
+            else:
+                hash0 = input0.get('sha1', input0.get('hash', None))
+            if not hash0:
+                raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+            input_hashes[input_name] = hash0
+        elif type(input0) == list:
+            input_hashes[input_name] = []
+            for a in input0:
+                if a.get('directory', False):
+                    hash0 = a.get('hash', None)
+                else:
+                    hash0 = a.get('sha1', a.get('hash', None))
+                if not hash0:
+                    raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+                input_hashes[input_name].append(hash0)
+        else:
+            raise Exception('Unexpected type for input {}'.format(input_name))
+
+    signature_obj = dict(
+        processor_name=processor_name,
+        processor_version=processor_version,
+        inputs=input_hashes,
+        parameters=parameters,
+        output_name=output_name
+    )
+    signature_string = json.dumps(signature_obj, sort_keys=True)
+    return _sha1(signature_string)
+
+
+def _sha1(str):
+    hash_object = hashlib.sha1(str.encode('utf-8'))
+    return hash_object.hexdigest()

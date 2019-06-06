@@ -4,6 +4,7 @@ import traceback
 import multiprocessing
 from .mountainjob import MountainJob, currentJobQueue, _setCurrentJobQueue
 from .mountainjobresult import MountainJobResult
+from mountainclient import client as mt
 
 
 class JobQueue():
@@ -32,8 +33,7 @@ class JobQueue():
             result_outputs[output_name] = dict(
                 queue_job_id=job_id,
                 output_name=output_name,
-                output_signature=output0['signature'],
-                hash=output0['signature']
+                pending=True
             )
         obj0 = dict(
             outputs=result_outputs
@@ -116,16 +116,17 @@ class JobQueue():
             else:
                 all_inputs.append(input0)
         for input0 in all_inputs:
-            if input0['path'] is None:
+            if input0.get('pending', False):
                 qj_id = input0['object']['queue_job_id']
                 output_name = input0['object']['output_name']
                 qj = self._all_jobs[qj_id]
                 if qj.result.status() == 'finished':
                     if qj.result.retcode == 0:
                         input0['path'] = qj.result.outputs[output_name]
+                        input0['hash'] = mt.computeFileSha1(input0['path'])
                     else:
                         # in this case the input is not available because the dependent job failed
-                        job.result.retcode = 7 # for now this signifies that it failed in this way
+                        job.result.retcode = 7  # for now this signifies that it failed in this way
                         job.result._status = 'finished'
                         return False
                 else:

@@ -4,7 +4,6 @@ import fnmatch
 from mountainclient import MountainClient
 from .mountainjob import MountainJob
 import json
-import hashlib
 import inspect
 import multiprocessing
 
@@ -146,13 +145,18 @@ def createJobs(proc, argslist, verbose=None):
                                 object=fname0,
                                 hash=hash0
                             )
+                        elif fname0.get('pending', False):
+                            inputs[name0] = dict(
+                                object=fname0,
+                                pending=True
+                            )
                         else:
-                            raise Exception('Input {} is not a string and does not have hash attribute.'.format(name0))
+                            print(fname0)
+                            raise Exception('Input {} is not a string and is not pending.'.format(name0))
             else:
                 if not input0.optional:
                     raise Exception('Missing required input: {}'.format(name0))
 
-        # signatures for outputs are computed below
         outputs = dict()
         for output0 in proc.OUTPUTS:
             name0 = output0.name
@@ -210,7 +214,7 @@ def createJobs(proc, argslist, verbose=None):
             processor_code=code,
             label=_label,
             inputs=inputs,  # hashes are computed below
-            outputs=outputs,  # signatures are computed below
+            outputs=outputs,
             parameters=parameters,
             parameters_to_hash=parameters_to_hash,
             container=_container,
@@ -221,9 +225,7 @@ def createJobs(proc, argslist, verbose=None):
             keep_temp_files=_keep_temp_files,
             environment_variables=environment_variables,
             additional_files_to_realize=_additional_files_to_realize or [],
-            timeout=_timeout,
-            runtime_info_signature=None,  # computed below
-            console_out_signature=None  # computed below
+            timeout=_timeout
         )
         job_objects.append(job_object)
 
@@ -314,32 +316,6 @@ def createJobs(proc, argslist, verbose=None):
             all_kbucket_dir_inputs[ii]['hash'] = hashes[ii]
 
     if verbose:
-        print('Computing output signatures...')
-    mtlogging.sublog('computing-output-signatures')
-    for job_object in job_objects:
-        for output_name, output0 in job_object['outputs'].items():
-            output0['signature'] = _compute_mountain_job_output_signature(
-                processor_name=proc.NAME,
-                processor_version=proc.VERSION,
-                inputs=job_object['inputs'],
-                parameters=job_object['parameters_to_hash'],
-                output_name=output_name
-            )
-        job_object['runtime_info_signature'] = _compute_mountain_job_output_signature(
-            processor_name=proc.NAME,
-            processor_version=proc.VERSION,
-            inputs=job_object['inputs'],
-            parameters=job_object['parameters_to_hash'],
-            output_name='--runtime-info--'
-        )
-        job_object['console_out_signature'] = _compute_mountain_job_output_signature(
-            processor_name=proc.NAME,
-            processor_version=proc.VERSION,
-            inputs=job_object['inputs'],
-            parameters=job_object['parameters_to_hash'],
-            output_name='--console-out--'
-        )
-    if verbose:
         print('.')
 
     return [MountainJob(processor=proc, job_object=job_object) for job_object in job_objects]
@@ -406,46 +382,6 @@ def _read_python_code_of_directory(dirname, exclude_init, additional_files=[]):
         files=files,
         dirs=dirs
     )
-
-
-def _compute_mountain_job_output_signature(*, processor_name, processor_version, inputs, parameters, output_name):
-    input_hashes = dict()
-    for input_name, input0 in inputs.items():
-        if type(input0) == dict:
-            if input0.get('directory', False):
-                hash0 = input0.get('hash', None)
-            else:
-                hash0 = input0.get('sha1', input0.get('hash', None))
-            if not hash0:
-                raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
-            input_hashes[input_name] = hash0
-        elif type(input0) == list:
-            input_hashes[input_name] = []
-            for a in input0:
-                if a.get('directory', False):
-                    hash0 = a.get('hash', None)
-                else:
-                    hash0 = a.get('sha1', a.get('hash', None))
-                if not hash0:
-                    raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
-                input_hashes[input_name].append(hash0)
-        else:
-            raise Exception('Unexpected type for input {}'.format(input_name))
-
-    signature_obj = dict(
-        processor_name=processor_name,
-        processor_version=processor_version,
-        inputs=input_hashes,
-        parameters=parameters,
-        output_name=output_name
-    )
-    signature_string = json.dumps(signature_obj, sort_keys=True)
-    return _sha1(signature_string)
-
-
-def _sha1(str):
-    hash_object = hashlib.sha1(str.encode('utf-8'))
-    return hash_object.hexdigest()
 
 
 def _file_exists_or_is_sha1_url(fname):
