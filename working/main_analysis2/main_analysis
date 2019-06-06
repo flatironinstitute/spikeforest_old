@@ -42,7 +42,7 @@ def main():
 
     if args.use_slurm:
         workers_per_batch = 14
-        gpu_workers_per_batch = 2
+        gpu_workers_per_batch = 4
         max_simultaneous_batches = 8
         use_slurm = True
         time_limit_per_batch = 4800
