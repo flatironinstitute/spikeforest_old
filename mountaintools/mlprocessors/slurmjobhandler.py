@@ -326,8 +326,18 @@ class _SlurmProcess():
             srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:
             srun_sh_script = ShellScript("""
-                #!/bin/bash
-                set -e
+               #!/bin/bash
+               set -e
+
+               _term() {
+                   echo "Terminating srun process..."
+                   kill -INT "$srun_pid" 2>/dev/null
+                   # srun needs two signals
+                   sleep 0.3
+                   kill -INT "$srun_pid" 2>/dev/null
+                }
+
+                trap _term SIGINT SIGTERM
 
                 export NUM_WORKERS={num_cores_per_job}
                 export MKL_NUM_THREADS=$NUM_WORKERS
@@ -336,7 +346,9 @@ class _SlurmProcess():
 
                 export DISPLAY=""
 
-                srun {srun_opts} {srun_py_script}
+                srun {srun_opts} {srun_py_script} &
+                srun_pid=$!
+                wait $srun_pid
             """, keep_temp_files=False)
             srun_sh_script.substitute('{srun_opts}', ' '.join(srun_opts))
             srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
@@ -368,11 +380,8 @@ class _SlurmProcess():
 
     def halt(self):
         for x in self._srun_sh_scripts:
-            if not x.stopWithSignal(sig=signal.SIGTERM, timeout=0.4):
-                # slurm requires two terminations within a second
-                if not x.stopWithSignal(sig=signal.SIGTERM, timeout=1):
-                    print('Warning: unable to stop slurm script.')
-            x.wait()
+            if not x.stopWithSignal(sig=signal.SIGTERM, timeout=2):
+                print('Warning: unable to stop slurm script.')
 
 
 def _random_string(num):
