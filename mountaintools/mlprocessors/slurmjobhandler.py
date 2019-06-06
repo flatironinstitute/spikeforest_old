@@ -56,7 +56,15 @@ class SlurmJobHandler(JobHandler):
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # important to put a random string in the working directory so we don't have a chance of interference from previous runs
-        nb = _Batch(num_workers=self._opts['workers_per_batch'], working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)), srun_opts=self._opts['srun_opts'], use_slurm=self._opts['use_slurm'], time_limit=self._opts['time_limit_per_batch'], example_job=job)
+        nb = _Batch(
+            num_workers=self._opts['workers_per_batch'],
+            working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
+            srun_opts=self._opts['srun_opts'],
+            use_slurm=self._opts['use_slurm'],
+            time_limit=self._opts['time_limit_per_batch'],
+            example_job=job,
+            batch_label='{}'.format(batch_id)
+        )
         if not nb.canAddJob(job):
             raise Exception('Cannot add job to new batch.')
         self._running_batches[batch_id] = nb
@@ -100,7 +108,7 @@ class SlurmJobHandler(JobHandler):
 
 
 class _Batch():
-    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit, example_job):
+    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit, example_job, batch_label):
         os.mkdir(working_dir)
         self._status = 'pending'
         self._working_dir = working_dir
@@ -111,6 +119,7 @@ class _Batch():
         self._time_limit = time_limit
         self._workers = []
         self._is_gpu = False
+        self._batch_label = batch_label
         if example_job:
             compute_requirements = example_job.getObject().get('compute_requirements', {})
         else:
@@ -179,6 +188,8 @@ class _Batch():
                 return True
 
     def addJob(self, job):
+        jobj = job.getObject()
+        print('Adding job to batch {}: {}'.format(self._batch_label, jobj.get('label', jobj.get('processor_name', '<>'))))
         for w in self._workers:
             if not w.hasJob():
                 w.setJob(job)
