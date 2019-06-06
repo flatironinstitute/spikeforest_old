@@ -1,7 +1,8 @@
 import time
 import mlprocessors as mlpr
 import traceback
-from .mountainjob import currentJobQueue, _setCurrentJobQueue
+import multiprocessing
+from .mountainjob import MountainJob, currentJobQueue, _setCurrentJobQueue
 from .mountainjobresult import MountainJobResult
 
 
@@ -56,6 +57,7 @@ class JobQueue():
             if self._job_is_ready_to_run(job):
                 job_ids_to_run.append(id)
         
+        newly_running_jobs = []
         for id in job_ids_to_run:
             if self._halted:
                 return
@@ -63,15 +65,20 @@ class JobQueue():
             del self._queued_jobs[id]
             self._running_jobs[id] = job
             job.result._status = 'running'
-            # self._job_manager.addJob(job)
-            # first check result cache
-            R0 = job._execute_check_cache()
-            if R0 is not None:
-                jobj = job.getObject()
-                print('Using result from cache: {}'.format(jobj.get('label', jobj.get('processor_name', '<>'))))
-                job.result._status = 'finished'
-            else:
-                self._job_handler.executeJob(job)
+
+            newly_running_jobs.append(job)
+
+        if len(newly_running_jobs) > 0:
+            print('Running {} new jobs...'.format(len(newly_running_jobs)))
+            newly_running_job_results_from_cache = _check_cache_for_job_results(newly_running_jobs)
+            for ii, job in enumerate(newly_running_jobs):
+                if newly_running_job_results_from_cache[ii] is not None:
+                    jobj = job.getObject()
+                    print('Using result from cache: {}'.format(jobj.get('label', jobj.get('processor_name', '<>'))))
+                    job.result.fromObject(newly_running_job_results_from_cache[ii].getObject())
+                    job.result._status = 'finished'
+                else:
+                    self._job_handler.executeJob(job)
 
         if self._job_handler:
             self._job_handler.iterate()
@@ -143,3 +150,26 @@ class JobQueue():
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.halt()
         _setCurrentJobQueue(self._parent_job_queue)
+
+
+def _check_cache_for_job_results(jobs):
+    pool = multiprocessing.Pool(10)
+    result_objects = pool.map(_execute_job_check_cache, [job.getObject() for job in jobs])
+    pool.close()
+    pool.join()
+    results = []
+    for robj in result_objects:
+        if robj:
+            results.append(MountainJobResult(result_object=robj))
+        else:
+            results.append(None)
+    return results
+
+
+def _execute_job_check_cache(job_object):
+    job = MountainJob(job_object=job_object)
+    result = job._execute_check_cache()
+    if result:
+        return result.getObject()
+    else:
+        return None

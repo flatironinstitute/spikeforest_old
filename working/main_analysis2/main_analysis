@@ -45,12 +45,10 @@ def main():
     if args.use_slurm:
         workers_per_batch = 14
         gpu_workers_per_batch = 4
-        max_simultaneous_batches = 8
         use_slurm = True
         time_limit_per_batch = job_timeout * 2
     else:
         workers_per_batch = multiprocessing.cpu_count()
-        max_simultaneous_batches = 1
         gpu_workers_per_batch = 2
         use_slurm = False
         time_limit_per_batch = None
@@ -63,7 +61,6 @@ def main():
         workers_per_batch=workers_per_batch,
         gpu_workers_per_batch=gpu_workers_per_batch,
         time_limit_per_batch=time_limit_per_batch,
-        max_simultaneous_batches=max_simultaneous_batches,
         use_slurm=use_slurm
     )
 

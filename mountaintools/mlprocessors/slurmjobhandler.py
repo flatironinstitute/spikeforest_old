@@ -21,7 +21,6 @@ class SlurmJobHandler(JobHandler):
         workers_per_batch=12,
         gpu_workers_per_batch=2,
         time_limit_per_batch=None,  # number of seconds or none
-        max_simultaneous_batches=4,
         use_slurm=True,
         srun_opts=[]
     ):
@@ -32,7 +31,6 @@ class SlurmJobHandler(JobHandler):
         self._opts = dict(
             workers_per_batch=workers_per_batch,
             gpu_workers_per_batch=gpu_workers_per_batch,
-            max_simultaneous_batches=max_simultaneous_batches,
             srun_opts=srun_opts,
             use_slurm=use_slurm,
             time_limit_per_batch=time_limit_per_batch
@@ -90,19 +88,9 @@ class SlurmJobHandler(JobHandler):
         for id in batch_ids_to_remove:
             del self._running_batches[id]
 
-        num_running = 0
-        num_pending = 0
         for _, b in self._running_batches.items():
-            if b.isRunning():
-                num_running = num_running + 1
-            elif b.isPending():
-                num_pending = num_pending + 1
-
-        if (num_pending > 0) and (num_running < self._opts['max_simultaneous_batches']):
-            for _, b in self._running_batches.items():
-                if b.isPending() and (num_running < self._opts['max_simultaneous_batches']):
-                    b.start()
-                    num_running = num_running + 1
+            if b.isPending():
+                b.start()
 
     def isFinished(self):
         if self._halted:
@@ -196,8 +184,12 @@ class _Batch():
                 return True
 
     def addJob(self, job):
+        num_running = 0
+        for w in self._workers:
+            if w.hasJob():
+                num_running = num_running + 1
         jobj = job.getObject()
-        print('Adding job to batch {}: {}'.format(self._batch_label, jobj.get('label', jobj.get('processor_name', '<>'))))
+        print('Adding job to batch {} ({}/{}): {}'.format(self._batch_label, num_running + 1, self._num_workers, jobj.get('label', jobj.get('processor_name', '<>'))))
         for w in self._workers:
             if not w.hasJob():
                 w.setJob(job)
