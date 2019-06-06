@@ -19,21 +19,13 @@ from .temporarydirectory import TemporaryDirectory
 import mtlogging
 import numpy as np
 import random
+from .mountainjobresult import MountainJobResult
 
 local_client = MountainClient()
 
 _internal = dict(
-    current_job_handler=None,
     current_job_queue=None
 )
-
-
-def currentJobHandler():
-    return _internal['current_job_handler']
-
-
-def _setCurrentJobHandler(handler):
-    _internal['current_job_handler'] = handler
 
 
 def currentJobQueue():
@@ -42,12 +34,6 @@ def currentJobQueue():
 
 def _setCurrentJobQueue(jqueue):
     _internal['current_job_queue'] = jqueue
-
-
-from .defaultjobhandler import DefaultJobHandler
-from .mountainjobresult import MountainJobResult
-
-_setCurrentJobHandler(DefaultJobHandler())
 
 
 class MountainJob():
@@ -128,7 +114,7 @@ class MountainJob():
         if jq:
             return jq.queueJob(self)
         else:
-            return _internal['current_job_handler'].executeJob(self)
+            return self._execute()
 
     def _execute(self):
         if self._job_object is None:

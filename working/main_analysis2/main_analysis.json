@@ -76,19 +76,19 @@
             "name":"IronClust",
             "processor_name":"IronClust",
             "params": {},
-            "compute_requirement": "gpu"
+            "gpu": true
         },
         "hs2": {
             "name": "HerdingSpikes2",
             "processor_name": "HerdingSpikes2",
             "params": {},
-            "compute_requirement": "cpu"
+            "gpu": false
         },
         "jrc": {
             "name": "JRClust",
             "processor_name": "JRClust",
             "params": {},
-            "compute_requirement": "gpu"
+            "gpu": true
         },
         "ks": {
             "name": "KiloSort",
@@ -97,19 +97,19 @@
                 "detect_sign": -1,
                 "adjacency_radius": 50
             },
-            "compute_requirement": "gpu"
+            "gpu": true
         },
         "ks2": {
             "name": "KiloSort2",
             "processor_name": "KiloSort2",
             "params": {},
-            "compute_requirement": "gpu"
+            "gpu": true
         },
         "klusta": {
             "name": "Klusta",
             "processor_name": "Klusta",
             "params": {},
-            "compute_requirement": "cpu"
+            "gpu": false
         },
         "ms4": {
             "name": "MountainSort4",
@@ -119,7 +119,7 @@
                 "adjacency_radius": 50,
                 "detect_threshold": 3
             },
-            "compute_requirement":"cpu"
+            "gpu": false
         },
         "sc": {
             "name": "SpykingCircus",
@@ -128,25 +128,25 @@
                 "detect_sign": -1,
                 "adjacency_radius": 50
             },
-            "compute_requirement": "cpu"
+            "gpu": false
         },
         "tdc": {
             "name": "Tridesclous",
             "processor_name": "Tridesclous",
             "params": {},
-            "compute_requirement": "cpu"
+            "gpu": false
         },
         "waveclus": {
             "name": "Waveclus",
             "processor_name": "Waveclus",
             "params": {},
-            "compute_requirement":"cpu"
+            "gpu": false
         },
         "yass": {
             "name": "Yass",
             "processor_name": "Yass",
             "params": {},
-            "compute_requirement": "cpu"
+            "gpu": false
         }
     }
 }

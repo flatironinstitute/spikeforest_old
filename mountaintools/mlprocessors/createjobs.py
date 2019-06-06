@@ -59,6 +59,7 @@ def createJobs(proc, argslist, verbose=None):
         _keep_temp_files = args.get('_keep_temp_files', None)
         _container = args.get('_container', None)
         _label = args.get('_label', None)
+        _compute_requirements = args.get('_compute_requirements', None)
         _use_cache = args.get('_use_cache', True)
         _skip_failing = args.get('_skip_failing', None)
         _timeout = args.get('_timeout', None)
@@ -83,6 +84,9 @@ def createJobs(proc, argslist, verbose=None):
 
         if _label is None:
             _label = '{} (version: {})'.format(proc.NAME, proc.VERSION)
+
+        if _compute_requirements is None:
+            _compute_requirements = dict()
 
         # hashes for inputs are computed below
         inputs = dict()
@@ -210,6 +214,7 @@ def createJobs(proc, argslist, verbose=None):
             parameters=parameters,
             parameters_to_hash=parameters_to_hash,
             container=_container,
+            compute_requirements=_compute_requirements,
             force_run=_force_run,
             use_cache=_use_cache,
             skip_failing=_skip_failing,
@@ -218,7 +223,7 @@ def createJobs(proc, argslist, verbose=None):
             additional_files_to_realize=_additional_files_to_realize or [],
             timeout=_timeout,
             runtime_info_signature=None,  # computed below
-            console_out_signature=None,  # computed below
+            console_out_signature=None  # computed below
         )
         job_objects.append(job_object)
 

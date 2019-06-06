@@ -1,6 +1,5 @@
 import abc
 import time
-from .mountainjob import currentJobHandler, _setCurrentJobHandler
 
 
 class JobHandler():
@@ -34,14 +33,3 @@ class JobHandler():
             if not self.isFinished():
                 time.sleep(0.2)
         return True
-
-    def parentJobHandler(self):
-        return self._parent_job_handler
-
-    def __enter__(self):
-        self._parent_job_handler = currentJobHandler()
-        _setCurrentJobHandler(self)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        _setCurrentJobHandler(self._parent_job_handler)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from mountaintools import client as mt
+import multiprocessing
 import os
 import sys
 import shutil
@@ -21,9 +22,9 @@ def main():
     parser.add_argument('--analyses', help='Comma-separated names of analyses to run', required=True)
     parser.add_argument('--job_timeout', help='Job timeout in seconds. Default is 20 minutes = 1200 seconds.', required=False, default=1200)
     parser.add_argument('--skip_failing', help='Use cached version of failing processes.', action='store_true')
+    parser.add_argument('--use_slurm', help='Whether to use slurm.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
-    parser.add_argument('--compute_opts', help='path to a .json file specifying the compute options', required=False, default=None)
 
     args = parser.parse_args()
 
@@ -39,46 +40,27 @@ def main():
 
     job_timeout = args.job_timeout
 
-    if args.compute_opts:
-        compute_opts = mt.loadObject(path=args.compute_opts)
+    if args.use_slurm:
+        workers_per_batch = 14
+        max_simultaneous_batches = 8
+        use_slurm = True
+        time_limit_per_batch = 4800
     else:
-        compute_opts = {
-            "default": {
-                "workers_per_batch": 12,
-                "time_limit_per_batch": 4800,
-                "max_simultaneous_batches": 1,
-                "use_slurm": False,
-                "srun_opts": []
-            },
-            "cpu": {
-                "workers_per_batch": 12,
-                "time_limit_per_batch": 4800,
-                "max_simultaneous_batches": 1,
-                "use_slurm": False,
-                "srun_opts": []
-            },
-            "gpu": {
-                "workers_per_batch": 12,
-                "time_limit_per_batch": 4800,
-                "max_simultaneous_batches": 1,
-                "use_slurm": False,
-                "srun_opts": []
-            }
-        }
+        workers_per_batch = multiprocessing.cpu_count()
+        max_simultaneous_batches = 1
+        use_slurm = False
+        time_limit_per_batch = None
 
-    job_handlers = dict()
-    for key, opts in compute_opts.items():
-        slurm_working_dir = 'tmp_slurm_job_handler_{}'.format(key)
-        if os.path.exists(slurm_working_dir):
-            shutil.rmtree(slurm_working_dir)
-        JH = mlpr.SlurmJobHandler(
-            working_dir=slurm_working_dir,
-            workers_per_batch=opts.get('workers_per_batch', 12),
-            max_simultaneous_batches=opts.get('max_simultaneous_batches', 1),
-            use_slurm=opts.get('use_slurm', False),
-            srun_opts=opts.get('srun_opts', [])
-        )
-        job_handlers[key] = JH
+    slurm_working_dir = 'tmp_slurm_job_handler'
+    if os.path.exists(slurm_working_dir):
+        shutil.rmtree(slurm_working_dir)
+    job_handler = mlpr.SlurmJobHandler(
+        working_dir=slurm_working_dir,
+        workers_per_batch=workers_per_batch,
+        time_limit_per_batch=time_limit_per_batch,
+        max_simultaneous_batches=max_simultaneous_batches,
+        use_slurm=use_slurm
+    )
 
     analysis_names = args.analyses.split(',')
 
@@ -121,7 +103,7 @@ def main():
             studies = studies[0:1]
             output_path = None
         
-        with mlpr.JobQueue() as JQ:
+        with mlpr.JobQueue(job_handler=job_handler) as JQ:
             # Summarize the recordings
             mtlogging.sublog('summarize-recordings')
             jobs_info = sa.ComputeRecordingInfo.createJobs([
@@ -130,69 +112,70 @@ def main():
                     channels=recording.get('channels', []),
                     json_out={'ext': '.json', 'upload': True},
                     _container='default',
-                    _label='Summarize recording: ' + recording.get('name', '')
+                    _label='Summarize recording: ' + recording.get('name', ''),
+                    _compute_requirements=dict(num_cores=2, gpu=False)
                 )
                 for recording in recordings
             ])
-            with job_handlers['default']:
-                jobs_units_info = sa.ComputeUnitsInfo.createJobs([
+            jobs_units_info = sa.ComputeUnitsInfo.createJobs([
+                dict(
+                    recording_dir=recording['directory'],
+                    firings=recording['directory'] + '/firings_true.mda',
+                    unit_ids=recording.get('units_true', None),
+                    channel_ids=recording.get('channels', None),
+                    json_out={'ext': '.json', 'upload': True},
+                    _container='default',
+                    _label='Compute units info for recording: ' + recording.get('name', ''),
+                    _compute_requirements=dict(num_cores=2, gpu=False)
+                )
+                for recording in recordings
+            ])
+            for i, recording in enumerate(recordings):
+                recording['results'] = dict()
+                recording['results']['info'] = jobs_info[i].execute()
+                recording['results']['units_info'] = jobs_units_info[i].execute()
+                recording['results']['sorting'] = dict()
+                recording['results']['comparison'] = dict()
+
+            # Sort the recordings
+            mtlogging.sublog('summarize-recordings')
+            for sorter in sorters:
+                sorter_name = sorter['name']
+                sorting_params = sorter['params']
+                processor_name = sorter['processor_name']
+                SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+                sorting_jobs = SORTER.createJobs([
                     dict(
+                        _container=CONTAINER,
+                        _timeout=job_timeout,
+                        _label='Sort recording {}/{} using {}'.format(recording.get('study', ''), recording.get('name', ''), sorter.get('name', '')),
+                        _additional_files_to_realize=[recording['directory'] + '/raw.mda'],
                         recording_dir=recording['directory'],
-                        firings=recording['directory'] + '/firings_true.mda',
-                        unit_ids=recording.get('units_true', None),
-                        channel_ids=recording.get('channels', None),
-                        json_out={'ext': '.json', 'upload': True},
-                        _container='default',
-                        _label='Compute units info for recording: ' + recording.get('name', '')
+                        channels=recording.get('channels', []),
+                        firings_out=dict(ext='.mda'),
+                        _force_run=True,
+                        _compute_requirements=dict(num_cores=2, gpu=sorter['gpu']),
+                        **sorting_params
                     )
                     for recording in recordings
                 ])
                 for i, recording in enumerate(recordings):
-                    recording['results'] = dict()
-                    recording['results']['info'] = jobs_info[i].execute()
-                    recording['results']['units_info'] = jobs_units_info[i].execute()
-                    recording['results']['sorting'] = dict()
-                    recording['results']['comparison'] = dict()
+                    recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
 
-                # Sort the recordings
-                mtlogging.sublog('summarize-recordings')
-                for sorter in sorters:
-                    sorter_name = sorter['name']
-                    sorting_params = sorter['params']
-                    processor_name = sorter['processor_name']
-                    SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
-                    with job_handlers[sorter['compute_requirement']]:
-                        sorting_jobs = SORTER.createJobs([
-                            dict(
-                                _container=CONTAINER,
-                                _timeout=job_timeout,
-                                _label='Sort recording {}/{} using {}'.format(recording.get('study', ''), recording.get('name', ''), sorter.get('name', '')),
-                                _additional_files_to_realize=[recording['directory'] + '/raw.mda'],
-                                recording_dir=recording['directory'],
-                                channels=recording.get('channels', []),
-                                firings_out=dict(ext='.mda'),
-                                _force_run=True,
-                                **sorting_params
-                            )
-                            for recording in recordings
-                        ])
-                        for i, recording in enumerate(recordings):
-                            recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
-
-                    with job_handlers['default']:
-                        comparison_jobs = sa.GenSortingComparisonTable.createJobs([
-                            dict(
-                                firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
-                                firings_true=recording['directory'] + '/firings_true.mda',
-                                units_true=recording.get('units', []),
-                                json_out={'ext': '.json'},
-                                html_out={'ext': '.html'},
-                                _container='default'
-                            )
-                            for recording in recordings
-                        ])
-                        for i, recording in enumerate(recordings):
-                            recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()
+                comparison_jobs = sa.GenSortingComparisonTable.createJobs([
+                    dict(
+                        firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
+                        firings_true=recording['directory'] + '/firings_true.mda',
+                        units_true=recording.get('units', []),
+                        json_out={'ext': '.json'},
+                        html_out={'ext': '.html'},
+                        _container='default',
+                        _compute_requirements=dict(num_cores=2, gpu=False)
+                    )
+                    for recording in recordings
+                ])
+                for i, recording in enumerate(recordings):
+                    recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()
 
             JQ.wait()
 

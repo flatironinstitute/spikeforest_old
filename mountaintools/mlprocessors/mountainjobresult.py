@@ -1,16 +1,15 @@
 from copy import deepcopy
-from .mountainjob import currentJobHandler
 import time
 
 
 class MountainJobResult():
-    def __init__(self, result_object=None, job_handler=None):
+    def __init__(self, result_object=None, job_queue=None):
         self.retcode = None
         self.timed_out = False
         self.console_out = None
         self.runtime_info = None
         self.outputs = None
-        self._job_handler = job_handler
+        self._job_queue = job_queue
         self._status = 'pending'  # pending, running, finished -- note: finished includes error
         if result_object is not None:
             self.fromObject(result_object)
@@ -25,11 +24,12 @@ class MountainJobResult():
         return self._status == 'finished'
 
     def wait(self, timeout=-1):
-        if not self._job_handler:
+        print('.... wait')
+        if not self._job_queue:
             return True
         timer = time.time()
         while self._status != 'finished':
-            self._job_handler.iterate()
+            self._job_queue.iterate()
             elapsed = time.time() - timer
             if (timeout >= 0) and (elapsed > timeout):
                 return False

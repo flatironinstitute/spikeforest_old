@@ -2,9 +2,9 @@ import multiprocessing
 import os
 import time
 import random
+import signal
 import mlprocessors as mlpr
 from .jobhandler import JobHandler
-from .mountainjob import currentJobHandler
 from .mountainjobresult import MountainJobResult
 from .shellscript import ShellScript
 from mountainclient import FileLock
@@ -19,7 +19,7 @@ class SlurmJobHandler(JobHandler):
         self,
         working_dir,
         workers_per_batch=12,
-        time_limit_per_batch=3600,  # seconds
+        time_limit_per_batch=None,  # number of seconds or none
         max_simultaneous_batches=4,
         use_slurm=True,
         srun_opts=[]
@@ -44,8 +44,9 @@ class SlurmJobHandler(JobHandler):
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
-        if job_timeout + 30 > self._opts['time_limit_per_batch']:
-            raise Exception('Cannot execute job. Job timeout exceeds time limit: {} + 30 > {}'.format(job_timeout, self._opts['time_limit_per_batch']))
+        if self._opts['time_limit_per_batch'] is not None:
+            if job_timeout + 30 > self._opts['time_limit_per_batch']:
+                raise Exception('Cannot execute job. Job timeout exceeds time limit: {} + 30 > {}'.format(job_timeout, self._opts['time_limit_per_batch']))
         batch_ids = sorted(list(self._running_batches.keys()))
         for id in batch_ids:
             b = self._running_batches[id]
@@ -55,7 +56,7 @@ class SlurmJobHandler(JobHandler):
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # important to put a random string in the working directory so we don't have a chance of interference from previous runs
-        nb = _Batch(num_workers=self._opts['workers_per_batch'], working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)), srun_opts=self._opts['srun_opts'], use_slurm=self._opts['use_slurm'], time_limit=self._opts['time_limit_per_batch'])
+        nb = _Batch(num_workers=self._opts['workers_per_batch'], working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)), srun_opts=self._opts['srun_opts'], use_slurm=self._opts['use_slurm'], time_limit=self._opts['time_limit_per_batch'], example_job=job)
         if not nb.canAddJob(job):
             raise Exception('Cannot add job to new batch.')
         self._running_batches[batch_id] = nb
@@ -97,17 +98,9 @@ class SlurmJobHandler(JobHandler):
             b.halt()
         self._halted = True
 
-    def __enter__(self):
-        return super().__enter__()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for b in self._running_batches.values():
-            b.halt()
-        super().__exit__(exc_type, exc_val, exc_tb)
-
 
 class _Batch():
-    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit):
+    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit, example_job):
         os.mkdir(working_dir)
         self._status = 'pending'
         self._working_dir = working_dir
@@ -117,11 +110,20 @@ class _Batch():
         self._time_started = None
         self._time_limit = time_limit
         self._workers = []
+        self._is_gpu = False
+        if example_job:
+            compute_requirements = example_job.getObject().get('compute_requirements', {})
+        else:
+            compute_requirements = {}
+        if self._use_slurm:
+            self._is_gpu = compute_requirements.get('gpu', False)
+        self._num_cores_per_job = compute_requirements.get('num_cores', None)
+            
         for i in range(self._num_workers):
             self._workers.append(_Worker(base_path=self._working_dir + '/worker_{}'.format(i)))
         self._slurm_process = _SlurmProcess(
             working_dir=self._working_dir, num_workers=self._num_workers, srun_opts=self._srun_opts, use_slurm=self._use_slurm,
-            time_limit=time_limit
+            time_limit=time_limit, gpu=self._is_gpu, num_cores_per_job=self._num_cores_per_job
         )
 
     def isPending(self):
@@ -160,11 +162,18 @@ class _Batch():
     def canAddJob(self, job):
         if self.isFinished():
             return False
+        compute_requirements = job.getObject().get('compute_requirements', {})
+        if self._use_slurm:
+            if (compute_requirements.get('gpu', False) != self._is_gpu):
+                return False
+            if (compute_requirements.get('num_cores', False) != self._num_cores_per_job):
+                return False
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
-        if job_timeout + self.elapsedSinceStarted() + 30 > self._time_limit:
-            return False
+        if self._time_limit is not None:
+            if job_timeout + self.elapsedSinceStarted() + 30 > self._time_limit:
+                return False
         for w in self._workers:
             if not w.hasJob():
                 return True
@@ -223,24 +232,31 @@ class _Worker():
         with FileLock(result_fname + '.lock', exclusive=False):
             if os.path.exists(result_fname):
                 with open(result_fname, 'r') as f:
-                    result_obj = obj = json.load(f)
+                    result_obj = json.load(f)
         if result_obj:
-            self._job.result.fromObject(obj)
+            self._job.result.fromObject(result_obj)
             self._job.result._status = 'finished'
             self._job = None
-            os.remove(job_fname)
-            os.remove(result_fname)
+            if os.path.exists(job_fname + '.complete'):
+                os.remove(job_fname + '.complete')
+            os.rename(job_fname, job_fname + '.complete')
+            if os.path.exists(result_fname + '.complete'):
+                os.remove(result_fname + '.complete')
+            os.rename(result_fname, result_fname + '.complete')
             self._job_finish_timestamp = time.time()
 
 
 class _SlurmProcess():
-    def __init__(self, working_dir, num_workers, srun_opts, use_slurm, time_limit):
+    def __init__(self, working_dir, num_workers, srun_opts, use_slurm, time_limit, gpu, num_cores_per_job):
         self._working_dir = working_dir
         self._num_workers = num_workers
-        self._num_cpus_per_worker = 2
         self._srun_opts = srun_opts
         self._use_slurm = use_slurm
+        self._num_cores_per_job = num_cores_per_job
+        if self._num_cores_per_job is None:
+            self._num_cores_per_job = 1
         self._time_limit = time_limit
+        self._is_gpu = gpu
 
     def start(self):
         srun_py_script = ShellScript("""
@@ -302,17 +318,29 @@ class _SlurmProcess():
         srun_opts = []
         srun_opts.extend(self._srun_opts)
         srun_opts.append('-n {}'.format(self._num_workers))
-        srun_opts.append('-c {}'.format(self._num_cpus_per_worker))
-        srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
+        srun_opts.append('-c {}'.format(self._num_cores_per_job))
+        if self._is_gpu:
+            # TODO: this needs to be configured somewhere
+            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100'])
+        if self._time_limit is not None:
+            srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:
             srun_sh_script = ShellScript("""
                 #!/bin/bash
                 set -e
 
+                export NUM_WORKERS={num_cores_per_job}
+                export MKL_NUM_THREADS=$NUM_WORKERS
+                export NUMEXPR_NUM_THREADS=$NUM_WORKERS
+                export OMP_NUM_THREADS=$NUM_WORKERS
+
+                export DISPLAY=""
+
                 srun {srun_opts} {srun_py_script}
             """, keep_temp_files=False)
             srun_sh_script.substitute('{srun_opts}', ' '.join(srun_opts))
             srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
+            srun_sh_script.substitute('{num_cores_per_job}', self._num_cores_per_job)
 
             srun_sh_script.start()
             self._srun_sh_scripts = [srun_sh_script]
@@ -323,16 +351,26 @@ class _SlurmProcess():
                     #!/bin/bash
                     set -e
 
+                    export NUM_WORKERS={num_cores_per_job}
+                    export MKL_NUM_THREADS=$NUM_WORKERS
+                    export NUMEXPR_NUM_THREADS=$NUM_WORKERS
+                    export OMP_NUM_THREADS=$NUM_WORKERS
+
+                    export DISPLAY=""
+
                     {srun_py_script}
                 """, keep_temp_files=False)
                 srun_sh_script.substitute('{srun_py_script}', srun_py_script.scriptPath())
+                srun_sh_script.substitute('{num_cores_per_job}', self._num_cores_per_job)
 
                 srun_sh_script.start()
                 self._srun_sh_scripts.append(srun_sh_script)
 
     def halt(self):
         for x in self._srun_sh_scripts:
-            x.stop()
+            if not x.stopWithSignal(sig=signal.SIGTERM, timeout=1):
+                print('Warning: unable to stop slurm script.')
+            x.wait()
 
 
 def _random_string(num):

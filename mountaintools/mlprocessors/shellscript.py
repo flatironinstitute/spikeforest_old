@@ -80,10 +80,30 @@ class ShellScript():
         for signal0 in signals:
             self._process.send_signal(signal0)
             try:
-                self._process.wait(timeout=0.1)
+                self._process.wait(timeout=0.02)
                 return
             except:
                 pass
+
+    def kill(self):
+        if not self.isRunning():
+            return
+        self._process.send_signal(signal.SIGKILL)
+        try:
+            self._process.wait(timeout=1)
+        except:
+            print('WARNING: unable to kill shell script.')
+            pass
+
+    def stopWithSignal(self, sig, timeout):
+        if not self.isRunning():
+            return
+        self._process.send_signal(sig)
+        try:
+            self._process.wait(timeout=timeout)
+            return True
+        except:
+            return False
 
     def elapsedTimeSinceStart(self):
         if self._start_time is None:
