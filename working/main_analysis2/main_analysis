@@ -40,6 +40,8 @@ def main():
 
     job_timeout = args.job_timeout
 
+    skip_failing = args.skip_failing
+
     if args.use_slurm:
         workers_per_batch = 14
         gpu_workers_per_batch = 4
@@ -157,6 +159,7 @@ def main():
                         channels=recording.get('channels', []),
                         firings_out=dict(ext='.mda'),
                         _compute_requirements=dict(num_cores=2, gpu=sorter['gpu']),
+                        _skip_failing=skip_failing,
                         _force_run=sorter.get('force_run', False),
                         **sorting_params
                     )
