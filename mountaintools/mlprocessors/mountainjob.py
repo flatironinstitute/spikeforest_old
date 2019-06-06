@@ -110,6 +110,16 @@ class MountainJob():
 
     @mtlogging.log(name='MountainJob:execute')
     def execute(self):
+        force_run = self._job_object['force_run']
+        use_cache = self._job_object['use_cache']
+        ignore_local_cache = (os.environ.get('MLPROCESSORS_IGNORE_LOCAL_CACHE', 'FALSE') == 'TRUE')
+        if (use_cache) and (not force_run) and (not ignore_local_cache):
+            result0 = self._find_result_in_cache()
+        if result0:
+            print('Using result from cache.')
+            self.result.fromObject(result0.getObject())
+            return result0
+
         jq = _internal['current_job_queue']
         if jq:
             return jq.queueJob(self)
