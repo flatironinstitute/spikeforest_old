@@ -17,5 +17,5 @@ KACHERY_NAME=kbucket
 compute-resource-start $RESOURCE_NAME \
 	--allow_uncontainerized  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME \
-        --srun_opts "-c 2 -n 80 -p ccm --time $SRUN_TIMEOUT_MIN"
+        --srun_opts "-c 2 -n 60 -p gen --time $SRUN_TIMEOUT_MIN"
 

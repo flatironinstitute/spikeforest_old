@@ -172,6 +172,7 @@ def main():
                         units_true=recording.get('units', []),
                         json_out={'ext': '.json'},
                         html_out={'ext': '.html'},
+                        _label='Compare with truth {} {}/{}'.format(sorter_name, recording.get('study', ''), recording.get('name', '')),
                         _container='default',
                         _compute_requirements=dict(num_cores=2, gpu=False)
                     )

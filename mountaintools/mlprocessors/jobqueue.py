@@ -1,5 +1,6 @@
 import time
 import mlprocessors as mlpr
+import traceback
 from .mountainjob import currentJobQueue, _setCurrentJobQueue
 from .mountainjobresult import MountainJobResult
 
@@ -88,14 +89,15 @@ class JobQueue():
         return True
 
     def _check_for_finished_jobs(self):
-        finished_job_ids = []
-        for id, job in self._running_jobs.items():
-            if job.result.status() == 'finished':
-                finished_job_ids.append(id)
-        for id in finished_job_ids:
-            job = self._running_jobs[id]
-            del self._running_jobs[id]
-            self._finished_jobs[id] = job
+        for jobs0 in [self._running_jobs, self._queued_jobs]:
+            finished_job_ids = []
+            for id, job in jobs0.items():
+                if job.result.status() == 'finished':
+                    finished_job_ids.append(id)
+            for id in finished_job_ids:
+                job = jobs0[id]
+                del jobs0[id]
+                self._finished_jobs[id] = job
 
     def _job_is_ready_to_run(self, job):
         obj0 = job.getObject(copy=False)
@@ -112,7 +114,13 @@ class JobQueue():
                 output_name = input0['object']['output_name']
                 qj = self._all_jobs[qj_id]
                 if qj.result.status() == 'finished':
-                    input0['path'] = qj.result.outputs[output_name]
+                    if qj.result.retcode == 0:
+                        input0['path'] = qj.result.outputs[output_name]
+                    else:
+                        # in this case the input is not available because the dependent job failed
+                        job.result.retcode = 7 # for now this signifies that it failed in this way
+                        job.result._status = 'finished'
+                        return False
                 else:
                     return False
         return True
