@@ -340,7 +340,7 @@ class _SlurmProcess():
         srun_opts.append('-c {}'.format(self._num_cores_per_job))
         if self._is_gpu:
             # TODO: this needs to be configured somewhere
-            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100-32gb'])
+            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100'])
         if self._time_limit is not None:
             srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:

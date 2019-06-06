@@ -125,7 +125,6 @@ class MountainJob():
         else:
             result0 = None
         if result0:
-            print('Using result from cache.')
             self.result.fromObject(result0.getObject())
             return result0
         else:
