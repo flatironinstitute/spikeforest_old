@@ -128,7 +128,8 @@ class MountainJob():
             print('Using result from cache.')
             self.result.fromObject(result0.getObject())
             return result0
-        else return None
+        else:
+            return None
 
     def _execute(self):
         if self._job_object is None:
