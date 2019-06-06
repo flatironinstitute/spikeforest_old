@@ -63,7 +63,13 @@ class JobQueue():
             self._running_jobs[id] = job
             job.result._status = 'running'
             # self._job_manager.addJob(job)
-            self._job_handler.executeJob(job)
+            # first check result cache
+            R0 = job._execute_check_cache()
+            if R0 is not None:
+                # we got the result from the cache
+                pass
+            else:
+                self._job_handler.executeJob(job)
 
         if self._job_handler:
             self._job_handler.iterate()
