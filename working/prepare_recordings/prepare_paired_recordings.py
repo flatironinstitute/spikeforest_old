@@ -58,6 +58,7 @@ def prepare_paired_studies(*, basedir, name):
 
 # Prepare the studies
 names = ['boyden32c', 'crcns', 'mea64c', 'kampff']
+public_names = ['crcns', 'mea64c', 'kampff']
 study_sets = []
 for name in names:
     group_name = 'paired_' + name
@@ -67,10 +68,10 @@ for name in names:
     print('Uploading files to kachery...')
     for rec in recordings:
         mt.createSnapshot(rec['directory'], upload_to=upload_to, upload_recursive=True)
-        if name != 'boyden32c':
-            if rec['index_within_study'] == 0:
-                mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
-                rec['public'] = True
+        if name in public_names:
+            # if (rec['index_within_study'] == 0):
+            mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
+            rec['public'] = True
 
     print('Saving object...')
     for ut in [upload_to, upload_public_to]:
