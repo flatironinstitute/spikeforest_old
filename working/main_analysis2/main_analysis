@@ -177,7 +177,6 @@ def main():
                             for recording in recordings
                         ])
                         for i, recording in enumerate(recordings):
-                            print('------ executing sorting job')
                             recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
 
                     with job_handlers['default']:

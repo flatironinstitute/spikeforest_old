@@ -41,7 +41,6 @@ class SlurmJobHandler(JobHandler):
         self._working_dir = working_dir
 
     def executeJob(self, job):
-        print('------ executeJob', self._working_dir)
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
@@ -186,7 +185,7 @@ class _Batch():
         self._time_started = time.time()
 
     def halt(self):
-        print('------------------------- halting batch')
+        print('Halting batch...')
         os.remove(self._working_dir + '/running.txt')
         self._slurm_process.halt()
 
@@ -304,7 +303,7 @@ class _SlurmProcess():
         srun_opts.extend(self._srun_opts)
         srun_opts.append('-n {}'.format(self._num_workers))
         srun_opts.append('-c {}'.format(self._num_cpus_per_worker))
-        srun_opts.append('--time {}'.format(self._time_limit / 60))
+        srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:
             srun_sh_script = ShellScript("""
                 #!/bin/bash
