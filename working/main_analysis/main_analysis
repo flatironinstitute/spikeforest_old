@@ -39,6 +39,8 @@ def main():
         raise Exception('Unable to load analysis file: {}'.format(args.analysis_file))
 
     job_timeout = args.job_timeout
+    if job_timeout is not None:
+        job_timeout = int(job_timeout)
 
     skip_failing = args.skip_failing
 
