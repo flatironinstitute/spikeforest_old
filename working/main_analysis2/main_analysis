@@ -47,7 +47,7 @@ def main():
         gpu_workers_per_batch = 4
         max_simultaneous_batches = 8
         use_slurm = True
-        time_limit_per_batch = 4800
+        time_limit_per_batch = job_timeout * 2
     else:
         workers_per_batch = multiprocessing.cpu_count()
         max_simultaneous_batches = 1
