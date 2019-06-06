@@ -32,7 +32,7 @@ def prepare_hybrid_janelia_studies(*, basedir):
     print('Using study set dir: ' + study_set_dir)
     studies = []
     recordings = []
-    names = ['drift', 'static']
+    names = ['drift_siprobe', 'static_siprobe', 'drift_tetrode', 'static_tetrode']
     for name in names:
         study_name = 'hybrid_' + name
         print('PREPARING: ' + study_name)
