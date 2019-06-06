@@ -21,7 +21,12 @@ def print_columns(data, sep=' '):
 
 def ListCmd(args):
     kt = KacheryTokens()
-    print_columns(list(kt.entries()), '\t')
+    if args.show_tokens:
+        entries = list(kt.entries())
+    else:
+        entries = [ [ entry[0], entry[1], entry[2][0]+'***'+entry[2][-1] ] for entry in kt.entries() ]
+
+    print_columns(entries, '\t')
     sys.exit(0)
 
 def AddCmd(args):
@@ -42,6 +47,7 @@ def main():
     subparsers = parser.add_subparsers(dest='command')
 
     parser_list = subparsers.add_parser('list', help='List tokens')
+    parser_list.add_argument('--show-tokens', action='store_true', help='reveal token contents')
 
     parser_add = subparsers.add_parser('add', help='Add or update token')
     parser_add.add_argument('name')

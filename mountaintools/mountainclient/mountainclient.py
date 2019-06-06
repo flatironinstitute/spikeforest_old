@@ -180,6 +180,7 @@ class MountainClient():
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         pass
 
+    @deprecated("Warning: login() is deprecated.")
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
         """
         Log in to the mountain system. This acquires a collection of tokens that
@@ -286,11 +287,11 @@ class MountainClient():
     def configLocal(self):
         pass
 
-    @deprecated('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect.')
+    @deprecated('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect. Use configDownloadFrom() instead.')
     def configRemoteReadonly(self, *, collection=None, share_id='', alternate_share_ids=[]):
         pass
 
-    @deprecated('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect.')
+    @deprecated('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect. Use configDownloadFrom() instead.')
     def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
         pass
 

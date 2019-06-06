@@ -175,7 +175,7 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
         H = mlpr.SlurmJobHandler(use_slurm=False, working_dir=working_dir)
     else:
         H = mlpr.ParallelJobHandler(num_workers=num_parallel)
-    with mlpr.JobQueue(job_handler=H):
+    with mlpr.JobQueue(job_handler=H) as jq:
         results = []
         for job in jobs:
             result0 = job.execute()
@@ -198,7 +198,7 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
             _container=_container
         )
     
-        A.wait()
+        jq.wait()
         X_path = A.outputs['X_out']
         X = np.load(mt.realizeFile(X_path))
         return X

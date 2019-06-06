@@ -126,8 +126,13 @@ def createJobs(proc, argslist, verbose=None):
                                     object=a,
                                     hash=hash0
                                 ))
+                            elif a.get('pending', False):
+                                inputs[name0].append(dict(
+                                    object=a,
+                                    pending=True
+                                ))
                             else:
-                                raise Exception('Input {} is a list and one of the members is not a string and does not have hash attribute.'.format(name0))
+                                raise Exception('Input {} is a list and one of the members is not a string and is not pending.'.format(name0))
                     else:
                         if (type(fname0) == dict) and ('hash' in fname0):
                             inputs[name0] = dict(

@@ -385,6 +385,7 @@ class MountainJob():
             R.retcode = retcode
             R.runtime_info = runtime_capture.runtimeInfo()
             R.runtime_info['retcode'] = retcode
+            R.runtime_info['timed_out'] = R.timed_out
             R.console_out = local_client.saveText(text=runtime_capture.consoleOut(), basename='console_out.txt')
             R.outputs = dict()
             if retcode == 0:
