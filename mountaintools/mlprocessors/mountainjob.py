@@ -364,16 +364,19 @@ class MountainJob():
                     #     break
                     mtlogging.sublog(None)
 
-                if os.path.exists(tmp_process_console_out_fname):
-                    process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
-                    if process_console_out:
-                        lines0 = process_console_out.splitlines()
-                        for line0 in lines0:
-                            print('>> {}'.format(line0))
+                # we may want to restore the following at some point
+                print_console_out = False
+                if print_console_out:
+                    if os.path.exists(tmp_process_console_out_fname):
+                        process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
+                        if process_console_out:
+                            lines0 = process_console_out.splitlines()
+                            for line0 in lines0:
+                                print('>> {}'.format(line0))
+                        else:
+                            print('>> No console out for process')
                     else:
-                        print('>> No console out for process')
-                else:
-                    print('WARNING: no process console out file found: ' + tmp_process_console_out_fname)
+                        print('WARNING: no process console out file found: ' + tmp_process_console_out_fname)
                 elapsed = time.time() - timer
                 print('========== {} exited with code {} after {} sec'.format(self._job_object['processor_name'], retcode, elapsed))
                 print('================================================================================')
