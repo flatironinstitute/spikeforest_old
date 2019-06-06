@@ -20,7 +20,7 @@ class HerdingSpikes2(mlpr.Processor):
     """
 
     NAME = 'HS2'
-    VERSION = '0.2.3'  # wrapper VERSION
+    VERSION = '0.2.4'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
@@ -62,6 +62,7 @@ class HerdingSpikes2(mlpr.Processor):
             print('Using builtin bandpass and normalisation')
             hs2_par = st_sorter.default_params()
             hs2_par['filter'] = True
+            hs2_par['pre_scale_value'] = 20
             hs2_par['pre_scale'] = True
             st_sorter.set_params(**hs2_par)
             if clustering_n_jobs is not None:
