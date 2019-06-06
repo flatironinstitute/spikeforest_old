@@ -120,15 +120,17 @@ class MountainJob():
         force_run = self._job_object['force_run']
         use_cache = self._job_object['use_cache']
         ignore_local_cache = (os.environ.get('MLPROCESSORS_IGNORE_LOCAL_CACHE', 'FALSE') == 'TRUE')
+        skip_failing = self._job_object['skip_failing']
         if (use_cache) and (not force_run) and (not ignore_local_cache):
-            result0 = self._find_result_in_cache()
-        else:
-            result0 = None
-        if result0:
-            self.result.fromObject(result0.getObject())
-            return result0
-        else:
-            return None
+            result = self._find_result_in_cache()
+            if result:
+                if (result.retcode == 0) or (skip_failing):
+                    if result.retcode == 0:
+                        self._copy_outputs_from_result_to_dest_paths(result)
+                        result = self._post_process_result(result)
+                    self.result.fromObject(result.getObject())
+                    return result
+        return None
 
     def _execute(self):
         if self._job_object is None:
@@ -149,6 +151,7 @@ class MountainJob():
                     if result.retcode == 0:
                         self._copy_outputs_from_result_to_dest_paths(result)
                         result = self._post_process_result(result)
+                    self.result.fromObject(result.getObject())
                     return result
 
         if self._use_cached_results_only:
@@ -399,6 +402,7 @@ class MountainJob():
             if (retcode == 0):
                 R = self._post_process_result(R)
 
+            self.result.fromObject(R.getObject())
             return R
 
     def _post_process_result(self, R):
