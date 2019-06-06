@@ -69,7 +69,7 @@ class JobQueue():
             newly_running_jobs.append(job)
 
         if len(newly_running_jobs) > 0:
-            print('Running {} new jobs...'.format(len(newly_running_jobs)))
+            print('Checking cache for {} jobs...'.format(len(newly_running_jobs)))
             newly_running_job_results_from_cache = _check_cache_for_job_results(newly_running_jobs)
             for ii, job in enumerate(newly_running_jobs):
                 if newly_running_job_results_from_cache[ii] is not None:
