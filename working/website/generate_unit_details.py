@@ -40,7 +40,7 @@ def main():
             'paired_kampff',
             'paired_monotrode',
             'synth_monotrode',
-            'synth_bionet',
+            # 'synth_bionet',
             'synth_magland',
             'manual_franklab',
             'synth_mearec_neuronexus',
