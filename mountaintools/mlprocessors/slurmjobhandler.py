@@ -109,13 +109,16 @@ class SlurmJobHandler(JobHandler):
                     if b.canAddJob(job):
                         b.addJob(job)
                         return True
-                elif b.isWaitingToStart() or b.isPending():
+        for _, b in self._batches.items():
+            if b.batchTypeName() == batch_type_name:
+                if b.isWaitingToStart() or b.isPending():
                     # we'll wait for the batch to start before assigning it
                     return False
         # we need to create a new batch and we'll add the job later
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # we put a random string in the working directory so we don't have a chance of interference from previous runs
+        print('---- creating new batch', batch_id)
         new_batch = _Batch(
             working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
             batch_label='batch {} ({})'.format(batch_id, batch_type_name),
@@ -190,6 +193,7 @@ class _Batch():
                 w.iterate()
             for w in self._workers:
                 if w.hasStarted():
+                    print('---- batch has started', self._batch_label)
                     self._status = 'running'
                     self._time_started = time.time()
                     break
