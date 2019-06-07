@@ -235,8 +235,7 @@ def executeBatch(*, jobs, label='', num_workers=None, compute_resource=None, hal
             job.result.fromObject(results2[i].getObject())
     else:
         # using srun
-        keep_temp_files = True
-        with TemporaryDirectory(remove=(not keep_temp_files)) as temp_path:
+        with TemporaryDirectory(remove=True) as temp_path:
             local_client = MountainClient()
             job_objects = [job.getObject() for job in jobs2]
             jobs_path = os.path.join(temp_path, 'jobs.json')
