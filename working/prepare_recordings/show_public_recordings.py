@@ -36,7 +36,6 @@ def main():
     study_sets = []
     recordings = []
     for group_name in group_names:
-        print('--------------------------------------------------------------------------')
         print('RECORDING GROUP: {}'.format(group_name))
         output_path = ('key://pairio/spikeforest/spikeforest_recording_group.{}.json').format(group_name)
         obj = mt.loadObject(path=output_path)
@@ -55,7 +54,6 @@ def main():
             print('WARNING: unable to load object: ' + output_path)
 
     print('')
-    print('--------------------------------------------------------------------------')
     print('ALL GROUPS')
     study_sets_by_study = dict()
     for study in studies:

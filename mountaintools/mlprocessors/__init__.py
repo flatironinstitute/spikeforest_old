@@ -8,6 +8,9 @@ from .mountainjob import MountainJob
 from .shellscript import ShellScript
 from .localcomputeresource import LocalComputeResource
 from .temporarydirectory import TemporaryDirectory
+from .jobqueue import JobQueue
+from .paralleljobhandler import ParallelJobHandler
+from .slurmjobhandler import SlurmJobHandler
 
 __all__ = [
     "Input", "Output",

@@ -28,6 +28,21 @@ Processors = dict(
 )
 
 
+def find_sorter_processor_and_container(processor_name):
+    if processor_name not in Processors:
+        raise Exception('No such sorter: ' + processor_name)
+    SS = Processors[processor_name][0]
+    SS_container = Processors[processor_name][1]
+    if SS_container:
+        if SS_container == 'default':
+            SS_container = SS.CONTAINER
+        if SS_container:
+            print('Locating container: ' + SS_container)
+            if not mt.findFile(path=SS_container):
+                raise Exception('Unable to realize container: ' + SS_container)
+    return SS, SS_container
+
+
 @mtlogging.log()
 def sort_recordings(*, sorter, recordings, num_workers=None, disable_container=False, compute_resource, job_timeout=60 * 20, label=None):
     print('')

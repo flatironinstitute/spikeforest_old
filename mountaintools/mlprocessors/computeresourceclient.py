@@ -1,7 +1,7 @@
 from mountainclient import MountainClient
 import time
 import random
-from .mountainjob import MountainJobResult
+from .mountainjobresult import MountainJobResult
 from .mountainjob import MountainJob
 import mtlogging
 from mountainclient import client as mt

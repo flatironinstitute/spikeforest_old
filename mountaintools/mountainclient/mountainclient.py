@@ -180,6 +180,7 @@ class MountainClient():
     def autoConfig(self, *, collection, key, ask_password=False, password=None):
         pass
 
+    @deprecated("Warning: login() is deprecated.")
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
         """
         Log in to the mountain system. This acquires a collection of tokens that
@@ -286,11 +287,11 @@ class MountainClient():
     def configLocal(self):
         pass
 
-    @deprecated('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect.')
+    @deprecated('WARNING: configRemoteReadonly() is deprecated and will no longer have any effect. Use configDownloadFrom() instead.')
     def configRemoteReadonly(self, *, collection=None, share_id='', alternate_share_ids=[]):
         pass
 
-    @deprecated('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect.')
+    @deprecated('WARNING: configRemoteReadWrite() is deprecated and will no longer have any effect. Use configDownloadFrom() instead.')
     def configRemoteReadWrite(self, *, collection=None, share_id, token=None, upload_token=None):
         pass
 
@@ -1076,7 +1077,6 @@ class MountainClient():
     def _initialize_kacheries(self):
         kacheries_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kacheries')
         kachery_upload_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_upload_tokens')
-        kachery_tokens_fname = os.path.join(os.environ.get('HOME', ''), '.mountaintools', 'kachery_tokens')
         kachery_urls = dict()
         kachery_upload_tokens = dict()
         kachery_download_tokens = dict()
@@ -1100,21 +1100,10 @@ class MountainClient():
                         print('WARNING: problem parsing kachery_upload_tokens file.')
                     else:
                         kachery_upload_tokens[vals[0]] = vals[1]
-        if os.path.exists(kachery_tokens_fname):
-            txt = _read_text_file(kachery_tokens_fname)
-            lines = txt.splitlines()
-            for line in lines:
-                if (not line.startswith('#')) and (len(line.strip()) > 0):
-                    vals = line.strip().split()
-                    if len(vals) != 3:
-                        print('WARNING: problem parsing kachery_tokens file.')
-                    else:
-                        if vals[1] == 'upload':
-                            kachery_upload_tokens[vals[0]] = vals[2]
-                        elif vals[1] == 'download':
-                            kachery_download_tokens[vals[0]] = vals[2]
-                        else:
-                            print('WARNING: problem parsing kachery_tokens file (*).')
+        from .kachery_tokens import KacheryTokens
+        db = KacheryTokens()
+        kachery_upload_tokens = { name: token for name, type, token in db.entries() if type == 'upload' }
+        kachery_download_tokens = { name: token for name, type, token in db.entries() if type == 'download' }
         for name, url in kachery_urls.items():
             self._kachery_urls[name] = url
         for name, token in kachery_upload_tokens.items():

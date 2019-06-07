@@ -4,6 +4,8 @@ import argparse
 from mountaintools import client as mt
 import os
 import json
+import multiprocessing
+import random
 
 import numpy as np
 import spikeextractors as se
@@ -21,134 +23,164 @@ _CONTAINER = None
 def main():
     parser = argparse.ArgumentParser(description='Generate unit detail data (including spikesprays) for website')
     parser.add_argument('--output_ids', help='Comma-separated list of IDs of the analysis outputs to include in the website.', required=False, default=None)
-    parser.add_argument('--compute_resources', help='Optional path to a .json file specifying the "default" compute resource', required=False, default=None)
-    parser.add_argument('--login', help='Whether to log in.', action='store_true')
 
     args = parser.parse_args()
 
-    if args.login:
-        mt.login(ask_password=True)
+    use_slurm = True
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
-
-    if args.compute_resources:
-        obj = mt.loadObject(path=args.compute_resources)
-        mlpr.configComputeResources(obj['compute_resources'])
-    else:
-        mlpr.configComputeResource('default', resource_name=None)
 
     if args.output_ids is not None:
         output_ids = args.output_ids.split(',')
     else:
         output_ids = [
-            'synth_monotrode',
-            'paired_monotrode',
             'paired_boyden32c',
             'paired_crcns',
             'paired_mea64c',
             'paired_kampff',
+            'paired_monotrode',
+            'synth_monotrode',
+            # 'synth_bionet',
             'synth_magland',
             'manual_franklab',
+            'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
             'synth_visapy',
-            'synth_mearec_neuronexus',
-            'synth_bionet'
+            'hybrid_janelia'
         ]
     print('Using output ids: ', output_ids)
 
     print('******************************** LOADING ANALYSIS OUTPUT OBJECTS...')
     for output_id in output_ids:
-        print('=============================================', output_id)
-        print('Loading output object: {}'.format(output_id))
-        output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
-        obj = mt.loadObject(path=output_path)
-        # studies = obj['studies']
-        # study_sets = obj.get('study_sets', [])
-        # recordings = obj['recordings']
-        sorting_results = obj['sorting_results']
-
-        print('Determining sorting results to process ({} total)...'.format(len(sorting_results)))
-        sorting_results_to_process = []
-        for sr in sorting_results:
-            print('{}/{} {}'.format(sr['recording']['study'], sr['recording']['name'], sr['sorter']['name']))
-            key = dict(
-                name='unit-details-v0.1.0',
-                recording_directory=sr['recording']['directory'],
-                firings_true=sr['firings_true'],
-                firings=sr['firings']
+        slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
+        job_handler = mlpr.SlurmJobHandler(
+            working_dir=slurm_working_dir
+        )
+        if use_slurm:
+            job_handler.addBatchType(
+                name='default',
+                num_workers_per_batch=20,
+                num_cores_per_job=1,
+                time_limit_per_batch=1800,
+                use_slurm=True,
+                additional_srun_opts=['-p ccm']
             )
-            val = mt.getValue(key=key, collection='spikeforest')
-            if not val:
-                sr['key'] = key
-                sorting_results_to_process.append(sr)
-        
-        print('Need to process {} of {} sorting results'.format(len(sorting_results_to_process), len(sorting_results)))
-
-        recording_directories_to_process = sorted(list(set([sr['recording']['directory'] for sr in sorting_results_to_process])))
-        print('{} recording directories to process'.format(len(recording_directories_to_process)))
-
-        print('Filtering recordings...')
-        filter_jobs = FilterTimeseries.createJobs([
-            dict(
-                recording_directory=recdir,
-                timeseries_out={'ext': '.mda'}
+        else:
+            job_handler.addBatchType(
+                name='default',
+                num_workers_per_batch=multiprocessing.cpu_count(),
+                num_cores_per_job=1,
+                use_slurm=False
             )
-            for recdir in recording_directories_to_process
-        ])
-        filter_results = mlpr.executeBatch(jobs=filter_jobs, compute_resource='default', download_outputs=False)
+        with mlpr.JobQueue(job_handler=job_handler) as JQ:
+            print('=============================================', output_id)
+            print('Loading output object: {}'.format(output_id))
+            output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
+            obj = mt.loadObject(path=output_path)
+            # studies = obj['studies']
+            # study_sets = obj.get('study_sets', [])
+            # recordings = obj['recordings']
+            sorting_results = obj['sorting_results']
 
-        filtered_timeseries_by_recdir = dict()
-        for i, recdir in enumerate(recording_directories_to_process):
-            result0 = filter_results[i]
-            if result0.retcode != 0:
-                raise Exception('Problem computing filtered timeseries for recording: {}'.format(recdir))
-            filtered_timeseries_by_recdir[recdir] = result0.outputs['timeseries_out']
+            print('Determining sorting results to process ({} total)...'.format(len(sorting_results)))
+            sorting_results_to_process = []
+            for sr in sorting_results:
+                key = dict(
+                    name='unit-details-v0.1.0',
+                    recording_directory=sr['recording']['directory'],
+                    firings_true=sr['firings_true'],
+                    firings=sr['firings']
+                )
+                val = mt.getValue(key=key, collection='spikeforest')
+                if not val:
+                    sr['key'] = key
+                    sorting_results_to_process.append(sr)
 
-        print('Creating spike sprays...')
+            print('Need to process {} of {} sorting results'.format(len(sorting_results_to_process), len(sorting_results)))
+
+            recording_directories_to_process = sorted(list(set([sr['recording']['directory'] for sr in sorting_results_to_process])))
+            print('{} recording directories to process'.format(len(recording_directories_to_process)))
+
+            print('Filtering recordings...')
+            filter_jobs = FilterTimeseries.createJobs([
+                dict(
+                    recording_directory=recdir,
+                    timeseries_out={'ext': '.mda'},
+                    _timeout=600
+                )
+                for recdir in recording_directories_to_process
+            ])
+            filter_results = [job.execute() for job in filter_jobs]
+
+            JQ.wait()
+
+            filtered_timeseries_by_recdir = dict()
+            for i, recdir in enumerate(recording_directories_to_process):
+                result0 = filter_results[i]
+                if result0.retcode != 0:
+                    raise Exception('Problem computing filtered timeseries for recording: {}'.format(recdir))
+                filtered_timeseries_by_recdir[recdir] = result0.outputs['timeseries_out']
+
+            print('Creating spike sprays...')
+            for sr in sorting_results_to_process:
+                rec = sr['recording']
+                study_name = rec['study']
+                rec_name = rec['name']
+                sorter_name = sr['sorter']['name']
+
+                print('====== COMPUTING {}/{}/{}'.format(study_name, rec_name, sorter_name))
+
+                if sr.get('comparison_with_truth', None) is not None:
+                    cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
+
+                    filtered_timeseries = filtered_timeseries_by_recdir[rec['directory']]
+
+                    spike_spray_job_objects = []
+                    list0 = list(cwt.values())
+                    for _, unit in enumerate(list0):
+                        # print('')
+                        # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
+                        # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
+
+                        spike_spray_job_objects.append(dict(
+                            args=dict(
+                                recording_directory=rec['directory'],
+                                filtered_timeseries=filtered_timeseries,
+                                firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
+                                firings_sorted=sr['firings'],
+                                unit_id_true=unit['unit_id'],
+                                unit_id_sorted=unit['best_unit'],
+                                json_out={'ext': '.json'},
+                                _container='default',
+                                _timeout=180
+                            ),
+                            study_name=study_name,
+                            rec_name=rec_name,
+                            sorter_name=sorter_name,
+                            unit=unit
+                        ))
+                    spike_spray_jobs = CreateSpikeSprays.createJobs([
+                        obj['args']
+                        for obj in spike_spray_job_objects
+                    ])
+                    spike_spray_results = [job.execute() for job in spike_spray_jobs]
+
+                    sr['spike_spray_job_objects'] = spike_spray_job_objects
+                    sr['spike_spray_results'] = spike_spray_results
+
+            JQ.wait()
+
         for sr in sorting_results_to_process:
             rec = sr['recording']
             study_name = rec['study']
             rec_name = rec['name']
             sorter_name = sr['sorter']['name']
 
-            print('====== {}/{}/{}'.format(study_name, rec_name, sorter_name))
+            print('====== SAVING {}/{}/{}'.format(study_name, rec_name, sorter_name))
 
-            # rx = SFMdaRecordingExtractor(dataset_directory=rec['directory'], download=True)
-            # sx_true = SFMdaSortingExtractor(firings_file=os.path.join(rec['directory'], 'firings_true.mda'))
-            # sx = SFMdaSortingExtractor(firings_file=mt.realizeFile(path=sr['firings']))
             if sr.get('comparison_with_truth', None) is not None:
-                cwt = mt.loadObject(path=sr['comparison_with_truth']['json'])
-
-                filtered_timeseries = filtered_timeseries_by_recdir[rec['directory']]
-
-                spike_spray_job_objects = []
-                list0 = list(cwt.values())
-                for _, unit in enumerate(list0):
-                    # print('')
-                    # print('=========================== {}/{}/{} unit {} of {}'.format(study_name, rec_name, sorter_name, ii + 1, len(list0)))
-                    # ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=neighborhood_size, num_spikes=num_spikes, unit_id_true=unit['unit_id'], unit_id_sorted=unit['best_unit'])
-
-                    spike_spray_job_objects.append(dict(
-                        args=dict(
-                            recording_directory=rec['directory'],
-                            filtered_timeseries=filtered_timeseries,
-                            firings_true=os.path.join(rec['directory'], 'firings_true.mda'),
-                            firings_sorted=sr['firings'],
-                            unit_id_true=unit['unit_id'],
-                            unit_id_sorted=unit['best_unit'],
-                            json_out={'ext': '.json'},
-                            _container='default'
-                        ),
-                        study_name=study_name,
-                        rec_name=rec_name,
-                        sorter_name=sorter_name,
-                        unit=unit
-                    ))
-                spike_spray_jobs = CreateSpikeSprays.createJobs([
-                    obj['args']
-                    for obj in spike_spray_job_objects
-                ])
-                spike_spray_results = mlpr.executeBatch(jobs=spike_spray_jobs, compute_resource='default', download_outputs=False)
+                spike_spray_job_objects = sr['spike_spray_job_objects']
+                spike_spray_results = sr['spike_spray_results']
 
                 unit_details = []
                 ok = True
@@ -174,8 +206,6 @@ def main():
                         _container='default'
                     ))
                 if ok:
-                    print('Saving object to key:')
-                    print(json.dumps(sr['key'], indent=4))
                     mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
 
 
@@ -328,6 +358,12 @@ class CreateSpikeSprays(mlpr.Processor):
         ssobj = create_spikesprays(rx=rx, sx_true=sx_true, sx_sorted=sx, neighborhood_size=self.neighborhood_size, num_spikes=self.num_spikes, unit_id_true=self.unit_id_true, unit_id_sorted=self.unit_id_sorted)
         with open(self.json_out, 'w') as f:
             json.dump(ssobj, f)
+
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
+
 
 if __name__ == "__main__":
     main()
