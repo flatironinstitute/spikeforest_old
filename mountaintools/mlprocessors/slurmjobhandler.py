@@ -273,7 +273,7 @@ class _Worker():
             with open(job_fname, 'w') as f:
                 json.dump(job_object, f)
     
-    def hasStarted(self, job):
+    def hasStarted(self):
         return os.path.exists(self._base_path + '_claimed.txt')
 
     def iterate(self):
