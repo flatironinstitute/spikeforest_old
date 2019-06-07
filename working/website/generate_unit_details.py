@@ -170,45 +170,43 @@ def main():
 
             JQ.wait()
 
-            for sr in sorting_results_to_process:
-                rec = sr['recording']
-                study_name = rec['study']
-                rec_name = rec['name']
-                sorter_name = sr['sorter']['name']
+        for sr in sorting_results_to_process:
+            rec = sr['recording']
+            study_name = rec['study']
+            rec_name = rec['name']
+            sorter_name = sr['sorter']['name']
 
-                print('====== SAVING {}/{}/{}'.format(study_name, rec_name, sorter_name))
+            print('====== SAVING {}/{}/{}'.format(study_name, rec_name, sorter_name))
 
-                if sr.get('comparison_with_truth', None) is not None:
-                    spike_spray_job_objects = sr['spike_spray_job_objects']
-                    spike_spray_results = sr['spike_spray_results']
+            if sr.get('comparison_with_truth', None) is not None:
+                spike_spray_job_objects = sr['spike_spray_job_objects']
+                spike_spray_results = sr['spike_spray_results']
 
-                    unit_details = []
-                    ok = True
-                    for i, result in enumerate(spike_spray_results):
-                        obj0 = spike_spray_job_objects[i]
-                        if result.retcode != 0:
-                            print('WARNING: Error creating spike sprays for job:')
-                            print(spike_spray_jobs[i])
-                            ok = False
-                            break
-                        ssobj = mt.loadObject(path=result.outputs['json_out'])
-                        if ssobj is None:
-                            raise Exception('Problem loading spikespray object output.')
-                        address = mt.saveObject(object=ssobj, upload_to='spikeforest.kbucket')
-                        unit = obj0['unit']
-                        unit_details.append(dict(
-                            studyName=obj0['study_name'],
-                            recordingName=obj0['rec_name'],
-                            sorterName=obj0['sorter_name'],
-                            trueUnitId=unit['unit_id'],
-                            sortedUnitId=unit['best_unit'],
-                            spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from='spikeforest.kbucket'),
-                            _container='default'
-                        ))
-                    if ok:
-                        print('Saving object to key:')
-                        print(json.dumps(sr['key'], indent=4))
-                        mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
+                unit_details = []
+                ok = True
+                for i, result in enumerate(spike_spray_results):
+                    obj0 = spike_spray_job_objects[i]
+                    if result.retcode != 0:
+                        print('WARNING: Error creating spike sprays for job:')
+                        print(spike_spray_jobs[i])
+                        ok = False
+                        break
+                    ssobj = mt.loadObject(path=result.outputs['json_out'])
+                    if ssobj is None:
+                        raise Exception('Problem loading spikespray object output.')
+                    address = mt.saveObject(object=ssobj, upload_to='spikeforest.kbucket')
+                    unit = obj0['unit']
+                    unit_details.append(dict(
+                        studyName=obj0['study_name'],
+                        recordingName=obj0['rec_name'],
+                        sorterName=obj0['sorter_name'],
+                        trueUnitId=unit['unit_id'],
+                        sortedUnitId=unit['best_unit'],
+                        spikeSprayUrl=mt.findFile(path=address, remote_only=True, download_from='spikeforest.kbucket'),
+                        _container='default'
+                    ))
+                if ok:
+                    mt.saveObject(collection='spikeforest', key=sr['key'], object=unit_details, upload_to='spikeforest.public')
 
 
 class FilterTimeseries(mlpr.Processor):
