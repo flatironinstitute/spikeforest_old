@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-ARGS = "main_analysis.json --use_slurm --skip_failing"
+ARGS="main_analysis.json --use_slurm --skip_failing"
 
 ./main_analysis $ARGS --analyses hybrid_janelia
 ./main_analysis $ARGS --analyses manual_franklab
