@@ -1,6 +1,7 @@
 import numpy as np
 import shutil
 import os
+import random
 from matplotlib import pyplot as plt
 import mlprocessors as mlpr
 from mountaintools import client as mt
@@ -161,18 +162,23 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
             subsampling_offset=offset,
             output_npy=dict(ext='.npy', upload=True),
             _force_run=_force_run,
-            _container=_container
+            _container=_container,
+            _compute_requirements=dict(batch_type='cpu1')
         )
         for offset in range(subsampling_factor)
     ]
 
     jobs = ComputeMandelbrot.createJobs(job_args)
 
-    working_dir = 'tmp_slurm_working_dir'
-    if os.path.exists(working_dir):
-        shutil.rmtree(working_dir)
+    working_dir = 'tmp_slurm_working_dir_' + _random_string(5)
     if use_slurm:
-        H = mlpr.SlurmJobHandler(use_slurm=False, working_dir=working_dir)
+        H = mlpr.SlurmJobHandler(working_dir=working_dir)
+        H.addBatchType(
+            name='cpu1',
+            num_workers_per_batch=4,
+            num_cores_per_job=2,
+            use_slurm=False
+        )
     else:
         H = mlpr.ParallelJobHandler(num_workers=num_parallel)
     with mlpr.JobQueue(job_handler=H) as jq:
@@ -195,10 +201,16 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
             X_list=X_list,
             X_out={'ext': '.npy'},
             _force_run=_force_run,
-            _container=_container
+            _container=_container,
+            _compute_requirements=dict(batch_type='cpu1')
         )
-    
+
         jq.wait()
         X_path = A.outputs['X_out']
         X = np.load(mt.realizeFile(X_path))
         return X
+
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))

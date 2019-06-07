@@ -29,7 +29,7 @@ class JobQueue():
         job_object = job.getObject()
         job_outputs = job_object['outputs']
         result_outputs = dict()
-        for output_name, output0 in job_outputs.items():
+        for output_name in job_outputs.keys():
             result_outputs[output_name] = dict(
                 queue_job_id=job_id,
                 output_name=output_name,
@@ -150,6 +150,8 @@ class JobQueue():
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.halt()
+        if self._job_handler:
+            self._job_handler.cleanup()
         _setCurrentJobQueue(self._parent_job_queue)
 
 

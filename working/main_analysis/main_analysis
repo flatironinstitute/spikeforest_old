@@ -6,6 +6,7 @@ import os
 import sys
 import shutil
 import json
+import random
 import mlprocessors as mlpr
 import mtlogging
 import argparse
@@ -44,27 +45,43 @@ def main():
 
     skip_failing = args.skip_failing
 
-    if args.use_slurm:
-        workers_per_batch = 14
-        gpu_workers_per_batch = 4
-        use_slurm = True
-        time_limit_per_batch = job_timeout * 3
-    else:
-        workers_per_batch = multiprocessing.cpu_count()
-        gpu_workers_per_batch = 2
-        use_slurm = False
-        time_limit_per_batch = None
-
-    slurm_working_dir = 'tmp_slurm_job_handler'
-    if os.path.exists(slurm_working_dir):
-        shutil.rmtree(slurm_working_dir)
+    slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
     job_handler = mlpr.SlurmJobHandler(
-        working_dir=slurm_working_dir,
-        workers_per_batch=workers_per_batch,
-        gpu_workers_per_batch=gpu_workers_per_batch,
-        time_limit_per_batch=time_limit_per_batch,
-        use_slurm=use_slurm
+        working_dir=slurm_working_dir
     )
+
+    use_slurm = True
+
+    if use_slurm:
+        job_handler.addBatchType(
+            name='cpu',
+            num_workers_per_batch=14,
+            num_cores_per_job=2,
+            time_limit_per_batch=job_timeout * 3,
+            use_slurm=True,
+            additional_srun_opts=['-p ccm']
+        )
+        job_handler.addBatchType(
+            name='gpu',
+            num_workers_per_batch=4,
+            num_cores_per_job=4,
+            time_limit_per_batch=job_timeout * 3,
+            use_slurm=True,
+            additional_srun_opts=['-p gpu', '--gres=gpu:1', '--constraint=v100']
+        )
+    else:
+        job_handler.addBatchType(
+            name='cpu',
+            num_workers_per_batch=multiprocessing.cpu_count(),
+            num_cores_per_job=2,
+            use_slurm=False
+        )
+        job_handler.addBatchType(
+            name='gpu',
+            num_workers_per_batch=1,
+            num_cores_per_job=2,
+            use_slurm=False
+        )
 
     analysis_names = args.analyses.split(',')
 
@@ -118,7 +135,7 @@ def main():
                     _timeout=job_timeout,
                     _container='default',
                     _label='Summarize recording: ' + recording.get('name', ''),
-                    _compute_requirements=dict(num_cores=2, gpu=False)
+                    _compute_requirements=dict(batch_type='cpu')
                 )
                 for recording in recordings
             ])
@@ -132,7 +149,7 @@ def main():
                     _timeout=job_timeout,
                     _container='default',
                     _label='Compute units info for recording: ' + recording.get('name', ''),
-                    _compute_requirements=dict(num_cores=2, gpu=False)
+                    _compute_requirements=dict(batch_type='cpu')
                 )
                 for recording in recordings
             ])
@@ -150,6 +167,10 @@ def main():
                 sorting_params = sorter['params']
                 processor_name = sorter['processor_name']
                 SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+                if sorter.get('gpu', False):
+                    batch_type = 'gpu'
+                else:
+                    batch_type = 'cpu'
                 sorting_jobs = SORTER.createJobs([
                     dict(
                         _container=CONTAINER,
@@ -159,7 +180,7 @@ def main():
                         recording_dir=recording['directory'],
                         channels=recording.get('channels', []),
                         firings_out=dict(ext='.mda'),
-                        _compute_requirements=dict(num_cores=2, gpu=sorter['gpu']),
+                        _compute_requirements=dict(batch_type=batch_type),
                         _skip_failing=skip_failing,
                         _force_run=sorter.get('force_run', False),
                         **sorting_params
@@ -179,7 +200,7 @@ def main():
                         _timeout=job_timeout * 2,
                         _label='Compare with truth {} {}/{}'.format(sorter_name, recording.get('study', ''), recording.get('name', '')),
                         _container='default',
-                        _compute_requirements=dict(num_cores=2, gpu=False)
+                        _compute_requirements=dict(batch_type='cpu')
                     )
                     for recording in recordings
                 ])
@@ -299,6 +320,12 @@ def _expand_sorter(sorter):
                     ret = ret + _expand_sorter(sorter2)
                 return ret
     return [sorter]
+
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
+
 
 if __name__ == "__main__":
     main()

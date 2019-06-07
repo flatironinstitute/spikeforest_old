@@ -3,6 +3,7 @@ import os
 import time
 import random
 import signal
+import shutil
 import mlprocessors as mlpr
 from .jobhandler import JobHandler
 from .mountainjobresult import MountainJobResult
@@ -15,124 +16,153 @@ DEFAULT_JOB_TIMEOUT = 1200
 
 
 class SlurmJobHandler(JobHandler):
-    def __init__(
-        self,
-        working_dir,
-        workers_per_batch=12,
-        gpu_workers_per_batch=2,
-        time_limit_per_batch=None,  # number of seconds or none
-        use_slurm=True,
-        srun_opts=[]
-    ):
+    def __init__(self, working_dir):
         super().__init__()
         if os.path.exists(working_dir):
             raise Exception('Working directory already exists: {}'.format(working_dir))
         os.mkdir(working_dir)
-        self._opts = dict(
-            workers_per_batch=workers_per_batch,
-            gpu_workers_per_batch=gpu_workers_per_batch,
-            srun_opts=srun_opts,
-            use_slurm=use_slurm,
-            time_limit_per_batch=time_limit_per_batch
-        )
-        self._running_batches = dict()
+        self._batch_types = dict()
+        self._batches = dict()
         self._halted = False
         self._last_batch_id = 0
         self._working_dir = working_dir
+        self._unassigned_jobs = []
+
+    def addBatchType(self, *,
+                     name,
+                     num_workers_per_batch,
+                     num_cores_per_job,
+                     use_slurm,
+                     time_limit_per_batch=None,  # number of seconds or None
+                     additional_srun_opts=[]
+                     ):
+        if name in self._batch_types:
+            raise Exception('Batch type already exists: {}'.format(name))
+        self._batch_types[name] = dict(
+            num_workers_per_batch=num_workers_per_batch,
+            num_cores_per_job=num_cores_per_job,
+            use_slurm=use_slurm,
+            time_limit_per_batch=time_limit_per_batch,
+            additional_srun_opts=additional_srun_opts
+        )
 
     def executeJob(self, job):
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
-        if self._opts['time_limit_per_batch'] is not None:
-            if job_timeout + 30 > self._opts['time_limit_per_batch']:
-                raise Exception('Cannot execute job. Job timeout exceeds time limit: {} + 30 > {}'.format(job_timeout, self._opts['time_limit_per_batch']))
-        batch_ids = sorted(list(self._running_batches.keys()))
-        for id in batch_ids:
-            b = self._running_batches[id]
-            if b.canAddJob(job):
-                b.addJob(job)
-                return
         compute_requirements = job.getObject().get('compute_requirements', {})
-        gpu_job = compute_requirements.get('gpu', False)
-        if gpu_job:
-            num_workers = self._opts['gpu_workers_per_batch']
-        else:
-            num_workers = self._opts['workers_per_batch']
-        batch_id = self._last_batch_id + 1
-        self._last_batch_id = batch_id
-        # important to put a random string in the working directory so we don't have a chance of interference from previous runs
-        nb = _Batch(
-            num_workers=num_workers,
-            working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
-            srun_opts=self._opts['srun_opts'],
-            use_slurm=self._opts['use_slurm'],
-            time_limit=self._opts['time_limit_per_batch'],
-            example_job=job,
-            batch_label='{}'.format(batch_id)
-        )
-        if not nb.canAddJob(job):
-            raise Exception('Cannot add job to new batch.')
-        self._running_batches[batch_id] = nb
-        nb.addJob(job)
+        batch_type_name = compute_requirements.get('batch_type', 'default')
+        if batch_type_name not in self._batch_types:
+            raise Exception('No batch type: {}'.format(batch_type_name))
+        batch_type = self._batch_types[batch_type_name]
+        if batch_type['time_limit_per_batch'] is not None:
+            if job_timeout > batch_type['time_limit_per_batch']:
+                raise Exception('Cannot execute job. Job timeout exceeds time limit: {} > {}'.format(job_timeout, batch_type['time_limit_per_batch']))
+        self._unassigned_jobs.append(job)
 
     def iterate(self):
         if self._halted:
             return
-        batch_ids_to_remove = []
-        for id, b in self._running_batches.items():
-            if b.isFinished():
-                batch_ids_to_remove.append(id)
-            else:
+        for _, b in self._batches.items():
+            if not b.isFinished():
                 b.iterate()
-        for id in batch_ids_to_remove:
-            del self._running_batches[id]
-
-        for _, b in self._running_batches.items():
-            if b.isPending():
-                b.start()
+        new_unassigned_jobs = []
+        for job in self._unassigned_jobs:
+            if not self._handle_unassigned_job(job):
+                new_unassigned_jobs.append(job)
+        self._unassigned_jobs = new_unassigned_jobs
 
     def isFinished(self):
         if self._halted:
             return True
-        return (self._running_batches == {})
+        if len(self._unassigned_jobs) > 0:
+            return False
+        for b in self._batches.values():
+            if b.isRunning():
+                if b.hasJob():  # todo: implement
+                    return False
+        return True
 
     def halt(self):
-        for _, b in self._running_batches.items():
-            b.halt()
+        for _, b in self._batches.items():
+            if not b.isFinished():
+                b.halt()
         self._halted = True
+
+    def cleanup(self):
+        shutil.rmtree(self._working_dir)
+
+    def _handle_unassigned_job(self, job):
+        compute_requirements = job.getObject().get('compute_requirements', {})
+        batch_type_name = compute_requirements.get('batch_type', 'default')
+        if batch_type_name not in self._batch_types:
+            raise Exception('No such batch type in slurm job handler: {}'.format(batch_type_name))
+        batch_type = self._batch_types[batch_type_name]
+
+        for _, b in self._batches.items():
+            if b.batchTypeName() == batch_type_name:
+                if b.isRunning():
+                    if b.canAddJob(job):
+                        b.addJob(job)
+                        return True
+                elif b.isWaitingToStart() or b.isPending():
+                    # we'll wait for the batch to start before assigning it
+                    return False
+        # we need to create a new batch and we'll add the job later
+        batch_id = self._last_batch_id + 1
+        self._last_batch_id = batch_id
+        # we put a random string in the working directory so we don't have a chance of interference from previous runs
+        new_batch = _Batch(
+            working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
+            batch_label='batch {} ({})'.format(batch_id, batch_type_name),
+            batch_type_name=batch_type_name,
+            batch_type=batch_type
+        )
+        self._batches[batch_id] = new_batch
+        new_batch.start()
+        # we'll add the job later
+        return False
 
 
 class _Batch():
-    def __init__(self, num_workers, working_dir, srun_opts, use_slurm, time_limit, example_job, batch_label):
+    def __init__(self, working_dir, batch_label, batch_type_name, batch_type):
         os.mkdir(working_dir)
         self._status = 'pending'
-        self._working_dir = working_dir
-        self._num_workers = num_workers
-        self._srun_opts = srun_opts
-        self._use_slurm = use_slurm
         self._time_started = None
-        self._time_limit = time_limit
-        self._workers = []
-        self._is_gpu = False
+        self._working_dir = working_dir
         self._batch_label = batch_label
-        if example_job:
-            compute_requirements = example_job.getObject().get('compute_requirements', {})
-        else:
-            compute_requirements = {}
-        if self._use_slurm:
-            self._is_gpu = compute_requirements.get('gpu', False)
-        self._num_cores_per_job = compute_requirements.get('num_cores', None)
-            
+        self._batch_type = batch_type
+        self._batch_type_name = batch_type_name
+        self._num_workers = batch_type['num_workers_per_batch']
+        self._num_cores_per_job = batch_type['num_cores_per_job']
+        self._use_slurm = batch_type['use_slurm']
+        self._time_limit = batch_type['time_limit_per_batch']
+        self._additional_srun_opts = batch_type['additional_srun_opts']
+        self._workers = []
+
         for i in range(self._num_workers):
             self._workers.append(_Worker(base_path=self._working_dir + '/worker_{}'.format(i)))
+
         self._slurm_process = _SlurmProcess(
-            working_dir=self._working_dir, num_workers=self._num_workers, srun_opts=self._srun_opts, use_slurm=self._use_slurm,
-            time_limit=time_limit, gpu=self._is_gpu, num_cores_per_job=self._num_cores_per_job
+            working_dir=self._working_dir,
+            num_workers=self._num_workers,
+            num_cores_per_job=self._num_cores_per_job,
+            additional_srun_opts=self._additional_srun_opts,
+            use_slurm=self._use_slurm,
+            time_limit=self._time_limit
         )
+
+    def batchTypeName(self):
+        return self._batch_type_name
+
+    def batchType(self):
+        return self._batch_type
 
     def isPending(self):
         return self._status == 'pending'
+
+    def isWaitingToStart(self):
+        return self._status == 'waiting'
 
     def isRunning(self):
         return self._status == 'running'
@@ -142,7 +172,7 @@ class _Batch():
 
     def timeStarted(self):
         return self._time_started
-    
+
     def elapsedSinceStarted(self):
         if not self._time_started:
             return 0
@@ -151,39 +181,43 @@ class _Batch():
     def iterate(self):
         if self.isPending():
             pass
+        elif self.isWaitingToStart():
+            for w in self._workers:
+                w.iterate()
+            for w in self._workers:
+                if w.hasStarted():
+                    self._status = 'running'
+                    self._time_started = time.time()
+                    break
         elif self.isRunning():
             for w in self._workers:
                 w.iterate()
-            has_some_job = False
-            for w in self._workers:
-                if w.hasJob(delay=10):
-                    has_some_job = True
-            if not has_some_job:
-                os.remove(self._working_dir + '/running.txt')
-                self._status = 'finished'
         elif self.isFinished():
             pass
 
     def canAddJob(self, job):
         if self.isFinished():
             return False
-        compute_requirements = job.getObject().get('compute_requirements', {})
-        if self._use_slurm:
-            if (compute_requirements.get('gpu', False) != self._is_gpu):
-                return False
-            if (compute_requirements.get('num_cores', False) != self._num_cores_per_job):
-                return False
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
         if self._time_limit is not None:
-            if job_timeout + self.elapsedSinceStarted() + 30 > self._time_limit:
+            if job_timeout + self.elapsedSinceStarted() > self._time_limit:
                 return False
         for w in self._workers:
             if not w.hasJob():
                 return True
+    
+    def hasJob(self):
+        has_some_job = False
+        for w in self._workers:
+            if w.hasJob(delay=10):
+                has_some_job = True
+        return has_some_job
 
     def addJob(self, job):
+        if self._status != 'running':
+            raise Exception('Cannot add job to batch that is not running.')
         num_running = 0
         for w in self._workers:
             if w.hasJob():
@@ -207,6 +241,7 @@ class _Batch():
     def halt(self):
         print('Halting batch...')
         os.remove(self._working_dir + '/running.txt')
+        self._status = 'finished'
         self._slurm_process.halt()
 
 
@@ -233,6 +268,9 @@ class _Worker():
         with FileLock(job_fname + '.lock', exclusive=True):
             with open(job_fname, 'w') as f:
                 json.dump(job_object, f)
+    
+    def hasStarted(self, job):
+        return os.path.exists(self._base_path + '_claimed.txt')
 
     def iterate(self):
         if not self._job:
@@ -258,16 +296,15 @@ class _Worker():
 
 
 class _SlurmProcess():
-    def __init__(self, working_dir, num_workers, srun_opts, use_slurm, time_limit, gpu, num_cores_per_job):
+    def __init__(self, working_dir, num_workers, additional_srun_opts, use_slurm, time_limit, num_cores_per_job):
         self._working_dir = working_dir
         self._num_workers = num_workers
-        self._srun_opts = srun_opts
+        self._additional_srun_opts = additional_srun_opts
         self._use_slurm = use_slurm
         self._num_cores_per_job = num_cores_per_job
         if self._num_cores_per_job is None:
             self._num_cores_per_job = 1
         self._time_limit = time_limit
-        self._is_gpu = gpu
 
     def start(self):
         srun_py_script = ShellScript("""
@@ -327,12 +364,9 @@ class _SlurmProcess():
         srun_py_script.write()
 
         srun_opts = []
-        srun_opts.extend(self._srun_opts)
+        srun_opts.extend(self._additional_srun_opts)
         srun_opts.append('-n {}'.format(self._num_workers))
         srun_opts.append('-c {}'.format(self._num_cores_per_job))
-        if self._is_gpu:
-            # TODO: this needs to be configured somewhere
-            srun_opts.extend(['-p gpu', '--gres=gpu:1', '--constraint=v100'])
         if self._time_limit is not None:
             srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
         if self._use_slurm:

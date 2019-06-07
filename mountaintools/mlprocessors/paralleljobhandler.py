@@ -63,6 +63,9 @@ class ParallelJobHandler(JobHandler):
                 p['process'].terminate()
         self._halted = True
 
+    def cleanup(self):
+        pass
+
 
 def _run_job(pipe_to_parent, job):
     result0 = job._execute()

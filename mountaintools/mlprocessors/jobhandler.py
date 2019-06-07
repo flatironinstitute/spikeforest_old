@@ -23,6 +23,10 @@ class JobHandler():
     def halt(self):
         pass
 
+    @abc.abstractmethod
+    def cleanup(self):
+        pass
+
     def wait(self, timeout=-1):
         timer = time.time()
         while not self.isFinished():
