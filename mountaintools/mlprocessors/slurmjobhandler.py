@@ -118,7 +118,7 @@ class SlurmJobHandler(JobHandler):
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
         # we put a random string in the working directory so we don't have a chance of interference from previous runs
-        print('---- creating new batch', batch_id)
+        print('Creating new batch', batch_id)
         new_batch = _Batch(
             working_dir=self._working_dir + '/batch_{}_{}'.format(batch_id, _random_string(8)),
             batch_label='batch {} ({})'.format(batch_id, batch_type_name),
@@ -146,6 +146,7 @@ class _Batch():
         self._time_limit = batch_type['time_limit_per_batch']
         self._additional_srun_opts = batch_type['additional_srun_opts']
         self._workers = []
+        self._had_a_job = False
 
         for i in range(self._num_workers):
             self._workers.append(_Worker(base_path=self._working_dir + '/worker_{}'.format(i)))
@@ -193,7 +194,6 @@ class _Batch():
                 w.iterate()
             for w in self._workers:
                 if w.hasStarted():
-                    print('---- batch has started', self._batch_label)
                     self._status = 'running'
                     self._time_started = time.time()
                     break
@@ -209,6 +209,13 @@ class _Batch():
         elif self.isRunning():
             for w in self._workers:
                 w.iterate()
+            if self._had_a_job:
+                still_doing_stuff = False
+                for w in self._workers:
+                    if w.hadJob(5):
+                        still_doing_stuff = True
+                if not still_doing_stuff:
+                    self.halt()
         elif self.isFinished():
             pass
 
@@ -241,6 +248,7 @@ class _Batch():
                 num_running = num_running + 1
         jobj = job.getObject()
         print('Adding job to batch {} ({}/{}): {}'.format(self._batch_label, num_running + 1, self._num_workers, jobj.get('label', jobj.get('processor_name', '<>'))))
+        self._had_a_job = True
         for w in self._workers:
             if not w.hasJob():
                 w.setJob(job)
@@ -271,11 +279,15 @@ class _Worker():
     def hasJob(self, delay=None):
         if self._job is not None:
             return True
-        if delay is not None:
-            if self._job_finish_timestamp is not None:
-                elapsed = time.time() - self._job_finish_timestamp
-                if elapsed <= delay:
-                    return True
+        return False
+
+    def hadJob(self, delay):
+        if self._job is not None:
+            return True
+        if self._job_finish_timestamp is not None:
+            elapsed = time.time() - self._job_finish_timestamp
+            if elapsed <= delay:
+                return True
         return False
 
     def setJob(self, job):
