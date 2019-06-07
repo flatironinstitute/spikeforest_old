@@ -322,6 +322,8 @@ class _Worker():
                     os.remove(result_fname + '.complete')
                 os.rename(result_fname, result_fname + '.complete')
             elif os.path.exists(result_fname + '.error'):
+                with open(result_fname + '.error', 'r') as f:
+                    print(f.read())
                 raise Exception('Unexpected error processing job in batch.')
 
         if result_obj:
@@ -350,6 +352,7 @@ class _SlurmProcess():
                 import time
                 import json
                 import random
+                import traceback
                 from mountainclient import FileLock
                 import mlprocessors as mlpr
 
@@ -396,7 +399,7 @@ class _SlurmProcess():
                         except:
                             with FileLock(result_fname + '.lock', exclusive=True):
                                 with open(result_fname + ".error", 'w') as f:
-                                    f.write('Unexpected problem executing job.')
+                                    f.write(traceback.format_exc())
                     time.sleep(0.2)
             """, script_path=os.path.join(self._working_dir, 'execute_batch_srun.py')
                                      )
