@@ -61,7 +61,7 @@ def main():
                 name='default',
                 num_workers_per_batch=20,
                 num_cores_per_job=1,
-                time_limit_per_batch=300,
+                time_limit_per_batch=1800,
                 use_slurm=True,
                 additional_srun_opts=['-p ccm']
             )
@@ -105,7 +105,8 @@ def main():
             filter_jobs = FilterTimeseries.createJobs([
                 dict(
                     recording_directory=recdir,
-                    timeseries_out={'ext': '.mda'}
+                    timeseries_out={'ext': '.mda'},
+                    _timeout=600
                 )
                 for recdir in recording_directories_to_process
             ])
@@ -150,7 +151,8 @@ def main():
                                 unit_id_true=unit['unit_id'],
                                 unit_id_sorted=unit['best_unit'],
                                 json_out={'ext': '.json'},
-                                _container='default'
+                                _container='default',
+                                _timeout=180
                             ),
                             study_name=study_name,
                             rec_name=rec_name,
