@@ -45,43 +45,7 @@ def main():
 
     skip_failing = args.skip_failing
 
-    slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
-    job_handler = mlpr.SlurmJobHandler(
-        working_dir=slurm_working_dir
-    )
-
     use_slurm = True
-
-    if use_slurm:
-        job_handler.addBatchType(
-            name='cpu',
-            num_workers_per_batch=14,
-            num_cores_per_job=2,
-            time_limit_per_batch=job_timeout * 3,
-            use_slurm=True,
-            additional_srun_opts=['-p ccm']
-        )
-        job_handler.addBatchType(
-            name='gpu',
-            num_workers_per_batch=4,
-            num_cores_per_job=4,
-            time_limit_per_batch=job_timeout * 3,
-            use_slurm=True,
-            additional_srun_opts=['-p gpu', '--gres=gpu:1', '--constraint=v100']
-        )
-    else:
-        job_handler.addBatchType(
-            name='cpu',
-            num_workers_per_batch=multiprocessing.cpu_count(),
-            num_cores_per_job=2,
-            use_slurm=False
-        )
-        job_handler.addBatchType(
-            name='gpu',
-            num_workers_per_batch=1,
-            num_cores_per_job=2,
-            use_slurm=False
-        )
 
     analysis_names = args.analyses.split(',')
 
@@ -124,6 +88,40 @@ def main():
             studies = studies[0:1]
             output_path = None
         
+        slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
+        job_handler = mlpr.SlurmJobHandler(
+            working_dir=slurm_working_dir
+        )
+        if use_slurm:
+            job_handler.addBatchType(
+                name='cpu',
+                num_workers_per_batch=14,
+                num_cores_per_job=2,
+                time_limit_per_batch=job_timeout * 3,
+                use_slurm=True,
+                additional_srun_opts=['-p ccm']
+            )
+            job_handler.addBatchType(
+                name='gpu',
+                num_workers_per_batch=4,
+                num_cores_per_job=4,
+                time_limit_per_batch=job_timeout * 3,
+                use_slurm=True,
+                additional_srun_opts=['-p gpu', '--gres=gpu:1', '--constraint=v100']
+            )
+        else:
+            job_handler.addBatchType(
+                name='cpu',
+                num_workers_per_batch=multiprocessing.cpu_count(),
+                num_cores_per_job=2,
+                use_slurm=False
+            )
+            job_handler.addBatchType(
+                name='gpu',
+                num_workers_per_batch=1,
+                num_cores_per_job=2,
+                use_slurm=False
+            )
         with mlpr.JobQueue(job_handler=job_handler) as JQ:
             # Summarize the recordings
             mtlogging.sublog('summarize-recordings')
