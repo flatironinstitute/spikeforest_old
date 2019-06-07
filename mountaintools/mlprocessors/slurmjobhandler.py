@@ -197,6 +197,15 @@ class _Batch():
                     self._status = 'running'
                     self._time_started = time.time()
                     break
+                if self._status != 'running':
+                    # the following is probably not needed
+                    # but I suspected some trouble with our ceph
+                    # file system where the expected file
+                    # was not being detected until I added this
+                    # line. hm.
+                    x = os.listdir(self._working_dir)
+                    if len(x) == 0:
+                        assert('Unexpected problem. We should at least have a running.txt and a *.py file here.')
         elif self.isRunning():
             for w in self._workers:
                 w.iterate()
