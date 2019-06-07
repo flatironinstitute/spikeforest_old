@@ -226,7 +226,7 @@ class _Batch():
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
         if self._time_limit is not None:
-            if job_timeout + self.elapsedSinceStarted() > self._time_limit:
+            if job_timeout + self.elapsedSinceStarted() > self._time_limit + 5:
                 return False
         for w in self._workers:
             if not w.hasJob():
@@ -410,7 +410,7 @@ class _SlurmProcess():
         srun_opts.append('-n {}'.format(self._num_workers))
         srun_opts.append('-c {}'.format(self._num_cores_per_job))
         if self._time_limit is not None:
-            srun_opts.append('--time {}'.format(round(self._time_limit / 60)))
+            srun_opts.append('--time {}'.format(round(self._time_limit / 60) + 1))
         if self._use_slurm:
             srun_sh_script = ShellScript("""
                #!/bin/bash
