@@ -90,7 +90,11 @@ class SlurmJobHandler(JobHandler):
         self._halted = True
 
     def cleanup(self):
-        shutil.rmtree(self._working_dir)
+        try:
+            shutil.rmtree(self._working_dir)
+        except:
+            time.sleep(3)
+            shutil.rmtree(self._working_dir)
 
     def _handle_unassigned_job(self, job):
         compute_requirements = job.getObject().get('compute_requirements', {})
@@ -234,8 +238,8 @@ class _Batch():
         assert self._status == 'pending'
         self._slurm_process.start()
         with open(self._working_dir + '/running.txt', 'w') as f:
-            f.write('batch is running.')
-        self._status = 'running'
+            f.write('batch is waiting to start.')
+        self._status = 'waiting'
         self._time_started = time.time()
 
     def halt(self):
