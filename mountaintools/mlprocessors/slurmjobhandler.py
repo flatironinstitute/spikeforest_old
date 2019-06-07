@@ -258,14 +258,18 @@ class _Batch():
     def start(self):
         assert self._status == 'pending'
         self._slurm_process.start()
-        with open(self._working_dir + '/running.txt', 'w') as f:
-            f.write('batch is waiting to start.')
+        running_fname = self._working_dir + '/running.txt'
+        with FileLock(running_fname + '.lock', exclusive=True):
+            with open(running_fname, 'w') as f:
+                f.write('batch.')
         self._status = 'waiting'
         self._time_started = time.time()
 
     def halt(self):
         print('Halting batch...')
-        os.remove(self._working_dir + '/running.txt')
+        running_fname = self._working_dir + '/running.txt'
+        with FileLock(running_fname + '.lock', exclusive=True):
+            os.remove(self._working_dir + '/running.txt')
         self._status = 'finished'
         self._slurm_process.halt()
 
@@ -311,16 +315,19 @@ class _Worker():
             if os.path.exists(result_fname):
                 with open(result_fname, 'r') as f:
                     result_obj = json.load(f)
+                if os.path.exists(job_fname + '.complete'):
+                    os.remove(job_fname + '.complete')
+                os.rename(job_fname, job_fname + '.complete')
+                if os.path.exists(result_fname + '.complete'):
+                    os.remove(result_fname + '.complete')
+                os.rename(result_fname, result_fname + '.complete')
+            elif os.path.exists(result_fname + '.error'):
+                raise Exception('Unexpected error processing job in batch.')
+
         if result_obj:
             self._job.result.fromObject(result_obj)
             self._job.result._status = 'finished'
             self._job = None
-            if os.path.exists(job_fname + '.complete'):
-                os.remove(job_fname + '.complete')
-            os.rename(job_fname, job_fname + '.complete')
-            if os.path.exists(result_fname + '.complete'):
-                os.remove(result_fname + '.complete')
-            os.rename(result_fname, result_fname + '.complete')
             self._job_finish_timestamp = time.time()
 
 
@@ -370,8 +377,9 @@ class _SlurmProcess():
 
                 num_found = 0
                 while True:
-                    if not os.path.exists(running_fname):
-                        break
+                    with FileLock(running_fname + '.lock', exclusive=False):
+                        if not os.path.exists(running_fname):
+                            break
                     job_object = None
                     with FileLock(job_fname + '.lock', exclusive=False):
                         if (os.path.exists(job_fname)) and not (os.path.exists(result_fname)):
@@ -380,10 +388,15 @@ class _SlurmProcess():
                                 job_object = json.load(f)
                     if job_object:
                         job = mlpr.MountainJob(job_object = job_object)
-                        result = job.execute()
-                        with FileLock(result_fname + '.lock', exclusive=True):
-                            with open(result_fname, 'w') as f:
-                                json.dump(result.getObject(), f)
+                        try:
+                            result = job.execute()
+                            with FileLock(result_fname + '.lock', exclusive=True):
+                                with open(result_fname, 'w') as f:
+                                    json.dump(result.getObject(), f)
+                        except:
+                            with FileLock(result_fname + '.lock', exclusive=True):
+                                with open(result_fname + ".error", 'w') as f:
+                                    f.write('Unexpected problem executing job.')
                     time.sleep(0.2)
             """, script_path=os.path.join(self._working_dir, 'execute_batch_srun.py')
                                      )
