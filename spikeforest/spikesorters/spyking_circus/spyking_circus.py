@@ -141,7 +141,7 @@ def spyking_circus(
     with open(join(source_dir, 'config_default.params'), 'r') as f:
         circus_config = f.read()
     if merge_spikes:
-        auto = 1e-5
+        auto = 1
     else:
         auto = 0
     circus_config = circus_config.format(
