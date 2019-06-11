@@ -7,6 +7,7 @@ import pathlib
 import random
 import base64
 import tempfile
+import traceback
 from copy import deepcopy
 from datetime import datetime as dt
 from .sha1cache import Sha1Cache
@@ -34,7 +35,7 @@ _global_kbucket_mem_dir_hash_cache = dict()
 
 class MountainClient():
     """
-    MountainClient is a python client for accessing local and remote mountain
+    MountainClient is a Python client for accessing local and remote mountain
     databases and KBucket shares. All I/O for MountainTools is handled using
     this client.
 
@@ -101,7 +102,7 @@ class MountainClient():
         mt.saveText(key=dict(name='key-for-repeating-text'), text=large_text)
         txt = mt.loadText(key=dict(name='key-for-repeating-text'))
 
-        # Similarly we can store python dicts via json content
+        # Similarly we can store Python dicts via json content
         some_object = dict(some='object')
         path = mt.saveObject(some_object, basename='object.json')
         print(path)
@@ -167,7 +168,7 @@ class MountainClient():
         self._kachery_upload_tokens = dict()
         self._kachery_download_tokens = dict()
         self._pairio_tokens = dict()
-        self._verbose = False
+        self._verbose = None  # None might become true or false depending on env variables
         self._remote_client = MountainRemoteClient()
         self._values_by_alias = dict()
         self._config_download_from = []
@@ -182,88 +183,7 @@ class MountainClient():
 
     @deprecated("Warning: login() is deprecated.")
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
-        """
-        Log in to the mountain system. This acquires a collection of tokens that
-        are used by the configRemoteReadWrite() function in order to gain
-        read/write access to collections and kbucket shares. The default user
-        name and/or password may be set by setting the following variables in
-        ~/.mountaintools/.env: MOUNTAIN_USER and MOUNTAIN_PASSWORD.
-
-        The system will prompt for the user name in either of the following
-        situations:
-        1) No user is specified and MOUNTAIN_USER is not set and
-           interactive=True
-        2) User is set to '' (empty string) and interactive=True
-
-        The system will prompt for the password in the following situation:
-        No password is provided and MOUNTAIN_PASSWORD is not set and
-            (interactive = True or ask_password=True)
-
-        Parameters
-        ----------
-        user: str
-            Name of the user
-        password: str
-            Password of the user
-        interactive: bool
-            Whether to interactively ask for user/password (see above)
-        ask_password: bool
-            Whether to ask for the password (see above)
-        """
-        if interactive:
-            ask_password = True
-
-        try:
-            from simplecrypt import encrypt, decrypt
-        except:
-            raise Exception('Cannot import simplecrypt. Use pip install simple-crypt.')
-
-        if user is None:
-            user = os.environ.get('MOUNTAIN_USER', '')
-            if user and (password is None):
-                password = os.environ.get('MOUNTAIN_PASSWORD', '')
-
-        if not user:
-            if interactive:
-                user = input('Mountain user: ')
-
-        if not user:
-            raise Exception('Cannot login, no user found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
-
-        if not password:
-            if ask_password:
-                password = getpass('Mountain password for {}: '.format(user))
-
-        if not password:
-            raise Exception('Cannot login, no password found. You can store MOUNTAIN_USER and MOUNTAIN_PASSWORD variables in ~/.mountaintools/.env.')
-
-        key = dict(
-            name='user_config',
-            user=user
-        )
-        print('Logging in as {}...'.format(user))
-        val = self.getValue(
-            collection='admin',
-            key=key
-        )
-        if not val:
-            raise Exception('Unable to find config for user: {}'.format(user))
-        config = json.loads(
-            decrypt(
-                password,
-                base64.b64decode(val.encode('utf-8'))
-            )
-        )
-        if 'pairio_tokens' in config:
-            for key0, val0 in config['pairio_tokens'].items():
-                self.setPairioToken(key0, val0)
-        if 'kachery_upload_tokens' in config:
-            for key0, val0 in config['kachery_upload_tokens'].items():
-                self.setKacheryUploadToken(key0, val0)
-        if 'kachery_download_tokens' in config:
-            for key0, val0 in config['kachery_download_tokens'].items():
-                self.setKacheryDownloadToken(key0, val0)
-        print('Logged in as {}'.format(user))
+        pass
 
     def setPairioToken(self, collection, token):
         """
@@ -343,6 +263,17 @@ class MountainClient():
         for kname in kachery_names:
             if kname not in self._config_download_from:
                 self._config_download_from.append(kname)
+    
+    def configVerbose(self, value):
+        """Toggle on or off verbose mode
+        
+        Parameters
+        ----------
+        value : bool
+            Whether to turn on verbose mode
+        """
+        self._verbose = value
+        self._local_db.configVerbose(value)
 
     # def getDownloadFromConfig(self):
     #     return deepcopy(dict(
@@ -359,7 +290,7 @@ class MountainClient():
         remote mountain collection, from a remote database. This is used to
         retrieve relatively small strings (generally fewer than 80 characters)
         that were previously associated with keys via setValue(). The keys can
-        either be strings or python dicts. In addition to keys, subkeys may also
+        either be strings or Python dicts. In addition to keys, subkeys may also
         be provided. To retrieve larger text strings, objects, or files, use
         loadText(), loadObject(), or realizeFile() instead.
 
@@ -407,7 +338,7 @@ class MountainClient():
         mountain collection, to a remote database. This is used to store
         relatively small strings (generally fewer than 80 characters) and
         associate them with keys for subsequent retrieval using getValue(). The
-        keys can either be strings or python dicts. In addition to keys, subkeys
+        keys can either be strings or Python dicts. In addition to keys, subkeys
         may also be provided. To store larger text strings, objects, or files,
         use saveText(), saveObject(), or saveFile() instead.
 
@@ -468,8 +399,8 @@ class MountainClient():
         1) By local path. For example, path = '/path/to/local/file.dat'
         2) By SHA-1 URL. For example, path =
            'sha1://7bf5432e9266831ab7d64d193fe3f8c69c9e04cc/experiment1/raw.dat'
-        3) By kbucket URL. For example, path =
-           'kbucket://59317022c908/experiment1/raw.dat'
+        3) By sha1 directory URL. For example, path =
+           'sha1dir://fb52d510d2543634e247e0d2d1d4390be9ed9e20.synth_magland/001_synth/params.json'
         4) By key (and optionally by subkey). For example, key =
            dict(study=’some-unique-id’, experiment=’experiment1’, data=’raw’)
 
@@ -485,10 +416,7 @@ class MountainClient():
         file will be downloaded to the SHA-1 cache (or to dest_path if provided)
         and that local path will be returned.
 
-        In the third case, the kbucket server is probed and the SHA-1 hash of
-        the file is retrieved. If a file with that checksum is found on the
-        local machine, then that is used (or copied to dest_path). Otherwise,
-        the file is downloaded from kbucket as above.
+        TODO: describe the third case... sha1://
 
         In the fourth case, the SHA-1 hash of the file is first retrieved via
         getValue(key=key) or getValue(key=key, subkey=subkey) and then we follow
@@ -931,6 +859,7 @@ class MountainClient():
                 return None
 
         if path.startswith('kbucket://'):
+            print('WARNING: The kbucket:// URL is deprecated')
             path_local = self._local_db._find_file_in_local_kbucket_share(path, directory=True)
             if path_local is not None:
                 return self.readDir(path=path_local, recursive=recursive, include_sha1=include_sha1)
@@ -1102,8 +1031,8 @@ class MountainClient():
                         kachery_upload_tokens[vals[0]] = vals[1]
         from .kachery_tokens import KacheryTokens
         db = KacheryTokens()
-        kachery_upload_tokens = { name: token for name, type, token in db.entries() if type == 'upload' }
-        kachery_download_tokens = { name: token for name, type, token in db.entries() if type == 'download' }
+        kachery_upload_tokens = {name: token for name, type, token in db.entries() if type == 'upload'}
+        kachery_download_tokens = {name: token for name, type, token in db.entries() if type == 'download'}
         for name, url in kachery_urls.items():
             self._kachery_urls[name] = url
         for name, token in kachery_upload_tokens.items():
@@ -1235,7 +1164,7 @@ class MountainClient():
     def _upload_to_kachery(self, *, path, sha1, kachery_url, upload_token):
         url_check_path0 = '/check/sha1/' + sha1
         url_check = kachery_url + url_check_path0
-        resp_obj = _http_get_json(url_check)
+        resp_obj = _http_get_json(url_check, verbose=self._verbose)
         if not resp_obj['success']:
             print('Warning: Problem checking for upload: ' + resp_obj['error'])
             return False
@@ -1273,8 +1202,9 @@ class MountainClient():
         if kachery_url:
             check_url = kachery_url + '/check/sha1/' + sha1
             try:
-                obj = _http_get_json(check_url)
+                obj = _http_get_json(check_url, verbose=self._verbose)
             except:
+                traceback.print_exc()
                 print('WARNING: failed in check to kachery {}: {}'.format(download_from, check_url))
                 return (None, None)
             if not obj['success']:
@@ -1304,7 +1234,7 @@ class MountainClient():
         if not kbucket_url:
             return (None, None)
         url = kbucket_url + '/' + download_from + '/api/find/' + sha1
-        obj = _http_get_json(url)
+        obj = _http_get_json(url, verbose=self._verbose)
         if not obj:
             return (None, None)
         if not obj['success']:
@@ -1338,7 +1268,7 @@ class MountainClient():
 
     def _read_kbucket_dir(self, *, share_id, path, recursive, include_sha1):
         url = self._local_db.kbucketUrl() + '/' + share_id + '/api/readdir/' + path
-        obj = _http_get_json(url)
+        obj = _http_get_json(url, verbose=self._verbose)
         if (not obj) or (not obj['success']):
             return None
 
@@ -1395,6 +1325,10 @@ class MountainClientLocal():
         self._nodeinfo_cache = dict()
         self._local_kbucket_shares = dict()
         self._initialize_local_kbucket_shares()
+        self._verbose = None
+
+    def configVerbose(self, value):
+        self._verbose = value
 
     def getSubKeys(self, *, key):
         keyhash = _hash_of_key(key)
@@ -1500,6 +1434,7 @@ class MountainClientLocal():
             sha1 = list0[2]
             return self._realize_file_from_sha1(sha1=sha1, dest_path=dest_path, show_progress=show_progress)
         elif path.startswith('kbucket://'):
+            print('WARNING: The kbucket:// URL is deprecated')
             path_local = self._find_file_in_local_kbucket_share(path)
             if path_local is not None:
                 return path_local
@@ -1573,6 +1508,7 @@ class MountainClientLocal():
             sha1 = list0[2]
             return sha1
         elif path.startswith('kbucket://'):
+            print('WARNING: The kbucket:// URL is deprecated')
             path_local = self._find_file_in_local_kbucket_share(path)
             if path_local is not None:
                 return self.computeFileSha1(path=path_local)
@@ -1707,7 +1643,7 @@ class MountainClientLocal():
             node_info = self._nodeinfo_cache[share_id]
         else:
             url = self._kbucket_url + '/' + share_id + '/api/nodeinfo'
-            obj = _http_get_json(url)
+            obj = _http_get_json(url, verbose=self._verbose)
             if not obj:
                 print('Warning: unable to find node info for share {}'.format(share_id))
                 return None
@@ -1756,7 +1692,7 @@ class MountainClientLocal():
 
         url_prv = kbucket_url + '/' + kbshare_id + '/prv/' + path0
         try:
-            prv = _http_get_json(url_prv)
+            prv = _http_get_json(url_prv, verbose=self._verbose)
         except:
             return (None, None, None)
 

@@ -5,10 +5,12 @@ from mountaintools import client as mt
 import os
 import frontmatter
 from datetime import datetime
+import pkg_resources
 
 help_txt = """
 This script assembles collections of data
 
+General
 Algorithms
 Sorters
 SortingResults
@@ -16,6 +18,25 @@ StudySets
 StudyAnalysisResults
 
 ## Schema
+
+### General
+
+const generalSchema = new mongoose.Schema({
+  dateUpdated: {
+    type: String,
+    required: "A timestamp in isoformat for when the database was updated."
+  },
+  packageVersions: {
+    type: {
+      mountaintools: {
+        type: String
+      },
+      spikeforest: {
+        type: String
+      }
+    }
+  }
+});
 
 ### Algorithm
 
@@ -102,6 +123,9 @@ const sortingResultSchema = new mongoose.Schema({
   consoleOut: {
     type: String,
     required: "sha1:// of the console output file"
+  },
+  container: {
+    type: String
   },
 });
     
@@ -384,6 +408,7 @@ def main():
                 recordingDirectory=sr['recording']['directory'],
                 firingsTrue=sr['recording']['firings_true'],
                 consoleOut=sr['console_out'],
+                container=sr['container'],
                 cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
             )
         if sr.get('firings', None):
@@ -414,8 +439,8 @@ def main():
                 name=sorter['name'],
                 algorithmName=alg_label,
                 processorName=sorter['processor_name'],
-                processorVersion='0',  # jfm needs to provide this
-                sortingParameters=sorter['params']  # Liz, even though most sorters have similar parameter names, it won't always be like that. The params is an arbitrary json object.
+                processorVersion='0',  # jfm to provide this
+                sortingParameters=sorter['params']
             ))
     print([S['name'] + ':' + S['algorithmName'] for S in Sorters])
 
@@ -435,7 +460,11 @@ def main():
     # GENERAL
     print('******************************** ASSEMBLING GENERAL INFO...')
     General = [dict(
-        dateUpdated=datetime.now().isoformat()
+        dateUpdated=datetime.now().isoformat(),
+        packageVersions=dict(
+            mountaintools=pkg_resources.get_distribution("mountaintools").version,
+            spikeforest=pkg_resources.get_distribution("spikeforest").version
+        )
     )]
 
     obj = dict(

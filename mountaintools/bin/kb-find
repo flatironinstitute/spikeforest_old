@@ -24,6 +24,9 @@ def main():
     if args.download_from:
         mt.configDownloadFrom([args.download_from])
 
+    if args.verbose:
+        mt.configVerbose(True)
+
     if mt.isFile(path):
         path2 = mt.findFile(path=path, local_only=args.local_only, remote_only=args.remote_only)
         if not path2:

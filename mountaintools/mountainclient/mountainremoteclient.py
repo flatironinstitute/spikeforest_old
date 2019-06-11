@@ -153,10 +153,10 @@ def _sha1_of_object(obj):
 
 @mtlogging.log()
 def _http_get_json(url, verbose=None, retry_delays=None):
+    timer = time.time()
     if retry_delays is None:
         retry_delays = [0.2, 0.5]
     if verbose is None:
-        timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
         print('_http_get_json::: ' + url)
