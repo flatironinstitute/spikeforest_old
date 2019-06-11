@@ -121,14 +121,17 @@ def spyking_circus(
         saveProbeFile(recording, join(output_folder, 'probe.prb'), format='spyking_circus', radius=adjacency_radius,
                       dimensions=electrode_dimensions)
         probe_file = join(output_folder, 'probe.prb')
+    
     # save binary file
     if file_name is None:
         file_name = 'recording'
-    elif file_name.endswith('.npy'):
-        file_name = file_name[file_name.find('.npy')]
-    raw = recording.get_traces()
-    np.save(join(output_folder, file_name),
-            raw.astype(raw.dtype, order='F'))
+    elif not file_name.endswith('.mda'):
+        file_name = file_name[file_name.find('.mda')]
+    
+    # raw = recording.get_traces()
+    #np.save(join(output_folder, file_name),
+    #         raw.astype(raw.dtype, order='F'))
+    shutil.copy(recording._timeseries_path, join(output_folder, file_name + '.mda'))
 
     if detect_sign < 0:
         detect_sign = 'negative'
@@ -168,7 +171,7 @@ def spyking_circus(
     if int(n_cores) > 1:
         num_cores_str = '-c {}'.format(n_cores)
     cmd = 'spyking-circus {} {} '.format(
-        join(output_folder_cmd, file_name + '.npy'), num_cores_str)
+        join(output_folder_cmd, file_name + '.mda'), num_cores_str)
 
     # I think the merging step requires a gui and some user interaction. TODO: inquire about this
     # cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
