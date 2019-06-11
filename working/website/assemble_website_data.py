@@ -265,6 +265,11 @@ def main():
     parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
 
     args = parser.parse_args()
+    
+    if args.upload_to:
+      upload_to = args.upload_to.split(',')
+    else:
+      upload_to = None
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
 
@@ -483,7 +488,7 @@ def main():
         General=General
     )
     address = mt.saveObject(object=obj)
-    mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+    mt.createSnapshot(path=address, upload_to=upload_to, dest_path=args.dest_key_path)
 
 
 def _assemble_study_analysis_result(*, study_name, study_set_name, recordings, sorting_results, sorter_names):
