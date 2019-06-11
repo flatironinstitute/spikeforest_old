@@ -53,8 +53,8 @@ max_clusters   = 10         # Maximal number of clusters for every electrodes WA
 nb_repeats     = 3          # Number of passes used for the clustering
 smart_search   = True       # Activate the smart search mode
 sim_same_elec  = 3          # Distance within clusters under which they are re-merged
-sensitivity    = 3         # Single parameter for clustering sensitivity. The lower the more sensitive
-cc_merge       = 0.96      # If CC between two templates is higher, they are merged
+sensitivity    = 3          # Single parameter for clustering sensitivity. The lower the more sensitive
+cc_merge       = 0.975      # If CC between two templates is higher, they are merged
 dispersion     = (5, 5)     # Min and Max dispersion allowed for amplitudes [in MAD]
 noise_thr      = 0.8        # Minimal amplitudes are such than amp*min(templates) < noise_thr*threshold in [0-1]
 remove_mixture = True       # At the end of the clustering, we remove mixtures of templates
@@ -62,7 +62,7 @@ cc_mixtures    = 0.75       # If CC between a sum of two templates and a templat
 make_plots     =            # Generate sanity plots of the clustering [Nothing or None if no plots]
 
 [fitting]
-chunk_size     = 1          # Size of chunks used during fitting [in second] WAS 1
+chunk_size     = 1          # Size of chunks used during fitting [in second]
 amp_limits     = (0.3, 5)   # Amplitudes for the templates during spike detection [if not auto] (0.3, 5)
 amp_auto       = True       # True if amplitudes are adjusted automatically for every templates
 max_chunk      = inf        # Fit only up to max_chunk

@@ -75,6 +75,7 @@ class SpykingCircus(mlpr.Processor):
                 if os.path.exists(tmpdir):
                     shutil.rmtree(tmpdir)
             raise
+
         if not getattr(self, '_keep_temp_files', False):
             shutil.rmtree(tmpdir)
 
@@ -85,7 +86,7 @@ def spyking_circus(
     probe_file=None,
     file_name=None,
     detect_sign=-1,  # -1 - 1 - 0
-    adjacency_radius=100,  # Channel neighborhood adjacency radius corresponding to geom file
+    adjacency_radius=200,  # Channel neighborhood adjacency radius corresponding to geom file
     spike_thresh=6,  # Threshold for detection
     template_width_ms=3,  # Spyking circus parameter
     filter=True,
