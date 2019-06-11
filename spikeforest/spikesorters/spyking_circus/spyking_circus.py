@@ -42,7 +42,7 @@ class SpykingCircus(mlpr.Processor):
         optional=True, default=10000, description='I believe it relates to subsampling and affects compute time')
 
     def run(self):
-        tmpdir = _get_tmpdir('spiking-circus')
+        tmpdir = _get_tmpdir('spyking-circus')
         num_workers = int(os.environ.get('NUM_WORKERS', 1))
 
         try:
