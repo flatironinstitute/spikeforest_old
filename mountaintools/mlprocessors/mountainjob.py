@@ -366,7 +366,7 @@ class MountainJob():
                 # we may want to restore the following at some point
                 print_console_out = False
                 if retcode != 0:
-                    print_console_out
+                    print_console_out = True
                 if os.path.exists(tmp_process_console_out_fname):
                     process_console_out = _read_text_file(tmp_process_console_out_fname) or ''
                     if process_console_out:
