@@ -17,9 +17,9 @@ SortingResults
 StudySets
 StudyAnalysisResults
 
-## Schema
+# Schema
 
-### General
+# General
 
 const generalSchema = new mongoose.Schema({
   dateUpdated: {
@@ -38,7 +38,7 @@ const generalSchema = new mongoose.Schema({
   }
 });
 
-### Algorithm
+# Algorithm
 
 const algorithmSchema = new mongoose.Schema({
   label: {
@@ -68,7 +68,7 @@ const algorithmSchema = new mongoose.Schema({
   }
 });
 
-### Sorter
+# Sorter
 
 const sorterSchema = new mongoose.Schema({
   name: {
@@ -91,8 +91,8 @@ const sorterSchema = new mongoose.Schema({
     type: Map
   }
 });
-    
-### SortingResult
+
+# SortingResult
 
 const sortingResultSchema = new mongoose.Schema({
   recordingName: {
@@ -128,8 +128,8 @@ const sortingResultSchema = new mongoose.Schema({
     type: String
   },
 });
-    
-### StudySet
+
+# StudySet
 
 const studySetSchema = new mongoose.Schema({
   name: {
@@ -189,7 +189,7 @@ const studySetSchema = new mongoose.Schema({
   }
 });
 
-### StudyAnalysisResult
+# StudyAnalysisResult
 
 const studyAnalysisResultSchema = new mongoose.Schema(
   {
@@ -409,17 +409,21 @@ def main():
                 firingsTrue=sr['recording']['firings_true'],
                 consoleOut=sr['console_out'],
                 container=sr['container'],
-                cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None)
+                cpuTimeSec=sr['execution_stats'].get('elapsed_sec', None),
+                returnCode=sr['execution_stats'].get('retcode', 0),  # TODO: in future, the default should not be 0 -- rather it should be a required field of execution_stats
+                timedOut=sr['execution_stats'].get('timed_out', False),
+                startTime=datetime.fromtimestamp(sr['execution_stats'].get('start_time')).isoformat(),
+                endTime=datetime.fromtimestamp(sr['execution_stats'].get('end_time')).isoformat()
             )
-        if sr.get('firings', None):
-            SR['firings'] = sr['firings']
-            if not sr.get('comparison_with_truth', None):
-                print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
+            if sr.get('firings', None):
+                SR['firings'] = sr['firings']
+                if not sr.get('comparison_with_truth', None):
+                    print('Warning: comparison with truth not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
+                    print('Console output is here: ' + sr['console_out'])
+            else:
+                print('Warning: firings not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
                 print('Console output is here: ' + sr['console_out'])
-        else:
-            print('Warning: firings not found for sorting result: {} {}/{}'.format(sr['sorter']['name'], sr['recording']['study'], sr['recording']['name']))
-            print('Console output is here: ' + sr['console_out'])
-        SortingResults.append(SR)
+            SortingResults.append(SR)
     # print('Num unit results:', len(UnitResults))
 
     # SORTERS

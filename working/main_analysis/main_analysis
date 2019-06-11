@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--analyses', help='Comma-separated names of analyses to run', required=True)
     parser.add_argument('--job_timeout', help='Job timeout in seconds. Default is 20 minutes = 1200 seconds.', required=False, default=1200)
     parser.add_argument('--skip_failing', help='Use cached version of failing processes.', action='store_true')
+    parser.add_argument('--skip_timed_out', help='Use cached version of timed out processes.', action='store_true')
     parser.add_argument('--use_slurm', help='Whether to use slurm.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
@@ -44,6 +45,7 @@ def main():
         job_timeout = int(job_timeout)
 
     skip_failing = args.skip_failing
+    skip_timed_out = args.skip_timed_out
 
     use_slurm = True
 
@@ -182,6 +184,7 @@ def main():
                         firings_out=dict(ext='.mda'),
                         _compute_requirements=dict(batch_type=batch_type),
                         _skip_failing=skip_failing,
+                        _skip_timed_out=skip_timed_out,
                         _force_run=sorter.get('force_run', False),
                         **sorting_params
                     )

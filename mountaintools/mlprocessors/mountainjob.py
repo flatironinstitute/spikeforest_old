@@ -121,10 +121,21 @@ class MountainJob():
         use_cache = self._job_object['use_cache']
         ignore_local_cache = (os.environ.get('MLPROCESSORS_IGNORE_LOCAL_CACHE', 'FALSE') == 'TRUE')
         skip_failing = self._job_object['skip_failing']
+        skip_timed_out = self._job_object.get('skip_timed_out', False)
         if (use_cache) and (not force_run) and (not ignore_local_cache):
             result = self._find_result_in_cache()
             if result:
-                if (result.retcode == 0) or (skip_failing):
+                if (result.retcode == 0):
+                    use_result = True
+                else:
+                    if skip_failing:
+                        use_result = True
+                    elif skip_timed_out and (result.timed_out):
+                        use_result = True
+                    else:
+                        use_result = False
+
+                if use_result:
                     if result.retcode == 0:
                         self._copy_outputs_from_result_to_dest_paths(result)
                         result = self._post_process_result(result)
@@ -139,6 +150,7 @@ class MountainJob():
         force_run = self._job_object['force_run']
         use_cache = self._job_object['use_cache']
         skip_failing = self._job_object['skip_failing']
+        skip_timed_out = self._job_object.get('skip_timed_out', False)
         keep_temp_files = self._job_object['keep_temp_files']
         job_timeout = self._job_object.get('timeout', None)
         label = self._job_object.get('label', '')
@@ -147,7 +159,17 @@ class MountainJob():
         if (use_cache) and (not force_run) and (not ignore_local_cache):
             result = self._find_result_in_cache()
             if result:
-                if (result.retcode == 0) or (skip_failing):
+                if (result.retcode == 0):
+                    use_result = True
+                else:
+                    if skip_failing:
+                        use_result = True
+                    elif skip_timed_out and (result.timed_out):
+                        use_result = True
+                    else:
+                        use_result = False
+
+                if use_result:
                     if result.retcode == 0:
                         self._copy_outputs_from_result_to_dest_paths(result)
                         result = self._post_process_result(result)
@@ -404,7 +426,7 @@ class MountainJob():
             if use_cache:
                 # We will now store the result regardless of what the retcode was
                 # For retrieval we will then decide whether to repeat based on options
-                # specified (i.e., skip_failing)
+                # specified (i.e., skip_failing skip_timed_out)
                 self._store_result_in_cache(R)
 
             if (retcode == 0):
@@ -550,6 +572,7 @@ class MountainJob():
 
         R = MountainJobResult()
         R.retcode = retcode
+        R.timed_out = runtime_info.get('timed_out', False)
         R.runtime_info = runtime_info
         R.console_out = local_client.saveFile(path=output_paths['--console-out--'])
         R.outputs = dict()

@@ -7,11 +7,12 @@ def execute(
     _container=None,
     _use_cache=True,
     _skip_failing=None,
+    _skip_timed_out=None,
     _force_run=None,
     _keep_temp_files=None,
     _label=None,
     **kwargs
 ):
-    job = createJob(proc, _container=_container, _use_cache=_use_cache, _skip_failing=_skip_failing, _force_run=_force_run, _keep_temp_files=_keep_temp_files, _label=_label, _verbose=False, **kwargs)
+    job = createJob(proc, _container=_container, _use_cache=_use_cache, _skip_failing=_skip_failing, _skip_timed_out=_skip_timed_out, _force_run=_force_run, _keep_temp_files=_keep_temp_files, _label=_label, _verbose=False, **kwargs)
     result = job.execute()
     return result
