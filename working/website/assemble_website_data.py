@@ -265,11 +265,11 @@ def main():
     parser.add_argument('--dest_key_path', help='Optional destination key path', required=False, default=None)
 
     args = parser.parse_args()
-    
+
     if args.upload_to:
-      upload_to = args.upload_to.split(',')
+        upload_to = args.upload_to.split(',')
     else:
-      upload_to = None
+        upload_to = None
 
     mt.configDownloadFrom(['spikeforest.kbucket'])
 

@@ -20,6 +20,7 @@ from .filelock import FileLock
 import mtlogging
 from .aux import _read_json_file, _read_text_file, _write_text_file, _sha1_of_object, _sha1_of_string, _create_temporary_fname
 from .aux import deprecated
+from typing import Union, List
 
 env_path = os.path.join(os.environ.get('HOME', ''), '.mountaintools', '.env')
 if os.path.exists(env_path):
@@ -185,19 +186,19 @@ class MountainClient():
     def login(self, *, user=None, password=None, interactive=False, ask_password=False):
         pass
 
-    def setPairioToken(self, collection, token):
+    def setPairioToken(self, collection: str, token: str) -> None:
         """
         Store a pairio token for a given collection.
         """
         self._pairio_tokens[collection] = token
 
-    def setKacheryUploadToken(self, kachery_name, token):
+    def setKacheryUploadToken(self, kachery_name: str, token: str) -> None:
         """
         Store upload token for given kachery
         """
         self._kachery_upload_tokens[kachery_name] = token
 
-    def setKacheryDownloadToken(self, kachery_name, token):
+    def setKacheryDownloadToken(self, kachery_name: str, token: str) -> None:
         """
         Store download token for given kachery
         """
@@ -223,7 +224,7 @@ class MountainClient():
     def getRemoteConfig(self):
         return dict()
 
-    def addRemoteCollection(self, collection, token, admin_token):
+    def addRemoteCollection(self, collection: str, token: str, admin_token: str):
         """
         Add a remote collection, or set the token for an existing collection
         (requires admin access).
@@ -263,10 +264,10 @@ class MountainClient():
         for kname in kachery_names:
             if kname not in self._config_download_from:
                 self._config_download_from.append(kname)
-    
+
     def configVerbose(self, value):
         """Toggle on or off verbose mode
-        
+
         Parameters
         ----------
         value : bool
@@ -1053,7 +1054,7 @@ class MountainClient():
                     else:
                         self._pairio_tokens[vals[0]] = vals[1]
 
-    def _get_value(self, *, key, subkey, collection=None, local_first=False, check_alt=False):
+    def _get_value(self, *, key: Union[str, dict], subkey: Union[None, str]=None, collection: Union[None, str]=None, local_first: bool=False, check_alt: bool=False) -> Union[None, str]:
         if local_first or not collection:
             ret = self._local_db.getValue(key=key, subkey=subkey, check_alt=check_alt)
             if ret is not None:
@@ -1092,7 +1093,7 @@ class MountainClient():
                 raise Exception('Error setting value to remote collection {}'.format(collection))
         return True
 
-    def _get_sub_keys(self, *, key, collection):
+    def _get_sub_keys(self, *, key: Union[str, dict], collection: Union[str, None]) -> List[str]:
         if collection:
             return self._remote_client.getSubKeys(key=key, collection=collection, url=self._pairio_url)
         else:
@@ -1330,7 +1331,7 @@ class MountainClientLocal():
     def configVerbose(self, value):
         self._verbose = value
 
-    def getSubKeys(self, *, key):
+    def getSubKeys(self, *, key: Union[str, dict]) -> List[str]:
         keyhash = _hash_of_key(key)
         subkey_db_path = self._get_subkey_file_path_for_keyhash(keyhash, _create=False)
         if not os.path.exists(subkey_db_path):
@@ -1425,10 +1426,7 @@ class MountainClientLocal():
                     _write_text_file(fname0, value)
             return True
 
-    @mtlogging.log()
     def realizeFile(self, *, path, local_only=False, resolve_locally=True, dest_path=None, show_progress=False):
-        """
-        """
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
@@ -1502,7 +1500,7 @@ class MountainClientLocal():
         return ret_path
 
     @mtlogging.log(name='MountainClientLocal:computeFileSha1')
-    def computeFileSha1(self, path):
+    def computeFileSha1(self, path, _cache_only=False):
         if path.startswith('sha1://'):
             list0 = path.split('/')
             sha1 = list0[2]
@@ -1511,10 +1509,14 @@ class MountainClientLocal():
             print('WARNING: The kbucket:// URL is deprecated')
             path_local = self._find_file_in_local_kbucket_share(path)
             if path_local is not None:
-                return self.computeFileSha1(path=path_local)
+                return self.computeFileSha1(path=path_local, _cache_only=_cache_only)
+            if _cache_only:
+                return None
             sha1, _, __ = self._get_kbucket_file_info(path=path)
             return sha1
         elif path.startswith('sha1dir://'):
+            if _cache_only:
+                return None
             list0 = path.split('/')
             sha1 = list0[2]
             if '.' in sha1:
@@ -1538,7 +1540,7 @@ class MountainClientLocal():
                 ii = ii + 1
             return None
         else:
-            return self._sha1_cache.computeFileSha1(path=path)
+            return self._sha1_cache.computeFileSha1(path=path, _cache_only=_cache_only)
 
     def getNodeInfo(self, *, share_id):
         return self._get_node_info(share_id=share_id)
@@ -1628,10 +1630,20 @@ class MountainClientLocal():
         fname = self._sha1_cache.findFile(sha1)
         if fname is not None:
             if (dest_path is not None) and (os.path.abspath(fname) != os.path.abspath(dest_path)):
-                if show_progress:
-                    print('Copying file {} -> {}'.format(fname, dest_path))
-                shutil.copyfile(fname, dest_path)
-                self._sha1_cache.reportFileSha1(dest_path, sha1)
+                if os.path.exists(dest_path):
+                    already_there = False
+                    if os.path.getsize(dest_path) == os.path.getsize(fname):
+                        # there is a chance they are the same
+                        if self.computeFileSha1(dest_path, _cache_only=True) == sha1:
+                            # already exists at destination
+                            already_there = True
+                else:
+                    already_there = False
+                if not already_there:
+                    if show_progress:
+                        print('Copying file {} -> {}'.format(fname, dest_path))
+                    shutil.copyfile(fname, dest_path)
+                    self._sha1_cache.reportFileSha1(dest_path, sha1)
                 return os.path.abspath(dest_path)
             return os.path.abspath(fname)
         return None

@@ -109,8 +109,6 @@ def main():
                 num_cores_per_job=4,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
-                #additional_srun_opts=['-p gpu', '--gres=gpu:1', '--constraint=v100']
-                #additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1', '--constraint=v100']
                 additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
             )
         else:

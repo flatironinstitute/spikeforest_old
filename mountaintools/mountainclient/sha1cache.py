@@ -142,7 +142,7 @@ class Sha1Cache():
         return path0, sha1
 
     @mtlogging.log()
-    def computeFileSha1(self, path, _known_sha1=None):
+    def computeFileSha1(self, path, _known_sha1=None, _cache_only=False):
         path = os.path.abspath(path)
         basename = os.path.basename(path)
         if len(basename) == 40:
@@ -165,6 +165,8 @@ class Sha1Cache():
                             return obj['sha1']
 
         if _known_sha1 is None:
+            if _cache_only:
+                return None
             sha1 = _compute_file_sha1(path)
         else:
             sha1 = _known_sha1

@@ -5,9 +5,11 @@ import hashlib
 import json
 import functools
 
+
 def deprecated(reason):
     def decorator(func):
-        if not func.__doc__: func.__doc__ = 'Deprecated'
+        if not func.__doc__:
+            func.__doc__ = 'Deprecated'
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -16,6 +18,7 @@ def deprecated(reason):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
 
 def _db_load(path, *, count=0):
     if count > 10:
@@ -57,20 +60,6 @@ def _db_load(path, *, count=0):
         return dict()
 
 
-def _db_save(path, db):
-    # create a backup first
-    if os.path.exists(path):
-        try:
-            # make sure it is good before doing the backup
-            _read_json_file(path)  # if not good, we get an exception
-            if os.path.exists(path + '.save'):
-                os.unlink(path + '.save')
-            shutil.copyfile(path, path + '.save')
-        except:
-            # worst case, let's just proceed
-            pass
-    _write_json_file(db, path)
-
 def _read_json_file(path):
     with open(path) as f:
         return json.load(f)
@@ -90,8 +79,10 @@ def _write_text_file(fname, txt):
     with open(fname, 'w') as f:
         f.write(txt)
 
+
 def _is_http_url(url):
     return url.startswith('http://') or url.startswith('https://')
+
 
 def _sha1_of_string(txt):
     hh = hashlib.sha1(txt.encode('utf-8'))
@@ -106,6 +97,7 @@ def _sha1_of_object(obj):
 
 def _random_string(num):
     return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
+
 
 def _create_temporary_fname(ext):
     tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())

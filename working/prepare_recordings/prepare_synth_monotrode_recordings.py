@@ -68,6 +68,8 @@ for rec in recordings:
     # if rec['index_within_study'] == 0:
     #     mt.createSnapshot(rec['directory'], upload_to=upload_public_to, upload_recursive=True)
     #     rec['public'] = True
+    mt.createSnapshot(rec['directory'] + '/geom.csv', upload_to=upload_public_to)
+    mt.createSnapshot(rec['directory'] + '/params.json', upload_to=upload_public_to)
 
 print('Saving object...')
 # for ut in [upload_to, upload_public_to]:

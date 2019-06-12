@@ -5,13 +5,13 @@ import random
 
 
 class FileLock():
-    def __init__(self, path, _disable_lock=False, exclusive=True):
+    def __init__(self, path: str, _disable_lock: bool=False, exclusive: bool=True):
         self._path = path
         self._file = None
         self._disable_lock = _disable_lock
         self._exclusive = exclusive
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         if self._disable_lock:
             return
         self._file = open(self._path, 'w+')
@@ -35,5 +35,6 @@ class FileLock():
     def __exit__(self, type, value, traceback):
         if self._disable_lock:
             return
-        fcntl.flock(self._file, fcntl.LOCK_UN)
-        self._file.close()
+        if self._file is not None:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+            self._file.close()

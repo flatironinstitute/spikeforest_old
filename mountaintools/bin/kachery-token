@@ -58,7 +58,7 @@ def main():
     parser_remove.add_argument('name')
     parser_remove.add_argument('type', choices=['download', 'upload'], nargs='?')
     
-    args = parser.parse_args()
+    args = parser.parse_args(['list'] if len(sys.argv) == 1 else None)
     command = args.command
 
     cmds = {

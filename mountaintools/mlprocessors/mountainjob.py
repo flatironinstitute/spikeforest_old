@@ -4,13 +4,9 @@ import json
 import hashlib
 import time
 import os
-import subprocess
 import tempfile
 import sys
 import shutil
-import fnmatch
-import inspect
-import shlex
 from mountainclient import client as mt
 from mountainclient import MountainClient
 import datetime
@@ -18,21 +14,22 @@ from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 import mtlogging
 import numpy as np
-import random
 from .mountainjobresult import MountainJobResult
+from typing import Union
 
 local_client = MountainClient()
+
 
 _internal = dict(
     current_job_queue=None
 )
 
 
-def currentJobQueue():
+def currentJobQueue() -> Union[None, object]:
     return _internal['current_job_queue']
 
 
-def _setCurrentJobQueue(jqueue):
+def _setCurrentJobQueue(jqueue: object):
     _internal['current_job_queue'] = jqueue
 
 
@@ -110,7 +107,7 @@ class MountainJob():
 
     @mtlogging.log(name='MountainJob:execute')
     def execute(self):
-        jq = _internal['current_job_queue']
+        jq = currentJobQueue()
         if jq:
             return jq.queueJob(self)
         else:
@@ -516,7 +513,7 @@ class MountainJob():
 
     def consoleOutSignature(self):
         return self.outputSignature('--console-out--')
-    
+
     def outputSignature(self, output_name):
         return _compute_mountain_job_output_signature(
             processor_name=self._job_object['processor_name'],
@@ -650,6 +647,7 @@ class ConsoleCapture():
         self._time_start = time.time()
 
     def stop_capturing(self):
+        assert self._tmp_fname is not None
         self._time_stop = time.time()
         sys.stdout = self._original_stdout
         sys.stderr = self._original_stderr
@@ -662,6 +660,7 @@ class ConsoleCapture():
         self._file_handle.write(txt)
 
     def runtimeInfo(self):
+        assert self._time_start is not None
         return dict(
             start_time=self._time_start - 0,
             end_time=self._time_stop - 0,
@@ -726,12 +725,12 @@ def _write_text_file(fname, str):
         f.write(str)
 
 
-def _get_file_ext(fname):
+def _get_file_ext(fname: str):
     _, ext = os.path.splitext(fname)
     return ext
 
 
-def _make_remote_url_for_file(fname):
+def _make_remote_url_for_file(fname: str):
     if fname.startswith('sha1://'):
         return fname
     elif fname.startswith('kbucket://') or fname.startswith('sha1dir://'):
