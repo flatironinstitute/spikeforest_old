@@ -3,145 +3,113 @@
         "hybrid_janelia": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.hybrid_janelia.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.hybrid_janelia_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "manual_franklab": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "paired_boyden32c": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_boyden32c.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_boyden32c_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "paired_crcns": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_crcns.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_crcns_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "paired_kampff": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_kampff.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_kampff_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "paired_mea64c": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_mea64c.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_mea64c_irc.json",
-            "sorter_keys": ["irc"]
-        },
-        "paired_monotrode": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_monotrode.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_monotrode_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "synth_bionet": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_bionet.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_bionet_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "synth_magland": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_magland.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_magland_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "synth_mearec_neuronexus": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuronexus.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuronexus_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "synth_mearec_tetrode": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_tetrode.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_tetrode_irc.json",
-            "sorter_keys": ["irc"]
-        },
-        "synth_monotrode": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_monotrode.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_monotrode_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         },
         "synth_visapy": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_visapy.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_visapy_irc.json",
-            "sorter_keys": ["irc"]
+            "sorter_keys": ["irc1","irc2","irc3","irc4","irc5","irc6","irc7","irc8","ks2"]
         }
     },
     "sorters":{
-        "irc": {
+        "irc1": {
             "name":"IronClust",
             "processor_name":"IronClust",
-            "params": {},
+            "params": {"delta_cut":1, "sort_mode":1, "fft_thresh":10},
             "gpu": true
         },
-        "hs2": {
-            "name": "HerdingSpikes2",
-            "processor_name": "HerdingSpikes2",
-            "params": {},
-            "gpu": false
-        },
-        "jrc": {
-            "name": "JRClust",
-            "processor_name": "JRClust",
-            "params": {},
+        "irc2": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1.1, "sort_mode":1, "fft_thresh":10},
             "gpu": true
         },
-        "ks": {
-            "name": "KiloSort",
-            "processor_name": "KiloSort",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50
-            },
+        "irc3": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1, "sort_mode":2, "fft_thresh":10},
             "gpu": true
         },
+        "irc4": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1.1, "sort_mode":2, "fft_thresh":10},
+            "gpu": true
+        },
+        "irc5": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1, "sort_mode":3, "fft_thresh":10},
+            "gpu": true
+        },
+        "irc6": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1.1, "sort_mode":3, "fft_thresh":10},
+            "gpu": true
+        },    
+        "irc7": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1, "sort_mode":2, "fft_thresh":8},
+            "gpu": true
+        },    
+        "irc8": {
+            "name":"IronClust",
+            "processor_name":"IronClust",
+            "params": {"delta_cut":1.1, "sort_mode":2, "fft_thresh":8},
+            "gpu": true
+        },                                                        
         "ks2": {
             "name": "KiloSort2",
             "processor_name": "KiloSort2",
             "params": {},
             "gpu": true
-        },
-        "klusta": {
-            "name": "Klusta",
-            "processor_name": "Klusta",
-            "params": {},
-            "gpu": false
-        },
-        "ms4": {
-            "name": "MountainSort4",
-            "processor_name": "MountainSort4",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50,
-                "detect_threshold": 3
-            },
-            "gpu": false
-        },
-        "sc": {
-            "name": "SpykingCircus",
-            "processor_name": "SpykingCircus",
-            "params": {
-                "detect_sign": -1,
-                "adjacency_radius": 50
-            },
-            "gpu": false
-        },
-        "tdc": {
-            "name": "Tridesclous",
-            "processor_name": "Tridesclous",
-            "params": {},
-            "gpu": false
-        },
-        "waveclus": {
-            "name": "Waveclus",
-            "processor_name": "Waveclus",
-            "params": {},
-            "gpu": false
-        },
-        "yass": {
-            "name": "Yass",
-            "processor_name": "Yass",
-            "params": {},
-            "gpu": false
         }
     }
 }
