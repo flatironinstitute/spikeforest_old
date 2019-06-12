@@ -33,7 +33,7 @@ def main():
     print(args)
 
     mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
-    upload_to = 'spikeforest.kbucket'
+    upload_to = ['spikeforest.kbucket', 'spikeforest.public']
 
     print('Loading analysis file...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
@@ -53,7 +53,7 @@ def main():
 
     sorter_definitions = analysis_obj['sorters']
     analysis_definitions = analysis_obj['analyses']
-    
+
     for aname in analysis_names:
         if aname not in analysis_definitions:
             raise Exception('Analysis {} not found in analysis file'.format(aname))
@@ -89,7 +89,7 @@ def main():
             recordings = recordings[0:2]
             studies = studies[0:1]
             output_path = None
-        
+
         slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
         job_handler = mlpr.SlurmJobHandler(
             working_dir=slurm_working_dir
