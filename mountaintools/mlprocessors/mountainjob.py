@@ -140,7 +140,7 @@ class MountainJob():
                     return result
         return None
 
-    def _execute(self):
+    def _execute(self, print_console_out=True):
         if self._job_object is None:
             return MountainJobResult()
         container = self._job_object['container']
@@ -382,8 +382,6 @@ class MountainJob():
                     #     break
                     mtlogging.sublog(None)
 
-                # we may want to restore the following at some point
-                print_console_out = False
                 if retcode != 0:
                     print_console_out = True
                 if os.path.exists(tmp_process_console_out_fname):

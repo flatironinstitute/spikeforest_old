@@ -78,7 +78,7 @@ class JobQueue():
                     job.result.fromObject(newly_running_job_results_from_cache[ii].getObject())
                     job.result._status = 'finished'
                 else:
-                    self._job_handler.executeJob(job)
+                    self._job_handler.executeJob(job, print_console_out=False)
 
         if self._job_handler:
             self._job_handler.iterate()

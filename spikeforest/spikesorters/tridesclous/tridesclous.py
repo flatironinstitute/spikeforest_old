@@ -20,19 +20,21 @@ class Tridesclous(mlpr.Processor):
     """
 
     NAME = 'Tridesclous'
-    VERSION = '0.2.1'  # wrapper VERSION
+    VERSION = '0.2.2'  # wrapper VERSION
     ADDITIONAL_FILES = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    CONTAINER = 'sha1://9fb4a9350492ee84c8ea5d8692434ecba3cf33da/2019-05-13/tridesclous.simg'
+    # CONTAINER = 'sha1://9fb4a9350492ee84c8ea5d8692434ecba3cf33da/2019-05-13/tridesclous.simg'
+    CONTAINER = 'sha1://07a59aaf83bcf2a2cf4b5e7fbd05aed784b34671/2019-06-13/tridesclous.simg'
     LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')
 
     def run(self):
+        print('Running Tridesclous...')
         from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
-        from spikeforest_common import autoScaleRecordingToNoiseLevel
+        # from spikeforest_common import autoScaleRecordingToNoiseLevel
         import spiketoolkit as st
 
         code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
@@ -42,6 +44,7 @@ class Tridesclous(mlpr.Processor):
             if not os.path.exists(tmpdir):
                 os.mkdir(tmpdir)
 
+            print('Loading recording...')
             recording = SFMdaRecordingExtractor(self.recording_dir)
             # print('Auto scaling via normalize_by_quantile...')
             # recording = st.preprocessing.normalize_by_quantile(recording=recording, scale=200.0)
@@ -66,5 +69,3 @@ class Tridesclous(mlpr.Processor):
 
         if not getattr(self, '_keep_temp_files', False):
             shutil.rmtree(tmpdir)
-
-

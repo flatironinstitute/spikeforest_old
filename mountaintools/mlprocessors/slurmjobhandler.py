@@ -392,7 +392,7 @@ class _SlurmProcess():
                     if job_object:
                         job = mlpr.MountainJob(job_object = job_object)
                         try:
-                            result = job.execute()
+                            result = job._execute(print_console_out=False)
                             with FileLock(result_fname + '.lock', exclusive=True):
                                 with open(result_fname, 'w') as f:
                                     json.dump(result.getObject(), f)

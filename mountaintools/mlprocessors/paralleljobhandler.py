@@ -68,7 +68,7 @@ class ParallelJobHandler(JobHandler):
 
 
 def _run_job(pipe_to_parent, job):
-    result0 = job._execute()
+    result0 = job._execute(print_console_out=False)
     pipe_to_parent.send(result0.getObject())
     # wait for message to return
     while True:
