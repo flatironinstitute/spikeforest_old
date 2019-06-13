@@ -16,7 +16,7 @@ RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl
 RUN pip install tridesclous>=1.2.0
 
 ## OpenCL with POCL
-RUN apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl
+RUN apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl-opencl-icd
 RUN pip install pyopencl
 
 ### spikeextractors
