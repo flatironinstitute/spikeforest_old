@@ -60,7 +60,7 @@ def main():
     skip_failing = args.skip_failing
     skip_timed_out = args.skip_timed_out
 
-    use_slurm = True
+    use_slurm = args.use_slurm
 
     analysis_names = args.analyses.split(',')
 
