@@ -49,7 +49,7 @@ class Tridesclous(mlpr.Processor):
 
             print('Running TridesclousSorter...')
             os.environ['HS2_PROBE_PATH'] = tmpdir
-            st_sorter = st.sorters.HerdingspikesSorter(
+            st_sorter = st.sorters.TridesclousSorter(
                 recording=recording,
                 output_folder=tmpdir + '/tdc_sorting_output'
             )
