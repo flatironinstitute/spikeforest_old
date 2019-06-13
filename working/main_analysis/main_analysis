@@ -54,6 +54,7 @@ def main():
     sorter_definitions = analysis_obj['sorters']
     analysis_definitions = analysis_obj['analyses']
 
+    # Loop through all the analyses
     for aname in analysis_names:
         if aname not in analysis_definitions:
             raise Exception('Analysis {} not found in analysis file'.format(aname))
@@ -90,6 +91,7 @@ def main():
             studies = studies[0:1]
             output_path = None
 
+        # Set up slurm configuration
         slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
         job_handler = mlpr.SlurmJobHandler(
             working_dir=slurm_working_dir
@@ -101,6 +103,7 @@ def main():
                 num_cores_per_job=2,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
+                max_simultaneous_batches=20,
                 additional_srun_opts=['-p ccm']
             )
             job_handler.addBatchType(
@@ -109,6 +112,7 @@ def main():
                 num_cores_per_job=4,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
+                max_simultaneous_batches=20,
                 additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
             )
         else:
@@ -116,14 +120,18 @@ def main():
                 name='cpu',
                 num_workers_per_batch=multiprocessing.cpu_count(),
                 num_cores_per_job=2,
+                max_simultaneous_batches=1,
                 use_slurm=False
             )
             job_handler.addBatchType(
                 name='gpu',
                 num_workers_per_batch=1,
                 num_cores_per_job=2,
+                max_simultaneous_batches=1,
                 use_slurm=False
             )
+
+        # Start the job queue
         with mlpr.JobQueue(job_handler=job_handler) as JQ:
             # Summarize the recordings
             mtlogging.sublog('summarize-recordings')
@@ -155,8 +163,8 @@ def main():
             ])
             for i, recording in enumerate(recordings):
                 recording['results'] = dict()
-                recording['results']['info'] = jobs_info[i].execute()
-                recording['results']['units_info'] = jobs_units_info[i].execute()
+                recording['results']['info'] = jobs_info[i].execute()  # sends the job to the queue
+                recording['results']['units_info'] = jobs_units_info[i].execute()  # sends the job to the queue
                 recording['results']['sorting'] = dict()
                 recording['results']['comparison'] = dict()
 
@@ -189,7 +197,7 @@ def main():
                     for recording in recordings
                 ])
                 for i, recording in enumerate(recordings):
-                    recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
+                    recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()  # sends job to the queue
 
                 comparison_jobs = sa.GenSortingComparisonTable.createJobs([
                     dict(
@@ -206,8 +214,9 @@ def main():
                     for recording in recordings
                 ])
                 for i, recording in enumerate(recordings):
-                    recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()
+                    recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()  # sends job to the queue
 
+            # wait for all jobs to complete
             JQ.wait()
 
             for recording in recordings:
@@ -217,6 +226,7 @@ def main():
                     true_units_info=recording['results']['units_info'].outputs['json_out']
                 )
                 if upload_to:
+                    # upload true units info into kachery
                     mt.createSnapshot(path=recording['summary']['true_units_info'], upload_to=upload_to)
 
             sorting_results = []
@@ -240,6 +250,7 @@ def main():
                         container=CONTAINER,
                     )
                     if upload_to:
+                        # upload console output to kachery
                         mt.createSnapshot(path=sr['console_out'], upload_to=upload_to)
                     if sorting_result.retcode == 0:
                         sr['firings'] = sorting_result.outputs['firings_out']
@@ -248,6 +259,7 @@ def main():
                             html=comparison_result.outputs['html_out']
                         )
                         if upload_to:
+                            # upload firings and comparison to kachery
                             mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
                             mt.createSnapshot(path=sr['comparison_with_truth']['json'], upload_to=upload_to)
                     else:

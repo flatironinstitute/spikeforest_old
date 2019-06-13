@@ -32,7 +32,7 @@ class FileLock():
                     num_tries = num_tries + 1
                     time.sleep(random.uniform(0, 0.1))
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value: object, traceback) -> None:
         if self._disable_lock:
             return
         if self._file is not None:
