@@ -238,7 +238,8 @@ def test_tridesclous_magland_c4():
 def test_tridesclous_magland_c8():
     sorter = Tridesclous
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container='default
+)
 
 
 @pytest.mark.spikeforest
