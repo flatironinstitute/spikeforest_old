@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-ARGS="main_analysis_irc.json --use_slurm" # --skip_failing"
+#ARGS="main_analysis_irc.json --use_slurm" # --skip_failing"
+ARGS="main_analysis_irc.json" # --skip_failing"
 
 ./main_analysis $ARGS --analyses hybrid_janelia
 ./main_analysis $ARGS --analyses manual_franklab
