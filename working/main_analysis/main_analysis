@@ -27,13 +27,26 @@ def main():
     parser.add_argument('--use_slurm', help='Whether to use slurm.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
+    parser.add_argument('--upload_to', help='Upload destination(s) separated by comma', default=None, required=False)
+    parser.add_argument('--download_from', help='Download destination(s) separated by comma', default=None, required=False)
 
     args = parser.parse_args()
-
     print(args)
 
-    mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
-    upload_to = ['spikeforest.kbucket', 'spikeforest.public']
+    if args.upload_to:
+        upload_to = args.upload_to.split(',')
+    else:
+        upload_to = None
+
+    if args.download_from:
+        download_from = args.download_from.split(',')
+    else:
+        download_from = None        
+    mt.configDownloadFrom(download_from)
+
+    #mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
+    #upload_to = ['spikeforest.kbucket', 'spikeforest.public']
+    #download_from = ['spikeforest.kbucket', 'spikeforest.public']
 
     print('Loading analysis file...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
