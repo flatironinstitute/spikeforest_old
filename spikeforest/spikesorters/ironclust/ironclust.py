@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.4.6'
+    VERSION = '0.4.7'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -88,20 +88,18 @@ class IronClust(mlpr.Processor):
     fGpu = mlpr.BoolParameter(
         optional=True, default=True, description='Use GPU if available')
     fft_thresh = mlpr.FloatParameter(
-        optional=True, default=10, description='FFT-based noise peak threshold')
+        optional=True, default=8, description='FFT-based noise peak threshold')
     nSites_whiten = mlpr.IntegerParameter(
         optional=True, default=32, description='Number of adjacent channels to whiten')        
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
     delta_cut = mlpr.FloatParameter(
         optional=True, default=1.1, description='Cluster detection threshold (delta-cutoff)')
-    sort_mode = mlpr.IntegerParameter(
-        optional=True, default=2, description='{1,2,3}, internal testing only')        
 
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='f8b2da0f09298a6bb811f21b88ff3127ab3a373e')
+        return install_ironclust(commit='41683f9f969aa14a5af211b6161630966fe195f7')
 
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)

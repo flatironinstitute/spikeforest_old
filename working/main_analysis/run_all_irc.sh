@@ -16,6 +16,6 @@ ARGS="main_analysis_irc.json --skip_failing --download_from spikeforest.kbucket,
 ./main_analysis $ARGS --analyses synth_bionet
 ./main_analysis $ARGS --analyses synth_magland
 ./main_analysis $ARGS --analyses synth_mearec_neuronexus
-./main_analysis $ARGS --analyses synth_mearec_tetrode
+#./main_analysis $ARGS --analyses synth_mearec_tetrode
 #./main_analysis $ARGS --analyses synth_monotrode
-./main_analysis $ARGS --analyses synth_visapy
+#./main_analysis $ARGS --analyses synth_visapy
