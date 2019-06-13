@@ -12,10 +12,18 @@ RUN echo "13 May 2019"
 
 #########################################
 ### Tridesclous
-RUN pip install https://github.com/tridesclous/tridesclous/archive/master.zip
+RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl PyQt5 pyqtgraph==0.10 quantities neo
+RUN pip install tridesclous>=1.2.0
+
+## OpenCL with POCL
+RUN apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl
+RUN pip install pyopencl
 
 ### spikeextractors
 RUN pip install spikeextractors==0.4.2
+
+### spiketoolkit
+RUN pip install spiketoolkit==0.3.2
 
 ### Other dependencies
 RUN pip install requests
