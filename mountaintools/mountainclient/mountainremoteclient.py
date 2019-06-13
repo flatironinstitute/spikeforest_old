@@ -6,13 +6,15 @@ import os
 import requests
 import time
 import mtlogging
+from typing import Union, Dict, List, Optional, Any
+from .mttyping import StrOrDict
 
 
 class MountainRemoteClient():
     def __init__(self):
         pass
 
-    def addCollection(self, *, collection, token, url, admin_token):
+    def addCollection(self, *, collection: str, token: str, url: str, admin_token: str) -> bool:
         if not url:
             print('Missing url for remote mountain server.')
             return False
@@ -29,10 +31,10 @@ class MountainRemoteClient():
             return False
         return True
 
-    def getValue(self, *, collection, key, subkey, url):
+    def getValue(self, *, collection: str, key: StrOrDict, subkey: Optional[str], url: str) -> Optional[str]:
         if not url:
             print('Missing url for remote mountain server.')
-            return False
+            raise ValueError('Missing url for remote mountain server.')
         keyhash = _hash_of_key(key)
         if subkey is None:
             path = '/get/{}/{}'.format(collection, keyhash)
@@ -44,15 +46,17 @@ class MountainRemoteClient():
             return None
         return obj['value']
 
-    def setValue(self, *, collection, key, subkey, overwrite=True, value, url, token):
+    def setValue(self, *, collection: str, key: StrOrDict, subkey: Optional[str], overwrite: bool=True, value: Optional[str], url: str, token: str) -> bool:
         if value:
             value_b64 = base64.b64encode(value.encode()).decode('utf-8')
+        else:
+            value_b64 = None
         if not url:
             print('Missing url for remote mountain server.')
-            return False
+            raise ValueError('Missing url for remote mountain server.')
         if not token:
             print('Missing token for remote mountain server.')
-            return False
+            raise ValueError('Missing token for remote mountain server.')
         keyhash = _hash_of_key(key)
         if value:
             if subkey is None:
@@ -78,7 +82,7 @@ class MountainRemoteClient():
             return False
         return True
 
-    def uploadFile(self, *, path, sha1, cas_upload_server_url, upload_token):
+    def uploadFile(self, *, path: str, sha1: str, cas_upload_server_url: str, upload_token: str) -> bool:
         url_check_path0 = '/check/' + sha1
         signature = _sha1_of_object(
             {'path': url_check_path0, 'token': upload_token})
@@ -117,7 +121,7 @@ class MountainRemoteClient():
             # print('Already on server (**)')
             return True
 
-    def getSubKeys(self, *, collection, key, url):
+    def getSubKeys(self, *, collection: str, key: StrOrDict, url: str) -> List[str]:
         # TODO - fix this - do not require downloading the entire object - will prob require modifying api of server
         val = self.getValue(collection=collection,
                             key=key, url=url, subkey='-')
@@ -130,29 +134,31 @@ class MountainRemoteClient():
             return []
 
 
-def _hash_of_key(key):
+def _hash_of_key(key: Union[Dict, List, str]) -> str:
+    key_str: str = ""
     if (type(key) == dict) or (type(key) == list):
-        key = json.dumps(key, sort_keys=True, separators=(',', ':'))
+        key_str = json.dumps(key, sort_keys=True, separators=(',', ':'))
     else:
-        if key.startswith('~'):
-            return key[1:]
+        key_str = str(key)
+        if key_str.startswith('~'):
+            return key_str[1:]
     
-    return _sha1_of_string(key)
+    return _sha1_of_string(key_str)
 
 
-def _sha1_of_string(txt):
+def _sha1_of_string(txt: str) -> str:
     hh = hashlib.sha1(txt.encode('utf-8'))
     ret = hh.hexdigest()
     return ret
 
 
-def _sha1_of_object(obj):
+def _sha1_of_object(obj: Union[List, Dict]) -> str:
     txt = json.dumps(obj, sort_keys=True, separators=(',', ':'))
     return _sha1_of_string(txt)
 
 
 @mtlogging.log()
-def _http_get_json(url, verbose=None, retry_delays=None):
+def _http_get_json(url: str, verbose: Optional[bool]=None, retry_delays: Optional[List[float]]=None) -> Optional[str]:
     timer = time.time()
     if retry_delays is None:
         retry_delays = [0.2, 0.5]
@@ -180,9 +186,9 @@ def _http_get_json(url, verbose=None, retry_delays=None):
 
 
 @mtlogging.log()
-def _http_post_file_data(url, fname, verbose=None):
+def _http_post_file_data(url: str, fname: str, verbose: Optional[bool]=None) -> Any:
+    timer = time.time()
     if verbose is None:
-        timer = time.time()
         verbose = (os.environ.get('HTTP_VERBOSE', '') == 'TRUE')
     if verbose:
         print('_http_post_file_data::: ' + fname)
@@ -201,7 +207,7 @@ def _http_post_file_data(url, fname, verbose=None):
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
 
 
-def _format_file_size(size):
+def _format_file_size(size: Optional[int]) -> str:
     if not size:
         return 'Unknown'
     if size <= 1024:
@@ -209,7 +215,7 @@ def _format_file_size(size):
     return _sizeof_fmt(size)
 
 
-def _sizeof_fmt(num, suffix='B'):
+def _sizeof_fmt(num: float, suffix: str='B') -> str:
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             return "%3.1f %s%s" % (num, unit, suffix)

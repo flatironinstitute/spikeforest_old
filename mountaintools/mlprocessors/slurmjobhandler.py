@@ -10,13 +10,14 @@ from .mountainjobresult import MountainJobResult
 from .shellscript import ShellScript
 from mountainclient import FileLock
 from mountainclient import client as mt
+from typing import Optional, List
 import json
 
 DEFAULT_JOB_TIMEOUT = 1200
 
 
 class SlurmJobHandler(JobHandler):
-    def __init__(self, working_dir):
+    def __init__(self, working_dir: str):
         super().__init__()
         if os.path.exists(working_dir):
             raise Exception('Working directory already exists: {}'.format(working_dir))
@@ -30,12 +31,13 @@ class SlurmJobHandler(JobHandler):
 
     def addBatchType(self, *,
                      name,
-                     num_workers_per_batch,
-                     num_cores_per_job,
-                     use_slurm,
-                     time_limit_per_batch=None,  # number of seconds or None
-                     additional_srun_opts=[]
-                     ):
+                     num_workers_per_batch: int,
+                     num_cores_per_job: int,
+                     use_slurm: bool,
+                     time_limit_per_batch: Optional[float]=None,  # number of seconds or None
+                     max_simultaneous_batches: Optional[int]=None,
+                     additional_srun_opts: List[str]=[]
+                     ) -> None:
         if name in self._batch_types:
             raise Exception('Batch type already exists: {}'.format(name))
         self._batch_types[name] = dict(
@@ -43,10 +45,11 @@ class SlurmJobHandler(JobHandler):
             num_cores_per_job=num_cores_per_job,
             use_slurm=use_slurm,
             time_limit_per_batch=time_limit_per_batch,
+            max_simultaneous_batches=max_simultaneous_batches,
             additional_srun_opts=additional_srun_opts
         )
 
-    def executeJob(self, job):
+    def executeJob(self, job: mlpr.MountainJob) -> None:
         job_timeout = job.getObject().get('timeout', None)
         if job_timeout is None:
             job_timeout = DEFAULT_JOB_TIMEOUT
@@ -60,7 +63,7 @@ class SlurmJobHandler(JobHandler):
                 raise Exception('Cannot execute job. Job timeout exceeds time limit: {} > {}'.format(job_timeout, batch_type['time_limit_per_batch']))
         self._unassigned_jobs.append(job)
 
-    def iterate(self):
+    def iterate(self) -> None:
         if self._halted:
             return
         for _, b in self._batches.items():
@@ -72,7 +75,7 @@ class SlurmJobHandler(JobHandler):
                 new_unassigned_jobs.append(job)
         self._unassigned_jobs = new_unassigned_jobs
 
-    def isFinished(self):
+    def isFinished(self) -> bool:
         if self._halted:
             return True
         if len(self._unassigned_jobs) > 0:
@@ -83,20 +86,20 @@ class SlurmJobHandler(JobHandler):
                     return False
         return True
 
-    def halt(self):
+    def halt(self) -> None:
         for _, b in self._batches.items():
             if not b.isFinished():
                 b.halt()
         self._halted = True
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         try:
             shutil.rmtree(self._working_dir)
         except:
             time.sleep(3)
             shutil.rmtree(self._working_dir)
 
-    def _handle_unassigned_job(self, job):
+    def _handle_unassigned_job(self, job: mlpr.MountainJob):
         compute_requirements = job.getObject().get('compute_requirements', {})
         batch_type_name = compute_requirements.get('batch_type', 'default')
         if batch_type_name not in self._batch_types:
@@ -109,11 +112,20 @@ class SlurmJobHandler(JobHandler):
                     if b.canAddJob(job):
                         b.addJob(job)
                         return True
+        num_running_batches_of_type = 0
         for _, b in self._batches.items():
             if b.batchTypeName() == batch_type_name:
                 if b.isWaitingToStart() or b.isPending():
                     # we'll wait for the batch to start before assigning it
                     return False
+                if not b.isFinished():
+                    num_running_batches_of_type = num_running_batches_of_type + 1
+
+        if batch_type['max_simultaneous_batches'] is not None:
+            if num_running_batches_of_type >= batch_type['max_simultaneous_batches']:
+                # we can't create a new batch now
+                return False
+
         # we need to create a new batch and we'll add the job later
         batch_id = self._last_batch_id + 1
         self._last_batch_id = batch_id
@@ -132,7 +144,7 @@ class SlurmJobHandler(JobHandler):
 
 
 class _Batch():
-    def __init__(self, working_dir, batch_label, batch_type_name, batch_type):
+    def __init__(self, working_dir: str, batch_label: str, batch_type_name: str, batch_type: dict):
         os.mkdir(working_dir)
         self._status = 'pending'
         self._time_started = None
@@ -160,33 +172,33 @@ class _Batch():
             time_limit=self._time_limit
         )
 
-    def batchTypeName(self):
+    def batchTypeName(self) -> str:
         return self._batch_type_name
 
-    def batchType(self):
+    def batchType(self) -> dict:
         return self._batch_type
 
-    def isPending(self):
+    def isPending(self) -> bool:
         return self._status == 'pending'
 
-    def isWaitingToStart(self):
+    def isWaitingToStart(self) -> bool:
         return self._status == 'waiting'
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         return self._status == 'running'
 
-    def isFinished(self):
+    def isFinished(self) -> bool:
         return self._status == 'finished'
 
-    def timeStarted(self):
+    def timeStarted(self) -> Optional[float]:
         return self._time_started
 
-    def elapsedSinceStarted(self):
+    def elapsedSinceStarted(self) -> float:
         if not self._time_started:
             return 0
         return time.time() - self._time_started
 
-    def iterate(self):
+    def iterate(self) -> None:
         if self.isPending():
             pass
         elif self.isWaitingToStart():
@@ -219,7 +231,7 @@ class _Batch():
         elif self.isFinished():
             pass
 
-    def canAddJob(self, job):
+    def canAddJob(self, job: mlpr.MountainJob) -> bool:
         if self.isFinished():
             return False
         job_timeout = job.getObject().get('timeout', None)
@@ -231,7 +243,8 @@ class _Batch():
         for w in self._workers:
             if not w.hasJob():
                 return True
-    
+        return False
+
     def hasJob(self):
         has_some_job = False
         for w in self._workers:
@@ -301,7 +314,7 @@ class _Worker():
         with FileLock(job_fname + '.lock', exclusive=True):
             with open(job_fname, 'w') as f:
                 json.dump(job_object, f)
-    
+
     def hasStarted(self):
         return os.path.exists(self._base_path + '_claimed.txt')
 
@@ -474,5 +487,5 @@ class _SlurmProcess():
                 print('Warning: unable to stop slurm script.')
 
 
-def _random_string(num):
+def _random_string(num: int):
     return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', k=num))
