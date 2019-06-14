@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.4.7'
+    VERSION = '0.4.8'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -89,6 +89,8 @@ class IronClust(mlpr.Processor):
         optional=True, default=True, description='Use GPU if available')
     fft_thresh = mlpr.FloatParameter(
         optional=True, default=8, description='FFT-based noise peak threshold')
+    fft_thresh_low = mlpr.FloatParameter(
+        optional=True, default=4, description='FFT-based noise peak lower threshold (set to 0 to disable dual thresholding scheme)')
     nSites_whiten = mlpr.IntegerParameter(
         optional=True, default=32, description='Number of adjacent channels to whiten')        
     feature_type = mlpr.StringParameter(
@@ -99,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='41683f9f969aa14a5af211b6161630966fe195f7')
+        return install_ironclust(commit='02f03eaf3a91356e0a3298a215fac5a5288b1851')
 
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
