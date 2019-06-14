@@ -1,4 +1,4 @@
-function p_kilosort(kilosort_src, ironclust_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
+function p_kilosort(kilosort_path, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
 % cmdstr2 = sprintf("p_ironclust('$(tempdir)','$timeseries$','$geom$','$firings_out$','$(argfile)');");
 
 if exist(temp_path, 'dir') ~= 7
@@ -6,8 +6,7 @@ if exist(temp_path, 'dir') ~= 7
 end
 
 % prepare for kilosort execution
-addpath(genpath(kilosort_src));
-addpath(fullfile(ironclust_src, 'matlab'), fullfile(ironclust_src, 'matlab/mdaio'), fullfile(ironclust_src, 'matlab/npy-matlab'));    
+addpath(genpath(kilosort_path));
 ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 
 % Run kilosort
@@ -37,15 +36,17 @@ function mr_out = export_ksort_(rez, firings_out_fname)
 mr_out = zeros(size(rez.st3,1), 3, 'double'); 
 mr_out(:,2) = rez.st3(:,1); %time
 mr_out(:,3) = rez.st3(:,2); %cluster
-writemda(mr_out', firings_out_fname, 'float32');
+writemda(mr_out', firings_out_fname, 'int32');
 end %func
-
 
 %--------------------------------------------------------------------------
 function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
-S_txt = irc('call', 'meta2struct', {arg_fname});
-[spkTh, useGPU] = deal(-abs(S_txt.detect_threshold), 1);
+S_txt = meta2struct_(arg_fname);
+useGPU = 1;
+[freq_min, pc_per_chan, sRateHz, spkTh, adjacency_radius, Th1, Th2, nfilt_factor, NT_fac] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold', 'adjacency_radius', 'Th1', 'Th2', 'nfilt_factor', 'NT_fac');
+ 
+spkTh = -abs(spkTh);
 
 % convert to binary file (int16)
 fbinary = strrep(raw_fname, '.mda', '.bin');
@@ -55,10 +56,43 @@ fbinary = strrep(raw_fname, '.mda', '.bin');
 mrXY_site = csvread(geom_fname);
 vcFile_chanMap = fullfile(fpath, 'chanMap.mat');
 createChannelMapFile_(vcFile_chanMap, Nchannels, S_txt.samplerate, mrXY_site(:,1), mrXY_site(:,2));
+nChans = size(mrXY_site,1);
 
-ops = config_eMouse_(fpath, fbinary, vcFile_chanMap, spkTh, useGPU); %obtain ops
+S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min, adjacency_radius, Th1, Th2, nfilt_factor, NT_fac);
+ops = config_kilosort_(S_ops); %obtain ops
 
 end %func
+
+%--------------------------------------------------------------------------
+function varargout = struct_get_(varargin)
+% Obtain a member of struct
+% cvr = cell(size(varargin));
+% if varargin is given as cell output is also cell
+S = varargin{1};
+for iArg=1:nargout
+    vcName = varargin{iArg+1};
+    if iscell(vcName)
+        csName_ = vcName;
+        cell_ = cell(size(csName_));
+        for iCell = 1:numel(csName_)
+            vcName_ = csName_{iCell};
+            if isfield(S, vcName_)
+                cell_{iCell} = S.(vcName_);
+            end
+        end %for
+        varargout{iArg} = cell_;
+    elseif ischar(vcName)
+        if isfield(S, vcName)
+            varargout{iArg} = S.(vcName);
+        else
+            varargout{iArg} = [];
+        end
+    else
+        varargout{iArg} = [];
+    end
+end %for
+end %func
+
 
 
 %--------------------------------------------------------------------------
@@ -90,11 +124,52 @@ S_chanMap = makeStruct_(chanMap, connected, xcoords, ycoords, kcoords, chanMap0i
 save(vcFile_channelMap, '-struct', 'S_chanMap')
 end %func
 
-
 %--------------------------------------------------------------------------
 % convert mda to int16 binary format, flip polarity if detect sign is
 % positive
 function [nChans, nSamples] = mda2bin_(raw_fname, fbinary, detect_sign)
+dims = readmdadims(raw_fname);
+nChans = dims(1);
+nSamples = dims(2);
+
+if ~isfile(fbinary)
+fid = fopen(fbinary, 'w');
+blk_size = 20000 * 60 * 5; % 5 mins for a 20 kHz recording
+n_blks = ceil(nSamples/blk_size);
+total_size = 0;
+disp('Writing .dat from .mda in blocks...')
+for i = 1:n_blks
+    i_start = ((i-1)*blk_size) + 1;
+    if i < n_blks
+        i_end = i_start+blk_size-1;
+        blk_size_read = blk_size;
+    else
+        i_end = nSamples;
+        blk_size_read = nSamples - i_start + 1;
+    end
+    fprintf('Block %d of %d - samples %d to %d \n', i, n_blks, i_start, i_end);
+    
+    mr_block = readmda_block(raw_fname,[1,i_start],[nChans,blk_size_read]);
+    % adjust scale to fit int16 range with a margin
+    %if isa(mr_block,'single') || isa(mr_block,'double')
+    %    uV_per_bit = 2^14 / max(abs(mr_block(:)));
+    %    mr_block = int16(mr_block * uV_per_bit);
+    %end
+    if detect_sign > 0, mr = -mr; end % force negative detection
+    fwrite(fid, mr_block, 'int16');
+    total_size = total_size + size(mr_block,2);
+end
+fclose(fid);
+fprintf('Total Samples Written: %d\n', total_size);
+fprintf('Total Samples in Header: %d\n', nSamples);
+end
+end %func
+
+
+%--------------------------------------------------------------------------
+% convert mda to int16 binary format, flip polarity if detect sign is
+% positive
+function [nChans, nSamples] = mda2bin_old(raw_fname, fbinary, detect_sign)
 
 mr = readmda(raw_fname);
 % adjust scale to fit int16 range with a margin
@@ -109,23 +184,21 @@ fwrite(fid, mr, 'int16');
 fclose(fid);
 end %func
 
-
-%--------------------------------------------------------------------------
-function ops = config_eMouse_(fpath, fbinary, vcFile_chanMap, spkTh, useGPU)
+function ops = config_kilosort_(S_opt)
 
 ops = struct();
-ops.GPU                 = useGPU; % whether to run this code on an Nvidia GPU (much faster, mexGPUall first)		
+ops.GPU                 = 1; % whether to run this code on an Nvidia GPU (much faster, mexGPUall first)		
 ops.parfor              = 0; % whether to use parfor to accelerate some parts of the algorithm		
 ops.verbose             = 1; % whether to print command line progress		
 ops.showfigures         = 1; % whether to plot figures during optimization		
 		
 ops.datatype            = 'bin';  % binary ('dat', 'bin') or 'openEphys'		
-ops.fbinary             = fbinary; % will be created for 'openEphys'		
-ops.fproc               = fullfile(fpath, 'temp_wh.dat'); % residual from RAM of preprocessed data		
-ops.root                = fpath; % 'openEphys' only: where raw files are		
-% define the channel map as a filename (string) or simply an array		
-ops.chanMap             = vcFile_chanMap; % make this file using createChannelMapFile.m		
-% ops.chanMap = 1:ops.Nchan; % treated as linear probe if unavailable chanMap file		
+ops.fproc               = fullfile(S_opt.fpath, 'temp_wh.dat'); % residual from RAM of preprocessed data		
+
+% the binary file is in this folder
+ops.fbinary = S_opt.fbinary;
+
+ops.chanMap = S_opt.vcFile_chanMap;
 
 S_prb = load(ops.chanMap);
 nChans = numel(S_prb.chanMap);
@@ -140,13 +213,11 @@ ops.nSkipCov            = 1; % compute whitening matrix from every N-th batch (1
 ops.whiteningRange      = 32; % how many channels to whiten together (Inf for whole probe whitening, should be fine if Nchan<=32)		
 		
 ops.criterionNoiseChannels = 0.2; % fraction of "noise" templates allowed to span all channel groups (see createChannelMapFile for more info). 		
-
 % other options for controlling the model and optimization		
 ops.Nrank               = 3;    % matrix rank of spike template model (3)		
 ops.nfullpasses         = 6;    % number of complete passes through data during optimization (6)		
 ops.maxFR               = 20000;  % maximum number of spikes to extract per batch (20000)		
-ops.fshigh              = 200;   % frequency for high pass filtering		
-% ops.fslow             = 2000;   % frequency for low pass filtering (optional)
+ops.fshigh              = S_opt.freq_min;   % frequency for high pass filtering		
 ops.ntbuff              = 64;    % samples of symmetrical buffer for whitening and spike detection		
 ops.scaleproc           = 200;   % int16 scaling of whitened data		
 ops.NT                  = 128*1024+ ops.ntbuff;% this is the batch size (try decreasing if out of memory) 		
@@ -154,18 +225,20 @@ ops.NT                  = 128*1024+ ops.ntbuff;% this is the batch size (try dec
 		
 % the following options can improve/deteriorate results. 		
 % when multiple values are provided for an option, the first two are beginning and ending anneal values, 		
-% the third is the value used in the final pass. 		
-ops.Th               = [4 10 10];    % threshold for detecting spikes on template-filtered data ([6 12 12])		
-ops.lam              = [5 5 5];   % large means amplitudes are forced around the mean ([10 30 30])		
+% threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
+ops.Th = [S_opt.Th1 S_opt.Th2 S_opt.Th2];  
 ops.nannealpasses    = 4;            % should be less than nfullpasses (4)		
-ops.momentum         = 1./[20 400];  % start with high momentum and anneal (1./[20 1000])		
 ops.shuffle_clusters = 1;            % allow merges and splits during optimization (1)		
-ops.mergeT           = .1;           % upper threshold for merging (.1)		
+ops.mergeT           = .2;           % upper threshold for merging (.1)		
 ops.splitT           = .1;           % lower threshold for splitting (.1)		
-		
+% how important is the amplitude penalty (like in Kilosort1, 0 means not used, 10 is average, 50 is a lot) 
+ops.lam              = [10 20 20];   % large means amplitudes are forced around the mean ([10 30 30])		
+% number of samples to average over (annealed from first to second value) 
+ops.momentum = 1./[20 400]; 
+	
 % options for initializing spikes from data		
 ops.initialize      = 'fromData';    %'fromData' or 'no'		
-ops.spkTh           = spkTh;      % spike threshold in standard deviations (4)		
+ops.spkTh           = S_opt.spkTh;      % spike threshold in standard deviations (4)		
 ops.loc_range       = [3  1];  % ranges to detect peaks; plus/minus in time and channel ([3 1])		
 ops.long_range      = [30  6]; % ranges to detect isolated peaks ([30 6])		
 ops.maskMaxChannels = 5;       % how many channels to mask up/down ([5])		
@@ -183,3 +256,57 @@ ops.epu     = Inf;
 ops.ForceMaxRAMforDat   = 20e9; % maximum RAM the algorithm will try to use; on Windows it will autodetect.
 
 end % func
+
+
+%--------------------------------------------------------------------------
+% 8/2/17 JJJ: Documentation and test
+function S = meta2struct_(vcFile)
+    % Convert text file to struct
+    S = struct();
+    if ~exist_file_(vcFile, 1), return; end
+    
+    fid = fopen(vcFile, 'r');
+    mcFileMeta = textscan(fid, '%s%s', 'Delimiter', '=',  'ReturnOnError', false);
+    fclose(fid);
+    csName = mcFileMeta{1};
+    csValue = mcFileMeta{2};
+    for i=1:numel(csName)
+        vcName1 = csName{i};
+        if vcName1(1) == '~', vcName1(1) = []; end
+        try         
+            eval(sprintf('%s = ''%s'';', vcName1, csValue{i}));
+            eval(sprintf('num = str2double(%s);', vcName1));
+            if ~isnan(num)
+                eval(sprintf('%s = num;', vcName1));
+            end
+            eval(sprintf('S = setfield(S, ''%s'', %s);', vcName1, vcName1));
+        catch
+            fprintf('%s = %s error\n', csName{i}, csValue{i});
+        end
+    end
+    end %func
+    
+    
+    %--------------------------------------------------------------------------
+    % 7/21/2018 JJJ: rejecting directories, strictly search for flies
+    % 9/26/17 JJJ: Created and tested
+    function flag = exist_file_(vcFile, fVerbose)
+    if nargin<2, fVerbose = 0; end
+    if isempty(vcFile)
+        flag = false; 
+    elseif iscell(vcFile)
+        flag = cellfun(@(x)exist_file_(x, fVerbose), vcFile);
+        return;
+    else
+        S_dir = dir(vcFile);
+        if numel(S_dir) == 1
+            flag = ~S_dir.isdir;
+        else
+            flag = false;
+        end
+    end
+    if fVerbose && ~flag
+        fprintf(2, 'File does not exist: %s\n', vcFile);
+    end
+    end %func
+    

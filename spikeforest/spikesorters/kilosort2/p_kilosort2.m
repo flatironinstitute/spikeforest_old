@@ -1,4 +1,4 @@
-function p_kilosort2(kilosort_src, ironclust_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
+function p_kilosort2(kilosort_src, temp_path, raw_fname, geom_fname, firings_out_fname, arg_fname)
 
 if exist(temp_path, 'dir') ~= 7
     mkdir(temp_path);
@@ -6,16 +6,18 @@ end
 
 % prepare for kilosort execution
 addpath(genpath(kilosort_src));
-addpath(fullfile(ironclust_src, 'matlab'), fullfile(ironclust_src, 'matlab/mdaio'), fullfile(ironclust_src, 'matlab/npy-matlab'));    
 ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 
 % Run kilosort
 t1=tic;
 tic;
 fprintf('Running kilosort on %s\n', raw_fname);
+disp('Using the following ops...')
+disp(ops)
 
 % preprocess data to create temp_wh.dat
 rez = preprocessDataSub(ops);
+save('rez.mat', 'rez', '-v7.3');
 
 % time-reordering as a function of drift
 rez = clusterSingleBatches(rez);
@@ -69,9 +71,9 @@ end %func
 %--------------------------------------------------------------------------
 function ops = import_ksort_(raw_fname, geom_fname, arg_fname, fpath)
 % fpath: output path
-S_txt = irc('call', 'meta2struct', {arg_fname});
+S_txt = meta2struct_(arg_fname);
 useGPU = 1;
-[freq_min, pc_per_chan, sRateHz, spkTh, Th1, Th2, CAR, nfilt_factor, NT_fac] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold', 'Th1', 'Th2', 'CAR', 'nfilt_factor', 'NT_fac');
+[freq_min, pc_per_chan, sRateHz, spkTh, minFR, adjacency_radius, Th1, Th2, CAR, nfilt_factor, NT_fac, nt0] = struct_get_(S_txt, 'freq_min', 'pc_per_chan', 'samplerate', 'detect_threshold', 'minFR', 'adjacency_radius', 'Th1', 'Th2', 'CAR', 'nfilt_factor', 'NT_fac', 'nt0');
  
 spkTh = -abs(spkTh);
 
@@ -85,7 +87,7 @@ vcFile_chanMap = fullfile(fpath, 'chanMap.mat');
 createChannelMapFile_(vcFile_chanMap, Nchannels, mrXY_site(:,1), mrXY_site(:,2));
 nChans = size(mrXY_site,1);
 
-S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min, Th1, Th2, CAR, nfilt_factor, NT_fac);
+S_ops = makeStruct_(fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz, pc_per_chan, freq_min, minFR, adjacency_radius, Th1, Th2, CAR, nfilt_factor, NT_fac, nt0);
 ops = config_kilosort2_(S_ops); %obtain ops
 
 end %func
@@ -125,6 +127,46 @@ end %func
 % convert mda to int16 binary format, flip polarity if detect sign is
 % positive
 function [nChans, nSamples] = mda2bin_(raw_fname, fbinary, detect_sign)
+dims = readmdadims(raw_fname);
+nChans = dims(1);
+nSamples = dims(2);
+
+fid = fopen(fbinary, 'w');
+blk_size = 20000 * 60 * 5; % 5 mins for a 20 kHz recording
+n_blks = ceil(nSamples/blk_size);
+total_size = 0;
+disp('Writing .dat from .mda in blocks...')
+for i = 1:n_blks
+    i_start = ((i-1)*blk_size) + 1;
+    if i < n_blks
+        i_end = i_start+blk_size-1;
+        blk_size_read = blk_size;
+    else
+        i_end = nSamples;
+        blk_size_read = nSamples - i_start + 1;
+    end
+    fprintf('Block %d of %d - samples %d to %d \n', i, n_blks, i_start, i_end);
+    
+    mr_block = readmda_block(raw_fname,[1,i_start],[nChans,blk_size_read]);
+    if detect_sign > 0, mr = -mr; end % force negative detection
+    fwrite(fid, mr_block, 'int16');
+    total_size = total_size + size(mr_block,2);
+end
+% adjust scale to fit int16 range with a margin
+%if isa(mr_block,'single') || isa(mr_block,'double')
+%    uV_per_bit = 2^14 / max(abs(mr_block(:)));
+%    mr_block = int16(mr_block * uV_per_bit);
+%end
+
+fclose(fid);
+fprintf('Total Samples Written: %d\n', total_size);
+fprintf('Total Samples in Header: %d\n', nSamples);
+end %func
+
+%--------------------------------------------------------------------------
+% convert mda to int16 binary format, flip polarity if detect sign is
+% positive
+function [nChans, nSamples] = mda2bin_old(raw_fname, fbinary, detect_sign)
 
 mr = readmda(raw_fname);
 % adjust scale to fit int16 range with a margin
@@ -139,13 +181,13 @@ fwrite(fid, mr, 'int16');
 fclose(fid);
 end %func
 
-
 %--------------------------------------------------------------------------
 function ops = config_kilosort2_(S_opt)
 % S_opt: fpath, fbinary, nChans, vcFile_chanMap, spkTh, useGPU, sRateHz,
 %       pc_per_chan, freq_min
 
 % rootH = '~/kilosort';
+ops.fig = 0;
 ops.fproc       = fullfile(S_opt.fpath, 'temp_wh.dat'); % proc file on a fast SSD  ;
 ops.trange = [0 Inf]; % time range to sort
 ops.NchanTOT    = S_opt.nChans; % total number of channels in your recording
@@ -170,22 +212,24 @@ ops.minfr_goodchannels = 0.1;
 ops.Th = [S_opt.Th1 S_opt.Th2];  
 
 % how important is the amplitude penalty (like in Kilosort1, 0 means not used, 10 is average, 50 is a lot) 
-ops.lam = 10;  
+ops.lam = 40;  
 
 % splitting a cluster at the end requires at least this much isolation for each sub-cluster (max = 1)
 ops.AUCsplit = 0.9; 
 
 % minimum spike rate (Hz), if a cluster falls below this for too long it gets removed
-ops.minFR = 1/50; 
+ops.minFR = S_opt.minFR; 
 
 % number of samples to average over (annealed from first to second value) 
 ops.momentum = [20 400]; 
 
 % spatial constant in um for computing residual variance of spike
-ops.sigmaMask = 30; 
+ops.sigmaMask = S_opt.adjacency_radius; 
 
 % threshold crossings for pre-clustering (in PCA projection space)
 ops.ThPre = 8;
+
+ops.nt0 = S_opt.nt0
 % danger, changing these settings can lead to fatal errors
 % options for determining PCs
 ops.spkTh           = S_opt.spkTh;      % spike threshold in standard deviations (-6)
@@ -196,14 +240,13 @@ ops.GPU                 = S_opt.useGPU; % has to be 1, no CPU version yet, sorry
 ops.nfilt_factor        = S_opt.nfilt_factor; % max number of clusters per good channel (even temporary ones)
 ops.ntbuff              = 64;    % samples of symmetrical buffer for whitening and spike detection
 ops.NT                  = 32*S_opt.NT_fac+ ops.ntbuff; % must be multiple of 32 + ntbuff. This is the batch size (try decreasing if out of memory). 
-ops.whiteningRange      = min(S_opt.nChans,32); % number of channels to use for whitening each channel
+ops.whiteningRange      = min(S_opt.nChans,4); % number of channels to use for whitening each channel
 ops.nSkipCov            = 25; % compute whitening matrix from every N-th batch
 ops.scaleproc           = 200;   % int16 scaling of whitened data
 ops.nPCs                = S_opt.pc_per_chan; % how many PCs to project the spikes into
 ops.useRAM              = 0; % not yet available
 
 end %func
-
 
 %--------------------------------------------------------------------------
 % 8/22/18 JJJ: changed from the cell output to varargout
@@ -236,3 +279,56 @@ for iArg=1:nargout
     end
 end %for
 end %func
+
+%--------------------------------------------------------------------------
+% 8/2/17 JJJ: Documentation and test
+function S = meta2struct_(vcFile)
+% Convert text file to struct
+S = struct();
+if ~exist_file_(vcFile, 1), return; end
+
+    fid = fopen(vcFile, 'r');
+    mcFileMeta = textscan(fid, '%s%s', 'Delimiter', '=',  'ReturnOnError', false);
+    fclose(fid);
+    csName = mcFileMeta{1};
+    csValue = mcFileMeta{2};
+    for i=1:numel(csName)
+        vcName1 = csName{i};
+        if vcName1(1) == '~', vcName1(1) = []; end
+            try         
+                eval(sprintf('%s = ''%s'';', vcName1, csValue{i}));
+                eval(sprintf('num = str2double(%s);', vcName1));
+                if ~isnan(num)
+                    eval(sprintf('%s = num;', vcName1));
+            end
+            eval(sprintf('S = setfield(S, ''%s'', %s);', vcName1, vcName1));
+        catch
+            fprintf('%s = %s error\n', csName{i}, csValue{i});
+        end
+    end
+end %func
+
+
+%--------------------------------------------------------------------------
+% 7/21/2018 JJJ: rejecting directories, strictly search for flies
+% 9/26/17 JJJ: Created and tested
+function flag = exist_file_(vcFile, fVerbose)
+if nargin<2, fVerbose = 0; end
+    if isempty(vcFile)
+        flag = false; 
+    elseif iscell(vcFile)
+        flag = cellfun(@(x)exist_file_(x, fVerbose), vcFile);
+        return;
+    else
+        S_dir = dir(vcFile);
+        if numel(S_dir) == 1
+            flag = ~S_dir.isdir;
+        else
+            flag = false;
+        end
+    end
+    if fVerbose && ~flag
+        fprintf(2, 'File does not exist: %s\n', vcFile);
+    end
+end %func
+
