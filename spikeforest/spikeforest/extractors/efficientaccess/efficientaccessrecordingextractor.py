@@ -106,6 +106,7 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
     hdf5_out = mlpr.Output()
 
     def run(self):
+        import h5py
         recording = self.recording
         segment_size = self.segment_size
         channel_ids = recording.get_channel_ids()
