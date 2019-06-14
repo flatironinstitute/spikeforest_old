@@ -13,6 +13,7 @@ import argparse
 from copy import deepcopy
 import spikeforest_analysis as sa
 import numpy as np
+from typing import List, Optional
 
 
 @mtlogging.log(root=True)
@@ -33,20 +34,19 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    upload_to: Optional[List[str]] = None
     if args.upload_to:
         upload_to = args.upload_to.split(',')
-    else:
-        upload_to = None
 
+    download_from: Optional[List[str]] = None
     if args.download_from:
         download_from = args.download_from.split(',')
-    else:
-        download_from = None        
+        
     mt.configDownloadFrom(download_from)
 
-    #mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
-    #upload_to = ['spikeforest.kbucket', 'spikeforest.public']
-    #download_from = ['spikeforest.kbucket', 'spikeforest.public']
+    # mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
+    # upload_to = ['spikeforest.kbucket', 'spikeforest.public']
+    # download_from = ['spikeforest.kbucket', 'spikeforest.public']
 
     print('Loading analysis file...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
@@ -66,6 +66,17 @@ def main():
 
     sorter_definitions = analysis_obj['sorters']
     analysis_definitions = analysis_obj['analyses']
+
+    # Realize the containers for the sorters
+    for sorter in sorter_definitions:
+        sorter_name = sorter['name']
+        sorting_params = sorter['params']
+        processor_name = sorter['processor_name']
+        SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+        print('Checking container for SORTER: {}'.format(sorter_name))
+        if CONTAINER:
+            print('Realizing container for sorter: {}'.format(CONTAINER))
+            mt.realizeFile(path=CONTAINER)
 
     # Loop through all the analyses
     for aname in analysis_names:
