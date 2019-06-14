@@ -6,11 +6,11 @@ import numpy as np
 import spikeextractors as se
 from mountaintools import client as mt
 import mtlogging
-
+import h5py
 
 class EfficientAccessRecordingExtractor(se.RecordingExtractor):
     def __init__(self, *, path=None, recording=None, _dest_path=None):
-        import h5py
+        #import h5py
         se.RecordingExtractor.__init__(self)
         if path is not None:
             if recording is not None:

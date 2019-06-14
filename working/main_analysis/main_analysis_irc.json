@@ -60,49 +60,49 @@
         "irc1": {
             "name":"IronClust1",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1, "sort_mode":1, "fft_thresh_low":0},
+            "params": {"delta_cut":1, "sort_mode":1, "post_merge_mode":1},
             "gpu": true
         },
         "irc2": {
             "name":"IronClust2",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1.1, "sort_mode":1, "fft_thresh_low":0},
+            "params": {"delta_cut":1.1, "sort_mode":1, "post_merge_mode":1},
             "gpu": true
         },
         "irc3": {
             "name":"IronClust3",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1, "sort_mode":2, "fft_thresh_low":0},
+            "params": {"delta_cut":1, "sort_mode":2, "post_merge_mode":1},
             "gpu": true
         },
         "irc4": {
             "name":"IronClust4",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1.1, "sort_mode":2, "fft_thresh_low":0},
+            "params": {"delta_cut":1.1, "sort_mode":2, "post_merge_mode":1},
             "gpu": true
         },
         "irc5": {
             "name":"IronClust5",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1, "sort_mode":1, "fft_thresh_low":4},
+            "params": {"delta_cut":1, "sort_mode":1, "post_merge_mode":6},
             "gpu": true
         },
         "irc6": {
             "name":"IronClust6",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1.1, "sort_mode":1, "fft_thresh_low":4},
+            "params": {"delta_cut":1.1, "sort_mode":1, "post_merge_mode":6},
             "gpu": true
         },    
         "irc7": {
             "name":"IronClust7",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1, "sort_mode":2, "fft_thresh_low":4},
+            "params": {"delta_cut":1, "sort_mode":2, "post_merge_mode":6},
             "gpu": true
         },    
         "irc8": {
             "name":"IronClust8",
             "processor_name":"IronClust",
-            "params": {"delta_cut":1.1, "sort_mode":2, "fft_thresh_low":4},
+            "params": {"delta_cut":1.1, "sort_mode":2, "post_merge_mode":6},
             "gpu": true
         },                                                        
         "ks2": {
