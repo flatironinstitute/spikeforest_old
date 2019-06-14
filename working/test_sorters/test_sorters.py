@@ -1,7 +1,6 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, Klusta, Waveclus, YASS, YASS1
+from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, TridesclousOld, Klusta, Waveclus, YASS, YASS1
 from mountaintools import client as mt
 import spikeforest_analysis as sa
-import json
 import numpy as np
 import pytest
 
@@ -13,10 +12,10 @@ boyden32c_recdir = 'sha1dir://b28dbf52748dcb401034d1c353807bcbff20e106.boyden32c
 sqmea64c_recdir = 'sha1dir://e8de6ac2138bf775f29f8ab214d04aa92e20ca79'
 paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paired_mea64c'
 neurocube1c_recdir = 'sha1dir://e6cb8f3bb5228c73208a82d2854552af38ab6b40'
-visapy30c_recdir='sha1dir://97253adc2581b1acbf9a9fffcbc00247d8088a1d.mea_c30.set1'
-#synth_bionet_static1_recdir = 'sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_C_4B'
-#synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/recordings/bionet_static_rec1'
-#synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_A_4A'
+visapy30c_recdir = 'sha1dir://97253adc2581b1acbf9a9fffcbc00247d8088a1d.mea_c30.set1'
+# synth_bionet_static1_recdir = 'sha1dir://abc900f5cd62436e7c89d914c9f36dcd7fcca0e7.synth_bionet/bionet_static/static_8x_C_4B'
+# synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/recordings/bionet_static_rec1'
+# synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_A_4A'
 synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_C_4B'
 
 
@@ -228,7 +227,7 @@ def test_klusta_magland_c8():
 def test_tridesclous_magland_c4():
     sorter = Tridesclous
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.1, container='default')
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.5, container='default')
 
 
 @pytest.mark.spikeforest
@@ -238,7 +237,27 @@ def test_tridesclous_magland_c4():
 def test_tridesclous_magland_c8():
     sorter = Tridesclous
     params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container='default')
+
+
+@pytest.mark.spikeforest
+@pytest.mark.tridesclous_old_magland_c4
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_tridesclous_old_magland_c4():
+    sorter = TridesclousOld
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.5, container='default')
+
+
+@pytest.mark.spikeforest
+@pytest.mark.tridesclous_old_magland_c8
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_tridesclous_old_magland_c8():
+    sorter = TridesclousOld
+    params = dict()
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container='default')
 
 
 @pytest.mark.spikeforest

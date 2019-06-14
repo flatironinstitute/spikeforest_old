@@ -1,29 +1,33 @@
 from copy import deepcopy
 import time
+from typing import Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    # avoid circular dependency
+    from .jobqueue import JobQueue
 
 
 class MountainJobResult():
-    def __init__(self, result_object=None, job_queue=None):
-        self.retcode = None
-        self.timed_out = False
-        self.console_out = None
-        self.runtime_info = None
-        self.outputs = None
-        self._job_queue = job_queue
-        self._status = 'pending'  # pending, running, finished -- note: finished includes error
+    def __init__(self, result_object: dict=None, job_queue: Optional['JobQueue']=None):
+        self.retcode: Optional[int] = None
+        self.timed_out: bool = False
+        self.console_out: Optional[str] = None
+        self.runtime_info: Optional[dict] = None
+        self.outputs: Optional[dict] = None
+        self._job_queue: Optional[JobQueue] = job_queue
+        self._status: str = 'pending'  # pending, running, finished -- note: finished includes error
         if result_object is not None:
             self.fromObject(result_object)
 
-    def status(self):
+    def status(self) -> str:
         return self._status
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         return self._status == 'running'
 
-    def isFinished(self):
+    def isFinished(self) -> bool:
         return self._status == 'finished'
 
-    def wait(self, timeout=-1):
+    def wait(self, timeout: float=-1) -> bool:
         print('.... wait')
         if not self._job_queue:
             return True
@@ -37,7 +41,7 @@ class MountainJobResult():
                 time.sleep(0.2)
         return True
 
-    def getObject(self):
+    def getObject(self) -> dict:
         return dict(
             retcode=self.retcode,
             timed_out=self.timed_out,
@@ -46,7 +50,7 @@ class MountainJobResult():
             outputs=deepcopy(self.outputs)
         )
 
-    def fromObject(self, obj):
+    def fromObject(self, obj: dict) -> None:
         if 'retcode' in obj:
             self.retcode = obj['retcode']
         if 'timed_out' in obj:

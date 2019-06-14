@@ -7,39 +7,29 @@ from .mdaio import DiskReadMda, readmda, writemda32, writemda64
 import os
 import mtlogging
 import mlprocessors as mlpr
-
-
-def _load_required_modules():
-    try:
-        from mountaintools import client as mt
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("To use the MdaExtractors, install mountainlab_pytools and kbucket: \n\n"
-                                  "pip install mountainlab_pytools kbucket\n\n")
-    return mt
+from mountaintools import client as mt
 
 
 class SFMdaRecordingExtractor(RecordingExtractor):
     def __init__(self, dataset_directory, *, download=True, raw_fname='raw.mda', params_fname='params.json'):
-        ca = _load_required_modules()
-
         RecordingExtractor.__init__(self)
         self._dataset_directory = dataset_directory
         self._timeseries_path = dataset_directory + '/' + raw_fname
         self._dataset_params = read_dataset_params(dataset_directory, params_fname)
         self._samplerate = self._dataset_params['samplerate'] * 1.0
         if download:
-            path0 = ca.realizeFile(path=self._timeseries_path)
+            path0 = mt.realizeFile(path=self._timeseries_path)
             if not path0:
                 raise Exception('Unable to realize file: ' + self._timeseries_path)
             self._timeseries_path = path0
 
         geom0 = dataset_directory + '/geom.csv'
-        self._geom_fname = ca.realizeFile(path=geom0)
+        self._geom_fname = mt.realizeFile(path=geom0)
         self._geom = np.genfromtxt(self._geom_fname, delimiter=',')
 
         timeseries_path_or_url = self._timeseries_path
-        if not ca.isLocalPath(timeseries_path_or_url):
-            a = ca.findFile(timeseries_path_or_url)
+        if not mt.isLocalPath(timeseries_path_or_url):
+            a = mt.findFile(timeseries_path_or_url)
             if not a:
                 raise Exception('Cannot find timeseries file: ' + timeseries_path_or_url)
             timeseries_path_or_url = a
@@ -90,8 +80,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
     @mtlogging.log(name='SFMdaRecordingExtractor:get_traces')
     def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
-        ca = _load_required_modules()
-        if not ca.isLocalPath(self._timeseries_path):
+        if not mt.isLocalPath(self._timeseries_path):
             raise Exception('Cannot get traces -- timeseries file is not downloaded')
         if start_frame is None:
             start_frame = 0
@@ -128,19 +117,17 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
 class SFMdaSortingExtractor(SortingExtractor):
     def __init__(self, firings_file):
-        ca = _load_required_modules()
-
         SortingExtractor.__init__(self)
         if is_kbucket_url(firings_file):
-            download_needed = is_url(ca.findFile(path=firings_file))
+            download_needed = is_url(mt.findFile(path=firings_file))
         else:
             download_needed = is_url(firings_file)
         if download_needed:
             print('Downloading file: ' + firings_file)
-            self._firings_path = ca.realizeFile(path=firings_file)
+            self._firings_path = mt.realizeFile(path=firings_file)
             print('Done.')
         else:
-            self._firings_path = ca.realizeFile(path=firings_file)
+            self._firings_path = mt.realizeFile(path=firings_file)
         if not self._firings_path:
             raise Exception('Unable to realize firings file: ' + firings_file)
 
@@ -209,10 +196,8 @@ def is_url(path):
 
 
 def read_dataset_params(dsdir, params_fname):
-    ca = _load_required_modules()
-
     fname1 = dsdir + '/' + params_fname
-    fname2 = ca.realizeFile(path=fname1)
+    fname2 = mt.realizeFile(path=fname1)
     if not fname2:
         raise Exception('Unable to find file: ' + fname1)
     if not os.path.exists(fname2):

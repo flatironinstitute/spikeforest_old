@@ -1,5 +1,7 @@
 import abc
 import time
+from .mountainjob import MountainJob
+from .mountainjobresult import MountainJobResult
 
 
 class JobHandler():
@@ -8,26 +10,26 @@ class JobHandler():
         self._parent_job_handler = None
 
     @abc.abstractmethod
-    def executeJob(self, job):
+    def executeJob(self, job: MountainJob) -> MountainJobResult:
         pass
 
     @abc.abstractmethod
-    def iterate(self):
+    def iterate(self) -> None:
         pass
 
     @abc.abstractmethod
-    def isFinished(self):
+    def isFinished(self) -> bool:
         pass
 
     @abc.abstractmethod
-    def halt(self):
+    def halt(self) -> None:
         pass
 
     @abc.abstractmethod
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
 
-    def wait(self, timeout=-1):
+    def wait(self, timeout: float=-1):
         timer = time.time()
         while not self.isFinished():
             self.iterate()

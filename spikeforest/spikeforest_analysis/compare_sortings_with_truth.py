@@ -1,102 +1,10 @@
 # from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
 import json
-from mountaintools import client as mt
-import numpy as np
-from copy import deepcopy
-import multiprocessing
-import mtlogging
 
 import spikeextractors as si
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+from .sfmdaextractors import SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
-
-
-def _create_job_for_sorting_helper(kwargs):
-    return _create_job_for_sorting(**kwargs)
-
-
-def _create_job_for_sorting(sorting, container):
-    if sorting['firings'] is None:
-        from mlprocessors import MountainJob
-        return MountainJob()
-    units_true = sorting.get('units_true', [])
-    firings = sorting['firings']
-    firings_true = sorting['firings_true']
-    units_true = units_true
-    job = GenSortingComparisonTable.createJob(
-        firings=firings,
-        firings_true=firings_true,
-        units_true=units_true,
-        json_out={'ext': '.json', 'upload': True},
-        html_out={'ext': '.html', 'upload': True},
-        _container=container
-    )
-    return job
-
-
-@mtlogging.log()
-def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, label=None, upload_to=None):
-    print('')
-    print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    # container = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
-    container = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
-
-    sortings_out = deepcopy(sortings)
-    sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
-    jobs_gen_table = GenSortingComparisonTable.createJobs([
-        dict(
-            firings=sorting['firings'],
-            firings_true=sorting['firings_true'],
-            units_true=sorting.get('units_true', []),
-            json_out={'ext': '.json', 'upload': True},
-            html_out={'ext': '.html', 'upload': True},
-            _container=container
-        )
-        for sorting in sortings_valid
-    ])
-
-    # jobs_gen_table=[]
-    # for sorting in sortings:
-    #     units_true=sorting.get('units_true',[])
-    #     firings=sorting['firings']
-    #     firings_true=sorting['firings_true']
-    #     units_true=units_true
-    #     job=GenSortingComparisonTable.createJob(
-    #         firings=firings,
-    #         firings_true=firings_true,
-    #         units_true=units_true,
-    #         json_out={'ext':'.json','upload':True},
-    #         html_out={'ext':'.html','upload':True},
-    #         _container=container
-    #     )
-    #     jobs_gen_table.append(job)
-
-    label = label or 'Compare sortings with truth'
-    mlpr.executeBatch(jobs=jobs_gen_table, label=label, num_workers=num_workers, compute_resource=compute_resource)
-
-    for sorting in sortings_out:
-        sorting['comparison_with_truth'] = None
-
-    for ii, sorting in enumerate(sortings_valid):
-        comparison_with_truth = dict()
-        res0 = jobs_gen_table[ii].result
-        if res0.retcode == 0:
-            comparison_with_truth['json'] = res0.outputs['json_out']
-            comparison_with_truth['html'] = res0.outputs['html_out']
-            sorting['comparison_with_truth'] = comparison_with_truth
-            if upload_to:
-                mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
-                mt.createSnapshot(path=comparison_with_truth['html'], upload_to=upload_to)
-        else:
-            print("WARNING: Problem generating sorting comparison table for sorting (retcode = {}).".format(res0.retcode))
-            print('===================== sorting')
-            print(sorting)
-            print('===================== res0.console_out')
-            print(res0.console_out)
-            raise Exception('Problem generating sorting comparison table for sorting.')
-
-    return sortings_out
 
 
 class GenSortingComparisonTable(mlpr.Processor):

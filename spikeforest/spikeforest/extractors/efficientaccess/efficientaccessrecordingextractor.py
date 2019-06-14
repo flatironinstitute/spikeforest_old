@@ -2,7 +2,6 @@
 
 import mlprocessors as mlpr
 import spikeextractors as se
-import h5py
 import numpy as np
 import spikeextractors as se
 from mountaintools import client as mt
@@ -11,6 +10,7 @@ import mtlogging
 
 class EfficientAccessRecordingExtractor(se.RecordingExtractor):
     def __init__(self, *, path=None, recording=None, _dest_path=None):
+        import h5py
         se.RecordingExtractor.__init__(self)
         if path is not None:
             if recording is not None:
@@ -64,6 +64,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
 
     @mtlogging.log(name='EfficientAccessRecordingExtractor:get_traces')
     def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
+        import h5py
         if start_frame is None:
             start_frame = 0
         if end_frame is None:

@@ -9,6 +9,7 @@ import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor
 import uuid
 
+
 class TheApp():
     def __init__(self, recording_directory):
         self._recording_directory = recording_directory
@@ -34,9 +35,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Configure readonly access to kbucket
-    # ca.autoConfig(collection='spikeforest', key='spikeforest2-readonly')
-
     APP = TheApp(recording_directory=args.recording_directory)
 
     if args.port is not None:
@@ -46,6 +44,7 @@ def main():
         server.start()
     else:
         vd.pyqt5_start(APP=APP, title='view_timeseries')
+
 
 def _make_full_browser(W):
     resize_callback_id = 'resize-callback-' + str(uuid.uuid4())

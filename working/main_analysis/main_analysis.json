@@ -3,7 +3,7 @@
         "test": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_visapy.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.test.json",
-            "sorter_keys": ["ms4", "sc"]
+            "sorter_keys": ["ms4", "irc"]
         },
         "hybrid_janelia": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.hybrid_janelia.json"],
