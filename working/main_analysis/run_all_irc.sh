@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-ARGS="main_analysis_irc.json --use_slurm" # --skip_failing"
+#ARGS="main_analysis_irc.json --use_slurm" # --skip_failing"
+#ARGS="main_analysis_irc.json" # --skip_failing"
+#ARGS="main_analysis_irc.json --skip_failing --upload_to spikeforest.kbucket,spikeforest.public --download_from spikeforest.kbucket,spikeforest.public"
+ARGS="main_analysis_irc.json --skip_failing --download_from spikeforest.kbucket,spikeforest.public"
 
 ./main_analysis $ARGS --analyses hybrid_janelia
 ./main_analysis $ARGS --analyses manual_franklab
@@ -13,6 +16,6 @@ ARGS="main_analysis_irc.json --use_slurm" # --skip_failing"
 ./main_analysis $ARGS --analyses synth_bionet
 ./main_analysis $ARGS --analyses synth_magland
 ./main_analysis $ARGS --analyses synth_mearec_neuronexus
-./main_analysis $ARGS --analyses synth_mearec_tetrode
+#./main_analysis $ARGS --analyses synth_mearec_tetrode
 #./main_analysis $ARGS --analyses synth_monotrode
-./main_analysis $ARGS --analyses synth_visapy
+#./main_analysis $ARGS --analyses synth_visapy
