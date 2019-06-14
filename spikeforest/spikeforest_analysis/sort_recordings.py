@@ -28,8 +28,4 @@ def find_sorter_processor_and_container(processor_name):
     if SS_container:
         if SS_container == 'default':
             SS_container = SS.CONTAINER
-        if SS_container:
-            print('Locating container: ' + SS_container)
-            if not mt.findFile(path=SS_container):
-                raise Exception('Unable to realize container: ' + SS_container)
     return SS, SS_container
