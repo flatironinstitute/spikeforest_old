@@ -11,7 +11,7 @@ export DISPLAY=""
 COLLECTION=spikeforest
 KACHERY_NAME=kbucket
 
-../../../bin/compute-resource-start ccmlin008-default \
+compute-resource-start ccmlin008-default \
 	--allow_uncontainerized --parallel 10  \
 	--collection $COLLECTION --kachery_name $KACHERY_NAME
 

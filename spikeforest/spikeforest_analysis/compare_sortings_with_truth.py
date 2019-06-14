@@ -11,32 +11,35 @@ import spikeextractors as si
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
 
+
 def _create_job_for_sorting_helper(kwargs):
     return _create_job_for_sorting(**kwargs)
+
 
 def _create_job_for_sorting(sorting, container):
     if sorting['firings'] is None:
         from mlprocessors import MountainJob
         return MountainJob()
-    units_true=sorting.get('units_true',[])
-    firings=sorting['firings']
-    firings_true=sorting['firings_true']
-    units_true=units_true
-    job=GenSortingComparisonTable.createJob(
+    units_true = sorting.get('units_true', [])
+    firings = sorting['firings']
+    firings_true = sorting['firings_true']
+    units_true = units_true
+    job = GenSortingComparisonTable.createJob(
         firings=firings,
         firings_true=firings_true,
         units_true=units_true,
-        json_out={'ext':'.json','upload':True},
-        html_out={'ext':'.html','upload':True},
+        json_out={'ext': '.json', 'upload': True},
+        html_out={'ext': '.html', 'upload': True},
         _container=container
     )
     return job
 
+
 @mtlogging.log()
-def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label=None,upload_to=None):
+def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, label=None, upload_to=None):
     print('')
     print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    container='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+    container = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
 
     sortings_out = deepcopy(sortings)
     sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
@@ -45,8 +48,8 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label
             firings=sorting['firings'],
             firings_true=sorting['firings_true'],
             units_true=sorting.get('units_true', []),
-            json_out={'ext':'.json','upload':True},
-            html_out={'ext':'.html','upload':True},
+            json_out={'ext': '.json', 'upload': True},
+            html_out={'ext': '.html', 'upload': True},
             _container=container
         )
         for sorting in sortings_valid
@@ -67,9 +70,9 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label
     #         _container=container
     #     )
     #     jobs_gen_table.append(job)
-    
-    label=label or 'Compare sortings with truth'
-    mlpr.executeBatch(jobs=jobs_gen_table,label=label,num_workers=num_workers,compute_resource=compute_resource)
+
+    label = label or 'Compare sortings with truth'
+    mlpr.executeBatch(jobs=jobs_gen_table, label=label, num_workers=num_workers, compute_resource=compute_resource)
 
     for sorting in sortings_out:
         sorting['comparison_with_truth'] = None
@@ -85,37 +88,39 @@ def compare_sortings_with_truth(sortings,compute_resource,num_workers=None,label
 
     return sortings_out
 
+
 class GenSortingComparisonTable(mlpr.Processor):
-    VERSION='0.2.0'
-    firings=mlpr.Input('Firings file (sorting)')
-    firings_true=mlpr.Input('True firings file')
-    units_true=mlpr.IntegerListParameter('List of true units to consider')
-    json_out=mlpr.Output('Table as .json file produced from pandas dataframe')
-    html_out=mlpr.Output('Table as .html file produced from pandas dataframe')
-    CONTAINER='sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
-    
+    VERSION = '0.2.0'
+    firings = mlpr.Input('Firings file (sorting)')
+    firings_true = mlpr.Input('True firings file')
+    units_true = mlpr.IntegerListParameter('List of true units to consider')
+    json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
+    html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
+    CONTAINER = 'sha1://1ad2478736ad188ab5050289ffb1d2c29d1ba750/03-29-2019/spikeforest_basic.simg'
+
     def run(self):
-        sorting=SFMdaSortingExtractor(firings_file=self.firings)
-        sorting_true=SFMdaSortingExtractor(firings_file=self.firings_true)
-        if (self.units_true is not None) and (len(self.units_true)>0):
-            sorting_true=si.SubSortingExtractor(parent_sorting=sorting_true,unit_ids=self.units_true)
-        SC=SortingComparison(sorting_true,sorting)
-        df=get_comparison_data_frame(comparison=SC)
-        #sw.SortingComparisonTable(comparison=SC).getDataframe()
-        json=df.transpose().to_dict()
-        html=df.to_html(index=False)
-        _write_json_file(json,self.json_out)
-        _write_json_file(html,self.html_out)
+        sorting = SFMdaSortingExtractor(firings_file=self.firings)
+        sorting_true = SFMdaSortingExtractor(firings_file=self.firings_true)
+        if (self.units_true is not None) and (len(self.units_true) > 0):
+            sorting_true = si.SubSortingExtractor(parent_sorting=sorting_true, unit_ids=self.units_true)
+        SC = SortingComparison(sorting_true, sorting)
+        df = get_comparison_data_frame(comparison=SC)
+        # sw.SortingComparisonTable(comparison=SC).getDataframe()
+        json = df.transpose().to_dict()
+        html = df.to_html(index=False)
+        _write_json_file(json, self.json_out)
+        _write_json_file(html, self.html_out)
 
-def get_comparison_data_frame(*,comparison):
+
+def get_comparison_data_frame(*, comparison):
     import pandas as pd
-    SC=comparison
+    SC = comparison
 
-    unit_properties=[] #snr, etc? these would need to be properties in the sortings of the comparison
+    unit_properties = []  # snr, etc? these would need to be properties in the sortings of the comparison
 
     # Compute events counts
-    sorting1=SC.getSorting1()
-    sorting2=SC.getSorting2()
+    sorting1 = SC.getSorting1()
+    sorting2 = SC.getSorting2()
     unit1_ids = sorting1.getUnitIds()
     unit2_ids = sorting2.getUnitIds()
     N1 = len(unit1_ids)
@@ -132,24 +137,24 @@ def get_comparison_data_frame(*,comparison):
     rows = []
     for u_1, unit1 in enumerate(unit1_ids):
         unit2 = SC.getBestUnitMatch1(unit1)
-        if unit2>=0:
-            num_matches=SC.getMatchingEventCount(unit1, unit2)
-            num_false_negatives=event_counts1[unit1]-num_matches
-            num_false_positives=event_counts2[unit2]-num_matches
+        if unit2 >= 0:
+            num_matches = SC.getMatchingEventCount(unit1, unit2)
+            num_false_negatives = event_counts1[unit1] - num_matches
+            num_false_positives = event_counts2[unit2] - num_matches
         else:
-            num_matches=0
-            num_false_negatives=event_counts1[unit1]
-            num_false_positives=0
+            num_matches = 0
+            num_false_negatives = event_counts1[unit1]
+            num_false_positives = 0
         row0 = {
             'unit_id': unit1,
-            'accuracy': _safe_frac(num_matches,num_false_positives+num_false_negatives+num_matches),
+            'accuracy': _safe_frac(num_matches, num_false_positives + num_false_negatives + num_matches),
             'best_unit': unit2,
             'matched_unit': SC.getMappedSorting1().getMappedUnitIds(unit1),
             'num_matches': num_matches,
             'num_false_negatives': num_false_negatives,
             'num_false_positives': num_false_positives,
-            'f_n': _safe_frac(num_false_negatives,num_false_negatives+num_matches),
-            'f_p': _safe_frac(num_false_positives,num_false_positives+num_matches)
+            'f_n': _safe_frac(num_false_negatives, num_false_negatives + num_matches),
+            'f_p': _safe_frac(num_false_positives, num_false_positives + num_matches)
         }
         for prop in unit_properties:
             pname = prop['name']
@@ -169,12 +174,13 @@ def get_comparison_data_frame(*,comparison):
     df['f_p'] = df['f_p'].map('{:,.4f}'.format)
     return df
 
+
 def _safe_frac(numer, denom):
     if denom == 0:
         return 0
     return float(numer) / denom
 
-def _write_json_file(obj,path):
-  with open(path,'w') as f:
-    return json.dump(obj,f)
 
+def _write_json_file(obj, path):
+    with open(path, 'w') as f:
+        return json.dump(obj, f)

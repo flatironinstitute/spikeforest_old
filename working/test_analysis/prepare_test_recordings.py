@@ -4,11 +4,12 @@ from mountaintools import client as mt
 
 mt.configDownloadFrom('spikeforest.kbucket')
 
+
 def do_prepare(recording_group, study_name):
     print(recording_group, study_name)
     X = mt.loadObject(path="key://pairio/spikeforest/spikeforest_recording_group.{}.json".format(recording_group))
-    studies = [y for y in X['studies'] if (y['name']==study_name)]
-    recordings = [y for y in X['recordings'] if y['study']==study_name]
+    studies = [y for y in X['studies'] if (y['name'] == study_name)]
+    recordings = [y for y in X['recordings'] if y['study'] == study_name]
     recordings = recordings[0:1]
     study_sets = X['study_sets']
 

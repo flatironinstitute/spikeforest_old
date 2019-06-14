@@ -9,8 +9,8 @@ def synthesize_random_waveforms(*, M=5, T=500, K=20, upsamplefac=13, timeshift_f
     rand_durations_stdev = [10, 4, 6, 20]
     rand_amps_stdev = [0.2, 3, 0.5, 0]
     rand_amp_factor_range = [0.5, 1]
-    #geom_spread_coef1 = 0.2
-    #geom_spread_coef2 = 1
+    # geom_spread_coef1 = 0.2
+    # geom_spread_coef2 = 1
     geom_spread_coef1 = 0.5
     geom_spread_coef2 = 0.4
 
@@ -27,7 +27,7 @@ def synthesize_random_waveforms(*, M=5, T=500, K=20, upsamplefac=13, timeshift_f
 
     neuron_locations = get_default_neuron_locations(M, K, geometry)
 
-    ## The waveforms_out
+    # The waveforms_out
     WW = np.zeros((M, T * upsamplefac, K))
 
     for k in range(1, K + 1):

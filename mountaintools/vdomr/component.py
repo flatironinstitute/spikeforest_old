@@ -8,7 +8,7 @@ from .vdomr import exec_javascript, _queue_javascript, _exec_queued_javascript, 
 class Component(object):
     def __init__(self):
         self._component_id = str(uuid.uuid4())
-        self._div_id = 'component-div-'+self._component_id
+        self._div_id = 'component-div-' + self._component_id
         self._render_code = 0
 
     @abc.abstractmethod
@@ -28,9 +28,9 @@ class Component(object):
         js = js.replace('{component_id}', self.componentId())
         exec_javascript(js)
 
-        html=self._render_and_get_html()
+        html = self._render_and_get_html()
         html_encoded = base64.b64encode(html.encode('utf-8')).decode('utf-8')
-        
+
         js = """
         (function() {
             let ee = document.getElementById('{div_id}');
@@ -58,9 +58,9 @@ class Component(object):
             });
         },0);
         """
-        js2=js2.replace('{div_id}', self._div_id)
-        js2=js2.replace('{component_id}', self.componentId())
-        js2=js2.replace('{js}', js)
+        js2 = js2.replace('{div_id}', self._div_id)
+        js2 = js2.replace('{component_id}', self.componentId())
+        js2 = js2.replace('{js}', js)
         exec_javascript(js2)
 
     def to_html(self):
@@ -68,15 +68,15 @@ class Component(object):
 
     def _repr_html_(self):
         self._render_code = self._render_code + 1
-        html=self._render_and_get_html()
-        return '<div id={} data-vdomr-render-code={}>'.format(self._div_id, self._render_code)+html+'</div>'
+        html = self._render_and_get_html()
+        return '<div id={} data-vdomr-render-code={}>'.format(self._div_id, self._render_code) + html + '</div>'
 
     def _render_and_get_html(self):
         self._render_in_progress = True
         html = self.render().to_html()
-        js = self.postRenderScript() # pylint: disable=assignment-from-none
+        js = self.postRenderScript()  # pylint: disable=assignment-from-none
         if not js:
-            js='// no post-render javascript'
+            js = '// no post-render javascript'
         # important to wrap this in setTimeout call so that the refresh gets executed first
         js2 = """
         window.vdomr_set_component_ready('{component_id}', false);
@@ -96,9 +96,9 @@ class Component(object):
             });
         }, 0);
         """
-        js2=js2.replace('{js}', js)
-        js2=js2.replace('{div_id}', self._div_id)
-        js2=js2.replace('{render_code}', str(self._render_code))
-        js2=js2.replace('{component_id}', self.componentId())
+        js2 = js2.replace('{js}', js)
+        js2 = js2.replace('{div_id}', self._div_id)
+        js2 = js2.replace('{render_code}', str(self._render_code))
+        js2 = js2.replace('{component_id}', self.componentId())
         exec_javascript(js2)
         return html

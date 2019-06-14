@@ -2,6 +2,7 @@ from .filterrecording import FilterRecording
 import numpy as np
 from scipy import special
 
+
 class BandpassFilterRecording(FilterRecording):
     def __init__(self, *, recording, freq_min, freq_max, freq_wid):
         FilterRecording.__init__(self, recording=recording, chunk_size=3000 * 10)
@@ -21,19 +22,19 @@ class BandpassFilterRecording(FilterRecording):
         i1 = start_frame - padding
         i2 = end_frame + padding
         padded_chunk = self._read_chunk(i1, i2)
-        if i1<0:
+        if i1 < 0:
             for m in range(padded_chunk.shape[0]):
-                padded_chunk[m,:-i1]=padded_chunk[m,-i1]
-        if i2>self._recording.getNumFrames():
+                padded_chunk[m, :-i1] = padded_chunk[m, -i1]
+        if i2 > self._recording.getNumFrames():
             for m in range(padded_chunk.shape[0]):
-                aa=(i2-self._recording.getNumFrames())
-                padded_chunk[m,-aa:]=padded_chunk[m,aa-1]
+                aa = (i2 - self._recording.getNumFrames())
+                padded_chunk[m, -aa:] = padded_chunk[m, aa - 1]
         filtered_padded_chunk = self._do_filter(padded_chunk)
         return filtered_padded_chunk[:, start_frame - i1:end_frame - i1]
 
     def _create_filter_kernel(self, N, samplerate, freq_min, freq_max, freq_wid=1000):
         # Matches ahb's code /matlab/processors/ms_bandpass_filter.m
-        # improved ahb, changing tanh to erf, correct -3dB pts  6/14/16    
+        # improved ahb, changing tanh to erf, correct -3dB pts  6/14/16
         T = N / samplerate  # total time
         df = 1 / T  # frequency grid
         relwid = 3.0  # relative bottom-end roll-off width param, kills low freqs by factor 1e-5.
@@ -46,10 +47,10 @@ class BandpassFilterRecording(FilterRecording):
 
         val = np.ones(fgrid.shape)
         if freq_min != 0:
-            val = val * (1 + special.erf(relwid * (absf - freq_min) / freq_min)) / 2 # pylint: disable=no-member
+            val = val * (1 + special.erf(relwid * (absf - freq_min) / freq_min)) / 2  # pylint: disable=no-member
             val = np.where(np.abs(k_inds) < 0.1, 0, val)  # kill DC part exactly
         if freq_max != 0:
-            val = val * (1 - special.erf((absf - freq_max) / freq_wid)) / 2 # pylint: disable=no-member
+            val = val * (1 - special.erf((absf - freq_max) / freq_wid)) / 2  # pylint: disable=no-member
         val = np.sqrt(val)  # note sqrt of filter func to apply to spectral intensity not ampl
         return val
 

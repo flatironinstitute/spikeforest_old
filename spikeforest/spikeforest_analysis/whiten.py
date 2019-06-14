@@ -10,12 +10,12 @@ class WhitenRecording(FilterRecording):
 
     def _get_random_data_for_whitening(self, num_chunks=50, chunk_size=500):
         N = self._recording.getNumFrames()
-        list = []
-        for i in range(num_chunks):
+        list0 = []
+        for _ in range(num_chunks):
             ff = np.random.randint(0, N - chunk_size)
             chunk = self._recording.getTraces(start_frame=ff, end_frame=ff + chunk_size)
-            list.append(chunk)
-        return np.concatenate(list, axis=1)
+            list0.append(chunk)
+        return np.concatenate(list0, axis=1)
 
     def _compute_whitening_matrix(self):
         data = self._get_random_data_for_whitening()

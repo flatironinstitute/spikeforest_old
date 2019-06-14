@@ -17,7 +17,7 @@ def synthesize_random_firings(*, K=20, samplerate=30000, duration=60, firing_rat
 
         times0 = np.random.rand(populations[k - 1]) * (N - 1) + 1
 
-        ## make an interesting autocorrelogram shape
+        # make an interesting autocorrelogram shape
         times0 = np.hstack((times0, times0 + rand_distr2(refr_timepoints, refr_timepoints * 20, times0.size)))
         times0 = times0[np.random.choice(times0.size, int(times0.size / 2))]
         times0 = times0[np.where((0 <= times0) & (times0 < N))]
@@ -40,7 +40,8 @@ def rand_distr2(a, b, num):
 
 
 def enforce_refractory_period(times_in, refr):
-    if (times_in.size == 0): return times_in
+    if (times_in.size == 0):
+        return times_in
 
     times0 = np.sort(times_in)
     done = False

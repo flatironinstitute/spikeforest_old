@@ -26,7 +26,7 @@ def main():
         SFMdaRecordingExtractor.writeRecording(
             recording=rx, save_path=recpath)
         SFMdaSortingExtractor.writeSorting(
-            sorting=sx_true, save_path=recpath+'/firings_true.mda')
+            sorting=sx_true, save_path=recpath + '/firings_true.mda')
 
     # for downloading containers if needed
     mt.configDownloadFrom(['spikeforest.spikeforest2'])
@@ -50,7 +50,7 @@ def main():
         )
     ]
 
-    recordings = recordings*10
+    recordings = recordings * 10
 
     studies = [
         dict(
@@ -78,7 +78,7 @@ def main():
         )
 
         # Append to results
-        sorting_results = sorting_results+sortings
+        sorting_results = sorting_results + sortings
 
     # Summarize the sortings
     sorting_results = sa.summarize_sortings(
@@ -119,66 +119,66 @@ def _define_sorters():
         )
     )
 
-    sorter_irc_tetrode = dict(
-        name='IronClust-tetrode',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            detect_threshold=5,
-            prm_template_name="tetrode_template.prm"
-        )
-    )
+    # sorter_irc_tetrode = dict(
+    #     name='IronClust-tetrode',
+    #     processor_name='IronClust',
+    #     params=dict(
+    #         detect_sign=-1,
+    #         adjacency_radius=50,
+    #         detect_threshold=5,
+    #         prm_template_name="tetrode_template.prm"
+    #     )
+    # )
 
-    sorter_irc_drift = dict(
-        name='IronClust-drift',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            prm_template_name="drift_template.prm"
-        )
-    )
+    # sorter_irc_drift = dict(
+    #     name='IronClust-drift',
+    #     processor_name='IronClust',
+    #     params=dict(
+    #         detect_sign=-1,
+    #         adjacency_radius=50,
+    #         prm_template_name="drift_template.prm"
+    #     )
+    # )
 
-    sorter_irc_static = dict(
-        name='IronClust-static',
-        processor_name='IronClust',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50,
-            prm_template_name="static_template.prm"
-        )
-    )
+    # sorter_irc_static = dict(
+    #     name='IronClust-static',
+    #     processor_name='IronClust',
+    #     params=dict(
+    #         detect_sign=-1,
+    #         adjacency_radius=50,
+    #         prm_template_name="static_template.prm"
+    #     )
+    # )
 
-    def sorter_irc_template(prm_template_name):
-        sorter_irc = dict(
-            name='IronClust-{}'.format(prm_template_name),
-            processor_name='IronClust',
-            params=dict(
-                detect_sign=-1,
-                adjacency_radius=50,
-                prm_template_name="{}_template.prm".format(prm_template_name)
-            )
-        )
-        return sorter_irc
+    # def sorter_irc_template(prm_template_name):
+    #     sorter_irc = dict(
+    #         name='IronClust-{}'.format(prm_template_name),
+    #         processor_name='IronClust',
+    #         params=dict(
+    #             detect_sign=-1,
+    #             adjacency_radius=50,
+    #             prm_template_name="{}_template.prm".format(prm_template_name)
+    #         )
+    #     )
+    #     return sorter_irc
 
-    sorter_sc = dict(
-        name='SpykingCircus',
-        processor_name='SpykingCircus',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )
+    # sorter_sc = dict(
+    #     name='SpykingCircus',
+    #     processor_name='SpykingCircus',
+    #     params=dict(
+    #         detect_sign=-1,
+    #         adjacency_radius=50
+    #     )
+    # )
 
-    sorter_ks = dict(
-        name='KiloSort',
-        processor_name='KiloSort',
-        params=dict(
-            detect_sign=-1,
-            adjacency_radius=50
-        )
-    )
+    # sorter_ks = dict(
+    #     name='KiloSort',
+    #     processor_name='KiloSort',
+    #     params=dict(
+    #         detect_sign=-1,
+    #         adjacency_radius=50
+    #     )
+    # )
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     # return [sorter_ms4_thr3, sorter_sc, sorter_irc_tetrode, sorter_ks]
     return [sorter_ms4_thr3]

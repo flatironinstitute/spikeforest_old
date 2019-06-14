@@ -33,8 +33,8 @@ def test_spikeforest_analysis(tmpdir):
     delete_recordings = True
     num_recordings = 2
     duration = 15
-    for num in range(1, num_recordings+1):
-        dirname = tmpdir+'/toy_example{}'.format(num)
+    for num in range(1, num_recordings + 1):
+        dirname = tmpdir + '/toy_example{}'.format(num)
         if delete_recordings:
             if os.path.exists(dirname):
                 shutil.rmtree(dirname)
@@ -44,7 +44,7 @@ def test_spikeforest_analysis(tmpdir):
             SFMdaRecordingExtractor.writeRecording(
                 recording=rx, save_path=dirname)
             SFMdaSortingExtractor.writeSorting(
-                sorting=sx_true, save_path=dirname+'/firings_true.mda')
+                sorting=sx_true, save_path=dirname + '/firings_true.mda')
 
     # # Use this to optionally connect to a kbucket share:
     # # ca.autoConfig(collection='spikeforest',key='spikeforest2-readwrite',ask_password=True)
@@ -66,9 +66,9 @@ def test_spikeforest_analysis(tmpdir):
         dict(
             recording_name='toy_example{}'.format(num),
             study_name='toy_examples',
-            directory=tmpdir+'/toy_example{}'.format(num)
+            directory=tmpdir + '/toy_example{}'.format(num)
         )
-        for num in range(1, num_recordings+1)
+        for num in range(1, num_recordings + 1)
     ]
 
     studies = [
@@ -111,7 +111,7 @@ def test_spikeforest_analysis(tmpdir):
         )
 
         # Append to results
-        sorting_results = sorting_results+sortings
+        sorting_results = sorting_results + sortings
 
     # TODO: collect all the units for aggregated analysis
 
@@ -133,20 +133,20 @@ def test_spikeforest_analysis(tmpdir):
     )
 
     for sr in aggregated_sorting_results['study_sorting_results']:
-        study_name=sr['study']
-        sorter_name=sr['sorter']
-        n1=np.array(sr['num_matches'])
-        n2=np.array(sr['num_false_positives'])
-        n3=np.array(sr['num_false_negatives'])
-        accuracies=n1/(n1+n2+n3)
-        avg_accuracy=np.mean(accuracies)
-        txt='STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(study_name,sorter_name,avg_accuracy)
+        study_name = sr['study']
+        sorter_name = sr['sorter']
+        n1 = np.array(sr['num_matches'])
+        n2 = np.array(sr['num_false_positives'])
+        n3 = np.array(sr['num_false_negatives'])
+        accuracies = n1 / (n1 + n2 + n3)
+        avg_accuracy = np.mean(accuracies)
+        txt = 'STUDY: {}, SORTER: {}, AVG ACCURACY: {}'.format(study_name, sorter_name, avg_accuracy)
         print(txt)
-        if avg_accuracy<0.3:
+        if avg_accuracy < 0.3:
             if sorter_name == 'Yass':
                 print('Average accuracy is too low, but we are excusing Yass for now.')
             else:
-                raise Exception('Average accuracy is too low for test----- '+txt)
+                raise Exception('Average accuracy is too low for test----- ' + txt)
 
 
 def _define_sorters():
