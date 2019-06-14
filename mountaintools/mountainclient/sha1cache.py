@@ -80,7 +80,7 @@ class Sha1Cache():
                 _safe_remove_file(hints_fname)
         return None
 
-    def downloadFile(self, url: str, sha1: str, target_path: Optional[str] = None, size: Optional[int] = None, verbose: bool = False, show_progress: bool = False) -> Optional[str]:
+    def downloadFile(self, url: str, sha1: str, target_path: Optional[str]=None, size: Optional[int]=None, verbose: bool=False, show_progress: bool=False) -> Optional[str]:
         alternate_target_path = False
         if target_path is None:
             target_path = self._get_path(sha1, create=True)
@@ -106,7 +106,7 @@ class Sha1Cache():
             if os.path.exists(path_tmp):
                 _safe_remove_file(path_tmp)
             raise Exception(
-                'sha1 of downloaded file does not match expected {} {}'.format(url, sha1))
+                'sha1 of downloaded file does not match expected {} {} <> {}'.format(url, sha1, sha1b))
         if alternate_target_path:
             if os.path.exists(target_path):
                 _safe_remove_file(target_path)
@@ -199,13 +199,13 @@ class Sha1Cache():
         # todo: use hints for findFile
         return sha1
 
-    def reportFileSha1(self, path: str, sha1: str) -> Optional[str]:
+    def reportFileSha1(self, path: str, sha1: str) -> None:
         self.computeFileSha1(path, _known_sha1=sha1)
 
-    def _get_path(self, sha1: str, *, create: bool = True, directory: Optional[str] = None) -> str :
-        return str(self._get_path_ext(sha1, create = create, directory = directory, return_alternates=False))
-        
-    def _get_path_ext(self, sha1: str, *, create: bool = True, directory: Optional[str] = None, return_alternates: bool = False) -> Union[str, Tuple[str, List[str]]] :
+    def _get_path(self, sha1: str, *, create: bool=True, directory: Optional[str]=None) -> str:
+        return str(self._get_path_ext(sha1, create=create, directory=directory, return_alternates=False))
+
+    def _get_path_ext(self, sha1: str, *, create: bool=True, directory: Optional[str]=None, return_alternates: bool=False) -> Union[str, Tuple[str, List[str]]]:
         if not directory:
             directory = self.directory()
         path1 = os.path.join(sha1[0], sha1[1:3])
@@ -301,14 +301,6 @@ def _write_json_file(obj: object, path: str) -> None:
             json.dump(obj, f)
 
 
-def _safe_list_dir(path: str) -> List[str]:
-    try:
-        ret = os.listdir(path)
-        return ret
-    except:
-        return []
-
-
 def _rename_or_copy(path1: str, path2: str) -> None:
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
@@ -358,11 +350,12 @@ def _format_file_size(size: Optional[int]) -> str:
 
 
 def _sizeof_fmt(num: int, suffix='B') -> str:
+    num_float = float(num)
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
+        if abs(num_float) < 1024.0:
+            return "%3.1f %s%s" % (num_float, unit, suffix)
+        num_float /= 1024.0
+    return "%.1f %s%s" % (num_float, 'Yi', suffix)
 
 
 def _random_string(num_chars: int) -> str:

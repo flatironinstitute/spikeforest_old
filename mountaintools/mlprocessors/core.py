@@ -8,6 +8,7 @@ import traceback
 from .execute import execute
 from .createjobs import createJob, createJobs
 import json
+import abc
 
 
 class ParserError(ValueError):
@@ -338,6 +339,10 @@ class Processor(metaclass=ProcMeta):
     Usually this is determined automatically and should not be set manually.
     """
     USE_ARGUMENTS = True
+
+    @abc.abstractmethod
+    def run(self):
+        pass
 
     @classmethod
     def apply(cls, self, *args, **kwargs):

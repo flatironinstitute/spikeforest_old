@@ -9,4 +9,5 @@ from .herdingspikes2 import HerdingSpikes2
 from .jrclust import JRClust
 from .klusta import Klusta
 from .tridesclous import Tridesclous
+from .tridesclous_old import TridesclousOld
 from .waveclus import Waveclus

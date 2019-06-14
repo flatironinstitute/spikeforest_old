@@ -6,6 +6,7 @@ from .mountainjob import MountainJob
 import json
 import inspect
 import multiprocessing
+from typing import Optional, List
 
 local_client = MountainClient()
 
@@ -18,7 +19,7 @@ def createJobs(proc, argslist, verbose=None):
     try:
         processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     except:
-        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource or in a container.'.format(proc.NAME))
+        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a cluster or in a container.'.format(proc.NAME))
         processor_source_fname = None
     if processor_source_fname is not None:
         processor_source_dirname = os.path.dirname(processor_source_fname)
@@ -334,18 +335,18 @@ def createJobs(proc, argslist, verbose=None):
 @mtlogging.log()
 def createJob(
     proc,
-    _container=None,
-    _use_cache=True,
-    _skip_failing=None,
-    _skip_timed_out=None,
-    _force_run=None,
-    _keep_temp_files=None,
-    _label=None,
-    _timeout=None,
-    _additional_files_to_realize=None,
-    _verbose=None,
+    _container: Optional[str]=None,
+    _use_cache: bool=True,
+    _skip_failing: Optional[bool]=None,
+    _skip_timed_out: Optional[bool]=None,
+    _force_run: Optional[bool]=None,
+    _keep_temp_files: Optional[bool]=None,
+    _label: Optional[str]=None,
+    _timeout: Optional[float]=None,
+    _additional_files_to_realize: Optional[List[str]]=None,
+    _verbose: Optional[bool]=None,
     **kwargs
-):
+) -> MountainJob:
     args = dict(
         _container=_container,
         _use_cache=_use_cache,

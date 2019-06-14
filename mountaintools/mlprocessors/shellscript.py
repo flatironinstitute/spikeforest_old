@@ -4,10 +4,11 @@ import shutil
 import signal
 import os
 import time
+from typing import Optional, List, Any
 
 
 class ShellScript():
-    def __init__(self, script, script_path=None, keep_temp_files=False):
+    def __init__(self, script: str, script_path: Optional[str]=None, keep_temp_files: bool=False):
         lines = script.splitlines()
         lines = self._remove_initial_blank_lines(lines)
         if len(lines) > 0:
@@ -22,18 +23,18 @@ class ShellScript():
         self._script = '\n'.join(lines)
         self._script_path = script_path
         self._keep_temp_files = keep_temp_files
-        self._process = None
-        self._files_to_remove = []
-        self._dirs_to_remove = []
-        self._start_time = None
+        self._process: Optional[subprocess.Popen] = None
+        self._files_to_remove: List[str] = []
+        self._dirs_to_remove: List[str] = []
+        self._start_time: Optional[float] = None
 
     def __del__(self):
         self.cleanup()
 
-    def substitute(self, old, new):
+    def substitute(self, old: str, new: Any) -> None:
         self._script = self._script.replace(old, '{}'.format(new))
 
-    def write(self, script_path=None):
+    def write(self, script_path: Optional[str]=None) -> None:
         if script_path is None:
             script_path = self._script_path
         if script_path is None:
@@ -42,8 +43,7 @@ class ShellScript():
             f.write(self._script)
         os.chmod(script_path, 0o744)
 
-    def start(self):
-        script_path = self._script_path
+    def start(self) -> None:
         if self._script_path is not None:
             script_path = self._script_path
         else:
@@ -56,24 +56,26 @@ class ShellScript():
         self._start_time = time.time()
         self._process = subprocess.Popen(cmd)
 
-    def wait(self, timeout=None):
+    def wait(self, timeout=None) -> Optional[int]:
         if not self.isRunning():
             return self.returnCode()
+        assert self._process is not None, "Unexpected self._process is None even though it is running."
         try:
             retcode = self._process.wait(timeout=timeout)
             return retcode
         except:
             return None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self._keep_temp_files:
             return
         for dirpath in self._dirs_to_remove:
             shutil.rmtree(dirpath)
 
-    def stop(self):
+    def stop(self) -> None:
         if not self.isRunning():
             return
+        assert self._process is not None, "Unexpected self._process is None even though it is running."
 
         signals = [signal.SIGINT] * 10 + [signal.SIGTERM] * 10 + [signal.SIGKILL] * 10
 
@@ -85,9 +87,11 @@ class ShellScript():
             except:
                 pass
 
-    def kill(self):
+    def kill(self) -> None:
         if not self.isRunning():
             return
+        
+        assert self._process is not None, "Unexpected self._process is None even though it is running."
         self._process.send_signal(signal.SIGKILL)
         try:
             self._process.wait(timeout=1)
@@ -95,9 +99,11 @@ class ShellScript():
             print('WARNING: unable to kill shell script.')
             pass
 
-    def stopWithSignal(self, sig, timeout):
+    def stopWithSignal(self, sig, timeout) -> bool:
         if not self.isRunning():
-            return
+            return True
+        
+        assert self._process is not None, "Unexpected self._process is None even though it is running."
         self._process.send_signal(sig)
         try:
             self._process.wait(timeout=timeout)
@@ -105,12 +111,13 @@ class ShellScript():
         except:
             return False
 
-    def elapsedTimeSinceStart(self):
+    def elapsedTimeSinceStart(self) -> Optional[float]:
         if self._start_time is None:
-            return
+            return None
+        
         return time.time() - self._start_time
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         if not self._process:
             return False
         retcode = self._process.poll()
@@ -118,26 +125,27 @@ class ShellScript():
             return True
         return False
 
-    def isFinished(self):
+    def isFinished(self) -> bool:
         if not self._process:
             return False
         return not self.isRunning()
 
-    def returnCode(self):
+    def returnCode(self) -> Optional[int]:
         if not self.isFinished():
             raise Exception('Cannot get return code before process is finished.')
+        assert self._process is not None, "Unexpected self._process is None even though it is finished."
         return self._process.returncode
 
-    def scriptPath(self):
+    def scriptPath(self) -> Optional[str]:
         return self._script_path
 
-    def _remove_initial_blank_lines(self, lines):
+    def _remove_initial_blank_lines(self, lines: List[str]) -> List[str]:
         ii = 0
         while ii < len(lines) and len(lines[ii].strip()) == 0:
             ii = ii + 1
         return lines[ii:]
 
-    def _get_num_initial_spaces(self, line):
+    def _get_num_initial_spaces(self, line: str) -> int:
         ii = 0
         while ii < len(line) and line[ii] == ' ':
             ii = ii + 1

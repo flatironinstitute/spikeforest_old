@@ -150,7 +150,7 @@ class CombineSubsampledMandelbrot(mlpr.Processor):
         np.save(self.X_out, X)
 
 
-def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, compute_resource=None, _force_run=False, _container=None, srun_opts=None, use_slurm=False):
+def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num_x=1000, num_iter=1000, num_parallel=1, _force_run=False, _container=None, srun_opts=None, use_slurm=False):
     subsampling_factor = num_parallel
     jobs = []
 
@@ -187,7 +187,7 @@ def compute_mandelbrot_parallel(*, xmin=-2, xmax=0.5, ymin=-1.25, ymax=1.25, num
             result0 = job.execute()
             results.append(result0)
 
-        # results = mlpr.executeBatch(jobs=jobs, compute_resource=compute_resource, srun_opts=srun_opts)
+        # results = mlpr.executeBatch(jobs=jobs, srun_opts=srun_opts)
 
         X_list = []
         for result0 in results:
