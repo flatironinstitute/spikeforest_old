@@ -68,7 +68,7 @@ def main():
     analysis_definitions = analysis_obj['analyses']
 
     # Realize the containers for the sorters
-    for sorter in sorter_definitions:
+    for sorter in sorter_definitions.values():
         sorter_name = sorter['name']
         sorting_params = sorter['params']
         processor_name = sorter['processor_name']
