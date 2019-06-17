@@ -9,6 +9,7 @@ from .execute import execute
 from .createjobs import createJob, createJobs
 import json
 import abc
+from typing import Callable, Optional
 
 
 class ParserError(ValueError):
@@ -329,6 +330,7 @@ class Processor(metaclass=ProcMeta):
 
     """
     NAMESPACE = None
+    NAME = None
     VERSION = None
     """ Version of the processor """
     DESCRIPTION = None
@@ -339,6 +341,7 @@ class Processor(metaclass=ProcMeta):
     Usually this is determined automatically and should not be set manually.
     """
     USE_ARGUMENTS = True
+    test: Optional[Callable] = None
 
     @abc.abstractmethod
     def run(self):

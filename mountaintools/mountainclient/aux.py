@@ -6,6 +6,7 @@ import json
 import functools
 from typing import Any, Callable
 
+
 def deprecated(reason: str) -> Callable:
     def decorator(func):
         if not func.__doc__:
@@ -100,7 +101,7 @@ def _random_string(num: int) -> str:
 
 
 def _create_temporary_fname(ext: str) -> str:
-    tempdir = os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir())
+    tempdir = os.environ.get('SHA1_CACHE_DIR', os.environ.get('KBUCKET_CACHE_DIR', tempfile.gettempdir()))
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
     return tempdir + '/tmp_mountainclient_' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10)) + ext

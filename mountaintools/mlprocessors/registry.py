@@ -7,10 +7,13 @@ import traceback
 import argparse
 from .execute import execute
 import types
+from typing import Optional, List, Type, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .core import Processor
 
 
 class ProcessorRegistry:
-    def __init__(self, processors=[], namespace=None):
+    def __init__(self, processors: List[Type['Processor']]=[], namespace=None):
         self.processors = processors
         self.namespace = namespace
         if namespace:
@@ -23,7 +26,7 @@ class ProcessorRegistry:
         s['processors'] = [cls.spec() for cls in self.processors]
         return s
 
-    def find(self, **kwargs):
+    def find(self, **kwargs) -> Optional[Type['Processor']]:
         for P in self.processors:
             for key in kwargs:
                 if not hasattr(P, key):
@@ -31,6 +34,7 @@ class ProcessorRegistry:
                 if getattr(P, key) != kwargs[key]:
                     continue
                 return P
+        return None
 
     def get_processor_by_name(self, name):
         return self.find(NAME=name)
@@ -40,7 +44,7 @@ class ProcessorRegistry:
         proc = self.find(NAME=procname)
         if not proc:
             raise KeyError("Unable to find processor %s" % procname)
-        if not hasattr(proc, 'test') or not callable(proc.test):
+        if not hasattr(proc, 'test'):
             raise AttributeError("No test function defined for %s" % proc.NAME)
         print("----------------------------------------------")
         print("Testing", proc.NAME)

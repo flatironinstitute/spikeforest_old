@@ -23,7 +23,7 @@ class Sha1Cache():
         if self._directory:
             return self._directory
         else:
-            return os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
+            return os.getenv('SHA1_CACHE_DIR', os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache'))
 
     def alternateDirectories(self) -> List[str]:
         if self._alternate_directories:

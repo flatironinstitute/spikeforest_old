@@ -9,9 +9,9 @@ class TemporaryDirectory():
         self._prefix = prefix
 
     def __enter__(self) -> str:
-        kbucket_cache_dir = os.environ.get('KBUCKET_CACHE_DIR', None)
-        if kbucket_cache_dir:
-            dirpath = os.path.join(kbucket_cache_dir, 'tmp')
+        sha1_cache_dir = os.environ.get('SHA1_CACHE_DIR', os.environ.get('KBUCKET_CACHE_DIR', None))
+        if sha1_cache_dir:
+            dirpath = os.path.join(sha1_cache_dir, 'tmp')
             if not os.path.exists(dirpath):
                 os.mkdir(dirpath)
         else:

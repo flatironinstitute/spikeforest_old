@@ -2,12 +2,36 @@ import fcntl
 import errno
 import time
 import random
+from typing import IO, Optional
 
 
 class FileLock():
-    def __init__(self, path: str, _disable_lock: bool=False, exclusive: bool=True):
+    def __init__(self, path: str, exclusive: bool=True, _disable_lock: bool=False):
+        """Lock a file via fcntl.flock using an exclusive or non-exclusive lock.
+        
+        Example usage:
+        ```
+        with FileLock('some_file.txt.lock', exclusive=True):
+            # Do something with some_file.txt
+        ```
+        
+        Rather than locking a file directly, it is helpful to lock an adjacent
+        .lock file.
+
+        Exclusive locks are useful for read/write access whereas non-exclusive
+        locks are useful for readonly access.
+
+        Parameters
+        ----------
+        path : str
+            Path to the file to lock
+        exclusive : bool, optional
+            Whether the lock should be exclusive, by default True
+        _disable_lock : bool, optional
+            For testing purposes, do not actually lock, by default False
+        """
         self._path = path
-        self._file = None
+        self._file: Optional[IO] = None
         self._disable_lock = _disable_lock
         self._exclusive = exclusive
 

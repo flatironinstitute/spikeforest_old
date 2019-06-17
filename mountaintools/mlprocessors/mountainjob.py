@@ -643,19 +643,23 @@ def _code_generate_value(val: Any) -> Any:
 
 def _get_singularity_opts_and_env_vars() -> Tuple[List[str], List[str]]:
     singularity_opts = []
-    kbucket_cache_dir = local_client.localCacheDir()
-    alternate_kbucket_cache_dirs = local_client.alternateLocalCacheDirs()
+    sha1_cache_dir = local_client.localCacheDir()
+    alternate_sha1_cache_dirs = local_client.alternateLocalCacheDirs()
 
     env_vars = []
 
-    singularity_opts.append('-B {}:{}'.format(kbucket_cache_dir, '/sha1-cache'))
+    singularity_opts.append('-B {}:{}'.format(sha1_cache_dir, '/sha1-cache'))
+    # The first is probably not needed any more, but just to be safe
     env_vars.append('KBUCKET_CACHE_DIR=/sha1-cache')
+    env_vars.append('SHA1_CACHE_DIR=/sha1-cache')
     alt_dirs_in_container = []
-    for ii, alt_cache_dir in enumerate(alternate_kbucket_cache_dirs):
+    for ii, alt_cache_dir in enumerate(alternate_sha1_cache_dirs):
         dir_in_container = '/sha1-cache-alt-{}'.format(ii)
         singularity_opts.append('-B {}:{}'.format(alt_cache_dir, dir_in_container))
         alt_dirs_in_container.append(dir_in_container)
+    # The first is probably not needed any more, but just to be safe
     env_vars.append('KBUCKET_CACHE_DIR_ALT={}'.format(':'.join(alt_dirs_in_container)))
+    env_vars.append('SHA1_CACHE_DIR_ALT={}'.format(':'.join(alt_dirs_in_container)))
     singularity_opts.append('-B /tmp:/tmp')
     singularity_opts.append('--contain')
     singularity_opts.append('-e')
