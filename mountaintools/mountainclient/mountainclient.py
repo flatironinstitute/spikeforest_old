@@ -646,6 +646,39 @@ class MountainClient():
                           value=sha1_path)
 
         return sha1_path
+    
+    @mtlogging.log(name='MountainClient:findFile')
+    def findFile(self, path: str, *,
+                 local_only: bool=False,
+                 remote_only: bool=False,
+                 download_from: Optional[StrOrStrList]=None
+                 ) -> Optional[str]:
+        """
+        Find a file without downloading it, returning either the local
+        location of the file or a http:// or https:// address.
+        
+        Parameters
+        ----------
+        path : str
+            The path or URI of the file to find.
+        local_only : bool, optional
+            Whether to only find the file locally, by default False
+        remote_only : bool, optional
+            Whether to only find the file remotely, by default False
+        download_from : Optional[StrOrStrList], optional
+            The names of the remote kacheries to search, by default None
+        
+        Returns
+        -------
+        Optional[str]
+            Either the local path of the file or the http URL of the remote
+            file.
+        """
+        if path and path.startswith('key://'):
+            path = self.resolveKeyPath(path)
+            if not path:
+                return None
+        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, remote_only=remote_only, download_from=download_from)
 
     def createSnapshot(self, path: str, *,
                        upload_to: Optional[StrOrStrList]=None,
@@ -654,7 +687,32 @@ class MountainClient():
                        dest_path: Optional[str]=None
                        ) -> Optional[str]:
         """
-        Create an immutable snapshot of a file or directory.
+        Create an immutable snapshot of a file or directory, optionally upload
+        the content to a kachery, and return a sha1:// or sha1dir:// URI to the
+        file or directory.
+        
+        Parameters
+        ----------
+        path : str
+            Path to the file or directory to snapshot. This is usually the path
+            to a local file, but could also be a sha1:// or sha1dir:// URI.
+        upload_to : Optional[StrOrStrList], optional
+            The kachery or kacheries to upload content to, by default None
+        download_recursive : bool, optional
+            If path is a directory represented by a sha1dir:// path, this
+            specifies whether to recursively download the content. By default it
+            is False.
+        upload_recursive : bool, optional
+            If uploading... whether to upload the content recursively. If False,
+            only uploads the index of the diretory. By default it is False.
+        dest_path : Optional[str], optional
+            A key:// path where the returned URI is stored on pairio, by default
+            None.
+        
+        Returns
+        -------
+        Optional[str]
+            A sha1:// or sha1dir:// URI referring to the content of the snapshot.
         """
         if path and path.startswith('key://'):
             path = self.resolveKeyPath(path)
@@ -729,6 +787,27 @@ class MountainClient():
                         upload_recursive=False,
                         dest_paths=None
                         ) -> List[Optional[str]]:
+        """Create multiple snapshots. See createSnapshot().
+        
+        Parameters
+        ----------
+        paths : [type]
+            A list of paths. See createSnapshot().
+        upload_to : Optional[StrOrStrList], optional
+            Same as upload_to in createSnapshot(), by default None
+        download_recursive : bool, optional
+            Same as download_recursive in createSnapshot(), by default False
+        upload_recursive : bool, optional
+            Same as upload_recursive in createSnapshot(), by default False
+        dest_paths : [type], optional
+            A list of dest_paths as in createSnapshot(), by default None
+        
+        Returns
+        -------
+        List[Optional[str]]
+            A list of sha1:// or sha1dir:// URIs referring to the contents of
+            the snapshot.
+        """
         if dest_paths is None:
             dest_paths = [None for path in paths]
         return [
@@ -785,6 +864,38 @@ class MountainClient():
                 local_only: bool=False,
                 remote_only: bool=False
                 ) -> Optional[dict]:
+        """
+        Returns a recursive index of a local or remote directory, optionally
+        including the SHA-1 hashes of the files.
+        
+        Parameters
+        ----------
+        path : str
+            Either a path to a local directory or a sha1dir:// address to a
+            remote directory.
+        recursive : bool, optional
+            Whether to return a recursive index, by default False
+        include_sha1 : bool, optional
+            Whether to include the SHA-1 hashes of the files in the index, by
+            default True
+        download_from : Any, optional
+            Optional kachery to download information from in addition to those
+            configured by configDownloadFrom(), by default None
+        local_only : bool, optional
+            Whether to ignore all configured kacheries, by default False
+        remote_only : bool, optional
+            Whether to only obtain information from remote locations, by default
+            False
+        
+        Returns
+        -------
+        Optional[dict]
+            An index of the directory in the form:
+            {
+                dirs: {...},
+                files: {...}
+            }
+        """
         if path and path.startswith('key://'):
             path_resolved: str = self.resolveKeyPath(path)
             if not path_resolved:
@@ -820,6 +931,18 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeDirHash')
     def computeDirHash(self, path: str) -> Optional[str]:
+        """Returns a hash of a local or remote directory
+        
+        Parameters
+        ----------
+        path : str
+            Path of the local or remote directory. See readDir().
+        
+        Returns
+        -------
+        Optional[str]
+            The hash of the recursive directory index object from readDir().
+        """
         if path and path.startswith('key://'):
             # todo
             raise Exception('This case not handled yet')
@@ -830,6 +953,18 @@ class MountainClient():
 
     @mtlogging.log(name='MountainClient:computeFileSha1')
     def computeFileSha1(self, path: str) -> Optional[str]:
+        """Return the SHA-1 hash of a local or remote file.
+        
+        Parameters
+        ----------
+        path : str
+            The path to a local file or a sha1:// or sha1dir:// URI.
+        
+        Returns
+        -------
+        Optional[str]
+            The SHA-1 file hash, or None if the file does not exist.
+        """
         try:
             path = self._maybe_resolve(path)
             return self._local_db.computeFileSha1(path=path)
@@ -837,10 +972,38 @@ class MountainClient():
             return None
 
     def sha1OfObject(self, obj: dict) -> str:
+        """Compute the SHA-1 hash of a simple dict as the SHA-1 hash
+        of the JSON text generated in a reproducible way.
+        
+        Parameters
+        ----------
+        obj : dict
+            The simple dict object.
+        
+        Returns
+        -------
+        str
+            The hash.
+        """
         return _sha1_of_object(obj)
 
     @mtlogging.log(name='MountainClient:computeFileOrDirHash')
     def computeFileOrDirHash(self, path: str) -> Optional[str]:
+        """
+        Compute the SHA-1 hash of a file or directory. See computeFileSha1() and
+        computeDirHash().
+        
+        Parameters
+        ----------
+        path : str
+            The path or URI to the file or directory.
+        
+        Returns
+        -------
+        Optional[str]
+            The hash computed either using computeFileSha1() or
+            computeDirHash().
+        """
         if path.startswith('kbucket://'):
             raise Exception('kucket:// paths are no longer supported')
 
@@ -858,6 +1021,21 @@ class MountainClient():
                 return self.computeFileSha1(path)
 
     def isFile(self, path: str) -> bool:
+        """
+        Returns True if the path or URI represents a file rather than a
+        directory.
+        
+        Parameters
+        ----------
+        path : str
+            The path or URI to the putative (is putative the right word here?)
+            file.
+        
+        Returns
+        -------
+        bool
+            True if the path or URI represents a file rather than a directory
+        """
         if self.isLocalPath(path=path):
             return os.path.isfile(path)
 
@@ -877,7 +1055,20 @@ class MountainClient():
             return os.path.isfile(path)
 
     def isLocalPath(self, path: str) -> bool:
-        # rename to isLocalFilePath
+        """
+        Return True if the path or URI refers to a local file or directory. In
+        other words if it is not a sha1:// or sha1dir:// URI.
+        
+        Parameters
+        ----------
+        path : str
+            The path or URI to a file or directory.
+        
+        Returns
+        -------
+        bool
+            True if the path refers to a local file or directory.
+        """
         if path.startswith('kbucket://'):
             raise Exception('kucket:// paths are no longer supported')
 
@@ -930,13 +1121,42 @@ class MountainClient():
         )
 
     def localCacheDir(self) -> str:
+        """Returns the path of the directory used for the local cache.
+        
+        Returns
+        -------
+        str
+            Path to the cache directory.
+        """
         return self._local_db.localCacheDir()
 
     def alternateLocalCacheDirs(self) -> List[str]:
+        """Returns a list of paths to alternate local cache directories.
+        
+        Returns
+        -------
+        List[str]
+            The list of alternate local cache paths.
+        """
         return self._local_db.alternateLocalCacheDirs()
 
     @mtlogging.log(name='MountainClient:getSha1Url')
     def getSha1Url(self, path: str, *, basename: Optional[str]=None) -> Optional[str]:
+        """Return a sha1:// URI representing the file.
+        
+        Parameters
+        ----------
+        path : str
+            Path or URI to the file.
+        basename : Optional[str], optional
+            The base name for forming the sha1:// URI to be returned, by default
+            None
+        
+        Returns
+        -------
+        Optional[str]
+            The sha1:// URI.
+        """
         if basename is None:
             basename = os.path.basename(path)
 
@@ -945,18 +1165,6 @@ class MountainClient():
             return None
 
         return 'sha1://{}/{}'.format(sha1, basename)
-
-    @mtlogging.log(name='MountainClient:findFile')
-    def findFile(self, path: str, *,
-                 local_only: bool=False,
-                 remote_only: bool=False,
-                 download_from: Optional[StrOrStrList]=None
-                 ) -> Optional[str]:
-        if path and path.startswith('key://'):
-            path = self.resolveKeyPath(path)
-            if not path:
-                return None
-        return self._realize_file(path=path, resolve_locally=False, local_only=local_only, remote_only=remote_only, download_from=download_from)
 
     def _initialize_kacheries(self) -> None:
         kacheries_fname = os.path.join(os.environ.get(
