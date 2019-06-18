@@ -24,7 +24,7 @@ RUN pip install pyopencl
 RUN pip install spikeextractors==0.4.2
 
 ### spiketoolkit
-RUN pip install spiketoolkit==0.3.2
+RUN pip install spiketoolkit==0.3.3
 
 ### Other dependencies
 RUN pip install requests h5py
