@@ -145,7 +145,7 @@ def spyking_circus(
     with open(join(source_dir, 'config_default.params'), 'r') as f:
         circus_config = f.read()
     if merge_spikes:
-        auto = 1
+        auto = 0.1
     else:
         auto = 0
     circus_config = circus_config.format(
@@ -174,6 +174,15 @@ def spyking_circus(
     cmd = 'spyking-circus {} {} '.format(
         join(output_folder_cmd, file_name + '.mda'), num_cores_str)
 
+    methods_str = '-m filtering,whitening,clustering,fitting'
+    if merge_spikes:
+        methods_str += ',merging'
+
+    
+    cmd = 'spyking-circus {} {} {}'.format(
+        join(output_folder_cmd, file_name + '.mda'), num_cores_str, methods_str)
+
+    print(cmd)
     # I think the merging step requires a gui and some user interaction. TODO: inquire about this
     # cmd_merge = 'spyking-circus {} -m merging {} '.format(join(output_folder_cmd, file_name+'.npy'), num_cores_str)
     # cmd_convert = 'spyking-circus {} -m converting'.format(join(output_folder, file_name+'.npy'))
