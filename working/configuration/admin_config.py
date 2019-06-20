@@ -36,7 +36,12 @@ mt.addRemoteCollection(collection='morley', token=os.environ['PAIRIO_MORLEY_TOKE
 print('Setting up the kachery aliases')
 mt.setValue(key='kbucket', value='http://kbucket.flatironinstitute.org', collection='spikeforest')
 # mt.setValue(key='public', value='http://45.79.176.243:8080', collection='spikeforest')
+
 mt.setValue(key='public', value='http://132.249.245.246:24341', collection='spikeforest')
+
+## TODO:
+# mt.setValue(key='public', value='http://spikeforestpublic.org:24341', collection='spikeforest')
+
 mt.setValue(key='public1', value='http://132.249.245.246:24341', collection='spikeforest')
 mt.setValue(key='public2', value='http://132.249.245.246:24342', collection='spikeforest')
 mt.setValue(key='public3', value='http://132.249.245.246:24343', collection='spikeforest')

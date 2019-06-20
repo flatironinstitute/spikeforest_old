@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+RUN echo "17 June 2019"
+
 #########################################
 ### Python, etc                                                                                                                
 RUN apt-get update && apt-get -y install git wget build-essential
@@ -8,12 +10,10 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "6 May 2019"
-
 #########################################
 ### Spyking Circus
 RUN apt-get update && apt-get install -y libopenmpi-dev
-RUN pip install spyking-circus
+RUN pip install spyking-circus==0.8.0
 RUN pip install pyqt5
 RUN apt-get update && apt-get install -y libglib2.0-0
 RUN apt-get update && apt-get install -y libgl1-mesa-glx

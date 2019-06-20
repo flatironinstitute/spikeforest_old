@@ -19,7 +19,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.4.8'
+    VERSION = '0.4.10'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m']
@@ -97,11 +97,15 @@ class IronClust(mlpr.Processor):
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
     delta_cut = mlpr.FloatParameter(
         optional=True, default=1.1, description='Cluster detection threshold (delta-cutoff)')
+    post_merge_mode = mlpr.IntegerParameter(
+        optional=True, default=1, description='post_merge_mode')
+    sort_mode = mlpr.IntegerParameter(
+        optional=True, default=1, description='sort_mode')
 
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='02f03eaf3a91356e0a3298a215fac5a5288b1851')
+        return install_ironclust(commit='82c9b912b5d22d12b9901dc0f5d3c227d405ce79')
 
     def run(self):
         ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
