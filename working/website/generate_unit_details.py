@@ -188,7 +188,7 @@ def main():
                     obj0 = spike_spray_job_objects[i]
                     if result.retcode != 0:
                         print('WARNING: Error creating spike sprays for job:')
-                        print(spike_spray_jobs[i])
+                        print(spike_spray_job_objects[i])
                         ok = False
                         break
                     ssobj = mt.loadObject(path=result.outputs['json_out'])
