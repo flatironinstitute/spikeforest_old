@@ -671,7 +671,7 @@ class _SlurmProcess():
                             print('WARNING: Unexpected problem checking for running file in worker. Trying to continue.')
                             num_exceptions = num_exceptions + 1
                             if num_exceptions >= 5:
-                                raise Exception('Problem checking for running file in worker. Too many exceptions. Aborting)
+                                raise Exception('Problem checking for running file in worker. Too many exceptions. Aborting')
                             time.sleep(3)
 
                         # Check to see if we have a job to do
@@ -687,7 +687,7 @@ class _SlurmProcess():
                             print('WARNING: Unexpected problem loading job object file in worker. Trying to continue.')
                             num_exceptions = num_exceptions + 1
                             if num_exceptions >= 5:
-                                raise Exception('Problem loading job object file in worker. Too many exceptions. Aborting)
+                                raise Exception('Problem loading job object file in worker. Too many exceptions. Aborting')
                             time.sleep(3)
                         
                         # If we have a job to do, then let's do it
