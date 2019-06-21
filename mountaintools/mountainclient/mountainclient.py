@@ -1569,7 +1569,9 @@ def _safe_list_dir(path: str) -> Optional[List[str]]:
 
 if 'SHA1_CACHE_DIR' not in os.environ:
     if 'KBUCKET_CACHE_DIR' in os.environ:
-        print('NOTE: please use the SHA1_CACHE_DIR environment variable rather than KBUCKET_CACHE_DIR (MountainTools >= 0.6.1')
+        pass
+        # in the future we will print the following:
+        # print('NOTE: please use the SHA1_CACHE_DIR environment variable rather than KBUCKET_CACHE_DIR (MountainTools >= 0.6.1)')
 
 # The global module client
 _global_client = MountainClient()
