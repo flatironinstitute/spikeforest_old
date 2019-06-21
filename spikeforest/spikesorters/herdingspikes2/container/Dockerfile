@@ -8,13 +8,13 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "30 May 2019"
+RUN echo "21 June 2019"
 
 ### spikeextractors
-RUN pip install spikeextractors==0.4.2
+RUN pip install spikeextractors==0.5.2
 
 ### spiketoolkit
-RUN pip install spiketoolkit==0.3.1
+RUN pip install spiketoolkit==0.3.7
 
 #########################################
 ### Herding spikes 2

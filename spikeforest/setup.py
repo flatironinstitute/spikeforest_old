@@ -24,8 +24,8 @@ setuptools.setup(
         'requests', 'pillow', 'pandas',
         'ipython', 'h5py', 'setuptools-git',
         'scikit-learn', 'python-frontmatter',
-        'spikeextractors==0.4.2',
-        'spiketoolkit==0.3.2'
+        'spikeextractors==0.5.2',
+        'spiketoolkit==0.3.7'
     ],
     scripts=['bin/forestview'],
     classifiers=(
