@@ -6,6 +6,7 @@ set -ex
 
 pip install -e ./mountaintools
 pip install -e ./spikeforest
+pip install six
 
 # vscode extensions
 code --install-extension ms-python.python
