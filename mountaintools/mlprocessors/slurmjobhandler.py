@@ -4,6 +4,7 @@ import time
 import random
 import signal
 import shutil
+import traceback
 import mlprocessors as mlpr
 from .jobhandler import JobHandler
 from .mountainjobresult import MountainJobResult
@@ -522,9 +523,20 @@ class _Worker():
         self._job = job
         job_object = self._job.getObject()
         job_fname = self._base_path + '_job.json'
-        with FileLock(job_fname + '.lock', exclusive=True):
-            with open(job_fname, 'w') as f:
-                json.dump(job_object, f)
+        num_tries = 3
+        for try_count in range(1, num_tries + 1):
+            try:
+                with FileLock(job_fname + '.lock', exclusive=True):
+                    with open(job_fname, 'w') as f:
+                        json.dump(job_object, f)
+                break
+            except:
+                if try_count < num_tries:
+                    traceback.print_exc()
+                    print('Problem writing job file (try number {}).'.format(try_count))
+                    time.sleep(3)
+                else:
+                    raise
 
     def hasStarted(self) -> bool:
         """Returns whether the worker (not the job) has started
@@ -646,20 +658,37 @@ class _SlurmProcess():
 
                 try:  # We are going to catch any exceptions and report them back to the parent process
                     num_found = 0
+                    num_exceptions = 0
                     while True:
                         # Check whether running file exists
-                        with FileLock(running_fname + '.lock', exclusive=False):
-                            if not os.path.exists(running_fname):
-                                print('Running file not found. Stopping worker.')
-                                break
+                        try:
+                            with FileLock(running_fname + '.lock', exclusive=False):
+                                if not os.path.exists(running_fname):
+                                    print('Stopping worker.')
+                                    break
+                        except:
+                            traceback.print_exc()
+                            print('WARNING: Unexpected problem checking for running file in worker. Trying to continue.')
+                            num_exceptions = num_exceptions + 1
+                            if num_exceptions >= 5:
+                                raise Exception('Problem checking for running file in worker. Too many exceptions. Aborting)
+                            time.sleep(3)
 
                         # Check to see if we have a job to do
                         job_object = None
-                        with FileLock(job_fname + '.lock', exclusive=False):
-                            if (os.path.exists(job_fname)) and not (os.path.exists(result_fname)):
-                                num_found = num_found + 1
-                                with open(job_fname, 'r') as f:
-                                    job_object = json.load(f)
+                        try:
+                            with FileLock(job_fname + '.lock', exclusive=False):
+                                if (os.path.exists(job_fname)) and not (os.path.exists(result_fname)):
+                                    num_found = num_found + 1
+                                    with open(job_fname, 'r') as f:
+                                        job_object = json.load(f)
+                        except:
+                            traceback.print_exc()
+                            print('WARNING: Unexpected problem loading job object file in worker. Trying to continue.')
+                            num_exceptions = num_exceptions + 1
+                            if num_exceptions >= 5:
+                                raise Exception('Problem loading job object file in worker. Too many exceptions. Aborting)
+                            time.sleep(3)
                         
                         # If we have a job to do, then let's do it
                         if job_object:
