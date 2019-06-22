@@ -70,7 +70,7 @@ class ShellScript():
         if self._keep_temp_files:
             return
         for dirpath in self._dirs_to_remove:
-            shutil.rmtree(dirpath)
+            _rmdir_with_retries(dirpath, num_retries=5)
 
     def stop(self) -> None:
         if not self.isRunning():
@@ -150,3 +150,15 @@ class ShellScript():
         while ii < len(line) and line[ii] == ' ':
             ii = ii + 1
         return ii
+
+
+def _rmdir_with_retries(dirname, num_retries, delay_between_tries=1):
+    for retry_num in range(1, num_retries + 1):
+        try:
+            shutil.rmtree(dirname)
+        except:
+            if retry_num < num_retries:
+                print('Retrying to remove directory: {}'.format(dirname))
+                time.sleep(delay_between_tries)
+            else:
+                raise Exception('Unable to remove directory after {} tries: {}'.format(num_retries, dirname))

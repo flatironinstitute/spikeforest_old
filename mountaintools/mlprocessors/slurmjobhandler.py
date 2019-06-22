@@ -170,11 +170,7 @@ class SlurmJobHandler(JobHandler):
         -------
         None
         """
-        try:
-            shutil.rmtree(self._working_dir)
-        except:
-            time.sleep(3)
-            shutil.rmtree(self._working_dir)
+        _rmdir_with_retries(self._working_dir, num_retries=10)
 
     def _handle_unassigned_job(self, job: mlpr.MountainJob):
         compute_requirements = job.getObject().get('compute_requirements', {})
@@ -805,6 +801,18 @@ class _SlurmProcess():
             if not x.isFinished():
                 if not x.stopWithSignal(sig=signal.SIGTERM, timeout=5):
                     print('Warning: unable to stop slurm script.')
+
+
+def _rmdir_with_retries(dirname, num_retries, delay_between_tries=1):
+    for retry_num in range(1, num_retries + 1):
+        try:
+            shutil.rmtree(dirname)
+        except:
+            if retry_num < num_retries:
+                print('Retrying to remove directory: {}'.format(dirname))
+                time.sleep(delay_between_tries)
+            else:
+                raise Exception('Unable to remove directory after {} tries: {}'.format(num_retries, dirname))
 
 
 def _random_string(num: int):
