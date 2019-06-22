@@ -805,8 +805,11 @@ class _SlurmProcess():
 
 def _rmdir_with_retries(dirname, num_retries, delay_between_tries=1):
     for retry_num in range(1, num_retries + 1):
+        if not os.path.exists(dirname):
+            return
         try:
             shutil.rmtree(dirname)
+            break
         except:
             if retry_num < num_retries:
                 print('Retrying to remove directory: {}'.format(dirname))
