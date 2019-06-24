@@ -14,7 +14,7 @@ RUN echo "21 June 2019"
 RUN pip install spikeextractors==0.5.2
 
 ### spiketoolkit
-RUN pip install spiketoolkit==0.3.7
+RUN pip install spiketoolkit==0.3.4
 
 #########################################
 ### Herding spikes 2
