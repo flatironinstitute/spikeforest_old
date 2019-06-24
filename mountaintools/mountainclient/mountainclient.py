@@ -1005,7 +1005,7 @@ class MountainClient():
             computeDirHash().
         """
         if path.startswith('kbucket://'):
-            raise Exception('kucket:// paths are no longer supported')
+            raise Exception('kbucket:// paths are no longer supported')
 
         if path and (path.startswith('sha1dir://') or path.startswith('key://')):
             if self.findFile(path):

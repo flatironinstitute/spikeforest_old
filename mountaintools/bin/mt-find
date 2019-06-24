@@ -12,7 +12,7 @@ from mountaintools import client as mt
 # @mtlogging.log(root=True)
 def main():
     parser = argparse.ArgumentParser(description='Find a local or remote file and print the location.')
-    parser.add_argument('path', help='Path of source file: sha1://, sha1dir://, kbucket://, or local path')
+    parser.add_argument('path', help='Path of source file: sha1://, sha1dir://, or local path')
     parser.add_argument('--verbose', action='store_true', help='Turn on verbose output')
     parser.add_argument('--local-only', action='store_true', help='Only search for file remotely')
     parser.add_argument('--remote-only', action='store_true', help='Only search for file remotely')

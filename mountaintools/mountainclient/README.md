@@ -1,31 +1,32 @@
 # mountainclient
 
-MountainClient is a python client for accessing local and remote mountain
-databases and KBucket shares. All I/O for MountainTools is handled using
-this client.
+MountainClient is a Python client for loading, saving, downloading, and uploading files
+referenced by MountainTools paths and an interface to remote pairio and
+kachery databases, a local key/value store, and a local SHA-1 file cache.
+All I/O for MountainTools is handled using this client.
 
 There is a global client that may be imported via
 
-```
+```python
     from mountaintools import client as mt
 ```
 
 Or you can instantiate a local client object:
 
-```
+```python
     from mountaintools import MountainClient
     mt_client = MountainClient()
 ```
 
-The global client allows a single login to apply to the entire program, but
-there are also times when using a local instance is preferred.
+The global client allows a single configuration to apply to the entire
+program, but there are also times when using a local instance is preferred.
 
-By default the client utilizes cache directories on your local disk, but it
-can also be configured to read and write from remote servers. For example,
-the following code saves and retrieves some short text strings using the
-local file system as storage.
+By default the client utilizes databases stored in directories on your local
+disk, but it can also be used to read and write from remote servers. For
+example, the following code saves and retrieves some short text strings
+using the local file system as storage.
 
-```
+```python
     from mountaintools import client as mt
 
     # Setting values (these should be short strings, <=80 characters)
@@ -38,13 +39,13 @@ local file system as storage.
 ```
 
 By default these are stored inside the `~/.mountain` database directory. This
-may be configured using the `MOUNTAIN_DIR` environment variable.
+location may be configured using the `MOUNTAIN_DIR` environment variable.
 
 While `setValue()` and `getValue()` are limited to working with short strings,
 larger objects may be stored using saveText(), saveObject() and saveFile(),
 and retrieved using `loadText()`, `loadObject()` and `loadFile()`, as follows:
 
-```
+```python
     from mountaintools import client as mt
 
     # Local storage of data and files, retrievable by SHA-1 hash
@@ -54,7 +55,7 @@ and retrieved using `loadText()`, `loadObject()` and `loadFile()`, as follows:
     # Output: sha1://482cb0cfcbed6740a2bcb659c9ccc22a4d27b369/test.txt
 
     # Later we can use this to retrieve the text
-    retrieved_text = mt.loadText(path=path)
+    retrieved_text = mt.loadText(path='sha1://482cb0cfcbed6740a2bcb659c9ccc22a4d27b369/test.txt')
 
     # ... or retrieve the path to a local file containing the text
     fname = mt.realizeFile(path)
@@ -66,7 +67,7 @@ and retrieved using `loadText()`, `loadObject()` and `loadFile()`, as follows:
     mt.saveText(key=dict(name='key-for-repeating-text'), text=large_text)
     txt = mt.loadText(key=dict(name='key-for-repeating-text'))
 
-    # Similarly we can store python dicts via json content
+    # Similarly we can store simple Python dicts via json content
     some_object = dict(some='object')
     path = mt.saveObject(some_object, basename='object.json')
     print(path)
@@ -100,23 +101,4 @@ and retrieved using `loadText()`, `loadObject()` and `loadFile()`, as follows:
 
 The larger content is stored in a disk-backed content-addressable storage
 database, located by default at `/tmp/sha1-cache`. This may be configured by
-setting the `KBUCKET_CACHE_DIR` environment variable.
-
-To access content on a remote server, you can use
-
-```
-    from mountaintools import client as mt
-
-    mt.configRemoteReadonly(collection='<collection>', share_id='<id>')
-```
-
-where `<collection>` and `<id>` refer to a remote mountain collection and
-KBucket share ID. For read/write access you will need to either provide
-the authorization tokens or log in as follows:
-
-```
-    from mountaintools import client as mt
-
-    mt.login()
-    mt.configRemoteReadWrite(collection='<collection>', share_id='<id>')
-```
+setting the `SHA1_CACHE_DIR` environment variable.

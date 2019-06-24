@@ -179,7 +179,7 @@ class MountainClientLocal():
     @mtlogging.log(name='MountainClientLocal:computeFileSha1')
     def computeFileSha1(self, path: str, _cache_only: bool=False) -> Optional[str]:
         if path.startswith('kbucket://'):
-            raise Exception('kucket:// paths are no longer supported')
+            raise Exception('kbucket:// paths are no longer supported')
 
         if path.startswith('sha1://'):
             list0 = path.split('/')

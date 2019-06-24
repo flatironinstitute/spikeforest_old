@@ -8,6 +8,10 @@ from typing import Any, Callable
 
 
 def deprecated(reason: str) -> Callable:
+    """
+    Mark a given function as deprecated and issue a given warning when
+    the function is executed.
+    """
     def decorator(func):
         if not func.__doc__:
             func.__doc__ = 'Deprecated'
