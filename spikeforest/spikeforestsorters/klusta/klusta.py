@@ -30,11 +30,11 @@ class Klusta(mlpr.Processor):
     """
 
     NAME = 'Klusta'
-    VERSION = '0.1.1'  # wrapper VERSION
-    ADDITIONAL_FILES = ['*.prm']
+    VERSION = '0.2.0'  # wrapper VERSION
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    CONTAINER = 'sha1://6d76f22e3b4eff52b430ef4649a8802f7da9e0ec/2019-05-13/klusta.simg'
+    # CONTAINER = 'sha1://6d76f22e3b4eff52b430ef4649a8802f7da9e0ec/2019-05-13/klusta.simg'
+    CONTAINER = 'sha1://7b866c81be8426c2f2be9dc52716d86277d2ab62/2019-06-28/klusta.simg'
     LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)

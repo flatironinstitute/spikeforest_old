@@ -13,18 +13,16 @@ RUN echo "26 June 2019"
 #########################################
 ### Klusta
 RUN pip install Cython h5py tqdm
+RUN pip install scipy
 RUN pip install click klusta klustakwik2
 
 ### spikeextractors
 RUN pip install spikeextractors==0.4.2
-RUN pip install spikeextractors==0.3.4
-RUN pip install git+https://github.com/spikeinterface/spikesorters
+RUN pip install spiketoolkit==0.3.4
+RUN pip install spikesorters==0.1.0
 
 ### Other dependencies
 RUN pip install requests
-
-# the following belongs above in the "Klusta" section
-RUN pip install scipy
 
 ENV LANG C.UTF-8  
 ENV LC_ALL C.UTF-8 
