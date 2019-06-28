@@ -13,7 +13,8 @@ setuptools.setup(
     description="Spike sorting",
     packages=setuptools.find_packages(),
     package_dir={
-        'spikesorters': 'spikesorters',
+        'spikeforest': 'spikeforest',
+        'spikeforestsorters': 'spikeforestsorters',
         'forestview': 'forestview',
         'spikeforest_analysis': 'spikeforest_analysis',
         'spikeforest_common': 'spikeforest_common'
@@ -25,7 +26,8 @@ setuptools.setup(
         'ipython', 'h5py', 'setuptools-git',
         'scikit-learn', 'python-frontmatter',
         'spikeextractors==0.5.2',
-        'spiketoolkit==0.3.4'
+        'spiketoolkit==0.3.4',
+        'spikesorters==0.1.0'
     ],
     scripts=['bin/forestview'],
     classifiers=(

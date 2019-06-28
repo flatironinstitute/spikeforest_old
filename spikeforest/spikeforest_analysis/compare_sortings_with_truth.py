@@ -3,11 +3,58 @@ import mlprocessors as mlpr
 import json
 
 import spikeextractors as si
+import spiketoolkit as st
+import pandas as pd
 from .sfmdaextractors import SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
 
 
 class GenSortingComparisonTable(mlpr.Processor):
+    VERSION = '0.3.1'
+    firings = mlpr.Input('Firings file (sorting)')
+    firings_true = mlpr.Input('True firings file')
+    units_true = mlpr.IntegerListParameter('List of true units to consider')
+    json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
+    html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
+    # CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    # CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
+
+    def run(self):
+        print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))
+        sorting = SFMdaSortingExtractor(firings_file=self.firings)
+        sorting_true = SFMdaSortingExtractor(firings_file=self.firings_true)
+        if (self.units_true is not None) and (len(self.units_true) > 0):
+            sorting_true = si.SubSortingExtractor(parent_sorting=sorting_true, unit_ids=self.units_true)
+
+        SC = st.comparison.compare_sorter_to_ground_truth(
+            gt_sorting=sorting_true,
+            tested_sorting=sorting,
+            delta_frames=30,
+            min_accuracy=0,
+            exhaustive_gt=False  # Fix this in future
+        )
+        df = pd.concat([SC.count, SC.get_performance()], axis=1).reset_index()
+
+        df = df.rename(columns=dict(
+            gt_unit_id='unit_id',
+            fp='num_false_positives',
+            fn='num_false_negatives',
+            tested_id='best_unit',
+            tp='num_matches'
+        ))
+        df['matched_unit'] = df['best_unit']
+        df['f_p'] = 1 - df['precision']
+        df['f_n'] = 1 - df['recall']
+        
+        # sw.SortingComparisonTable(comparison=SC).getDataframe()
+        json = df.transpose().to_dict()
+        html = df.to_html(index=False)
+        _write_json_file(json, self.json_out)
+        _write_json_file(html, self.html_out)
+
+
+class GenSortingComparisonTableOld(mlpr.Processor):
     VERSION = '0.2.6'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
@@ -15,7 +62,8 @@ class GenSortingComparisonTable(mlpr.Processor):
     json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
     # CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
-    CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    # CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
 
     def run(self):
         print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))

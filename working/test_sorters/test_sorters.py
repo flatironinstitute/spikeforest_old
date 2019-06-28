@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, TridesclousOld, Klusta, Waveclus, YASS, YASS1
+from spikeforestsorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, TridesclousOld, Klusta, Waveclus, YASS, YASS1
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import numpy as np
