@@ -30,7 +30,7 @@ class SpykingCircus(mlpr.Processor):
 
     detect_sign = mlpr.IntegerParameter(description='-1, 1, or 0')
     adjacency_radius = mlpr.FloatParameter(
-        optional=True, default=100, description='Channel neighborhood adjacency radius corresponding to geom file')
+        optional=True, default=200, description='Channel neighborhood adjacency radius corresponding to geom file')
     spike_thresh = mlpr.FloatParameter(
         optional=True, default=6, description='Threshold for detection')
     template_width_ms = mlpr.FloatParameter(
@@ -145,7 +145,7 @@ def spyking_circus(
     with open(join(source_dir, 'config_default.params'), 'r') as f:
         circus_config = f.read()
     if merge_spikes:
-        auto = 0.1
+        auto = 0.5
     else:
         auto = 0
     circus_config = circus_config.format(
