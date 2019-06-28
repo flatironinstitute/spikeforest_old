@@ -5,9 +5,7 @@ function p_waveclus(vcDir_temp, vcFile_raw, vcFile_mda, sRateHz)
 % vcFile_raw: input raw .mda file (raw.mda)
 % vcFile_mda: output .mda file (firings.mda)
 
-% convert input to matlab format. flip polarity for positive detection
-
-all_data = double(readmda(vcFile_raw) * -1);
+all_data = double(readmda(vcFile_raw));
 sr = sRateHz;
 S_par = set_parameters_spf();
 S_par.sr = sRateHz;
@@ -30,11 +28,12 @@ if nChans==1
     vcFile_spikes = strrep(vcFile_mat{1}, '.mat', '_spikes.mat');
 else
     % Run waveclus batch mode. supply parameter file (set sampling rate)
+	elec_group = 1; %for now only one group supported
     pol_fname = ['polytrode' num2str(elec_group) '.txt'];
     pol_file = fopen(pol_fname,'w');
-    cellfun(@(x) fprintf(pol_file ,[x '\n']),vcFile_mat)
+    cellfun(@(x) fprintf(pol_file ,'%s\n',x),vcFile_mat);
     fclose(pol_file);
-    Get_spikes_pol(num2str(elec_group), 'par', S_par);
+    Get_spikes_pol(elec_group, 'par', S_par);
     vcFile_spikes = strrep(pol_fname, '.txt', '_spikes.mat');
 end
 
