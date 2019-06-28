@@ -223,7 +223,7 @@ def main():
                 for i, recording in enumerate(recordings):
                     recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()  # sends job to the queue
 
-                comparison_jobs = sa.GenSortingComparisonTable.createJobs([
+                comparison_jobs = sa.GenSortingComparisonTableOld.createJobs([
                     dict(
                         firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
                         firings_true=recording['directory'] + '/firings_true.mda',

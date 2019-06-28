@@ -62,7 +62,8 @@ class GenSortingComparisonTableOld(mlpr.Processor):
     json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
     # CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
-    CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    # CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
 
     def run(self):
         print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))
