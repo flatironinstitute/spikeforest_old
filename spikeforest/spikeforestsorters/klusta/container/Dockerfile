@@ -19,7 +19,7 @@ RUN pip install click klusta klustakwik2
 ### spikeextractors
 RUN pip install spikeextractors==0.4.2
 RUN pip install spiketoolkit==0.3.4
-RUN pip install spikesorters==0.1.0
+RUN pip install spikesorters==0.1.1
 
 ### Other dependencies
 RUN pip install requests
