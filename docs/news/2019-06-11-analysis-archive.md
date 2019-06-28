@@ -4,6 +4,8 @@ date: 2019-06-11
 author: Jeremy Magland
 ---
 
+[Edited 2019-06-25]
+
 SpikeForest now has an analysis archive. You can click on the "Archive" link at
 the top of the website and get a listing of the current analysis and all
 previous analyses (as of a few days ago). Each entry is a snapshot of the entire
@@ -24,7 +26,9 @@ mt.configDownloadFrom(['spikeforest.public'])
 A = mt.loadObject(path='sha1://60d72c800e62b86afac17182fcd8c27f1d53d2fd/analysis.json')
 ```
 
-We can begin exploring this object by printing some general information:
+You can explore the output using [this notebook](https://github.com/flatironinstitute/spikeforest/blob/master/working/notebooks/view_main_analysis.ipynb) (link will probably break in the future), 
+
+You can also explore this JSON object directly. For example, to print some basic information:
 
 ```
 print(A['General'])

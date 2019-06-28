@@ -2,16 +2,20 @@ import mlprocessors as mlpr
 import os
 import sys
 from .bandpass_filter import bandpass_filter
+import string
 from .whiten import whiten
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
+import spikesorters as sorters
+import random
 
 
 class MountainSort4(mlpr.Processor):
     NAME = 'MountainSort4'
-    VERSION = '4.2.0'
+    VERSION = '4.3.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
+    # CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
+    CONTAINER = 'sha1://8743ff094a26bdedd16f36209a05333f1f82fbd8/2019-06-26/mountainsort4.simg'
     LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -37,10 +41,10 @@ class MountainSort4(mlpr.Processor):
         optional=True, default=0.15, description='Use None for no automated curation')
 
     def run(self):
-        from .bandpass_filter import bandpass_filter
-        from .whiten import whiten
+        # from .bandpass_filter import bandpass_filter
+        # from .whiten import whiten
 
-        import ml_ms4alg
+        # import ml_ms4alg
 
         print('MountainSort4......')
         recording = SFMdaRecordingExtractor(self.recording_dir)
@@ -48,36 +52,66 @@ class MountainSort4(mlpr.Processor):
         if num_workers:
             num_workers = int(num_workers)
 
-        # Bandpass filter
-        if self.freq_min or self.freq_max:
-            recording = bandpass_filter(
-                recording=recording, freq_min=self.freq_min, freq_max=self.freq_max)
+        code = ''.join(random.choice(string.ascii_uppercase)
+                       for x in range(10))
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/mountainsort4-' + code
 
-        # Whiten
-        if self.whiten:
-            recording = whiten(recording=recording)
-
-        # Sort
-        sorting = ml_ms4alg.mountainsort4(
+        sorter = sorters.Mountainsort4Sorter(
             recording=recording,
+            output_folder=tmpdir,
+            debug=True,
+            delete_output_folder=True
+        )
+
+        sorter.set_params(
             detect_sign=self.detect_sign,
             adjacency_radius=self.adjacency_radius,
             clip_size=self.clip_size,
             detect_threshold=self.detect_threshold,
             detect_interval=self.detect_interval,
-            num_workers=num_workers
+            num_workers=num_workers,
+            curate=False,
+            whiten=True,
+            filter=True,
+            freq_min=self.freq_min,
+            freq_max=self.freq_max
         )
 
-        # Curate
-        # if self.noise_overlap_threshold is not None:
-        #    sorting=ml_ms4alg.mountainsort4_curation(
-        #      recording=recording,
-        #      sorting=sorting,
-        #      noise_overlap_threshold=self.noise_overlap_threshold
-        #    )
+        # TODO: get elapsed time from the return of this run
+        sorter.run()
+
+        sorting = sorter.get_result()
 
         SFMdaSortingExtractor.write_sorting(
             sorting=sorting, save_path=self.firings_out)
+
+        # # Bandpass filter
+        # if self.freq_min or self.freq_max:
+        #     recording = bandpass_filter(
+        #         recording=recording, freq_min=self.freq_min, freq_max=self.freq_max)
+
+        # # Whiten
+        # if self.whiten:
+        #     recording = whiten(recording=recording)
+
+        # # Sort
+        # sorting = ml_ms4alg.mountainsort4(
+        #     recording=recording,
+        #     detect_sign=self.detect_sign,
+        #     adjacency_radius=self.adjacency_radius,
+        #     clip_size=self.clip_size,
+        #     detect_threshold=self.detect_threshold,
+        #     detect_interval=self.detect_interval,
+        #     num_workers=num_workers
+        # )
+
+        # # Curate
+        # # if self.noise_overlap_threshold is not None:
+        # #    sorting=ml_ms4alg.mountainsort4_curation(
+        # #      recording=recording,
+        # #      sorting=sorting,
+        # #      noise_overlap_threshold=self.noise_overlap_threshold
+        # #    )        
 
 
 class MountainSort4TestError(mlpr.Processor):
@@ -85,7 +119,8 @@ class MountainSort4TestError(mlpr.Processor):
     VERSION = '4.2.0'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
-    CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
+    # CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
+    CONTAINER = 'sha1://8743ff094a26bdedd16f36209a05333f1f82fbd8/2019-06-26/mountainsort4.simg'
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
     firings_out = mlpr.Output('Output firings file')

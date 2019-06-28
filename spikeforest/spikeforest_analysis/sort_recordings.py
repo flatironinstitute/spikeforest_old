@@ -1,7 +1,7 @@
 from mountaintools import client as mt
 # from . import sorters as sorters
 
-from spikesorters import MountainSort4, SpykingCircus, YASS, YASS1, IronClust, KiloSort, KiloSort2, MountainSort4TestError, HerdingSpikes2, JRClust, Klusta, Tridesclous, Waveclus
+from spikeforestsorters import MountainSort4, SpykingCircus, YASS, YASS1, IronClust, KiloSort, KiloSort2, MountainSort4TestError, HerdingSpikes2, JRClust, Klusta, Tridesclous, Waveclus
 
 Processors = dict(
     MountainSort4=(MountainSort4, 'default'),

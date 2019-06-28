@@ -21,7 +21,7 @@ import os
 from spikeforest_analysis.sorters import ironclust
 from spikeforest import SortingComparison
 from spikeforest import spikewidgets as sw
-from spikesorters import IronClust
+from spikeforestsorters import IronClust
 
 # %%SortingComparisonyass_test1/recording/raw.mda
 """ recording_path = 'irc_test1'

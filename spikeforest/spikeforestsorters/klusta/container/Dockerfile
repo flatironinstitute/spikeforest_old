@@ -8,20 +8,23 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "6 May 2019"
-
-RUN mkdir /src
+RUN echo "26 June 2019"
 
 #########################################
-### MountainSort
-RUN pip install pybind11
-RUN pip install isosplit5
-RUN git clone https://github.com/magland/ml_ms4alg /src/ml_ms4alg
-WORKDIR /src/ml_ms4alg
-RUN python setup.py develop
+### Klusta
+RUN pip install Cython h5py tqdm
+RUN pip install click klusta klustakwik2
 
 ### spikeextractors
 RUN pip install spikeextractors==0.4.2
+RUN pip install spikeextractors==0.3.4
+RUN pip install git+https://github.com/spikeinterface/spikesorters
 
 ### Other dependencies
 RUN pip install requests
+
+# the following belongs above in the "Klusta" section
+RUN pip install scipy
+
+ENV LANG C.UTF-8  
+ENV LC_ALL C.UTF-8 

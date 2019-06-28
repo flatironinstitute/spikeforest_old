@@ -20,7 +20,7 @@ SFMdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=recdir + '/f
 
 
 # import a spike sorter from the spikesorters module of spikeforest
-from spikesorters import MountainSort4
+from spikeforestsorters import MountainSort4
 import os
 import shutil
 

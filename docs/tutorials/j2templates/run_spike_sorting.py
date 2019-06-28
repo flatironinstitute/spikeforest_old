@@ -1,5 +1,5 @@
 # import a spike sorter from the spikesorters module of spikeforest
-from spikesorters import MountainSort4
+from spikeforestsorters import MountainSort4
 import os
 import shutil
 

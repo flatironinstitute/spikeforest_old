@@ -14,3 +14,4 @@ RUN echo "29 March 2019"
 # spikeforest dependencies
 RUN pip install numpy scipy matplotlib requests pillow pandas ipython h5py setuptools-git scikit-learn python-frontmatter
 RUN pip install spikeextractors==0.4.2
+RUN pip install spiketoolkit==0.3.4
