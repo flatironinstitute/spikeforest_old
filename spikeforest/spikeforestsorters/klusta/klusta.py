@@ -29,7 +29,7 @@ class Klusta(mlpr.Processor):
     """
 
     NAME = 'Klusta'
-    VERSION = '0.2.0'  # wrapper VERSION
+    VERSION = '0.2.1'  # wrapper VERSION
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     # CONTAINER = 'sha1://6d76f22e3b4eff52b430ef4649a8802f7da9e0ec/2019-05-13/klusta.simg'
@@ -49,7 +49,7 @@ class Klusta(mlpr.Processor):
 
     def run(self):
         import spikesorters as sorters
-        
+
         print('Klusta......')
         recording = SFMdaRecordingExtractor(self.recording_dir)
 
