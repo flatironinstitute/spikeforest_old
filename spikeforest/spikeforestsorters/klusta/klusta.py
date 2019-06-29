@@ -13,7 +13,6 @@ import shlex
 import json
 from mountaintools import client as mt
 from subprocess import Popen, PIPE, CalledProcessError, call
-import spikesorters as sorters
 
 
 class Klusta(mlpr.Processor):
@@ -49,6 +48,8 @@ class Klusta(mlpr.Processor):
     extract_s_after = mlpr.IntegerParameter(optional=True, default=32, description='')
 
     def run(self):
+        import spikesorters as sorters
+        
         print('Klusta......')
         recording = SFMdaRecordingExtractor(self.recording_dir)
 
