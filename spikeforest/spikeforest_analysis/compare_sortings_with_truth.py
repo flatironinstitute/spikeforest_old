@@ -31,8 +31,9 @@ class GenSortingComparisonTableNew(mlpr.Processor):
         SC = st.comparison.compare_sorter_to_ground_truth(
             gt_sorting=sorting_true,
             tested_sorting=sorting,
-            delta_frames=30,
+            delta_time=0.3,
             min_accuracy=0,
+            compute_misclassification=False,
             exhaustive_gt=False  # Fix this in future
         )
         df = pd.concat([SC.count, SC.get_performance()], axis=1).reset_index()
@@ -47,7 +48,7 @@ class GenSortingComparisonTableNew(mlpr.Processor):
         df['matched_unit'] = df['best_unit']
         df['f_p'] = 1 - df['precision']
         df['f_n'] = 1 - df['recall']
-        
+
         # sw.SortingComparisonTable(comparison=SC).getDataframe()
         json = df.transpose().to_dict()
         html = df.to_html(index=False)
