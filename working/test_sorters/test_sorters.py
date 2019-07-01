@@ -139,19 +139,16 @@ def test_ms4_neuropix32c():
 
 
 @pytest.mark.spikeforest
-@pytest.mark.sc
+@pytest.mark.sc_magland_c8
 @pytest.mark.test_all
 @pytest.mark.exclude
 def test_sc():
     sorter = SpykingCircus
     params = dict(
         detect_sign=-1,
-        adjacency_radius=50
     )
 
-    # do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.8)
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.8)
-    # do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
+    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.4)
 
 
 @pytest.mark.spikeforest
@@ -440,7 +437,7 @@ def test_ks2_kampff():
 
 
 def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy, container='default', _keep_temp_files=False):
-    mt.configDownloadFrom('spikeforest.kbucket')
+    mt.configDownloadFrom('spikeforest.public')
 
     recdir = recording_dir
     mt.createSnapshot(path=recdir, download_recursive=True)

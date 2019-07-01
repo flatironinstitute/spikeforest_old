@@ -14,7 +14,7 @@ Processors = dict(
     MountainSort4TestError=(MountainSort4TestError, 'default'),
     HerdingSpikes2=(HerdingSpikes2, 'default'),
     JRClust=(JRClust, None),
-    Klusta=(Klusta, None),
+    Klusta=(Klusta, 'default'),
     Tridesclous=(Tridesclous, 'default'),
     Waveclus=(Waveclus, None),
 )

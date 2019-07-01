@@ -335,12 +335,12 @@ def main():
     print('******************************** ASSEMBLING ALGORITHMS...')
     algorithms_by_processor_name = dict()
     Algorithms = []
-    basepath = '../../spikeforest/spikesorters/descriptions'
+    basepath = '../../spikeforest/spikeforestsorters/descriptions'
     repo_base_url = 'https://github.com/flatironinstitute/spikeforest/blob/master'
     for item in os.listdir(basepath):
         if item.endswith('.md'):
             alg = frontmatter.load(basepath + '/' + item).to_dict()
-            alg['markdown_link'] = repo_base_url + '/spikeforest/spikesorters/descriptions/' + item
+            alg['markdown_link'] = repo_base_url + '/spikeforest/spikeforestsorters/descriptions/' + item
             alg['markdown'] = alg['content']
             del alg['content']
             if 'processor_name' in alg:
