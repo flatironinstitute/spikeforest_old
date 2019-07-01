@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 #########################################
-### Python, etc                                                                                                                
+### Python, etc
 RUN apt-get update && apt-get -y install git wget build-essential
 RUN apt-get install -y python3 python3-pip
 RUN ln -s python3 /usr/bin/python
