@@ -1,4 +1,4 @@
-from .compare_sortings_with_truth import GenSortingComparisonTable, GenSortingComparisonTableOld
+from .compare_sortings_with_truth import GenSortingComparisonTable, GenSortingComparisonTableNew
 from .aggregate_sorting_results import aggregate_sorting_results
 from .compute_units_info import compute_units_info, ComputeUnitsInfo
 from .computerecordinginfo import ComputeRecordingInfo

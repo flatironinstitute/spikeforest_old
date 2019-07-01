@@ -9,7 +9,8 @@ from .sfmdaextractors import SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
 
 
-class GenSortingComparisonTable(mlpr.Processor):
+# new method (in progress) that uses spiketoolkit
+class GenSortingComparisonTableNew(mlpr.Processor):
     VERSION = '0.3.1'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
@@ -54,7 +55,8 @@ class GenSortingComparisonTable(mlpr.Processor):
         _write_json_file(html, self.html_out)
 
 
-class GenSortingComparisonTableOld(mlpr.Processor):
+# old method that uses spikeforest
+class GenSortingComparisonTable(mlpr.Processor):
     VERSION = '0.2.6'
     firings = mlpr.Input('Firings file (sorting)')
     firings_true = mlpr.Input('True firings file')
