@@ -67,7 +67,6 @@ class SpykingCircus(mlpr.Processor):
             merge_spikes=True,
             auto_merge=0.5,
             num_workers=num_workers,
-            n_cores=num_workers,
             electrode_dimensions=None,
             whitening_max_elts=self.whitening_max_elts,
             clustering_max_elts=self.clustering_max_elts,
