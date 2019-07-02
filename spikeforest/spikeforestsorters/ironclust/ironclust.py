@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.5.0'
+    VERSION = '0.5.1'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -85,13 +85,13 @@ class IronClust(mlpr.Processor):
     fft_thresh = mlpr.FloatParameter(
         optional=True, default=8, description='FFT-based noise peak threshold')
     fft_thresh_low = mlpr.FloatParameter(
-        optional=True, default=4, description='FFT-based noise peak lower threshold (set to 0 to disable dual thresholding scheme)')
+        optional=True, default=0, description='FFT-based noise peak lower threshold (set to 0 to disable dual thresholding scheme)')
     nSites_whiten = mlpr.IntegerParameter(
         optional=True, default=32, description='Number of adjacent channels to whiten')        
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
     delta_cut = mlpr.FloatParameter(
-        optional=True, default=1.1, description='Cluster detection threshold (delta-cutoff)')
+        optional=True, default=1, description='Cluster detection threshold (delta-cutoff)')
     post_merge_mode = mlpr.IntegerParameter(
         optional=True, default=1, description='post_merge_mode')
     sort_mode = mlpr.IntegerParameter(
