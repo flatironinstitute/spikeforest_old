@@ -61,6 +61,14 @@ class KiloSort2(mlpr.Processor):
 
         import spikesorters as sorters
         print('Kilosort2......')
+
+        try:
+            kilosort2_path = KiloSort2.install()
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing kilosort.')
+        sorters.Kilosort2Sorter.set_kilosort2_path(kilosort2_path)
+
         recording = SFMdaRecordingExtractor(self.recording_dir)
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
