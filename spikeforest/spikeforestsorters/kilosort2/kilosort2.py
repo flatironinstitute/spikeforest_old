@@ -14,12 +14,86 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
 import shlex
 import traceback
+from typing import Union
 from .install_kilosort2 import install_kilosort2
 # from ..ironclust.install_ironclust import install_ironclust
 # import h5py
 
 
 class KiloSort2(mlpr.Processor):
+    """
+    [Prerequisite]
+    1. MATLAB (Tested on R2018b)
+    2. CUDA Toolkit v9.1
+    """
+
+    NAME = 'KiloSort2'
+    VERSION = '0.4.0'  # wrapper VERSION
+    CONTAINER: Union[str, None] = None
+
+    recording_dir = mlpr.Input('Directory of recording', directory=True)
+    firings_out = mlpr.Output('Output firings file')
+
+    detect_sign = mlpr.IntegerParameter(default=-1, optional=True,
+                                        description='Use -1 or 1, depending on the sign of the spikes in the recording')
+    adjacency_radius = mlpr.FloatParameter(default=30, optional=True,
+                                           description='The sigmaMask for kilosort2')
+    detect_threshold = mlpr.FloatParameter(
+        optional=True, default=6, description='')
+    # prm_template_name=mlpr.StringParameter(optional=False,description='TODO')
+    freq_min = mlpr.FloatParameter(
+        optional=True, default=150, description='Use 0 for no bandpass filtering')
+    pc_per_chan = mlpr.IntegerParameter(
+        optional=True, default=3, description='TODO')
+    minFR = mlpr.FloatParameter(default=1 / 50, optional=True,
+                                description='minimum spike rate (Hz), if a cluster falls below this for too long it gets removed')
+    car = mlpr.BoolParameter(default=True, optional=True, description='whether to do common average referencing')
+
+    @staticmethod
+    def install():
+        print('Auto-installing kilosort2.')
+        return install_kilosort2(
+            repo='https://github.com/alexmorley/Kilosort2',
+            commit='43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956'
+        )
+
+    def run(self):
+
+        import spikesorters as sorters
+        print('Kilosort2......')
+        recording = SFMdaRecordingExtractor(self.recording_dir)
+        code = ''.join(random.choice(string.ascii_uppercase)
+                       for x in range(10))
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-' + code
+
+        sorter = sorters.Kilosort2Sorter(
+            recording=recording,
+            output_folder=tmpdir,
+            debug=True,
+            delete_output_folder=True
+        )
+
+        sorter.set_params(
+            detect_threshold=self.detect_threshold,
+            car=self.car,
+            minFR=self.minFR,
+            electrode_dimensions=None,
+            freq_min=self.freq_min,
+            sigmaMas=self.adjacency_radius,
+            nPCs=self.pc_per_chan
+        )
+
+        # TODO: get elapsed time from the return of this run
+        sorter.run()
+
+        sorting = sorter.get_result()
+
+        SFMdaSortingExtractor.write_sorting(
+            sorting=sorting, save_path=self.firings_out)
+
+
+
+class KiloSort2Old(mlpr.Processor):
     """
     KiloSort2 wrapper for SpikeForest framework
       written by J. James Jun, May 7, 2019
