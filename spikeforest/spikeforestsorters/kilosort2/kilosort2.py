@@ -79,7 +79,7 @@ class KiloSort2(mlpr.Processor):
             minFR=self.minFR,
             electrode_dimensions=None,
             freq_min=self.freq_min,
-            sigmaMas=self.adjacency_radius,
+            sigmaMask=self.adjacency_radius,
             nPCs=self.pc_per_chan
         )
 
