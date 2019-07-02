@@ -63,7 +63,7 @@ class KiloSort(mlpr.Processor):
         recording = SFMdaRecordingExtractor(self.recording_dir)
         code = ''.join(random.choice(string.ascii_uppercase)
                        for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-' + code
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort-' + code
 
         sorter = sorters.KilosortSorter(
             recording=recording,

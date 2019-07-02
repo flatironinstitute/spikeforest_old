@@ -1,10 +1,5 @@
 import mlprocessors as mlpr
 import os
-import time
-import numpy as np
-from os.path import join
-from subprocess import Popen, PIPE
-import shlex
 import random
 import string
 import shutil
@@ -14,10 +9,161 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 from mountaintools import client as mt
 import json
 import traceback
+from typing import Union
 from .install_ironclust import install_ironclust
 
 
 class IronClust(mlpr.Processor):
+    NAME = 'IronClust'
+    VERSION = '0.5.0'
+    ENVIRONMENT_VARIABLES = [
+        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
+    CONTAINER: Union[str, None] = None
+
+    recording_dir = mlpr.Input('Directory of recording', directory=True)
+    firings_out = mlpr.Output('Output firings file')
+    channels = mlpr.IntegerListParameter(
+        optional=True, default=[],
+        description='List of channels to use.'
+    )
+    detect_sign = mlpr.IntegerParameter(
+        optional=True, default=-1,
+        description='Use -1, 0, or 1, depending on the sign of the spikes in the recording'
+    )
+    adjacency_radius = mlpr.FloatParameter(
+        optional=True, default=50,
+        description='Use -1 to include all channels in every neighborhood'
+    )
+    adjacency_radius_out = mlpr.FloatParameter(
+        optional=True, default=75,
+        description='Use -1 to include all channels in every neighborhood'
+    )
+    detect_threshold = mlpr.FloatParameter(
+        optional=True, default=4.5,
+        description='detection threshold'
+    )
+    prm_template_name = mlpr.StringParameter(
+        optional=True, default='',
+        description='.prm template file name'
+    )
+    freq_min = mlpr.FloatParameter(
+        optional=True, default=300,
+        description='Use 0 for no bandpass filtering'
+    )
+    freq_max = mlpr.FloatParameter(
+        optional=True, default=6000,
+        description='Use 0 for no bandpass filtering'
+    )
+    merge_thresh = mlpr.FloatParameter(
+        optional=True, default=0.985,
+        description='Threshold for automated merging'
+    )
+    pc_per_chan = mlpr.IntegerParameter(
+        optional=True, default=2,
+        description='Number of principal components per channel'
+    )
+
+    # added in version 0.2.4
+    whiten = mlpr.BoolParameter(
+        optional=True, default=False, description='Whether to do channel whitening as part of preprocessing')
+    filter_type = mlpr.StringParameter(
+        optional=True, default='bandpass', description='{none, bandpass, wiener, fftdiff, ndiff}')
+    filter_detect_type = mlpr.StringParameter(
+        optional=True, default='none', description='{none, bandpass, wiener, fftdiff, ndiff}')
+    common_ref_type = mlpr.StringParameter(
+        optional=True, default='none', description='{none, mean, median}')
+    batch_sec_drift = mlpr.FloatParameter(
+        optional=True, default=300, description='batch duration in seconds. clustering time duration')
+    step_sec_drift = mlpr.FloatParameter(
+        optional=True, default=20, description='compute anatomical similarity every n sec')
+    knn = mlpr.IntegerParameter(
+        optional=True, default=30, description='K nearest neighbors')
+    min_count = mlpr.IntegerParameter(
+        optional=True, default=30, description='Minimum cluster size')
+    fGpu = mlpr.BoolParameter(
+        optional=True, default=True, description='Use GPU if available')
+    fft_thresh = mlpr.FloatParameter(
+        optional=True, default=8, description='FFT-based noise peak threshold')
+    fft_thresh_low = mlpr.FloatParameter(
+        optional=True, default=4, description='FFT-based noise peak lower threshold (set to 0 to disable dual thresholding scheme)')
+    nSites_whiten = mlpr.IntegerParameter(
+        optional=True, default=32, description='Number of adjacent channels to whiten')        
+    feature_type = mlpr.StringParameter(
+        optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
+    delta_cut = mlpr.FloatParameter(
+        optional=True, default=1.1, description='Cluster detection threshold (delta-cutoff)')
+    post_merge_mode = mlpr.IntegerParameter(
+        optional=True, default=1, description='post_merge_mode')
+    sort_mode = mlpr.IntegerParameter(
+        optional=True, default=1, description='sort_mode')
+
+    @staticmethod
+    def install():
+        print('Auto-installing ironclust.')
+        return install_ironclust(commit='82c9b912b5d22d12b9901dc0f5d3c227d405ce79')
+
+    def run(self):
+        import spikesorters as sorters
+        print('IronClust......')
+
+        try:
+            ironclust_path = IronClust.install()
+        except:
+            traceback.print_exc()
+            raise Exception('Problem installing ironclust.')
+        sorters.IronClustSorter.set_ironclust_path(ironclust_path)
+
+
+        recording = SFMdaRecordingExtractor(self.recording_dir)
+        code = ''.join(random.choice(string.ascii_uppercase)
+                       for x in range(10))
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/ironclust-' + code
+
+        sorter = sorters.IronClustSorter(
+            recording=recording,
+            output_folder=tmpdir,
+            debug=True,
+            delete_output_folder=True
+        )
+
+        sorter.set_params(
+            detect_sign=self.detect_sign,
+            adjacency_radius=self.adjacency_radius,
+            adjacency_radius_out=self.adjacency_radius_out,
+            detect_threshold=self.detect_threshold,
+            prm_template_name=self.prm_template_name,
+            freq_min=self.freq_min,
+            freq_max=self.freq_max,
+            merge_thresh=self.merge_thresh,
+            pc_per_chan=self.pc_per_chan,
+            whiten=self.whiten,
+            filter_type=self.filter_type,
+            filter_detect_type=self.filter_detect_type,
+            common_ref_type=self.common_ref_type,
+            batch_sec_drift=self.batch_sec_drift,
+            step_sec_drift=self.step_sec_drift,
+            knn=self.knn,
+            min_count=self.min_count,
+            fGpu=self.fGpu,
+            fft_thresh=self.fft_thresh,
+            fft_thresh_low=self.fft_thresh_low,
+            nSites_whiten=self.nSites_whiten,
+            feature_type=self.feature_type,
+            delta_cut=self.delta_cut,
+            post_merge_mode=self.post_merge_mode,
+            sort_mode=self.sort_mode
+        )
+
+        # TODO: get elapsed time from the return of this run
+        sorter.run()
+
+        sorting = sorter.get_result()
+
+        SFMdaSortingExtractor.write_sorting(
+            sorting=sorting, save_path=self.firings_out)
+
+
+class IronClustOld(mlpr.Processor):
     NAME = 'IronClust'
     VERSION = '0.4.10'
     ENVIRONMENT_VARIABLES = [
