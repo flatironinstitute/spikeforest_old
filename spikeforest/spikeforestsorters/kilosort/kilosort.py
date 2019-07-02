@@ -9,6 +9,7 @@ import random
 import string
 import shutil
 from spikeforest import mdaio
+from typing import Union
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 import sys
@@ -18,6 +19,71 @@ from .install_kilosort import install_kilosort
 
 
 class KiloSort(mlpr.Processor):
+    """
+    [Prerequisite]
+    1. MATLAB (Tested on R2018b)
+    2. CUDA Toolkit v9.1
+    """
+
+    NAME = 'KiloSort'
+    VERSION = '0.3.0'  # wrapper VERSION
+    CONTAINER: Union[str, None] = None
+
+    recording_dir = mlpr.Input('Directory of recording', directory=True)
+    firings_out = mlpr.Output('Output firings file')
+
+    detect_threshold = mlpr.FloatParameter(
+        optional=True, default=6, description='')
+    freq_min = mlpr.FloatParameter(
+        optional=True, default=300, description='Use 0 for no bandpass filtering')
+    freq_max = mlpr.FloatParameter(
+        optional=True, default=6000, description='Use 0 for no bandpass filtering')
+
+    @staticmethod
+    def install():
+        print('Auto-installing kilosort.')
+        return install_kilosort(
+            repo='https://github.com/cortex-lab/KiloSort.git',
+            commit='3f33771f8fdf8c3846a7f8a75cc8c318b44ed48c'
+        )
+
+    def run(self):
+
+        import spikesorters as sorters
+        print('KiloSort......')
+        recording = SFMdaRecordingExtractor(self.recording_dir)
+        code = ''.join(random.choice(string.ascii_uppercase)
+                       for x in range(10))
+        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-' + code
+
+        sorter = sorters.Kilosort2Sorter(
+            recording=recording,
+            output_folder=tmpdir,
+            debug=True,
+            delete_output_folder=True
+        )
+
+        sorter.set_params(
+            detect_threshold=self.detect_threshold,
+            freq_min=self.freq_min,
+            freq_max=self.freq_max,
+            nPCs=self.pc_per_chan,
+            car=True,
+            useGPU=True,
+            electrode_dimensions=None
+        )
+
+        # TODO: get elapsed time from the return of this run
+        sorter.run()
+
+        sorting = sorter.get_result()
+
+        SFMdaSortingExtractor.write_sorting(
+            sorting=sorting, save_path=self.firings_out)
+
+
+
+class KiloSortOld(mlpr.Processor):
     """
     Kilosort wrapper for SpikeForest framework
       written by J. James Jun, May 21, 2019
