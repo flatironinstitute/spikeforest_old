@@ -67,7 +67,6 @@ class KiloSort(mlpr.Processor):
             detect_threshold=self.detect_threshold,
             freq_min=self.freq_min,
             freq_max=self.freq_max,
-            nPCs=self.pc_per_chan,
             car=True,
             useGPU=True,
             electrode_dimensions=None
