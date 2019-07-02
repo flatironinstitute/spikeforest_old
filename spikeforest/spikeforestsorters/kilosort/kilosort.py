@@ -56,7 +56,7 @@ class KiloSort(mlpr.Processor):
                        for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/kilosort2-' + code
 
-        sorter = sorters.Kilosort2Sorter(
+        sorter = sorters.KilosortSorter(
             recording=recording,
             output_folder=tmpdir,
             debug=True,
