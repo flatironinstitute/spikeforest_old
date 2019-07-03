@@ -26,7 +26,7 @@ class KiloSort(mlpr.Processor):
     """
 
     NAME = 'KiloSort'
-    VERSION = '0.3.1'  # wrapper VERSION
+    VERSION = '0.3.2'  # wrapper VERSION
     CONTAINER: Union[str, None] = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
