@@ -8,6 +8,7 @@ import shutil
 import os
 import numpy as np
 import mlprocessors as mlpr
+import multiprocessing
 from mountaintools import client as mt
 import mtlogging
 
@@ -25,7 +26,7 @@ def main():
     noise_level = [10, 20]
     duration = 20  # change this to 600
     bursting = [False, True]
-    nrec = 2
+    nrec = 2  # change this to 10
     ei_ratio = 0.8
     rec_dict = {
         'tetrode': {
@@ -50,8 +51,31 @@ def main():
         shutil.rmtree(recordings_path)
     os.mkdir(recordings_path)
 
-    SJH = mlpr.SlurmJobHandler(working_dir='tmp1')
-    with mlpr.JobQueue(job_handler=SJH):
+    # Set up slurm configuration
+    slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
+    job_handler = mlpr.SlurmJobHandler(
+        working_dir=slurm_working_dir
+    )
+    use_slurm=True
+    if use_slurm:
+        job_handler.addBatchType(
+            name='default',
+            num_workers_per_batch=14,
+            num_cores_per_job=2,
+            time_limit_per_batch=job_timeout * 3,
+            use_slurm=True,
+            max_simultaneous_batches=20,
+            additional_srun_opts=['-p ccm']
+        )
+    else:
+        job_handler.addBatchType(
+            name='default',
+            num_workers_per_batch=multiprocessing.cpu_count(),
+            num_cores_per_job=2,
+            max_simultaneous_batches=1,
+            use_slurm=False
+        )
+    with mlpr.JobQueue(job_handler=job_handler):
         for rec_type in rec_dict.keys():
             study_set_name = 'synth_mearec_{}'.format(rec_type)
             os.mkdir(recordings_path + '/' + study_set_name)
@@ -137,6 +161,10 @@ class GenerateMearecRecording(mlpr.Processor):
         recgen = mr.gen_recordings(params=recordings_params, tempgen=tempgen, verbose=False)
         mr.save_recording_generator(recgen, self.recording_out)
         del recgen
+
+def _random_string(num_chars):
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(random.choice(chars) for _ in range(num_chars))
 
 if __name__ == "__main__":
     main()
