@@ -12,6 +12,8 @@ ops = import_ksort_(raw_fname, geom_fname, arg_fname, temp_path);
 % Run kilosort
 t1=tic;
 fprintf('Running kilosort on %s\n', raw_fname);
+disp('----------------------------------------------------------------------')
+disp(ops)
 [rez, DATA, uproj] = preprocessData(ops); % preprocess data and extract spikes for initialization
 rez                = fitTemplates(rez, DATA, uproj);  % fit templates iteratively
 rez                = fullMPMU(rez, DATA);% extract final spike times (overlapping extraction)

@@ -11,10 +11,12 @@ import mlprocessors as mlpr
 import multiprocessing
 from mountaintools import client as mt
 import mtlogging
+import random
 
 
 @mtlogging.log(root=True)
 def main():
+    mt.configDownloadFrom('spikeforest.public')
     templates_path = 'sha1dir://95dba567b5168bacb480411ca334ffceb96b8c19.2019-06-11.templates'
     recordings_path = 'recordings_out'
 
@@ -57,6 +59,7 @@ def main():
         working_dir=slurm_working_dir
     )
     use_slurm=True
+    job_timeout = 600
     if use_slurm:
         job_handler.addBatchType(
             name='default',

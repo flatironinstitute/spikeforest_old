@@ -1,1 +1,1 @@
-from .kilosort import KiloSort
+from .kilosort import KiloSort, KiloSortOld
