@@ -304,7 +304,7 @@ def main():
                             # upload firings, comparison, and sorted units info to kachery
                             mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
                             mt.createSnapshot(path=sr['comparison_with_truth']['json'], upload_to=upload_to)
-                            mt.createSnapshot(path=sr['sorted_units_info']['json'], upload_to=upload_to)
+                            mt.createSnapshot(path=sr['sorted_units_info'], upload_to=upload_to)
                     else:
                         sr['firings'] = None
                         sr['comparison_with_truth'] = None
