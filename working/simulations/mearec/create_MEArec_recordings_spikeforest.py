@@ -110,7 +110,8 @@ def main():
                             print('Generating', rec_type, 'recording with', ncells, 'noise level', n, 'bursting', b)
                             params['bursting'] = b
                             params['shape_mod'] = b
-                            result0 = GenerateMearecRecording.execute(**params, templates_in=rec_dict[rec_type]['tempgen'], recording_out=dict(ext='.h5'))
+                            templates0 = mt.realizeFile(path=rec_dict[rec_type]['tempgen'])
+                            result0 = GenerateMearecRecording.execute(**params, templates_in=templates0, recording_out=dict(ext='.h5'))
                             out_fname = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}.h5'.format(i)
                             results_to_write.append((result0, out_fname))
         JQ.wait()
