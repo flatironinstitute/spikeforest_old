@@ -191,6 +191,7 @@ def main():
                 recording['results']['units_info'] = jobs_units_info[i].execute()  # sends the job to the queue
                 recording['results']['sorting'] = dict()
                 recording['results']['comparison'] = dict()
+                recording['results']['sorted_units_info'] = dict()
 
             # Sort the recordings
             mtlogging.sublog('summarize-recordings')
@@ -237,8 +238,23 @@ def main():
                     )
                     for recording in recordings
                 ])
+                jobs_sorted_units_info = sa.ComputeUnitsInfo.createJobs([
+                    dict(
+                        recording_dir=recording['directory'],
+                        firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
+                        unit_ids=None,
+                        channel_ids=recording.get('channels', None),
+                        json_out={'ext': '.json', 'upload': True},
+                        _timeout=job_timeout,
+                        _container='default',
+                        _label='Compute sorted units info for recording: ' + recording.get('name', ''),
+                        _compute_requirements=dict(batch_type='cpu')
+                    )
+                    for recording in recordings
+                ])
                 for i, recording in enumerate(recordings):
                     recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()  # sends job to the queue
+                    recording['results']['sorted_units_info'][sorter_name] = jobs_sorted_units_info[i].execute()  # sends job to the queue
 
             # wait for all jobs to complete
             JQ.wait()
@@ -263,6 +279,7 @@ def main():
                 for recording in recordings:
                     sorting_result = recording['results']['sorting'][sorter_name]
                     comparison_result = recording['results']['comparison'][sorter_name]
+                    sorted_units_info = recording['results']['sorted_units_info'][sorter_name]
                     sr = dict(
                         recording=recording,
                         sorter=sorter,
@@ -282,13 +299,16 @@ def main():
                             json=comparison_result.outputs['json_out'],
                             html=comparison_result.outputs['html_out']
                         )
+                        sr['sorted_units_info'] = sorted_units_info.outputs['json_out']
                         if upload_to:
-                            # upload firings and comparison to kachery
+                            # upload firings, comparison, and sorted units info to kachery
                             mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
                             mt.createSnapshot(path=sr['comparison_with_truth']['json'], upload_to=upload_to)
+                            mt.createSnapshot(path=sr['sorted_units_info']['json'], upload_to=upload_to)
                     else:
                         sr['firings'] = None
                         sr['comparison_with_truth'] = None
+                        sr['sorted_units_info'] = None
                     sorting_results.append(sr)
 
             for recording in recordings:
