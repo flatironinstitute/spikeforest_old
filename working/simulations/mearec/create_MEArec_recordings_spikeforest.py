@@ -78,7 +78,8 @@ def main():
             max_simultaneous_batches=1,
             use_slurm=False
         )
-    with mlpr.JobQueue(job_handler=job_handler):
+    with mlpr.JobQueue(job_handler=job_handler) as JQ:
+        results_to_write = []
         for rec_type in rec_dict.keys():
             study_set_name = 'synth_mearec_{}'.format(rec_type)
             os.mkdir(recordings_path + '/' + study_set_name)
@@ -111,8 +112,14 @@ def main():
                             params['shape_mod'] = b
                             result0 = GenerateMearecRecording.execute(**params, templates_in=rec_dict[rec_type]['tempgen'], recording_out=dict(ext='.h5'))
                             out_fname = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}.h5'.format(i)
-                            print('Writing {}'.format(out_fname))
-                            mt.realizeFile(path=result0.outputs['recording_out'], dest_path=out_fname)
+                            results_to_write.append((result0, out_fname))
+        JQ.wait()
+
+        for x in results_to_write:
+            result0 = x[0]
+            out_fname = x[1]
+            print('Writing {}'.format(out_fname))
+            mt.realizeFile(path=result0.outputs['recording_out'], dest_path=out_fname)
 
 
 class GenerateMearecRecording(mlpr.Processor):
