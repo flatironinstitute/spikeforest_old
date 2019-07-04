@@ -12,6 +12,7 @@ import multiprocessing
 from mountaintools import client as mt
 import mtlogging
 import random
+import spikeextractors as se
 
 
 @mtlogging.log(root=True)
@@ -113,14 +114,24 @@ def main():
                             templates0 = mt.realizeFile(path=rec_dict[rec_type]['tempgen'])
                             result0 = GenerateMearecRecording.execute(**params, templates_in=templates0, recording_out=dict(ext='.h5'))
                             out_fname = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}.h5'.format(i)
-                            results_to_write.append((result0, out_fname))
+                            mda_output_folder = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}'.format(i)
+                            results_to_write.append(dict(
+                                result=result0,
+                                output_file=out_fname,
+                                mda_output_folder=mda_output_folder
+                            ))
         JQ.wait()
 
         for x in results_to_write:
-            result0 = x[0]
-            out_fname = x[1]
+            result0 = x['result']
+            out_fname = x['output_file']
+            mda_output_folder = x['mda_output_folder']
             print('Writing {}'.format(out_fname))
-            mt.realizeFile(path=result0.outputs['recording_out'], dest_path=out_fname)
+            path = mt.realizeFile(path=result0.outputs['recording_out'], dest_path=out_fname)
+            recording = se.MEArecRecordingExtractor(recording_path=path)
+            sorting_true = se.MEArecSortingExtractor(recording_path=path)
+            se.MdaRecordingExtractor.write_recording(recording=recording, save_path=mda_output_folder)
+            se.MdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=mda_output_folder + '/firings_true.mda')
 
 
 class GenerateMearecRecording(mlpr.Processor):
