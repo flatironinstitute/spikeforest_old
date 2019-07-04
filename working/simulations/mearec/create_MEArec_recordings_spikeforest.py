@@ -28,7 +28,7 @@ def main():
     noise_level = [10, 20]
     duration = 20  # change this to 600
     bursting = [False, True]
-    nrec = 2  # change this to 10
+    nrec = 1  # change this to 10
     ei_ratio = 0.8
     rec_dict = {
         'tetrode': {
@@ -40,9 +40,9 @@ def main():
         'neuropixels': {
             'ncells': [20, 40, 60], 'tempgen': tempgen_neuropixels, 'drifting': False
         },
-        'neuronexus_drift': {
-            'ncells': [10, 20, 40], 'tempgen': tempgen_neuronexus_drift, 'drifting': True
-        }
+        #'neuronexus_drift': {
+        #    'ncells': [10, 20, 40], 'tempgen': tempgen_neuronexus_drift, 'drifting': True
+        #}
     }
 
     # optional: if drifting change drift velocity
