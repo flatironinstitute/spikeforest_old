@@ -29,7 +29,7 @@ def main():
     noise_level = [10, 20]
     duration = 20  # change this to 600
     bursting = [False, True]
-    nrec = 1  # change this to 10
+    nrec = 2  # change this to 10
     ei_ratio = 0.8
     rec_dict = {
         'tetrode': {
@@ -117,22 +117,23 @@ def main():
                             mda_output_folder = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}'.format(i)
                             results_to_write.append(dict(
                                 result=result0,
-                                output_file=out_fname,
                                 mda_output_folder=mda_output_folder
                             ))
         JQ.wait()
 
         for x in results_to_write:
             result0 = x['result']
-            out_fname = x['output_file']
             mda_output_folder = x['mda_output_folder']
             print('Writing {}'.format(out_fname))
-            path = mt.realizeFile(path=result0.outputs['recording_out'], dest_path=out_fname)
+            path = mt.realizeFile(path=result0.outputs['recording_out'])
             recording = se.MEArecRecordingExtractor(recording_path=path)
             sorting_true = se.MEArecSortingExtractor(recording_path=path)
             se.MdaRecordingExtractor.write_recording(recording=recording, save_path=mda_output_folder)
             se.MdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=mda_output_folder + '/firings_true.mda')
 
+    print('Creating and uploading snapshot...')
+    sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.public', upload_recursive=True)
+    print(sha1dir_path)
 
 class GenerateMearecRecording(mlpr.Processor):
     # input file
