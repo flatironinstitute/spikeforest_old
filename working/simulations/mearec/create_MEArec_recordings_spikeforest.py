@@ -134,8 +134,8 @@ def main():
                 mt.saveObject(object=result0.runtime_info, dest_path=mda_output_folder + '.runtime_info.json')
 
     print('Creating and uploading snapshot...')
-    sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.public', upload_recursive=True)
-    sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.kbucket', upload_recursive=False)
+    sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.public', upload_recursive=False)
+    # sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.kbucket', upload_recursive=True)
     print(sha1dir_path)
 
 class GenerateMearecRecording(mlpr.Processor):
