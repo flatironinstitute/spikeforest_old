@@ -6,7 +6,7 @@ from mountaintools import client as mt
 
 
 def main():
-    path = 'sha1dir://8516cc54587e0c5ddd0709154e7f609b9b7884b4'
+    path = mt.createSnapshot(path='recordings_out')
     mt.configDownloadFrom('spikeforest.public')
     X = mt.readDir(path)
     for study_set_name, d in X['dirs'].items():
@@ -52,7 +52,7 @@ def main():
             upload_to='spikeforest.public'
         )
         if not address:
-            raise Exception('Problem uploading object to {}'.format(ut))
+            raise Exception('Problem uploading object to kachery')
 
         output_fname = 'key://pairio/spikeforest/spikeforest_recording_group.{}.json'.format(group_name)
         print('Saving output to {}'.format(output_fname))
