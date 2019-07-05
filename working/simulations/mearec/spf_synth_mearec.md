@@ -1,7 +1,7 @@
 ---
 # This is YAML front matter
 label: SYNTH_MEAREC
-electrode_type: tetrode, Neuronexus-32, Neuropixels-124
+electrode_type: tetrode, Neuronexus-32, Neuropixels-128
 doi: https://doi.org/10.1101/691642
 ground_truth: simulation
 recording_type: in-silico
