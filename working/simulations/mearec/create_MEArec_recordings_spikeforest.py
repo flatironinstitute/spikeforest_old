@@ -27,7 +27,7 @@ def main():
     tempgen_neuronexus_drift = templates_path + '/templates_neuronexus_drift.h5'
 
     noise_level = [10, 20]
-    duration = 20  # change this to 600
+    duration = 600
     bursting = [False, True]
     nrec = 2  # change this to 10
     ei_ratio = 0.8
