@@ -60,12 +60,12 @@ def main():
         working_dir=slurm_working_dir
     )
     use_slurm=True
-    job_timeout = 600
+    job_timeout = 3600 * 4
     if use_slurm:
         job_handler.addBatchType(
             name='default',
-            num_workers_per_batch=14,
-            num_cores_per_job=2,
+            num_workers_per_batch=4,
+            num_cores_per_job=6,
             time_limit_per_batch=job_timeout * 3,
             use_slurm=True,
             max_simultaneous_batches=20,
@@ -135,9 +135,13 @@ def main():
 
     print('Creating and uploading snapshot...')
     sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.public', upload_recursive=True)
+    sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.kbucket', upload_recursive=False)
     print(sha1dir_path)
 
 class GenerateMearecRecording(mlpr.Processor):
+    NAME = "GenerateMearecRecording"
+    VERSION = "0.1.0"
+
     # input file
     templates_in = mlpr.Input(description='.h5 file containing templates')
 
@@ -169,6 +173,7 @@ class GenerateMearecRecording(mlpr.Processor):
         recordings_params['recordings']['bursting'] = self.bursting
         recordings_params['recordings']['shape_mod'] = self.shape_mod
         recordings_params['recordings']['seed'] = self.seed
+        # recordings_params['recordings']['chunk_conv_duration'] = 0  # turn off parallel execution
 
         recordings_params['spiketrains']['duration'] = self.duration
         recordings_params['spiketrains']['n_exc'] = self.n_exc
