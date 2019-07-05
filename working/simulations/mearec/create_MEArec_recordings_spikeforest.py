@@ -113,7 +113,6 @@ def main():
                             params['shape_mod'] = b
                             templates0 = mt.realizeFile(path=rec_dict[rec_type]['tempgen'])
                             result0 = GenerateMearecRecording.execute(**params, templates_in=templates0, recording_out=dict(ext='.h5'))
-                            out_fname = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}.h5'.format(i)
                             mda_output_folder = recordings_path + '/' + study_set_name + '/' + study_name + '/' + '{}'.format(i)
                             results_to_write.append(dict(
                                 result=result0,
@@ -122,14 +121,17 @@ def main():
         JQ.wait()
 
         for x in results_to_write:
-            result0 = x['result']
+            result0: mlpr.MountainJobResult = x['result']
             mda_output_folder = x['mda_output_folder']
-            print('Writing {}'.format(out_fname))
             path = mt.realizeFile(path=result0.outputs['recording_out'])
             recording = se.MEArecRecordingExtractor(recording_path=path)
             sorting_true = se.MEArecSortingExtractor(recording_path=path)
             se.MdaRecordingExtractor.write_recording(recording=recording, save_path=mda_output_folder)
             se.MdaSortingExtractor.write_sorting(sorting=sorting_true, save_path=mda_output_folder + '/firings_true.mda')
+            if result0.console_out:
+                mt.realizeFile(path=result0.console_out, dest_path=mda_output_folder + '.console_out.txt')
+            if result0.runtime_info:
+                mt.saveObject(object=result0.runtime_info, dest_path=mda_output_folder + '.runtime_info.json')
 
     print('Creating and uploading snapshot...')
     sha1dir_path = mt.createSnapshot(path=recordings_path, upload_to='spikeforest.public', upload_recursive=True)

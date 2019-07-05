@@ -2,6 +2,7 @@ from .core import *
 from .registry import *
 from .validators import *
 from .mountainjob import MountainJob
+from .mountainjobresult import MountainJobResult
 from .shellscript import ShellScript
 from .temporarydirectory import TemporaryDirectory
 from .jobqueue import JobQueue
