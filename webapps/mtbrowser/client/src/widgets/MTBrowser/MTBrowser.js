@@ -1,5 +1,7 @@
 import React, { Component } from "react";
+import { Container, Row, Col } from 'react-bootstrap';
 import Tree from "./Tree"
+import FileView from "./FileView"
 import PropTypes from "prop-types";
 
 const axios = require("axios");
@@ -9,7 +11,7 @@ export class MTBrowser extends Component {
         super(props);
         this.state = {
             status: `Loading: ${this.props.path}`,
-            data: {dirs: [], files: []}
+            selectedFile: null
         };
     }
 
@@ -28,16 +30,25 @@ export class MTBrowser extends Component {
         }
     }
 
-    onSelect = (node) => {
-        console.log(node);
+    onSelect = (file) => {
+        this.setState({
+            selectedFile: file
+        });
     }
 
     render() {
         if (this.state.status === 'loaded') {
-            return <div>
-                <div>MT Browser</div>
-                <Tree data={this.state.data} onSelect={(node) => { this.onSelect(node); }}></Tree>
-            </div>
+            return <Container fluid={true}>
+                <Row noGutters={true}>
+                    <Col md={6}>
+                        <Tree data={this.state.data} onSelect={(node) => { this.onSelect(node); }}></Tree>
+                    </Col>
+                    <Col md={6}>
+                        <FileView file={this.state.selectedFile} basePath={this.props.path}></FileView>
+                    </Col>
+                </Row>
+                
+            </Container>
         }
         else if (this.state.status === 'loading') {
             return <div>Loading...</div>
@@ -46,6 +57,10 @@ export class MTBrowser extends Component {
             return <div>{this.state.status}</div>
         }
     }
+}
+
+MTBrowser.propTypes = {
+    path: PropTypes.string
 }
 
 async function loadDirectory(path) {
