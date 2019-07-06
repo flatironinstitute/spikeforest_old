@@ -1,0 +1,32 @@
+{
+  "name": "mtbrowserclient",
+  "version": "0.1.0",
+  "description": "MountainTools browser client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --devtool source-map --mode production && cp public/index.html dist/index.html"
+  },
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-icons": "^3.7.0",
+    "styled-components": "^4.3.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-react": "^7.0.0",
+    "@tulipjs/eslint-config": "^1.1.1",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.0.0",
+    "style-loader": "^0.23.1",
+    "url-loader": "^2.0.1",
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.5"
+  }
+}
