@@ -82,7 +82,7 @@ def main():
     with mlpr.JobQueue(job_handler=job_handler) as JQ:
         results_to_write = []
         for rec_type in rec_dict.keys():
-            study_set_name = 'synth_mearec_{}'.format(rec_type)
+            study_set_name = 'SYNTH_MEAREC_{}'.format(rec_type.upper())
             os.mkdir(recordings_path + '/' + study_set_name)
             params = dict()
             params['duration'] = duration
