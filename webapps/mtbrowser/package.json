@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "MountainTools browser",
   "main": "server/index.js",
+  "engines": {
+    "yarn": "1.15.2"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd client && npm run build",
