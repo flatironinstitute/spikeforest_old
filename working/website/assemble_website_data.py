@@ -271,7 +271,7 @@ def main():
     else:
         upload_to = None
 
-    mt.configDownloadFrom(['spikeforest.kbucket'])
+    mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
 
     if args.output_ids is not None:
         output_ids = args.output_ids.split(',')
@@ -288,6 +288,9 @@ def main():
             'manual_franklab',
             'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
+            'SYNTH_MEAREC_TETRODE_b',
+            'SYNTH_MEAREC_NEURONEXUS_b',
+            'SYNTH_MEAREC_NEUROPIXELS_b',
             'synth_visapy',
             'hybrid_janelia'
         ]
@@ -330,6 +333,8 @@ def main():
             study_sets = study_sets + obj.get('study_sets', [])
             recordings = recordings + obj['recordings']
             sorting_results = sorting_results + obj['sorting_results']
+        else:
+            raise Exception('Unable to load: {}'.format(output_path))
 
     # ALGORITHMS
     print('******************************** ASSEMBLING ALGORITHMS...')

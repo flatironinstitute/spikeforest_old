@@ -60,19 +60,19 @@
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_tetrode.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
-        "synth_mearec_neuronexus_b": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuronexus_b.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuronexus_b.json",
+        "SYNTH_MEAREC_NEURONEXUS_b": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_NEURONEXUS_b.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_NEURONEXUS_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
-        "synth_mearec_neuropixels_b": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuropixels_b.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuropixels_b.json",
+        "SYNTH_MEAREC_NEUROPIXELS_b": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_NEUROPIXELS_b.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_NEUROPIXELS_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
-        "synth_mearec_tetrode_b": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_tetrode_b.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_tetrode_b.json",
+        "SYNTH_MEAREC_TETRODE_b": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_TETRODE_b.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_TETRODE_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
         "synth_monotrode": {
