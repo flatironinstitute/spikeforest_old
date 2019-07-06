@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+
+  <!-- Disable caching by browser -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <script type="text/javascript" src="./mtbrowser.js"></script>
+  <script type="text/javascript">
+    // TODO: do this without the delay
+    setTimeout(function () {
+      let path = getUrlParameter('path');
+      if (path === 'test') {
+        path = 'sha1dir://d04ed7441ebbfbda38064ceabf6d4ecdc07f1a19';
+      }
+      // TODO: not sure why we need to do this twice!!
+      window.show_mtbrowser(path);
+      //window.test_mtbrowser('sha1://d04ed7441ebbfbda38064ceabf6d4ecdc07f1a19');
+    }, 500);
+
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      var results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    };
+  </script>
+
+  <title>Test MTBrowser</title>
+</head>
+
+<body>
+  <div id="root">
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "mtbrowser",
+  "version": "0.1.0",
+  "description": "MountainTools browser",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd client && npm run build",
+    "heroku-postbuild": "cd client && npm install && npm run build",
+    "start": "node server/index.js"
+  },
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "express": "^4.17.1",
+    "json-stable-stringify": "^1.0.1",
+    "text-encoding": "^0.7.0"
+  },
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0"
+  }
+}
