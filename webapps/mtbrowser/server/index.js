@@ -34,9 +34,7 @@ app.get("/api/loadObject", async (req, res) => {
 app.get("/api/loadText", async (req, res) => {
     let path = decodeURIComponent(req.query.path)
 
-    console.log('------------------ loading text', path);
     let txt = await mt.loadText(path);
-    console.log('-------------------txt', txt);
     if (txt) {
         res.send({ success: true, text: txt });
     }
@@ -65,4 +63,4 @@ app.get('*', (req, res) => {
 const port = process.env.PORT || 5000;
 app.listen(port);
 
-console.log('App is listening on port ' + port);
+console.log(`App is listening on port ${port}`);

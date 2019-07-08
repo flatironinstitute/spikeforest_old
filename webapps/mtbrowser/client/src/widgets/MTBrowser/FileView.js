@@ -24,25 +24,19 @@ export default class FileView extends Component {
     }
 
     async updateContent() {
-        console.log('updateContent');
         let { file } = this.props;
-        console.log(file);
         this.setState({
             fileContentStatus: 'not-loading',
             fileContent: null
         });
         if ((file) && (file.type === 'file')) {
-            console.log('a');
             if (file.file.size < 10000) {
-                console.log('b');
                 let path0 = `sha1://${file.file.sha1}`;
                 console.log(path0);
                 this.setState({
                     fileContentStatus: 'loading'
                 });
-                console.log('loading text', path0);
                 let txt0 = await loadText(path0);
-                console.log('loaded text', txt0);
                 if (txt0) {
                     this.setState({
                         fileContentStatus: 'loaded',
@@ -120,10 +114,8 @@ export default class FileView extends Component {
 }
 
 async function loadText(path, opts) {
-    console.log('------------------- loadText', path);
     let response;
     try {
-        console.log('a');
         response = await axios.get(`/api/loadText?path=${encodeURIComponent(path)}`);
     }
     catch (err) {
