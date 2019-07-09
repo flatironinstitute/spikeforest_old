@@ -30,7 +30,7 @@ const NodeIcon = styled.div`
 const getNodeLabel = (node) => last(node.path.split('/'));
 
 const TreeNode = (props) => {
-  const { node, getChildNodes, level, onToggle, onNodeSelect } = props;
+  const { node, selectedNodePath, getChildNodes, level, onToggle, onNodeSelect } = props;
 
   return (
     <React.Fragment>
@@ -48,6 +48,7 @@ const TreeNode = (props) => {
 
         <span role="button" onClick={() => onNodeSelect(node)}>
           { getNodeLabel(node) }
+          { (node.path === selectedNodePath ) ? '*' : '' }
         </span>
       </StyledTreeNode>
 

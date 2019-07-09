@@ -7,7 +7,8 @@ export default class Tree extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            open_node_paths: {}
+            open_node_paths: this.props.openNodePaths || {},
+            selectedNodePath: this.props.selectedNodePath || null
         };
     }
 
@@ -15,7 +16,7 @@ export default class Tree extends Component {
         let data;
         let parent_path;
         if (!node) {
-            data = this.props.data
+            data = this.props.data;
             parent_path = '';
         }
         else if (node.type === 'folder') {
@@ -58,6 +59,9 @@ export default class Tree extends Component {
 
     onNodeSelect = node => {
         const { onSelect } = this.props;
+        this.setState({
+            selectedNodePath: node.path
+        });
         onSelect(node);
     }
 
@@ -68,6 +72,7 @@ export default class Tree extends Component {
                 {rootNodes.map(node => (
                     <TreeNode
                         node={node}
+                        selectedNodePath={this.state.selectedNodePath}
                         getChildNodes={this.getChildNodes}
                         onToggle={this.onToggle}
                         onNodeSelect={this.onNodeSelect}

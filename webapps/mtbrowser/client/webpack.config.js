@@ -71,15 +71,15 @@ module.exports = {
 		// https://webpack.js.org/configuration/output/#output-librarytarget
 		libraryTarget: 'umd',
 	},
-	// optimization: {
-	// 	splitChunks: {
-	// 		cacheGroups: {
-	// 			commons: {
-	// 				test: /[\\/]node_modules[\\/]/,
-	// 				name: 'vendors',
-	// 				chunks: 'all'
-	// 			}
-	// 		}
-	// 	}
-	// }
+	optimization: {
+		splitChunks: {
+			cacheGroups: {
+				commons: {
+					test: /[\\/]node_modules[\\/]/,
+					name: 'vendors',
+					chunks: 'all'
+				}
+			}
+		}
+	}
 };

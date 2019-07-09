@@ -21,8 +21,18 @@ export default class FileView extends Component {
         let elements = [];
         if (this.props.viewPlugins) {
             for (let plugin of this.props.viewPlugins) {
-                let elements0 = plugin.getViewElementsForFile(file);
-                elements.push(...elements0);
+                if (file.type === 'file') {
+                    if ('getViewElementsForFile' in plugin) {
+                        let elements0 = plugin.getViewElementsForFile(`sha1://${file.file.sha1}${file.path}`, {size: file.file.size});
+                        elements.push(...elements0);
+                    }
+                }
+                else if (file.type === 'folder') {
+                    if ('getViewElementsForFolder' in plugin) {
+                        let elements0 = plugin.getViewElementsForFolder(file.dir, {path: file.path});
+                        elements.push(...elements0);
+                    }
+                }
             }
         }
         return elements;
@@ -56,7 +66,6 @@ export default class FileView extends Component {
                     <span>
                         {viewPluginElements}
                     </span>
-                    
                 </div>
             )
         }
@@ -69,6 +78,9 @@ export default class FileView extends Component {
                             <td>{file.path}</td>
                         </tr>
                     </table>
+                    <span>
+                        {viewPluginElements}
+                    </span>
                 </div>
             )
         }

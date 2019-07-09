@@ -4,9 +4,9 @@ import Tree from "./Tree"
 import FileView from "./FileView"
 import PropTypes from "prop-types";
 
-import { getViewPlugins } from "../../viewplugins";
+import * as viewPlugins from "../../viewplugins";
 
-const axios = require("axios");
+const axios = require('axios');
 
 export class MTBrowser extends Component {
     constructor(props) {
@@ -15,15 +15,26 @@ export class MTBrowser extends Component {
             status: `Loading: ${this.props.path}`,
             selectedFile: null
         };
-        this.viewPlugins = getViewPlugins();
+        this.viewPluginsList = Object.values(viewPlugins);
     }
 
     async componentDidMount() {
         let X = await loadDirectory(this.props.path, {});
+        let data = {
+            files: {},
+            dirs: {
+                'root': X
+            }
+        };
         if (X) {
             this.setState({
                 status: `loaded`,
-                data: X
+                data: data,
+                selectedFile: {
+                    path: '/root',
+                    type: 'folder', 
+                    dir: X
+                }
             });
         }
         else {
@@ -44,10 +55,15 @@ export class MTBrowser extends Component {
             return <Container fluid={true}>
                 <Row noGutters={true}>
                     <Col md={6}>
-                        <Tree data={this.state.data} onSelect={(node) => { this.onSelect(node); }}></Tree>
+                        <Tree
+                            data={this.state.data}
+                            onSelect={(node) => { this.onSelect(node); }}
+                            openNodePaths={{'/root': true}}
+                            selectedNodePath={'/root'}
+                        />
                     </Col>
                     <Col md={6}>
-                        <FileView file={this.state.selectedFile} basePath={this.props.path} viewPlugins={this.viewPlugins}></FileView>
+                        <FileView file={this.state.selectedFile} basePath={this.props.path} viewPlugins={this.viewPluginsList}></FileView>
                     </Col>
                 </Row>
                 
@@ -71,6 +87,7 @@ async function loadDirectory(path) {
     if (vals[0] !== 'sha1dir:') {
         return null;
     }
+    vals[2] = vals[2].split('.')[0];
     let X = await loadObject(`sha1://${vals[2]}`);
     if (!X) return;
     for (let i=3; i < vals.length; i++) {
@@ -108,42 +125,42 @@ async function loadObject(path, opts) {
     else return null;
 }
 
-function example_data() {
-    return {
-        "files": {
-            "index.js": {
-                "size": 310,
-                "sha1": "2dd6248bcd0ba0c4fc59f58085abbd47e5d1f17e"
-            }
-        },
-        "dirs": {
-            "widgets": {
-                "files": {
-                    "index.js": {
-                        "size": 50,
-                        "sha1": "82073d94fa7ff3ed7923287d36b9e4e0f6671bc0"
-                    }
-                },
-                "dirs": {
-                    "MTBrowser": {
-                        "files": {
-                            "Tree.js": {
-                                "size": 2076,
-                                "sha1": "f7c49b972b5bc3a1cc0cdf74fdbe14223438519f"
-                            },
-                            "TreeNode.js": {
-                                "size": 2073,
-                                "sha1": "ce3f22f3e105952ddb87bfd5daa0315d740ba19b"
-                            },
-                            "MTBrowser.js": {
-                                "size": 488,
-                                "sha1": "e98a6c46428346a94fecdba18c2f99c97870f03f"
-                            }
-                        },
-                        "dirs": {}
-                    }
-                }
-            }
-        }
-    };
-}
+// function example_data() {
+//     return {
+//         "files": {
+//             "index.js": {
+//                 "size": 310,
+//                 "sha1": "2dd6248bcd0ba0c4fc59f58085abbd47e5d1f17e"
+//             }
+//         },
+//         "dirs": {
+//             "widgets": {
+//                 "files": {
+//                     "index.js": {
+//                         "size": 50,
+//                         "sha1": "82073d94fa7ff3ed7923287d36b9e4e0f6671bc0"
+//                     }
+//                 },
+//                 "dirs": {
+//                     "MTBrowser": {
+//                         "files": {
+//                             "Tree.js": {
+//                                 "size": 2076,
+//                                 "sha1": "f7c49b972b5bc3a1cc0cdf74fdbe14223438519f"
+//                             },
+//                             "TreeNode.js": {
+//                                 "size": 2073,
+//                                 "sha1": "ce3f22f3e105952ddb87bfd5daa0315d740ba19b"
+//                             },
+//                             "MTBrowser.js": {
+//                                 "size": 488,
+//                                 "sha1": "e98a6c46428346a94fecdba18c2f99c97870f03f"
+//                             }
+//                         },
+//                         "dirs": {}
+//                     }
+//                 }
+//             }
+//         }
+//     };
+// }

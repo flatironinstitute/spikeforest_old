@@ -25,11 +25,8 @@ async function main() {
     };
 
     let val0 = await mt.getValue({collection: 'spikeforest', key:key0});
-    console.log('val0:', val0);
 
     let val1 = await mt.loadObject(null, {collection: 'spikeforest', key:key0});
-    console.log('val1:', val1);
-
 }
 
 main();

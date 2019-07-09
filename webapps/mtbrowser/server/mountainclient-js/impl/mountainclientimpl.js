@@ -353,23 +353,18 @@ function MemoryCache() {
 
 function LocalFileCache(sha1_cache_dir) {
   this.getBinaryForSha1 = async function(sha1) {
-    console.log('getBinaryForSha1 a', sha1);
     if (!sha1_cache_dir) return null;
     const fs = require('fs');
     const util = require('util');
     let exists = util.promisify(fs.exists);
     let readFile = util.promisify(fs.readFile);
     let fname = `${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}/${sha1}`;
-    console.log('getBinaryForSha1 a.2', sha1, fname);
     let does_exist = await exists(fname);
-    console.log('getBinaryForSha1 a.3', sha1, fname, does_exist);
     if (!does_exist) return null;
     let buf = await readFile(fname);
-    console.log('getBinaryForSha1 b', sha1, buf);
     return buf;
   }
   this.setBinaryForSha1 = async function(sha1, data) {
-    console.log('setBinaryForSha1 a', sha1);
     if (!sha1_cache_dir) return null;
     const fs = require('fs');
     const util = require('util');
@@ -377,16 +372,11 @@ function LocalFileCache(sha1_cache_dir) {
     let writeFile = util.promisify(fs.writeFile);
     let rename = util.promisify(fs.rename);
     let fname = `${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}/${sha1}`;
-    console.log('setBinaryForSha1 a.2', sha1, fname);
     let does_exist = await exists(fname);
-    console.log('setBinaryForSha1 a.3', sha1, fname, does_exist);
     if (does_exist) return;
     let fname_tmp = `${fname}.jstmp.${make_random_id(6)}`;
     await writeFile(fname_tmp, new Buffer(data));
-    console.log('setBinaryForSha1 a.4 renaming', sha1, fname_tmp, fname);
     rename(fname_tmp, fname);
-
-    console.log('setBinaryForSha1 a.5', sha1, fname);
   }
 }
 
