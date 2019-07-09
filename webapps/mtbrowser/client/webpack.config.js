@@ -19,7 +19,7 @@ module.exports = {
 				// The ? in the regex just means "optional"
 				test: /\.js$/,
 				// Don't bother spending time transpiling your installed packages
-				// exclude: /node_modules/,
+				exclude: /node_modules/,
 				// This is where we tell webpack to use babel to transpile our JS.
 				// The configuration can go here, but in this case it's in ./babelrc.js
 				use: {
@@ -71,4 +71,15 @@ module.exports = {
 		// https://webpack.js.org/configuration/output/#output-librarytarget
 		libraryTarget: 'umd',
 	},
+	// optimization: {
+	// 	splitChunks: {
+	// 		cacheGroups: {
+	// 			commons: {
+	// 				test: /[\\/]node_modules[\\/]/,
+	// 				name: 'vendors',
+	// 				chunks: 'all'
+	// 			}
+	// 		}
+	// 	}
+	// }
 };

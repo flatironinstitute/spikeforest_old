@@ -10,11 +10,12 @@
   <meta http-equiv="Expires" content="0">
 
   <script type="text/javascript" src="./mtbrowser.js"></script>
+  <!-- <script type="text/javascript" src="./1.mtbrowser.js"></script> -->
   <script type="text/javascript">
     // TODO: do this without the delay
     setTimeout(function () {
       let path = getUrlParameter('path');
-      if (path === 'test') {
+      if (!path) {
         path = 'sha1dir://d04ed7441ebbfbda38064ceabf6d4ecdc07f1a19';
       }
       // TODO: not sure why we need to do this twice!!

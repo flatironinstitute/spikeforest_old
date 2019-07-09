@@ -4,6 +4,8 @@ import Tree from "./Tree"
 import FileView from "./FileView"
 import PropTypes from "prop-types";
 
+import { getViewPlugins } from "../../viewplugins";
+
 const axios = require("axios");
 
 export class MTBrowser extends Component {
@@ -13,6 +15,7 @@ export class MTBrowser extends Component {
             status: `Loading: ${this.props.path}`,
             selectedFile: null
         };
+        this.viewPlugins = getViewPlugins();
     }
 
     async componentDidMount() {
@@ -44,7 +47,7 @@ export class MTBrowser extends Component {
                         <Tree data={this.state.data} onSelect={(node) => { this.onSelect(node); }}></Tree>
                     </Col>
                     <Col md={6}>
-                        <FileView file={this.state.selectedFile} basePath={this.props.path}></FileView>
+                        <FileView file={this.state.selectedFile} basePath={this.props.path} viewPlugins={this.viewPlugins}></FileView>
                     </Col>
                 </Row>
                 
@@ -94,6 +97,8 @@ async function loadObject(path, opts) {
         response = await axios.get(`/api/loadObject?path=${encodeURIComponent(path)}`);
     }
     catch (err) {
+        console.error(err);
+        console.error(`Problem loading object: ${path}`);
         return null;
     }
     let rr = response.data;

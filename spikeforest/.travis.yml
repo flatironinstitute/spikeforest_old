@@ -3,7 +3,7 @@ python:
 - '3.6'
 install:
 - pip install pytest
-- pip install mountaintools==0.2.5
+- pip install mountaintools==0.7.1
 - pip install .
 script:
 - echo "no test"

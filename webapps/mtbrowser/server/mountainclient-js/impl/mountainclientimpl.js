@@ -9,8 +9,10 @@ const TextDecoder = textEncoding.TextDecoder;
 function MountainClientImpl() {
   let that = this;
   let m_pairio_url = process.env.PAIRIO_URL||'http://pairio.org';
+  let m_sha1_cache_dir = process.env.SHA1_CACHE_DIR || process.env.KBUCKET_CACHE_DIR || '/tmp/sha1-cache';
   let m_download_from = [];
   let m_memory_cache = new MemoryCache();
+  let m_local_file_cache = new LocalFileCache(m_sha1_cache_dir);
   let m_kachery_urls = {};
 
   this.setParioUrl = function(url) {
@@ -143,6 +145,10 @@ function MountainClientImpl() {
       if (ret !== null) {
         return ret;
       }
+      let ret2 = await m_local_file_cache.getBinaryForSha1(sha1);
+      if (ret2 !== null) {
+        return ret2;
+      }
       for (let i=0; i<m_download_from.length; i++) {
         let df = m_download_from[i];
         let kachery_url = await resolve_kachery_url(df);
@@ -161,6 +167,7 @@ function MountainClientImpl() {
             let buf = await http_get_binary(url0);
             if (buf !== null) {
               m_memory_cache.setBinaryForSha1(sha1, buf);
+              await m_local_file_cache.setBinaryForSha1(sha1, buf);
               return buf;
             }
           }
@@ -344,6 +351,45 @@ function MemoryCache() {
   }
 }
 
+function LocalFileCache(sha1_cache_dir) {
+  this.getBinaryForSha1 = async function(sha1) {
+    console.log('getBinaryForSha1 a', sha1);
+    if (!sha1_cache_dir) return null;
+    const fs = require('fs');
+    const util = require('util');
+    let exists = util.promisify(fs.exists);
+    let readFile = util.promisify(fs.readFile);
+    let fname = `${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}/${sha1}`;
+    console.log('getBinaryForSha1 a.2', sha1, fname);
+    let does_exist = await exists(fname);
+    console.log('getBinaryForSha1 a.3', sha1, fname, does_exist);
+    if (!does_exist) return null;
+    let buf = await readFile(fname);
+    console.log('getBinaryForSha1 b', sha1, buf);
+    return buf;
+  }
+  this.setBinaryForSha1 = async function(sha1, data) {
+    console.log('setBinaryForSha1 a', sha1);
+    if (!sha1_cache_dir) return null;
+    const fs = require('fs');
+    const util = require('util');
+    let exists = util.promisify(fs.exists);
+    let writeFile = util.promisify(fs.writeFile);
+    let rename = util.promisify(fs.rename);
+    let fname = `${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}/${sha1}`;
+    console.log('setBinaryForSha1 a.2', sha1, fname);
+    let does_exist = await exists(fname);
+    console.log('setBinaryForSha1 a.3', sha1, fname, does_exist);
+    if (does_exist) return;
+    let fname_tmp = `${fname}.jstmp.${make_random_id(6)}`;
+    await writeFile(fname_tmp, new Buffer(data));
+    console.log('setBinaryForSha1 a.4 renaming', sha1, fname_tmp, fname);
+    rename(fname_tmp, fname);
+
+    console.log('setBinaryForSha1 a.5', sha1, fname);
+  }
+}
+
 function parse_key_path(path) {
   let list0 = path.split('/');
   if (list0.length < 5) return null;
@@ -371,6 +417,14 @@ function parse_key_path(path) {
     subkey:subkey,
     extra_path:extra_path
   }
+}
+
+function make_random_id(num_chars) {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (var i = 0; i < num_chars; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  return text;
 }
 
 function hash_of_string(key) {

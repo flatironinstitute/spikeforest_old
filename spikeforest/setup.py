@@ -7,7 +7,7 @@ pkg_name = "spikeforest"
 
 setuptools.setup(
     name=pkg_name,
-    version="0.10.3",
+    version="0.11.0",
     author="Jeremy Magland",
     author_email="jmagland@flatironinstitute.org",
     description="Spike sorting",
@@ -25,9 +25,9 @@ setuptools.setup(
         'requests', 'pillow', 'pandas',
         'ipython', 'h5py', 'setuptools-git',
         'scikit-learn', 'python-frontmatter',
-        'spikeextractors==0.5.3',
-        'spiketoolkit==0.3.5',
-        'spikesorters==0.1.2'
+        'spikeextractors==0.5.4',
+        'spiketoolkit==0.3.6',
+        'spikesorters==0.1.3'
     ],
     scripts=['bin/forestview'],
     classifiers=(
