@@ -16,11 +16,11 @@
     setTimeout(function () {
       let path = getUrlParameter('path');
       if (!path) {
-        path = 'sha1dir://d04ed7441ebbfbda38064ceabf6d4ecdc07f1a19';
+        window.show_default_mtbrowser();
       }
-      // TODO: not sure why we need to do this twice!!
-      window.show_mtbrowser(path);
-      //window.test_mtbrowser('sha1://d04ed7441ebbfbda38064ceabf6d4ecdc07f1a19');
+      else {
+        window.show_mtbrowser(path);
+      }
     }, 500);
 
     function getUrlParameter(name) {

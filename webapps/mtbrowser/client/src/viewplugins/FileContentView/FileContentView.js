@@ -55,7 +55,7 @@ export default class FileContentView extends Component {
             return <div>Failed to load content</div>;
         }
         else if (this.state.fileContentStatus === 'loaded') {
-            return <Highlight language="javascript">
+            return <Highlight language={determineLanguageFromFilePath(this.props.path)}>
                 {this.state.fileContent}
             </Highlight>
         }
@@ -69,6 +69,22 @@ export default class FileContentView extends Component {
             {this.getContentElement()}
         </div>
     }
+}
+
+function determineLanguageFromFilePath(path) {
+    let map = {
+        '.js': 'javascript',
+        '.json': 'json',
+        '.py': 'python',
+        '.html': 'html',
+        '.md': 'markdown'
+    };
+    for (let key in map) {
+        if (path.endsWith(key)) {
+            return map[key];
+        }
+    }
+    return '';
 }
 
 async function loadText(path, opts) {

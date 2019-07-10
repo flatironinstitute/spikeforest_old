@@ -7,83 +7,64 @@ export default class Tree extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            open_node_paths: this.props.openNodePaths || {},
-            selectedNodePath: this.props.selectedNodePath || null
+            selectedNode: this.props.selectedNode || null,
+            expandedNodePaths: {}
         };
     }
 
+    componentDidMount() {
+        const { expandedNodePaths } = this.state;
+        expandedNodePaths[this.props.rootNode.path] = true;
+        this.setState({ expandedNodePaths });
+    }
+
     getChildNodes = (node) => {
-        let data;
-        let parent_path;
-        if (!node) {
-            data = this.props.data;
-            parent_path = '';
-        }
-        else if (node.type === 'folder') {
-            data = node.dir;
-            parent_path = node.path;
-        }
-        else {
+        if (!node.childNodes) {
             return [];
         }
-        let nodes = [];
-        for (let dname in data.dirs) {
-            let dir0 = data.dirs[dname];
-            let node0 = {
-                path: `${parent_path}/${dname}`,
-                type: 'folder',
-                dir: dir0
-            };
-            node0.isOpen = (this.state.open_node_paths[node0.path]);
-            nodes.push(node0);
-        }
-        for (let fname in data.files) {
-            let file0 = data.files[fname];
-            nodes.push({
-                path: `${parent_path}/${fname}`,
-                type: 'file',
-                file: file0
-            });
-        }
-        return nodes;
+        return node.childNodes;
     }
 
     onToggle = (node) => {
-        const { open_node_paths } = this.state;
-        open_node_paths[node.path] = !(open_node_paths[node.path]);
-        this.setState({ open_node_paths });
-        // const { nodes } = this.state;
-        // nodes[node.path].isOpen = !node.isOpen;
-        // this.setState({ nodes });
+        const { expandedNodePaths } = this.state;
+        expandedNodePaths[node.path] = !(expandedNodePaths[node.path]);
+        this.setState({ expandedNodePaths });
     }
 
     onNodeSelect = node => {
         const { onSelect } = this.props;
         this.setState({
-            selectedNodePath: node.path
+            selectedNode: node
         });
-        onSelect(node);
+        if (onSelect) {
+            onSelect(node);
+        }
     }
 
     render() {
-        const rootNodes = this.getChildNodes(null);
+        const { rootNode, selectedNode } = this.props
+        const { expandedNodePaths } = this.state;
+        if (!rootNode) {
+            return <div>No root node.</div>;
+        }
         return (
             <div>
-                {rootNodes.map(node => (
-                    <TreeNode
-                        node={node}
-                        selectedNodePath={this.state.selectedNodePath}
-                        getChildNodes={this.getChildNodes}
-                        onToggle={this.onToggle}
-                        onNodeSelect={this.onNodeSelect}
-                    />
-                ))}
+                <TreeNode
+                    node={rootNode}
+                    selectedNode={selectedNode}
+                    expandedNodePaths={expandedNodePaths}
+                    getChildNodes={this.getChildNodes}
+                    onToggle={this.onToggle}
+                    onNodeSelect={this.onNodeSelect}
+                    level={0}
+                />
             </div>
         )
     }
 }
 
 Tree.propTypes = {
-    data: PropTypes.object,
-    onSelect: PropTypes.func.isRequired
+    rootNode: PropTypes.object.isRequired,
+    selectedNode: PropTypes.object,
+    onSelect: PropTypes.func
 };
