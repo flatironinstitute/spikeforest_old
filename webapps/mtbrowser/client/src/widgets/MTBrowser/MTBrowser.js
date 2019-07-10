@@ -13,67 +13,182 @@ export class MTBrowser extends Component {
         super(props);
         this.state = {
             status: `Loading: ${this.props.path}`,
-            selectedFile: null
+            rootNode: null,
+            selectedNode: null
         };
         this.viewPluginsList = Object.values(viewPlugins);
     }
 
     async componentDidMount() {
-        let X = await loadDirectory(this.props.path, {});
-        let data = {
-            files: {},
-            dirs: {
-                'root': X
+        const { path } = this.props;
+        let rootNode = null;
+        if (path.endsWith('.json')) {
+            let A = await loadObject(path, {});
+            if (!A) {
+                this.setState({
+                    status: `Unable to load file: ${path}`
+                });
+                return;
             }
-        };
-        if (X) {
-            this.setState({
-                status: `loaded`,
-                data: data,
-                selectedFile: {
-                    path: '/root',
-                    type: 'folder', 
-                    dir: X
-                }
-            });
+            rootNode = this.createObjectNode(A, 'root');
         }
         else {
-            this.setState({
-                status: `Unable to load: ${this.props.path}`
-            });
+            let X = await loadDirectory(path, {});
+            if (!X) {
+                this.setState({
+                    status: `Unable to load: ${path}`
+                });
+                return;
+            }
+            rootNode = this.createDirNode(X, '', this.props.path);
         }
-    }
-
-    onSelect = (file) => {
         this.setState({
-            selectedFile: file
+            status: `loaded`,
+            rootNode: rootNode,
+            selectedNode: rootNode
         });
     }
 
+    onSelect = (node) => {
+        this.setState({
+            selectedNode: node
+        });
+    }
+
+    createObjectNode(obj, name, basepath, part_of_list) {
+        const max_array_children = 20;
+        let childNodes = [];
+        let path0 = this.joinPaths(basepath, name, '.', part_of_list);
+        let type0 = 'object';
+        if (Array.isArray(obj)) {
+            childNodes = this.createArrayHierarchyChildNodes(obj, max_array_children, 0, obj.length, path0);
+        }
+        else {
+            for (let key in obj) {
+                let val = obj[key];
+                if (typeof (val) == 'object') {
+                    childNodes.push(this.createObjectNode(val, key, path0));
+                }
+                else {
+                    childNodes.push(this.createValueNode(val, key, path0));
+                }
+            }
+        }
+        return {
+            type: type0,
+            name: name,
+            childNodes: childNodes,
+            path: path0
+        }
+    }
+
+    createArrayHierarchyChildNodes(X, max_array_children, i1, i2, path0) {
+        let childNodes = [];
+        if (i2 - i1 <= max_array_children) {
+            for (let ii=i1; ii<i2; ii++) {
+                let val = X[ii];
+                if (typeof (val) == 'object') {
+                    childNodes.push(this.createObjectNode(val, '' + ii, path0, true));
+                }
+                else {
+                    childNodes.push(this.createValueNode(val, '' + ii, path0, true));
+                }
+            }
+        }
+        else {
+            let stride = 1;
+            while ((i2-i1)/stride > max_array_children / 2) {
+                stride = stride * 10;
+            }
+            for (let jj = i1; jj < i2; jj+=stride) {
+                let jj2 = jj + stride;
+                if (jj2 >= i2) jj2 = i2;
+                childNodes.push({
+                    type: 'array-parent',
+                    name: `${jj} - ${jj2-1}`,
+                    childNodes: this.createArrayHierarchyChildNodes(X, max_array_children, jj, jj2, path0),
+                    path: path0 + `[${jj}-${jj2-1}]`
+                });
+            }
+        }
+        return childNodes;
+        
+    }
+
+    createValueNode(val, name, basepath) {
+        let path0 = this.joinPaths(basepath, name, '.');
+        return {
+            type: 'value',
+            name: name,
+            value: val,
+            path: path0
+        };
+    }
+
+    createDirNode(X, name, basepath) {
+        let childNodes = [];
+        let path0 = this.joinPaths(basepath, name, '/');
+        for (let dname in X.dirs) {
+            childNodes.push(this.createDirNode(X.dirs[dname], dname, path0));
+        }
+        for (let fname in X.files) {
+            childNodes.push(this.createFileNode(X.files[fname], fname, path0));
+        }
+        return {
+            type: 'dir',
+            path: path0,
+            name: name,
+            dir: X,
+            childNodes: childNodes
+        };
+    }
+
+    createFileNode(X, name, basepath) {
+        let path0 = this.joinPaths(basepath, name, '/');
+        return {
+            type: 'file',
+            path: path0,
+            name: name,
+            file: X
+        };
+    }
+
+    joinPaths(path1, path2, sep, part_of_list) {
+        if (!path2) return path1;
+        if (!path1) return path2;
+        if (part_of_list) {
+            return `${path1}[${path2}]`;
+        }
+        else {
+            return `${path1}${sep}${path2}`;
+        }
+    }
+
     render() {
+        const { rootNode, selectedNode, status } = this.state;
         if (this.state.status === 'loaded') {
             return <Container fluid={true}>
                 <Row noGutters={true}>
                     <Col md={6}>
                         <Tree
-                            data={this.state.data}
+                            rootNode={rootNode}
+                            selectedNode={selectedNode}
                             onSelect={(node) => { this.onSelect(node); }}
-                            openNodePaths={{'/root': true}}
-                            selectedNodePath={'/root'}
                         />
                     </Col>
                     <Col md={6}>
-                        <FileView file={this.state.selectedFile} basePath={this.props.path} viewPlugins={this.viewPluginsList}></FileView>
+                        <div>Test</div>
+                        <FileView node={selectedNode ? selectedNode : null} viewPlugins={this.viewPluginsList}></FileView>
                     </Col>
                 </Row>
-                
+
             </Container>
         }
-        else if (this.state.status === 'loading') {
+        else if (status === 'loading') {
             return <div>Loading...</div>
         }
         else {
-            return <div>{this.state.status}</div>
+            return <div>{status}</div>
         }
     }
 }
@@ -90,7 +205,7 @@ async function loadDirectory(path) {
     vals[2] = vals[2].split('.')[0];
     let X = await loadObject(`sha1://${vals[2]}`);
     if (!X) return;
-    for (let i=3; i < vals.length; i++) {
+    for (let i = 3; i < vals.length; i++) {
         if (vals[i]) {
             if ((X.dirs) && (vals[i] in X.dirs)) {
                 X = X.dirs[vals[i]];

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import ElectrodeGeometryWidget from "./ElectrodeGeometryWidget";
+import { ElectrodeGeometryWidget } from "@spikeforestwidgets-js";
 
 const axios = require('axios');
 
@@ -47,12 +47,7 @@ export default class ElectrodeGeometryViewPlugin {
         }
         return [];
     }
-    static getViewElementsForFolder(dir, opts) {
-        if ('geom.csv' in dir.files) {
-            let file0 = dir.files['geom.csv'];
-            console.log(file0);
-            return this.getViewElementsForFile(`sha1://${file0.sha1}${opts.path}/geom.csv`, {size: file0.size});
-        }
+    static getViewElementsForDir(dir, opts) {
         return [];
     }
 };

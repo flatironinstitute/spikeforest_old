@@ -1,0 +1,8 @@
+{
+  "name": "spikeforestwidgets-js",
+  "version": "0.1.0",
+  "description": "JavaScript widgets for SpikeForest",
+  "main": "index.js",
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0"
+}

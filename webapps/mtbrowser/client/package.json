@@ -5,11 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --devtool source-map --mode production && cp public/index.html dist/index.html",
-    "watch": "webpack --watch --devtool source-map --mode production"
+    "build": "echo \"building bundle\" && webpack --devtool source-map --mode production && cp public/index.html dist/index.html",
+    "watch": "webpack --watch --verbose --devtool source-map --mode production",
+    "postinstall": "link-module-alias"
   },
   "author": "Jeremy Magland",
   "license": "Apache-2.0",
+  "_moduleAliases": {
+    "@spikeforestwidgets-js" : "spikeforestwidgets-js"
+  },
   "dependencies": {
     "axios": "^0.19.0",
     "react": "^16.8.6",
@@ -28,6 +32,7 @@
     "babel-loader": "^8.0.6",
     "babel-polyfill": "^6.26.0",
     "css-loader": "^3.0.0",
+    "link-module-alias": "^1.2.0",
     "style-loader": "^0.23.1",
     "url-loader": "^2.0.1",
     "webpack": "^4.35.0",

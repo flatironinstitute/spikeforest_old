@@ -21,10 +21,13 @@ module.exports = {
 				// Don't bother spending time transpiling your installed packages
 				exclude: /node_modules/,
 				// This is where we tell webpack to use babel to transpile our JS.
-				// The configuration can go here, but in this case it's in ./babelrc.js
 				use: {
 					loader: 'babel-loader',
-				},
+					options: {
+						presets: ["@babel/preset-env", "@babel/preset-react"],
+						plugins: ["@babel/plugin-proposal-class-properties"]
+					}
+				}
 			},
 			{
 				// I haven't used SCSS in the base example, but it's here for you if you

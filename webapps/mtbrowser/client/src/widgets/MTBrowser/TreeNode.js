@@ -1,8 +1,9 @@
 import React from 'react';
-import { FaFile, FaFolder, FaFolderOpen, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaFile, FaFolder, FaFolderOpen, FaChevronDown, FaChevronRight, FaBed, FaBullhorn } from 'react-icons/fa';
 import styled from 'styled-components';
 import last from 'lodash/last';
 import PropTypes from 'prop-types';
+import { notDeepEqual } from 'assert';
 
 const getPaddingLeft = (level, type) => {
   let paddingLeft = level * 20;
@@ -27,35 +28,65 @@ const NodeIcon = styled.div`
   margin-right: ${props => props.marginRight ? props.marginRight : 5}px;
 `;
 
-const getNodeLabel = (node) => last(node.path.split('/'));
+const abbreviate = (val, max_chars) => {
+  let str0 = '' + val;
+  if (str0.length > max_chars) {
+    return str0.slice(0, max_chars - 3) + '...';
+  }
+  else {
+    return str0;
+  }
+}
+
+const getNodeLabel = (node) => {
+  if (node.type === 'value') {
+    return `${node.name || 'root'}: ${abbreviate(node.value, 30)}`;
+  }
+  else {
+    return node.name || 'root';
+  }
+}
 
 const TreeNode = (props) => {
-  const { node, selectedNodePath, getChildNodes, level, onToggle, onNodeSelect } = props;
+  const { node, selectedNode, expandedNodePaths, getChildNodes, level, onToggle, onNodeSelect } = props;
+
+  if (!node) {
+    return <div>TreeNode: no node</div>;
+  }
+
+  let isExpanded = expandedNodePaths[node.path];
 
   return (
     <React.Fragment>
       <StyledTreeNode level={level} type={node.type}>
         <NodeIcon onClick={() => onToggle(node)}>
-          { node.type === 'folder' && (node.isOpen ? <FaChevronDown /> : <FaChevronRight />) }
+          { node.type === 'dir' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
+          { node.type === 'object' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
+          { node.type === 'array-parent' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
         </NodeIcon>
         
         <NodeIcon marginRight={10}>
           { node.type === 'file' && <FaFile /> }
-          { node.type === 'folder' && node.isOpen === true && <FaFolderOpen /> }
-          { node.type === 'folder' && !node.isOpen && <FaFolder /> }
+          { node.type === 'value' && <FaBed /> }
+          { node.type === 'dir' && isExpanded && <FaFolderOpen /> }
+          { node.type === 'dir' && !isExpanded && <FaFolder /> }
+          { node.type === 'object' && isExpanded && <FaBullhorn /> }
+          { node.type === 'object' && !isExpanded && <FaBullhorn /> }
+          { node.type === 'array-parent' && isExpanded && <FaBullhorn /> }
+          { node.type === 'array-parent' && !isExpanded && <FaBullhorn /> }
         </NodeIcon>
         
 
         <span role="button" onClick={() => onNodeSelect(node)}>
           { getNodeLabel(node) }
-          { (node.path === selectedNodePath ) ? '*' : '' }
+          { (node === selectedNode ) ? '*' : '' }
         </span>
       </StyledTreeNode>
 
-      { node.isOpen && getChildNodes(node).map(childNode => (
+      { isExpanded && getChildNodes(node).map(childNode => (
         <TreeNode 
           {...props}
-          node={childNode}          
+          node={childNode}
           level={level + 1}
         />
       ))}
@@ -65,6 +96,8 @@ const TreeNode = (props) => {
 
 TreeNode.propTypes = {
   node: PropTypes.object.isRequired,
+  selectedNode: PropTypes.object.isRequired,
+  expandedNodePaths: PropTypes.object.isRequired,
   getChildNodes: PropTypes.func.isRequired,
   level: PropTypes.number.isRequired,
   onToggle: PropTypes.func.isRequired,

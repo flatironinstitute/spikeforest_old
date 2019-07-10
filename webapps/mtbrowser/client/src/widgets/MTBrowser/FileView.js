@@ -17,19 +17,19 @@ export default class FileView extends Component {
     }
 
     getViewPluginElements() {
-        let { file } = this.props;
+        let { node } = this.props;
         let elements = [];
         if (this.props.viewPlugins) {
             for (let plugin of this.props.viewPlugins) {
-                if (file.type === 'file') {
+                if (node.type === 'file') {
                     if ('getViewElementsForFile' in plugin) {
-                        let elements0 = plugin.getViewElementsForFile(`sha1://${file.file.sha1}${file.path}`, {size: file.file.size});
+                        let elements0 = plugin.getViewElementsForFile(`sha1://${node.file.sha1}/${node.name}`, {size: node.file.size});
                         elements.push(...elements0);
                     }
                 }
-                else if (file.type === 'folder') {
-                    if ('getViewElementsForFolder' in plugin) {
-                        let elements0 = plugin.getViewElementsForFolder(file.dir, {path: file.path});
+                else if (node.type === 'dir') {
+                    if ('getViewElementsForDir' in plugin) {
+                        let elements0 = plugin.getViewElementsForDir(node.dir, {path: node.path});
                         elements.push(...elements0);
                     }
                 }
@@ -39,28 +39,24 @@ export default class FileView extends Component {
     }
 
     render() {
-        let { file } = this.props;
-        if (!file) {
-            return <div></div>
+        let { node } = this.props;
+        if (!node) {
+            return <div></div>;
         }
 
         let viewPluginElements = this.getViewPluginElements();
 
-        if (file.type === 'file') {
+        if (node.type === 'file') {
             return (
                 <div>
                     <table className="table">
                         <tr>
                             <td>Path</td>
-                            <td>{file.path}</td>
-                        </tr>
-                        <tr>
-                            <td>SHA-1</td>
-                            <td>{(file.file || {}).sha1}</td>
+                            <td>{node.path}</td>
                         </tr>
                         <tr>
                             <td>Size</td>
-                            <td>{(file.file || {}).size}</td>
+                            <td>{(node.file || {}).size}</td>
                         </tr>
                     </table>
                     <span>
@@ -69,13 +65,13 @@ export default class FileView extends Component {
                 </div>
             )
         }
-        else if (file.type === 'folder') {
+        else if (node.type === 'dir') {
             return (
                 <div>
                     <table className="table">
                         <tr>
                             <td>Path</td>
-                            <td>{file.path}</td>
+                            <td>{node.path}</td>
                         </tr>
                     </table>
                     <span>
@@ -83,6 +79,58 @@ export default class FileView extends Component {
                     </span>
                 </div>
             )
+        }
+        else if (node.type === 'object') {
+            return (
+                <div>
+                    <table className="table">
+                        <tr>
+                            <td>Path</td>
+                            <td>{node.path}</td>
+                        </tr>
+                    </table>
+                    <span>
+                        {viewPluginElements}
+                    </span>
+                </div>
+            )
+        }
+        else if (node.type === 'array-parent') {
+            return (
+                <div>
+                    <table className="table">
+                        <tr>
+                            <td>Path</td>
+                            <td>{node.path}</td>
+                        </tr>
+                    </table>
+                    <span>
+                        {viewPluginElements}
+                    </span>
+                </div>
+            )
+        }
+        else if (node.type === 'value') {
+            return (
+                <div>
+                    <table className="table">
+                        <tr>
+                            <td>Path</td>
+                            <td>{node.path}</td>
+                        </tr>
+                        <tr>
+                            <td>Value</td>
+                            <td>{node.value}</td>
+                        </tr>
+                    </table>
+                    <span>
+                        {viewPluginElements}
+                    </span>
+                </div>
+            )
+        }
+        else {
+            return <div>{`Unexpected node type: ${node.type}`}</div>
         }
     }
 }

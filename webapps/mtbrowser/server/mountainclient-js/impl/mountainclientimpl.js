@@ -374,9 +374,19 @@ function LocalFileCache(sha1_cache_dir) {
     let fname = `${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}/${sha1}`;
     let does_exist = await exists(fname);
     if (does_exist) return;
+    mkdir_if_not_exist(`${sha1_cache_dir}`);
+    mkdir_if_not_exist(`${sha1_cache_dir}/${sha1[0]}`);
+    mkdir_if_not_exist(`${sha1_cache_dir}/${sha1[0]}/${sha1[1]}${sha1[2]}`);
     let fname_tmp = `${fname}.jstmp.${make_random_id(6)}`;
     await writeFile(fname_tmp, new Buffer(data));
     rename(fname_tmp, fname);
+  }
+
+  function mkdir_if_not_exist(path) {
+    const fs = require('fs');
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path);
+    }
   }
 }
 
