@@ -6,7 +6,7 @@ set -e
 #ARGS="main_analysis_irc.json --skip_failing --upload_to spikeforest.kbucket,spikeforest.public --download_from spikeforest.kbucket,spikeforest.public"
 #ARGS="main_analysis_irc.json --skip_failing --download_from spikeforest.kbucket,spikeforest.public"
 #ARGS="main_analysis_irc.json --use_slurm --skip_failing --download_from spikeforest.kbucket,spikeforest.public"
-ARGS="main_analysis_irc.json --use_slurm --skip_failing --download_from spikeforest.kbucket,spikeforest.public --upload_to spikeforest.kbucket,spikeforest.public"
+ARGS="main_analysis_irc.json --use_slurm --skip_failing --download_from spikeforest.kbucket,spikeforest.public --upload_to spikeforest.kbucket"
 
 ./main_analysis $ARGS --analyses hybrid_janelia
 #./main_analysis $ARGS --analyses manual_franklab
