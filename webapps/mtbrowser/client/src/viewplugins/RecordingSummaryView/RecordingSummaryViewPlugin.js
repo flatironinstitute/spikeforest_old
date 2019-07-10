@@ -35,7 +35,6 @@ class RecordingSummaryView extends Component {
         for (let i in locations) {
             labels.push(Number(i) + 1);
         }
-        console.log('---- locations', locations);
         this.setState({ locations, labels })
     }
 
@@ -98,7 +97,6 @@ async function load_geom_csv(path) {
 }
 
 async function loadText(path, opts) {
-    console.log('----- loadText', path);
     let response;
     try {
         response = await axios.get(`/api/loadText?path=${encodeURIComponent(path)}`);
@@ -108,7 +106,6 @@ async function loadText(path, opts) {
         return null;
     }
     let rr = response.data;
-    console.log('-----', rr);
     if (rr.success) {
         return rr.text;
     }

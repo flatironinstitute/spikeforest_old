@@ -47,12 +47,16 @@ export default class FileView extends Component {
         let viewPluginElements = this.getViewPluginElements();
 
         if (node.type === 'file') {
+            let path0 = node.path;
+            if (path0.endsWith('.json')) {
+                path0 = <a href="#" onClick={() => {this.props.onOpenPath && this.props.onOpenPath(node.path)}}>{node.path}</a>;
+            }
             return (
                 <div>
                     <table className="table">
                         <tr>
                             <td>Path</td>
-                            <td>{node.path}</td>
+                            <td>{path0}</td>
                         </tr>
                         <tr>
                             <td>Size</td>
@@ -71,7 +75,7 @@ export default class FileView extends Component {
                     <table className="table">
                         <tr>
                             <td>Path</td>
-                            <td>{node.path}</td>
+                            <td><a href="#" onClick={() => {this.props.onOpenPath && this.props.onOpenPath(node.path)}}>{node.path}</a></td>
                         </tr>
                     </table>
                     <span>
@@ -111,6 +115,10 @@ export default class FileView extends Component {
             )
         }
         else if (node.type === 'value') {
+            let val0 = node.value;
+            if (isPath(val0)) {
+                val0 = <a href="#" onClick={() => {this.props.onOpenPath && this.props.onOpenPath(node.value)}}>{node.value}</a>
+            }
             return (
                 <div>
                     <table className="table">
@@ -120,7 +128,7 @@ export default class FileView extends Component {
                         </tr>
                         <tr>
                             <td>Value</td>
-                            <td>{node.value}</td>
+                            <td>{val0}</td>
                         </tr>
                     </table>
                     <span>
@@ -135,7 +143,13 @@ export default class FileView extends Component {
     }
 }
 
+function isPath(str0) {
+    if (typeof(str0) != 'string') return false;
+    return (str0.startsWith('sha1://') || str0.startsWith('sha1dir://') || str0.startsWith('key://'));
+}
+
 FileView.propTypes = {
     basePath: PropTypes.string,
-    file: PropTypes.object
+    file: PropTypes.object,
+    onOpenPath: PropTypes.func
 };

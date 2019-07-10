@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, Button } from 'react-bootstrap';
+import { FaArrowLeft as BackButton } from 'react-icons/fa';
 import Tree from "./Tree"
 import FileView from "./FileView"
 import PropTypes from "prop-types";
@@ -12,15 +13,33 @@ export class MTBrowser extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            status: `Loading: ${this.props.path}`,
+            status: 'Loading',
             rootNode: null,
-            selectedNode: null
+            selectedNode: null,
+            inputPath: props.path,
+            path: props.path
         };
         this.viewPluginsList = Object.values(viewPlugins);
+        this.pathHistory = [];
     }
 
     async componentDidMount() {
-        const { path } = this.props;
+        // this.setState({
+        //     inputPath: path,
+        //     path: path
+        // });
+        await this.updateContent();
+    }
+
+    async componentDidUpdate(prevProps, prevState) {
+        if (this.state.path !== prevState.path) {
+            await this.updateContent()
+        }
+    }
+
+    async updateContent() {
+        const { path } = this.state;
+        this.setState({ status: `Loading: ${path}` });
         let rootNode = null;
         if (path.endsWith('.json')) {
             let A = await loadObject(path, {});
@@ -40,7 +59,7 @@ export class MTBrowser extends Component {
                 });
                 return;
             }
-            rootNode = this.createDirNode(X, '', this.props.path);
+            rootNode = this.createDirNode(X, '', path);
         }
         this.setState({
             status: `loaded`,
@@ -85,7 +104,7 @@ export class MTBrowser extends Component {
     createArrayHierarchyChildNodes(X, max_array_children, i1, i2, path0) {
         let childNodes = [];
         if (i2 - i1 <= max_array_children) {
-            for (let ii=i1; ii<i2; ii++) {
+            for (let ii = i1; ii < i2; ii++) {
                 let val = X[ii];
                 if (typeof (val) == 'object') {
                     childNodes.push(this.createObjectNode(val, '' + ii, path0, true));
@@ -97,22 +116,22 @@ export class MTBrowser extends Component {
         }
         else {
             let stride = 1;
-            while ((i2-i1)/stride > max_array_children / 2) {
+            while ((i2 - i1) / stride > max_array_children / 2) {
                 stride = stride * 10;
             }
-            for (let jj = i1; jj < i2; jj+=stride) {
+            for (let jj = i1; jj < i2; jj += stride) {
                 let jj2 = jj + stride;
                 if (jj2 >= i2) jj2 = i2;
                 childNodes.push({
                     type: 'array-parent',
-                    name: `${jj} - ${jj2-1}`,
+                    name: `${jj} - ${jj2 - 1}`,
                     childNodes: this.createArrayHierarchyChildNodes(X, max_array_children, jj, jj2, path0),
-                    path: path0 + `[${jj}-${jj2-1}]`
+                    path: path0 + `[${jj}-${jj2 - 1}]`
                 });
             }
         }
         return childNodes;
-        
+
     }
 
     createValueNode(val, name, basepath) {
@@ -164,32 +183,98 @@ export class MTBrowser extends Component {
         }
     }
 
+    handlePathInputChanged = (evt) => {
+        this.setState({
+            inputPath: evt.target.value
+        });
+    }
+
+    handleUpdate = () => {
+        this.setState({
+            path: this.state.inputPath
+        });
+    }
+
+    handleOpenPath = (path) => {
+        this.pathHistory.push(this.state.path);
+        this.setState({
+            path: path,
+            inputPath: path
+        });
+    }
+
+    handleBackButton = () => {
+        if (this.pathHistory.length === 0) return;
+        let path0 = this.pathHistory.pop();
+        this.setState({
+            path: path0,
+            inputPath: path0
+        });
+    }
+
     render() {
         const { rootNode, selectedNode, status } = this.state;
-        if (this.state.status === 'loaded') {
-            return <Container fluid={true}>
-                <Row noGutters={true}>
-                    <Col md={6}>
-                        <Tree
-                            rootNode={rootNode}
-                            selectedNode={selectedNode}
-                            onSelect={(node) => { this.onSelect(node); }}
-                        />
-                    </Col>
-                    <Col md={6}>
-                        <div>Test</div>
-                        <FileView node={selectedNode ? selectedNode : null} viewPlugins={this.viewPluginsList}></FileView>
-                    </Col>
-                </Row>
+        let inputLength = Math.ceil(Math.max(20, this.state.inputPath.length) / 10) * 10;
+        let topControls = <Row noGutters={true}>
+            <Col>
+                <div class="input-group">
+                    <div
+                        style={{'padding-top': '6px'}}
+                        onClick={this.handleBackButton}
+                        // disabled={this.pathHistory.length === 0} // doesn't work for div elements
+                    >
+                        <BackButton />
+                    </div>
+                    <div style={{width: '12px'}}></div>
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="sha1dir:// or sha1:// path"
+                        onChange={this.handlePathInputChanged}
+                        style={{ 'max-width': `${inputLength}ch` }}
+                        value={this.state.inputPath}
+                    />
+                    <Button
+                        onClick={this.handleUpdate}
+                        disabled={this.state.path === this.state.inputPath}
+                    >
+                        Update
+                    </Button>
+                </div>
+            </Col>
+        </Row>
 
-            </Container>
+        let mainContent;
+        if (this.state.status === 'loaded') {
+            mainContent = <Row noGutters={true}>
+                <Col md={6}>
+                    <Tree
+                        rootNode={rootNode}
+                        selectedNode={selectedNode}
+                        onSelect={(node) => { this.onSelect(node); }}
+                    />
+                </Col>
+                <Col md={6}>
+                    <FileView
+                        node={selectedNode ? selectedNode : null}
+                        viewPlugins={this.viewPluginsList}
+                        onOpenPath={this.handleOpenPath}
+                    >
+                    </FileView>
+                </Col>
+            </Row>
         }
         else if (status === 'loading') {
-            return <div>Loading...</div>
+            mainContent = <Row><Col>Loading ...</Col></Row>
         }
         else {
-            return <div>{status}</div>
+            mainContent = <Row><Col>{status}</Col></Row>
         }
+
+        return <Container fluid={true}>
+            {topControls}
+            {mainContent}
+        </Container>
     }
 }
 

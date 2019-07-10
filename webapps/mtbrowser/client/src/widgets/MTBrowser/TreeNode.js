@@ -58,7 +58,7 @@ const TreeNode = (props) => {
 
   return (
     <React.Fragment>
-      <StyledTreeNode level={level} type={node.type}>
+      <StyledTreeNode level={level} type={node.type} onClick={() => onNodeSelect(node)}>
         <NodeIcon onClick={() => onToggle(node)}>
           { node.type === 'dir' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
           { node.type === 'object' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
@@ -77,7 +77,7 @@ const TreeNode = (props) => {
         </NodeIcon>
         
 
-        <span role="button" onClick={() => onNodeSelect(node)}>
+        <span role="button">
           { getNodeLabel(node) }
           { (node === selectedNode ) ? '*' : '' }
         </span>
