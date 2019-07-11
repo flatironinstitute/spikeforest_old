@@ -15,12 +15,19 @@ const StyledTreeNode = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 5px 8px;
-  padding-left: ${props => getPaddingLeft(props.level, props.type)}px;
+  // padding: 5px 8px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: ${props => getPaddingLeft(props.level, props.type)}px;
+  cursor: pointer;
 
-  &:hover {
-    background: lightgray;
+  &.selected {
+    background: #F2F2F2;
   }
+
+  // &:hover {
+  //   background: lightgray;
+  // }
 `;
 
 const NodeIcon = styled.div`
@@ -40,10 +47,10 @@ const abbreviate = (val, max_chars) => {
 
 const getNodeLabel = (node) => {
   if (node.type === 'value') {
-    return `${node.name || 'root'}: ${abbreviate(node.value, 30)}`;
+    return `${node.name || '/'}: ${abbreviate(node.value, 30)}`;
   }
   else {
-    return node.name || 'root';
+    return node.name || '/';
   }
 }
 
@@ -58,7 +65,7 @@ const TreeNode = (props) => {
 
   return (
     <React.Fragment>
-      <StyledTreeNode level={level} type={node.type} onClick={() => onNodeSelect(node)}>
+      <StyledTreeNode level={level} type={node.type} className={(node === selectedNode ) ? 'selected' : '' } onClick={() => onNodeSelect(node)}>
         <NodeIcon onClick={() => onToggle(node)}>
           { node.type === 'dir' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
           { node.type === 'object' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
@@ -77,9 +84,8 @@ const TreeNode = (props) => {
         </NodeIcon>
         
 
-        <span role="button">
+        <span role="button" style={{cursor: 'pointer'}}>
           { getNodeLabel(node) }
-          { (node === selectedNode ) ? '*' : '' }
         </span>
       </StyledTreeNode>
 

@@ -1,13 +1,44 @@
 import React, { Component } from "react";
 import { Container, Row, Col, Button } from 'react-bootstrap';
-import { FaArrowLeft as BackButton } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import Tree from "./Tree"
 import FileView from "./FileView"
 import PropTypes from "prop-types";
+import styled from 'styled-components'
 
 import * as viewPlugins from "../../viewplugins";
 
 const axios = require('axios');
+
+const ButtonIcon = styled.div`
+  padding-top: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+
+  &.enabled {
+    cursor: pointer;
+    :hover {
+        background: #F5F5F5;
+    }
+  }
+
+  &.disabled {
+    cursor: arrow;
+    color: lightgray;
+  }
+`;
+
+const HistoryLine = styled.div`
+  height:8px;
+  width: 100%;
+  background: #F2F2F2;
+  cursor: arrow;
+  margin-top: 6px;
+
+  :hover {
+    border: solid 1px gray;
+  }
+`;
 
 export class MTBrowser extends Component {
     constructor(props) {
@@ -17,10 +48,10 @@ export class MTBrowser extends Component {
             rootNode: null,
             selectedNode: null,
             inputPath: props.path,
-            path: props.path
+            path: props.path,
+            pathHistory: []
         };
         this.viewPluginsList = Object.values(viewPlugins);
-        this.pathHistory = [];
     }
 
     async componentDidMount() {
@@ -49,7 +80,7 @@ export class MTBrowser extends Component {
                 });
                 return;
             }
-            rootNode = this.createObjectNode(A, 'root');
+            rootNode = this.createObjectNode(A, '');
         }
         else {
             let X = await loadDirectory(path, {});
@@ -191,41 +222,51 @@ export class MTBrowser extends Component {
 
     handleUpdate = () => {
         this.setState({
-            path: this.state.inputPath
+            path: this.state.inputPath,
+            pathHistory: [ ...this.state.pathHistory, this.state.path]
         });
     }
 
     handleOpenPath = (path) => {
-        this.pathHistory.push(this.state.path);
+        if (path === this.state.path) {
+            return;
+        }
         this.setState({
             path: path,
-            inputPath: path
+            inputPath: path,
+            pathHistory: [ ...this.state.pathHistory, this.state.path]
         });
     }
 
     handleBackButton = () => {
-        if (this.pathHistory.length === 0) return;
-        let path0 = this.pathHistory.pop();
+        if (this.state.pathHistory.length === 0) return;
+        let path0 = this.state.pathHistory.pop();
         this.setState({
             path: path0,
             inputPath: path0
         });
     }
 
+    handleHistoryLine = (ind) => {
+        let path0 = this.state.pathHistory[ind];
+        this.setState({
+            path: path0,
+            inputPath: path0,
+            pathHistory: this.state.pathHistory.slice(0, ind)
+        });
+    }
+
     render() {
         const { rootNode, selectedNode, status } = this.state;
-        let inputLength = Math.ceil(Math.max(20, this.state.inputPath.length) / 10) * 10;
+        let inputLength = Math.ceil(Math.max(50, this.state.inputPath.length) / 10) * 10;
         let topControls = <Row noGutters={true}>
             <Col>
                 <div class="input-group">
-                    <div
-                        style={{'padding-top': '6px'}}
-                        onClick={this.handleBackButton}
-                        // disabled={this.pathHistory.length === 0} // doesn't work for div elements
+                    <ButtonIcon onClick={this.handleBackButton}
+                        className={(this.state.pathHistory.length === 0) ? 'disabled' : 'enabled'}
                     >
-                        <BackButton />
-                    </div>
-                    <div style={{width: '12px'}}></div>
+                        <FaArrowLeft />
+                    </ButtonIcon>
                     <input
                         type="text"
                         class="form-control"
@@ -247,14 +288,15 @@ export class MTBrowser extends Component {
         let mainContent;
         if (this.state.status === 'loaded') {
             mainContent = <Row noGutters={true}>
-                <Col md={6}>
+                <Col md={6} lg={4} xl={3}>
+                    {this.state.pathHistory.map((p, ind) => <HistoryLine title={p} onClick={() => {this.handleHistoryLine(ind)}} />)}
                     <Tree
                         rootNode={rootNode}
                         selectedNode={selectedNode}
                         onSelect={(node) => { this.onSelect(node); }}
                     />
                 </Col>
-                <Col md={6}>
+                <Col md={'auto'}>
                     <FileView
                         node={selectedNode ? selectedNode : null}
                         viewPlugins={this.viewPluginsList}
