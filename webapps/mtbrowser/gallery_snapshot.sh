@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mt-snapshot gallery_files --upload-to spikeforest.public --ur
+mt-snapshot --ur --upload-to spikeforest.public gallery_files key://pairio/spikeforest/gallery

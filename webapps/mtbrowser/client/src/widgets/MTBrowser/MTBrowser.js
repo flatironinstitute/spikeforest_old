@@ -1,14 +1,19 @@
+import { hot } from 'react-hot-loader/root';
 import React, { Component } from "react";
-import { Container, Row, Col, Button } from 'react-bootstrap';
+import { Button, Container, Row, Col } from 'react-bootstrap';
 import { FaArrowLeft } from 'react-icons/fa';
 import Tree from "./Tree"
 import FileView from "./FileView"
 import PropTypes from "prop-types";
+import InfoBar from "./InfoBar";
+import Toolbar from '@material-ui/core/Toolbar';
 import styled from 'styled-components'
 
 import * as viewPlugins from "../../viewplugins";
 
-const axios = require('axios');
+const queryString = require('query-string');
+
+const MountainClient = require('@mountainclient-js').MountainClient;
 
 const ButtonIcon = styled.div`
   padding-top: 6px;
@@ -18,7 +23,7 @@ const ButtonIcon = styled.div`
   &.enabled {
     cursor: pointer;
     :hover {
-        background: #F5F5F5;
+        background: #E5E5E5;
     }
   }
 
@@ -31,16 +36,16 @@ const ButtonIcon = styled.div`
 const HistoryLine = styled.div`
   height:8px;
   width: 100%;
-  background: #F2F2F2;
+  background: #E2E2E2;
   cursor: arrow;
   margin-top: 6px;
 
   :hover {
-    border: solid 1px gray;
+    background: gray;
   }
 `;
 
-export class MTBrowser extends Component {
+class MTBrowser extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -73,7 +78,9 @@ export class MTBrowser extends Component {
         this.setState({ status: `Loading: ${path}` });
         let rootNode = null;
         if (path.endsWith('.json')) {
-            let A = await loadObject(path, {});
+            let mt = new MountainClient();
+            mt.configDownloadFrom(['spikeforest.public']);
+            let A = await mt.loadObject(path, {});
             if (!A) {
                 this.setState({
                     status: `Unable to load file: ${path}`
@@ -220,22 +227,32 @@ export class MTBrowser extends Component {
         });
     }
 
-    handleUpdate = () => {
-        this.setState({
-            path: this.state.inputPath,
-            pathHistory: [ ...this.state.pathHistory, this.state.path]
-        });
+    handlePathInputKeyDown = (evt) => {
+        if (evt.keyCode === 13) {
+            this.handleUpdate();
+        }
     }
 
-    handleOpenPath = (path) => {
+    setNewPath = (path) => {
         if (path === this.state.path) {
             return;
         }
         this.setState({
             path: path,
             inputPath: path,
-            pathHistory: [ ...this.state.pathHistory, this.state.path]
+            pathHistory: [...this.state.pathHistory, this.state.path]
         });
+
+        var q = queryString.parse(location.search);
+        q.path = path;
+    }
+
+    handleUpdate = () => {
+        this.setNewPath(this.state.inputPath);
+    }
+
+    handleOpenPath = (path) => {
+        this.setNewPath(path);
     }
 
     handleBackButton = () => {
@@ -259,64 +276,85 @@ export class MTBrowser extends Component {
     render() {
         const { rootNode, selectedNode, status } = this.state;
         let inputLength = Math.ceil(Math.max(50, this.state.inputPath.length) / 10) * 10;
-        let topControls = <Row noGutters={true}>
-            <Col>
-                <div class="input-group">
-                    <ButtonIcon onClick={this.handleBackButton}
-                        className={(this.state.pathHistory.length === 0) ? 'disabled' : 'enabled'}
-                    >
-                        <FaArrowLeft />
-                    </ButtonIcon>
-                    <input
-                        type="text"
-                        class="form-control"
-                        placeholder="sha1dir:// or sha1:// path"
-                        onChange={this.handlePathInputChanged}
-                        style={{ 'max-width': `${inputLength}ch` }}
-                        value={this.state.inputPath}
-                    />
-                    <Button
-                        onClick={this.handleUpdate}
-                        disabled={this.state.path === this.state.inputPath}
-                    >
-                        Update
-                    </Button>
-                </div>
+        let topControls =
+            <div className="input-group">
+                <ButtonIcon onClick={this.handleBackButton}
+                    className={(this.state.pathHistory.length === 0) ? 'disabled' : 'enabled'}
+                >
+                    <FaArrowLeft />
+                </ButtonIcon>
+                <input
+                    type="text"
+                    className="form-control"
+                    placeholder="sha1dir:// or sha1:// path"
+                    onChange={this.handlePathInputChanged}
+                    onKeyDown={this.handlePathInputKeyDown}
+                    style={{ maxWidth: `${inputLength}ch` }}
+                    value={this.state.inputPath}
+                />
+                <Button
+                    onClick={this.handleUpdate}
+                    disabled={this.state.path === this.state.inputPath}
+                >
+                    Update
+                </Button>
+            </div>
+
+        let treeContent, viewContent;
+        if (this.state.status === 'loaded') {
+            treeContent = <Tree
+                rootNode={rootNode}
+                selectedNode={selectedNode}
+                onSelect={(node) => { this.onSelect(node); }}
+            />
+            viewContent = <FileView
+                node={selectedNode ? selectedNode : null}
+                viewPlugins={this.viewPluginsList}
+                onOpenPath={this.handleOpenPath}
+            >
+            </FileView>
+        }
+        else if (status === 'loading') {
+            treeContent = <div>Loading ...</div>
+            viewContent = <div></div>
+        }
+        else {
+            treeContent = <div>{status}</div>
+            viewContent = <div></div>
+        }
+
+        let mainContent = <Row noGutters={true}>
+            <Col md={6} lg={5}>
+                {this.state.pathHistory.map((p, ind) => <HistoryLine key={p} title={p} onClick={() => { this.handleHistoryLine(ind) }} />)}
+                {treeContent}
+            </Col>
+            <Col md={6} lg={7}>
+                {viewContent}
             </Col>
         </Row>
 
-        let mainContent;
-        if (this.state.status === 'loaded') {
-            mainContent = <Row noGutters={true}>
-                <Col md={6} lg={4} xl={3}>
-                    {this.state.pathHistory.map((p, ind) => <HistoryLine title={p} onClick={() => {this.handleHistoryLine(ind)}} />)}
-                    <Tree
-                        rootNode={rootNode}
-                        selectedNode={selectedNode}
-                        onSelect={(node) => { this.onSelect(node); }}
-                    />
-                </Col>
-                <Col md={'auto'}>
-                    <FileView
-                        node={selectedNode ? selectedNode : null}
-                        viewPlugins={this.viewPluginsList}
-                        onOpenPath={this.handleOpenPath}
-                    >
-                    </FileView>
-                </Col>
-            </Row>
-        }
-        else if (status === 'loading') {
-            mainContent = <Row><Col>Loading ...</Col></Row>
-        }
-        else {
-            mainContent = <Row><Col>{status}</Col></Row>
-        }
+        const KacheryManager = [
+            { name: 'test0', status: '' },
+            { name: 'test1', status: 'disconnected' },
+            { name: 'test2', status: 'connected' }
+        ];
 
-        return <Container fluid={true}>
-            {topControls}
-            {mainContent}
-        </Container>
+        return <React.Fragment>
+            <div>
+                <InfoBar KacheryManager={KacheryManager} />
+            </div>
+            {/* Important to put in this toolbar in order to shift down the stuff below */}
+            <Toolbar variant="dense" />
+            {/* Some space */}
+            <div style={{height:'10px'}} />
+            <div>
+                {topControls}
+            </div>
+            <div style={{height:'10px'}} />
+            <div>
+                {mainContent}
+            </div>
+        </React.Fragment>;
     }
 }
 
@@ -325,47 +363,75 @@ MTBrowser.propTypes = {
 }
 
 async function loadDirectory(path) {
-    let vals = path.split('/');
-    if (vals[0] !== 'sha1dir:') {
-        return null;
+    let mt = new MountainClient();
+    mt.configDownloadFrom(['spikeforest.public']);
+
+    let X;
+    if (path.startsWith('key://')) {
+        path = await mt.resolveKeyPath(path);
+        if (!path) return null;
     }
-    vals[2] = vals[2].split('.')[0];
-    let X = await loadObject(`sha1://${vals[2]}`);
-    if (!X) return;
-    for (let i = 3; i < vals.length; i++) {
-        if (vals[i]) {
-            if ((X.dirs) && (vals[i] in X.dirs)) {
-                X = X.dirs[vals[i]];
-            }
-            else {
-                return null;
+    if (path.startsWith('sha1dir://')) {
+        let vals = path.split('/');
+        vals[2] = vals[2].split('.')[0];
+        X = await mt.loadObject(`sha1://${vals[2]}`);
+        if (!X) return null;
+        for (let i = 3; i < vals.length; i++) {
+            if (vals[i]) {
+                if ((X.dirs) && (vals[i] in X.dirs)) {
+                    X = X.dirs[vals[i]];
+                }
+                else {
+                    return null;
+                }
             }
         }
     }
+    else {
+        return null;
+    }
+
     return X;
 }
 
-async function loadObject(path, opts) {
-    if (!path) {
-        if ((opts.key) && (opts.collection)) {
-            path = `key://pairio/${opts.collection}/~${hash_of_key(opts.key)}`;
-        }
-    }
-    let response;
-    try {
-        response = await axios.get(`/api/loadObject?path=${encodeURIComponent(path)}`);
-    }
-    catch (err) {
-        console.error(err);
-        console.error(`Problem loading object: ${path}`);
-        return null;
-    }
-    let rr = response.data;
-    if (rr.success) {
-        return rr.object;
-    }
-    else return null;
-}
+// async function resolveKeyPath(path) {
+//     let response;
+//     try {
+//         response = await axios.get(`/api/resolveKeyPath?path=${encodeURIComponent(path)}`);
+//     }
+//     catch (err) {
+//         console.error(err);
+//         console.error(`Problem resolving key path: ${path}`);
+//         return null;
+//     }
+//     let rr = response.data;
+//     if (rr.success) {
+//         return rr.text;
+//     }
+//     else return null;
+// }
+
+// async function loadObject(path, opts) {
+//     if (!path) {
+//         if ((opts.key) && (opts.collection)) {
+//             path = `key://pairio/${opts.collection}/~${hash_of_key(opts.key)}`;
+//         }
+//     }
+//     let response;
+//     try {
+//         response = await axios.get(`/api/loadObject?path=${encodeURIComponent(path)}`);
+//     }
+//     catch (err) {
+//         console.error(err);
+//         console.error(`Problem loading object: ${path}`);
+//         return null;
+//     }
+//     let rr = response.data;
+//     if (rr.success) {
+//         return rr.object;
+//     }
+//     else return null;
+// }
 
 // function example_data() {
 //     return {
@@ -406,3 +472,5 @@ async function loadObject(path, opts) {
 //         }
 //     };
 // }
+
+export default hot(MTBrowser)

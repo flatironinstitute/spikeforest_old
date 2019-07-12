@@ -1,6 +1,8 @@
 // Path is in Node for free and will make simple resolving of directories no
 // matter which part of your file system your library lives in
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackRootPlugin = require('html-webpack-root-plugin');
 
 // Webpack is just a bunch of keys on module.exports!
 module.exports = {
@@ -25,7 +27,7 @@ module.exports = {
 					loader: 'babel-loader',
 					options: {
 						presets: ["@babel/preset-env", "@babel/preset-react"],
-						plugins: ["@babel/plugin-proposal-class-properties"]
+						plugins: ["@babel/plugin-proposal-class-properties", "react-hot-loader/babel"]
 					}
 				}
 			},
@@ -74,6 +76,13 @@ module.exports = {
 		// https://webpack.js.org/configuration/output/#output-librarytarget
 		libraryTarget: 'umd',
 	},
+	plugins: [
+		new HtmlWebpackPlugin({
+			template: 'index_template.html',
+			title: 'MountainBrowser'
+		}),
+		new HtmlWebpackRootPlugin()
+	],
 	optimization: {
 		splitChunks: {
 			cacheGroups: {
@@ -84,5 +93,9 @@ module.exports = {
 				}
 			}
 		}
+	},
+	devServer: {
+		contentBase: 'dist',
+		port: 5050
 	}
 };

@@ -5,8 +5,9 @@ const MountainClientImpl = require(__dirname + '/impl/mountainclientimpl.js').Mo
 // The following may or may not apply to this version;
 //   Note: for webpack we need: externals:{"fs":"require('fs')"}
 
-function MountainClient() {
-  let impl = new MountainClientImpl();
+function MountainClient(opts) {
+  opts = opts || {};
+  let impl = new MountainClientImpl(opts.fs);
 
   this.setPairioUrl = function(url) {
     impl.setPairioUrl(url);
@@ -16,6 +17,10 @@ function MountainClient() {
   }
   this.getValue = async function(opts) {
     return await impl.getValue(opts);
+  }
+  this.resolveKeyPath = async function(path, opts) {
+    opts=opts||{};
+    return await impl.resolveKeyPath(path, opts);
   }
   this.readDir = async function(path, opts) {
     opts=opts||{};
@@ -36,5 +41,9 @@ function MountainClient() {
   this.findFile = async function(path, opts) {
     opts=opts||{};
     return await impl.findFile(path, opts);
+  }
+  this.probeKachery = async function(name, opts) {
+    opts=opts||{};
+    return await impl.probeKachery(name, opts);
   }
 }

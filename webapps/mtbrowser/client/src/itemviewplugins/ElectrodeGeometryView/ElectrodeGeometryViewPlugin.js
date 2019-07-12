@@ -3,30 +3,45 @@ import { ElectrodeGeometryWidget } from "@spikeforestwidgets-js";
 
 const MountainClient = require('@mountainclient-js').MountainClient;
 
-class ElectrodeGeometryView extends Component {
+export class ElectrodeGeometryView extends Component {
     constructor(props) {
         super(props);
         this.state = {
             locations: null,
             labels: null,
-            dimensions: null
+            width: null
         };
     }
 
     async componentDidMount() {
-        this.setState({
-            dimensions: {
-                width: this.container.offsetWidth,
-                height: this.container.offsetHeight,
-            },
-        });
+        this.updateDimensions();
+        window.addEventListener("resize", this.resetWidth);
         await this.loadGeom();
     }
 
-    async componentDidUpdate(prevProps) {
+    componentWillUnmount() {
+        window.removeEventListener("resize", this.resetWidth);
+    }
+
+    resetWidth = () => {
+        this.setState({
+            width: null
+        });
+    }
+
+    async componentDidUpdate(prevProps, prevState) {
+        if (!this.state.width) {
+            this.updateDimensions();
+        }
         if ((prevProps.path !== this.props.path)) {
             await this.loadGeom();
         }
+    }
+
+    updateDimensions() {
+        this.setState({
+            width: this.container.offsetWidth // see render()
+        });
     }
 
     async loadGeom() {
@@ -41,30 +56,33 @@ class ElectrodeGeometryView extends Component {
         return <div><ElectrodeGeometryWidget
             locations={this.state.locations}
             labels={this.state.labels}
+            width={this.state.width}
+            height={null}
         /></div>;
     }
 
     render() {
-        const { dimensions } = this.state;
+        const { width } = this.state;
 
         return (
-            <div className="determiningDimensions" ref={el => (this.container = el)}>
-                {dimensions && this.renderContent()}
+            <div className="determiningWidth" ref={el => (this.container = el)}>
+                {width && this.renderContent()}
             </div>
         );
     }
 }
 
 export default class ElectrodeGeometryViewPlugin {
-    static getViewElementsForFile(path, opts) {
+    static getViewComponentsForFile(path, opts) {
         if (baseName(path) === 'geom.csv') {
-            return [<ElectrodeGeometryView
-                path={path}
-            />];
+            return [{
+                component: <ElectrodeGeometryView path={path} />,
+                size: 'large'
+            }];
         }
         return [];
     }
-    static getViewElementsForDir(dir, opts) {
+    static getViewComponentsForDir(dir, opts) {
         return [];
     }
 };
@@ -72,7 +90,7 @@ export default class ElectrodeGeometryViewPlugin {
 async function load_geom_csv(path) {
     let mt = new MountainClient();
     mt.configDownloadFrom(['spikeforest.public']);
-
+    
     let txt = await mt.loadText(path, {});
     if (!txt) return null;
     let locations = [];
@@ -86,7 +104,7 @@ async function load_geom_csv(path) {
             }
             while (vals.length < 2) vals.push(0);
             locations.push(vals);
-            labels.push(Number(i) + 1);
+            labels.push(Number(i)+1);
         }
     }
     return {

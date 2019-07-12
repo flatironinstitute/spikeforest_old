@@ -6,7 +6,6 @@ export default class ElectrodeGeometryWidget extends Component {
         super(props);
         this.state = {
         }
-        this.size = [600, 250];
         this.xmin = 0;
         this.xmax = 1;
         this.ymin = 0;
@@ -32,18 +31,41 @@ export default class ElectrodeGeometryWidget extends Component {
         this.repaint()
     }
 
+    determineWidthHeight() {
+        this.updatePositions();
+
+        let W = this.props.width;
+        let H = this.props.height;
+        if (!H) {
+            let x1 = this.xmin - this.mindist, x2 = this.xmax + this.mindist;
+            let y1 = this.ymin - this.mindist, y2 = this.ymax + this.mindist;
+            let w0 = x2 - x1, h0 = y2 - y1;
+            if (this.transpose) {
+                let w0_tmp = w0;
+                w0 = h0;
+                h0 = w0_tmp;
+            }
+            if (!w0) {
+                H = 100;
+            }
+            else {
+                H = h0 / w0 * W;
+            }
+        }
+        return { width: W, height: H };
+    }
+
     repaint = () => {
+        const { width, height } = this.determineWidthHeight();
         const canvas = this.canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
 
         this.mouseHandler.setElement(canvas);
 
-        this.updatePositions();
-
         let painter = new CanvasPainter(ctx);
-        let W = this.size[0];
-        let H = this.size[1];
+        let W = width;
+        let H = height;
 
         painter.clearRect(0, 0, W, H);
 
@@ -110,8 +132,8 @@ export default class ElectrodeGeometryWidget extends Component {
             ymin = Math.min(ymin, pt[1]);
             ymax = Math.max(ymax, pt[1]);
         }
-        if (xmax === xmin) xmax++;
-        if (ymax === ymin) ymax++;
+        // if (xmax === xmin) xmax++;
+        // if (ymax === ymin) ymax++;
 
         this.xmin = xmin; this.xmax = xmax;
         this.ymin = ymin; this.ymax = ymax;
@@ -158,8 +180,8 @@ export default class ElectrodeGeometryWidget extends Component {
     electrodeIndexAtPixel(pos) {
         for (let i in this.channel_rects) {
             let rect0 = this.channel_rects[i];
-            if ((rect0[0]<=pos[0])&&(pos[0]<=rect0[0]+rect0[2])) {
-                if ((rect0[1]<=pos[1])&&(pos[1]<=rect0[1]+rect0[2])) {
+            if ((rect0[0] <= pos[0]) && (pos[0] <= rect0[0] + rect0[2])) {
+                if ((rect0[1] <= pos[1]) && (pos[1] <= rect0[1] + rect0[2])) {
                     return i;
                 }
             }
@@ -187,13 +209,15 @@ export default class ElectrodeGeometryWidget extends Component {
     }
 
     render() {
+        const { width, height } = this.determineWidthHeight();
+
         // We'll need to think of a better way to do this
         setTimeout(this.repaint, 100);
 
         let canvas = <canvas
             ref={this.canvasRef}
-            width={this.size[0]}
-            height={this.size[1]}
+            width={width}
+            height={height}
             onMouseDown={this.mouseHandler.mouseDown}
             onMouseUp={this.mouseHandler.mouseUp}
             onMouseMove={this.mouseHandler.mouseMove}

@@ -10,11 +10,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd client && yarn build",
     "dev": "NODE_OPTIONS=--max_old_space_size=4096 concurrently --kill-others-on-fail \"yarn start\" \"cd client && yarn watch\"",
-    "postinstall": "cd client && yarn install --production=false && yarn run build",
+    "preinstall": "which link-module-alias && link-module-alias clean || echo",
+    "postinstall": "link-module-alias && cd client && yarn install --production=false && yarn run build",
     "start": "node server/index.js"
   },
   "author": "Jeremy Magland",
   "license": "Apache-2.0",
+  "_moduleAliases": {
+    "@mountainclient-js": "mountainclient-js"
+  },
   "dependencies": {
     "axios": "^0.19.0",
     "express": "^4.17.1",
@@ -22,6 +26,7 @@
     "text-encoding": "^0.7.0"
   },
   "devDependencies": {
-    "concurrently": "^4.1.1"
+    "concurrently": "^4.1.1",
+    "link-module-alias": "^1.2.0"
   }
 }

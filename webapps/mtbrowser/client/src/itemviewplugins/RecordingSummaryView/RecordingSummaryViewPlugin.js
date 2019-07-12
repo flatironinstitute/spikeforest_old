@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ElectrodeGeometryWidget } from "@spikeforestwidgets-js";
+import { ElectrodeGeometryView } from "../ElectrodeGeometryView/ElectrodeGeometryViewPlugin";
 
 const MountainClient = require('@mountainclient-js').MountainClient;
 
@@ -28,7 +28,7 @@ class RecordingSummaryView extends Component {
     }
 
     async loadGeom() {
-        this.setState({locations: null, labels: null});
+        this.setState({ locations: null, labels: null });
         let locations = await load_geom_csv(this.props.geomPath);
         if (!locations) return { locations: null, labels: null };
         let labels = [];
@@ -39,7 +39,7 @@ class RecordingSummaryView extends Component {
     }
 
     async loadParams() {
-        this.setState({params: null});
+        this.setState({ params: null });
 
         let mt = new MountainClient();
         mt.configDownloadFrom(['spikeforest.public']);
@@ -59,24 +59,26 @@ class RecordingSummaryView extends Component {
                     <tr><td>Num. channels</td><td>{this.state.locations ? this.state.locations.length : '...'}</td></tr>
                 </tbody>
             </table>
-            <ElectrodeGeometryWidget
-                locations={this.state.locations}
-                labels={this.state.labels}
+            <ElectrodeGeometryView
+                path={this.props.geomPath}
             />
         </div>;
     }
 }
 
 export default class RecordingSummaryViewPlugin {
-    static getViewElementsForFile(path, opts) {
+    static getViewComponentsForFile(path, opts) {
         return [];
     }
-    static getViewElementsForDir(dir, opts) {
+    static getViewComponentsForDir(dir, opts) {
         if (('geom.csv' in dir.files) && ('params.json' in dir.files)) {
-            return [<RecordingSummaryView
-                geomPath={`sha1://${dir.files['geom.csv'].sha1}/geom.csv`}
-                paramsPath={`sha1://${dir.files['params.json'].sha1}/params.json`}
-            />];
+            return [{
+                component: <RecordingSummaryView
+                    geomPath={`sha1://${dir.files['geom.csv'].sha1}/geom.csv`}
+                    paramsPath={`sha1://${dir.files['params.json'].sha1}/params.json`}
+                />,
+                size: 'large'
+            }];
         }
         return [];
     }

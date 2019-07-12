@@ -1,9 +1,7 @@
 import React from 'react';
 import { FaFile, FaFolder, FaFolderOpen, FaChevronDown, FaChevronRight, FaBed, FaBullhorn } from 'react-icons/fa';
 import styled from 'styled-components';
-import last from 'lodash/last';
 import PropTypes from 'prop-types';
-import { notDeepEqual } from 'assert';
 
 const getPaddingLeft = (level, type) => {
   let paddingLeft = level * 20;
@@ -47,7 +45,7 @@ const abbreviate = (val, max_chars) => {
 
 const getNodeLabel = (node) => {
   if (node.type === 'value') {
-    return `${node.name || '/'}: ${abbreviate(node.value, 30)}`;
+    return `${node.name || '/'}: ${abbreviate(node.data.value, 30)}`;
   }
   else {
     return node.name || '/';

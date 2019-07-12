@@ -1,1 +1,1 @@
-export { MTBrowser } from './MTBrowser/MTBrowser';
+export { default as MTBrowser } from './MTBrowser/MTBrowser';
