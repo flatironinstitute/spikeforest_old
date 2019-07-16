@@ -1,5 +1,5 @@
 {
-  "name": "mtbrowser",
+  "name": "mountainbrowserserver",
   "version": "0.1.0",
   "description": "MountainTools browser",
   "main": "server/index.js",

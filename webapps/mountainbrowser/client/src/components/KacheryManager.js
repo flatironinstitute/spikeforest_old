@@ -3,6 +3,7 @@ const MountainClient = require('@mountainclient-js').MountainClient;
 const STATUS_WAITING = 'waiting';
 const STATUS_CONNECTED = 'connected';
 const STATUS_NOT_CONNECTED = 'not_connected';
+const STATUS_UNKNOWN = 'unknown';
 
 class KacheryConnection {
     constructor(kacheryName) {
@@ -42,6 +43,9 @@ export default class KacheryManager {
                 return c;
         }
         return null;
+    }
+    pairioConnectionStatus() {
+        return STATUS_UNKNOWN;
     }
     async checkAllConnections() {
         for (let kc of this._connections) {

@@ -1,7 +1,7 @@
 {
-  "name": "mtbrowserclient",
+  "name": "mountainbrowser",
   "version": "0.1.0",
-  "description": "MountainTools browser client",
+  "description": "MountainBrowser client",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

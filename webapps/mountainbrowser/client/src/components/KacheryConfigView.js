@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
-import { Paper, Table, TableBody, TableHead, TableRow, TableCell, Grid, Toolbar, IconButton, Button, Input } from '@material-ui/core';
-import KacheryManager from './KacheryManager';import { MdAdd } from 'react-icons/md';
+import { Paper, Table, TableBody, TableHead, TableRow, TableCell, Toolbar, Button, Input } from '@material-ui/core';
+import { MdAdd } from 'react-icons/md';
 
 
 const KacheryName = (props) => {
     const { connectionStatus, kacheryName } = props.kacheryInfo;
     if (connectionStatus === 'connected') {
-        return <span style={{color: 'darkgreen'}}>{kacheryName}</span>;
+        return <span style={{ color: 'darkgreen' }}>{kacheryName}</span>;
     }
     else if (connectionStatus === 'not_connected') {
-        return <span style={{color: 'darkred'}}>{kacheryName}</span>;
+        return <span style={{ color: 'darkred' }}>{kacheryName}</span>;
     }
     else {
         return <span>{kacheryName}</span>;
@@ -19,10 +19,10 @@ const KacheryName = (props) => {
 const ConnectionStatus = (props) => {
     const { connectionStatus } = props.kacheryInfo;
     if (connectionStatus === 'connected') {
-        return <span style={{color: 'darkgreen'}}>Connected</span>;
+        return <span style={{ color: 'darkgreen' }}>Connected</span>;
     }
     else if (connectionStatus === 'not_connected') {
-        return <span style={{color: 'darkred'}}>Not connected</span>;
+        return <span style={{ color: 'darkred' }}>Not connected</span>;
     }
     else {
         return <span>{connectionStatus}</span>;
@@ -55,7 +55,7 @@ class ConfigView extends Component {
     }
     componentDidMount() {
         this.updateKacheryInfos();
-        this.timer = setInterval(() => {this.updateKacheryInfos()}, 1000);
+        this.timer = setInterval(() => { this.updateKacheryInfos() }, 1000);
     }
 
     componentWillUnmount() {
@@ -64,24 +64,22 @@ class ConfigView extends Component {
     }
     renderKacheryTable() {
         return (
-            <Paper>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Kachery name</TableCell>
-                            <TableCell>Connection status</TableCell>
-                            <TableCell>Check connection</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {
-                            this.state.kacheryInfos.map((kci, ii) => (
-                                <KacheryConnectionRow key={ii} onCheckConnection={this.handleCheckConnection} kacheryInfo={kci} />
-                            ))
-                        }
-                    </TableBody>
-                </Table>
-            </Paper>
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Kachery name</TableCell>
+                        <TableCell>Connection status</TableCell>
+                        <TableCell>Check connection</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {
+                        this.state.kacheryInfos.map((kci, ii) => (
+                            <KacheryConnectionRow key={ii} onCheckConnection={this.handleCheckConnection} kacheryInfo={kci} />
+                        ))
+                    }
+                </TableBody>
+            </Table>
         );
     }
     handleCheckConnection = (kacheryName) => {
@@ -149,14 +147,11 @@ class ConfigView extends Component {
     }
     render() {
         return (
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={6} lg={5} xl={4}>
-                    {this.renderKacheryControlBar()}
-                    {this.renderKacheryTable()}
-                </Grid>
-                <Grid item xs={12} md={6} lg={7} xl={7}>
-                </Grid>
-            </Grid>
+            <Paper>
+                <h3>Kachery configuration</h3>
+                {this.renderKacheryControlBar()}
+                {this.renderKacheryTable()}
+            </Paper>
         )
     }
 }

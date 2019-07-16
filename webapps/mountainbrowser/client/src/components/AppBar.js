@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { AppBar as MaterialAppBar, Typography, Toolbar, IconButton } from '@material-ui/core';
 import { FaCog } from "react-icons/fa";
 import KacheryStatusIndicator from './KacheryStatusIndicator';
-import KacheryManager from './KacheryManager';
+import SpacerComponent from './SpacerComponent';
 
 export const AppBarSpacer = () => {
     return (
@@ -22,10 +22,6 @@ const TitleComponent = (props) => {
     >
         MountainBrowser
     </Typography>
-}
-
-const SpacerComponent = (props) => {
-    return <div style={{ width: props.width }} />;
 }
 
 const KacheryCogButton = (props) => {
