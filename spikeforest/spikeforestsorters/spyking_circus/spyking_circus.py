@@ -47,7 +47,7 @@ class SpykingCircus(mlpr.Processor):
         sorter = sorters.SpykingcircusSorter(
             recording=recording,
             output_folder=tmpdir,
-            debug=True,
+            verbose=True,
             delete_output_folder=True
         )
 
