@@ -111,7 +111,7 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
     @staticmethod
     def write_recording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json', 
-            _preserve_dtype=False, in_blocks=True):
+            _preserve_dtype=False, in_blocks=False):
         if in_blocks:
             return write_recording_blocks(recording, save_path, params, raw_fname, params_fname, _preserve_dtype)
 
