@@ -3,7 +3,7 @@ from spikeextractors import SortingExtractor
 
 import json
 import numpy as np
-from .mdaio import DiskReadMda, readmda, writemda32, writemda64, writemda
+from .mdaio import DiskReadMda, readmda, writemda32, writemda64, writemda, appendmda
 import os
 import mtlogging
 import mlprocessors as mlpr
@@ -111,7 +111,10 @@ class SFMdaRecordingExtractor(RecordingExtractor):
 
     @staticmethod
     def write_recording(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json', 
-            _preserve_dtype=False):
+            _preserve_dtype=False, in_blocks=True):
+        if in_blocks:
+            return write_recording_blocks(recording, save_path, params, raw_fname, params_fname, _preserve_dtype)
+
         # ca = _load_required_modules()
         channel_ids = recording.get_channel_ids()
         M = len(channel_ids)
@@ -228,3 +231,54 @@ def read_dataset_params(dsdir, params_fname):
         raise Exception('Dataset parameter file does not exist: ' + fname2)
     with open(fname2) as f:
         return json.load(f)
+
+def write_recording_blocks(recording, save_path, params=dict(), raw_fname='raw.mda', params_fname='params.json',
+        _preserve_dtype=False):
+    import math
+    import logging as log
+    if not os.path.isdir(save_path):
+        os.mkdir(save_path)
+
+    # ca = _load_required_modules()
+    channel_ids = recording.get_channel_ids()
+    M = len(channel_ids)
+    N = recording.get_num_frames()
+
+    block_size = 20000 * 60 * 10
+    n_blocks = math.ceil((N*1.0) / block_size)
+
+    # open file
+    log.info('Writing .mda in blocks...')
+    total_size = 0
+    for i in range(n_blocks):
+        i_start = (i*block_size)
+        if i == (n_blocks - 1):
+            i_end = N
+        else:
+            i_end = i_start+block_size
+        log.debug('  Block {} of {} - samples {} to {}'.format(i+1, n_blocks, i_start, i_end-1))
+        block = recording.get_traces(start_frame=i_start, end_frame=i_end)
+        if i == 0:
+            log.info('    Writing ' + save_path + '/' + raw_fname)
+            writemda32(block, save_path + '/' + raw_fname)
+        else:
+            log.info('    Appending to ' + save_path + '/' + raw_fname)
+            appendmda(block, save_path + '/' + raw_fname)
+        # write block
+        log.debug(np.shape(block))
+        total_size = total_size + np.shape(block)[1]
+        log.debug('    Num Frames: {}. Total frames written: {}'.format(N, total_size))
+    log.info('Num Frames Extractor: {}. Total frames written: {}'.format(N, total_size))
+
+    location0 = recording.get_channel_property(channel_ids[0], 'location')
+    nd = len(location0)
+    geom = np.zeros((M, nd))
+    for ii in range(len(channel_ids)):
+        location_ii = recording.get_channel_property(channel_ids[ii], 'location')
+        geom[ii, :] = list(location_ii)
+
+    params["samplerate"] = recording.get_sampling_frequency()
+    with open(save_path + '/' + params_fname,'w') as f:
+        json.dump(params, f)
+    np.savetxt(save_path + '/geom.csv', geom, delimiter=',')
+
