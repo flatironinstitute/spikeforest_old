@@ -943,9 +943,8 @@ class MountainClient():
         Optional[str]
             The hash of the recursive directory index object from readDir().
         """
-        if path and path.startswith('key://'):
-            # todo
-            raise Exception('This case not handled yet')
+        # resolve key:// path
+        path = self._maybe_resolve(path)
 
         dd = self.readDir(path=path, recursive=True, include_sha1=True)
         ret = _sha1_of_object(dd)

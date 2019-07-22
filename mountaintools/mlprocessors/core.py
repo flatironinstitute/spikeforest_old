@@ -9,7 +9,8 @@ from .execute import execute
 from .createjobs import createJob, createJobs
 import json
 import abc
-from typing import Callable, Optional
+from typing import Callable, Optional, List
+from .mountainjob import MountainJob
 
 
 class ParserError(ValueError):
@@ -568,9 +569,9 @@ class Processor(metaclass=ProcMeta):
         return execute(proc, **kwargs)
 
     @classmethod
-    def createJob(proc, **kwargs):
+    def createJob(proc, **kwargs) -> MountainJob:
         return createJob(proc, **kwargs)
 
     @classmethod
-    def createJobs(proc, argslist):
+    def createJobs(proc, argslist) -> List[MountainJob]:
         return createJobs(proc, argslist)

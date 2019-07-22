@@ -1,0 +1,33 @@
+{
+    "processor_name": "RepeatText",
+    "processor_version": "0.0.1",
+    "processor_class_name": "RepeatText",
+    "processor_code": "sha1://93e51920724ae4ef391915a47106543a3c72fe8d/object.json",
+    "label": "RepeatText (version: 0.0.1)",
+    "inputs": {
+        "textfile": {
+            "path": "<placeholder>"
+        }
+    },
+    "outputs": {
+        "textfile_out": {
+            "ext": ".txt"
+        }
+    },
+    "parameters": {
+        "num_repeats": "<placeholder>"
+    },
+    "parameters_to_hash": {
+        "num_repeats": "<placeholder>"
+    },
+    "container": null,
+    "compute_requirements": {},
+    "force_run": false,
+    "use_cache": true,
+    "skip_failing": false,
+    "skip_timed_out": false,
+    "keep_temp_files": false,
+    "environment_variables": [],
+    "additional_files_to_realize": [],
+    "timeout": null
+}

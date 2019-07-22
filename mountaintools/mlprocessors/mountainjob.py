@@ -97,6 +97,23 @@ class MountainJob():
     def storeResultInCache(self, result: MountainJobResult) -> None:
         self._store_result_in_cache(result)
 
+    def substituteInputsAndParameters(self, **kwargs):
+        for key, val in kwargs.items():
+            if key in self._job_object['inputs']:
+                if self._job_object['inputs'][key]['path'] != '<placeholder>':
+                    raise Exception('substituteInputsAndParameters: Input is not a placeholder: {}'.format(key))
+                self._job_object['inputs'][key]['path'] = val
+                if self._job_object['inputs'][key].get('directory', False):
+                    self._job_object['inputs'][key]['hash'] = mt.computeDirHash(val)
+                else:
+                    self._job_object['inputs'][key]['hash'] = mt.computeFileSha1(val)
+            elif key in self._job_object['parameters']:
+                if self._job_object['parameters'][key] != '<placeholder>':
+                    raise Exception('substituteInputsAndParameters: Parameter is not a placeholder: {}'.format(key))
+                self._job_object['parameters'][key] = val
+            else:
+                raise Exception('substituteInputsAndParameters: No input or parameter: {}'.format(key))
+
     @mtlogging.log(name='MountainJob:execute')
     def execute(self) -> MountainJobResult:
         from .jobqueue import currentJobQueue
@@ -199,7 +216,7 @@ class MountainJob():
                     else:
                         ext = _get_file_ext(input_value) or '.in'
 
-                        if input0.get('directory', False) and ((input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://'))):
+                        if input0.get('directory', False) and ((input0['path'].startswith('kbucket://') or input0['path'].startswith('sha1dir://')) or input0['path'].startswith('key://')):
                             infile_in_container = input0['path']
                         else:
                             infile_in_container = '/processor_inputs/{}{}'.format(input_name, ext)
@@ -716,7 +733,7 @@ def _compute_mountain_job_output_signature(*, processor_name: str, processor_ver
             else:
                 hash0 = input0.get('sha1', input0.get('hash', None))
             if not hash0:
-                raise Exception('Problem getting sha1 or hash for input: {}'.format(input_name))
+                raise Exception('Problem getting sha1 or hash for input: {}: {}'.format(input_name, input0.get('path', '')))
             input_hashes[input_name] = hash0
         elif type(input0) == list:
             input_hashes[input_name] = []

@@ -9,6 +9,8 @@ from .jobqueue import JobQueue
 from .paralleljobhandler import ParallelJobHandler
 from .slurmjobhandler import SlurmJobHandler
 
+PLACEHOLDER = '<placeholder>'
+
 __all__ = [
     "Input", "Output",
     "Parameter", "StringParameter", "IntegerParameter", "FloatParameter",

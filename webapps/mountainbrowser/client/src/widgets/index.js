@@ -1,1 +1,0 @@
-export { default as MTBrowser } from './MTBrowser/MTBrowser';
