@@ -133,11 +133,12 @@ def main():
             job_handler.addBatchType(
                 name='gpu',
                 num_workers_per_batch=4,
-                num_cores_per_job=4,
+                num_cores_per_job=2,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
                 max_simultaneous_batches=20,
-                additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
+                additional_srun_opts=['-p gpu', '--gres=gpu:v100-16gb:1']
+                # additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
             )
         else:
             job_handler.addBatchType(

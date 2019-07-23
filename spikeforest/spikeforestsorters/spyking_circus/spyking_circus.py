@@ -7,7 +7,7 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
-    VERSION = '0.3.1'
+    VERSION = '0.3.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
