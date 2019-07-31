@@ -13,8 +13,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 #########################################
 ### Tridesclous
 RUN apt-get update && apt-get install -y libgl1-mesa-glx
-RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl PyQt5 pyqtgraph==0.10 quantities neo
-RUN pip install tridesclous>=1.2.1
+RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl PyQt5 pyqtgraph==0.10 quantities neo isosplit5
+RUN pip install tridesclous>=1.2.2
 
 ## OpenCL with POCL
 RUN apt-get update && apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl-opencl-icd
