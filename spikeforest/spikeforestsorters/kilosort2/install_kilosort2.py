@@ -5,7 +5,7 @@ import shutil
 
 
 def install_kilosort2(repo, commit):
-    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', os.getenv('HOME') + '/spikeforest_algs')
+    spikeforest_alg_install_path = get_install_path()
     key = dict(
         alg='kilosort2',
         repo=repo,
@@ -75,3 +75,10 @@ def install_kilosort2(repo, commit):
     mt.saveObject(object=key, dest_path=source_path + '/spikeforest.json')
 
     return source_path
+
+
+def get_install_path():
+    spikeforest_alg_install_path = os.getenv('SPIKEFOREST_ALG_INSTALL_PATH', os.getenv('HOME') + '/spikeforest_algs')
+    if not os.path.exists(spikeforest_alg_install_path): 
+        os.mkdir(spikeforest_alg_install_path)
+    return spikeforest_alg_install_path
