@@ -43,11 +43,11 @@ class SFMdaRecordingExtractor(RecordingExtractor):
         self._geom = np.genfromtxt(self._geom_fname, delimiter=',')
 
         timeseries_path_or_url = self._timeseries_path
-        if not ca.isLocalPath(timeseries_path_or_url):
-            a = ca.findFile(timeseries_path_or_url)
-            if not a:
-                raise Exception('Cannot find timeseries file: ' + timeseries_path_or_url)
-            timeseries_path_or_url = a
+        # if not ca.isLocalPath(timeseries_path_or_url):
+        #     a = ca.findFile(timeseries_path_or_url)
+        #     if not a:
+        #         raise Exception('Cannot find timeseries file: ' + timeseries_path_or_url)
+        #     timeseries_path_or_url = a
 
         # if is_kbucket_url(timeseries0):
         #     download_needed = is_url(ca.findFile(path=timeseries0))

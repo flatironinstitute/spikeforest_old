@@ -36,6 +36,12 @@ def main():
             print('Unable to load input object: {}'.format(args.input), file=sys.stderr)
             exit(-1)
         JJ.substituteInputsAndParameters(**input_obj)
+
+    files_to_realize = JJ.getFilesToRealize()
+    for ff in files_to_realize:
+        if not mt.realizeFile(ff):
+            print('Unable to realize file: {}'.format(ff))
+            exit(-1)
     
     JJ.execute()
 

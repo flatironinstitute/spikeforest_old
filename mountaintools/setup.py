@@ -23,7 +23,7 @@ setuptools.setup(
         'bin/mt-execute-job'
     ],
     install_requires=[
-        'matplotlib', 'requests', 'ipython', 'simple-crypt', 'python-dotenv'
+        'matplotlib', 'requests', 'ipython', 'simple-crypt', 'python-dotenv', 'simplejson'
         #        'matplotlib','requests','ipython','simple-crypt','python-dotenv', 'asyncio', 'nest_asyncio', 'aiohttp'
     ],
     classifiers=(

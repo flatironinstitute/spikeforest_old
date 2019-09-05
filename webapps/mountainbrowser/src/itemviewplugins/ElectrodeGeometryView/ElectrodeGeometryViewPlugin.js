@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { ElectrodeGeometryWidget } from "@spikeforestwidgets-js";
 
-const MountainClient = require('@mountainclient-js').MountainClient;
-
 export class ElectrodeGeometryView extends Component {
     constructor(props) {
         super(props);

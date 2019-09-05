@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 
-const MountainClient = require('@mountainclient-js').MountainClient;
 import Highlight from "react-highlight.js";
 
 export default class FileContentView extends Component {

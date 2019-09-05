@@ -4,3 +4,5 @@ yarn.lock
 dist
 yarn-error.log
 gallery_files
+.mypy_cache
+.vscode

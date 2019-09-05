@@ -53,7 +53,7 @@ const getNodeLabel = (node) => {
 }
 
 const TreeNode = (props) => {
-  const { node, selectedNode, expandedNodePaths, getChildNodes, level, onToggle, onNodeSelect } = props;
+  const { node, selectedNodePath, expandedNodePaths, getChildNodes, level, onToggle, onNodeSelect } = props;
 
   if (!node) {
     return <div>TreeNode: no node</div>;
@@ -63,7 +63,7 @@ const TreeNode = (props) => {
 
   return (
     <React.Fragment>
-      <StyledTreeNode level={level} type={node.type} className={(node === selectedNode ) ? 'selected' : '' } onClick={() => onNodeSelect(node)}>
+      <StyledTreeNode level={level} type={node.type} className={(node.path === selectedNodePath ) ? 'selected' : '' } onClick={() => onNodeSelect(node)}>
         <NodeIcon key={'expanded-icon'} onClick={(e) => {e.stopPropagation(); onToggle(node)}}>
           { node.type === 'dir' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
           { node.type === 'object' && (isExpanded ? <FaChevronDown /> : <FaChevronRight />) }
@@ -101,7 +101,7 @@ const TreeNode = (props) => {
 
 TreeNode.propTypes = {
   node: PropTypes.object.isRequired,
-  selectedNode: PropTypes.object.isRequired,
+  selectedNodePath: PropTypes.string,
   expandedNodePaths: PropTypes.object.isRequired,
   getChildNodes: PropTypes.func.isRequired,
   level: PropTypes.number.isRequired,

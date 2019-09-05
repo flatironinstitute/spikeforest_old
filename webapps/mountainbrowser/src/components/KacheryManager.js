@@ -1,4 +1,4 @@
-const MountainClient = require('@mountainclient-js').MountainClient;
+const MountainClient = require('../mountainclient-js').MountainClient;
 
 const STATUS_WAITING = 'waiting';
 const STATUS_CONNECTED = 'connected';
@@ -165,13 +165,15 @@ export default class KacheryManager {
             obj = JSON.parse(txt);
         }
         catch (err) {
+            console.info(txt);
+            console.error(err);
             console.error(`Error parsing text in loadObject for ${path}`);
             return null;
         }
         return obj;
     }
     async loadText(path, opts) {
-        if (path.startsWith('sha1://') || (paths.startsWith('sha1dir://'))) {
+        if (path.startsWith('sha1://') || (path.startsWith('sha1dir://'))) {
             if (this._localStorageCacheEnabled) {
                 let txt1 = this._localStorageCacheManager.loadText(path, opts);
                 if (txt1) {
@@ -182,7 +184,7 @@ export default class KacheryManager {
         let mt = this.newMountainClient();
         mt.configDownloadFrom(this.enabledKacheryNames());
         let txt2 = await mt.loadText(path, {});
-        if (path.startsWith('sha1://') || (paths.startsWith('sha1dir://'))) {
+        if (path.startsWith('sha1://') || (path.startsWith('sha1dir://'))) {
             if (this._localStorageCacheEnabled) {
                 if (txt2) {
                     this._localStorageCacheManager.saveText(path, txt2);

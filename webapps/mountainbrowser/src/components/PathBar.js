@@ -49,6 +49,7 @@ class PathBar extends Component {
 
         // var q = queryString.parse(location.search);
         // q.path = path;
+
         this.props.onPathChanged && this.props.onPathChanged(path);
     }
 

@@ -29,7 +29,9 @@ class NodeCreator {
             childNodes = this.createArrayHierarchyChildNodes(obj, max_array_children, 0, obj.length, path0);
         }
         else {
-            for (let key in obj) {
+            let keys = Object.keys(obj);
+            keys.sort();
+            for (let key of keys) {
                 let val = obj[key];
                 if (typeof (val) == 'object') {
                     childNodes.push(this.createObjectNode(val, key, path0));
@@ -99,10 +101,14 @@ class NodeCreator {
     createDirNode(X, name, basepath) {
         let childNodes = [];
         let path0 = this.joinPaths(basepath, name, '/');
-        for (let dname in X.dirs) {
+        let dnames = Object.keys(X.dirs);
+        dnames.sort();
+        for (let dname of dnames) {
             childNodes.push(this.createDirNode(X.dirs[dname], dname, path0));
         }
-        for (let fname in X.files) {
+        let fnames = Object.keys(X.files);
+        fnames.sort();
+        for (let fname of fnames) {
             childNodes.push(this.createFileNode(X.files[fname], fname, path0));
         }
         return {
@@ -133,7 +139,7 @@ class NodeCreator {
         if (!path2) return path1;
         if (!path1) return path2;
         if (part_of_list) {
-            return `${path1}[${path2}]`;
+            return `${path1}.${path2}`;
         }
         else {
             return `${path1}${sep}${path2}`;
@@ -141,58 +147,93 @@ class NodeCreator {
     }
 }
 
+export class TreeData {
+    rootNode = null
+    status = null;
+    nodeCreator = new NodeCreator();
+    findNodeByPath(path, startAt) {
+        if (!startAt) {
+            startAt = this.rootNode;
+        }
+        if (!startAt)
+            return null;
+        if (startAt.path === path)
+            return startAt;
+        if (startAt.childNodes) {
+            for (let ch of startAt.childNodes) {
+                let x = this.findNodeByPath(path, ch);
+                if (x)
+                    return x;
+            }
+        }
+        return null;
+    }
+    async updateContent(path, kacheryManager) {
+        this.rootNode = null;
+        this.path = path;
+        if (path.endsWith('.json')) {
+            let A = await kacheryManager.loadObject(path, {});
+            if (!A) {
+                this.status = STATUS_FAILED_TO_LOAD;
+                return;
+            }
+            this.rootNode = this.nodeCreator.createObjectNode(A, '');
+            this.status = STATUS_LOADED;
+        }
+        else {
+            let X = await kacheryManager.loadDirectory(path, {});
+            if (!X) {
+                this.status = STATUS_FAILED_TO_LOAD;
+                return;
+            }
+            this.rootNode = this.nodeCreator.createDirNode(X, '', path);
+            this.status = STATUS_LOADED;
+        }
+    }
+}
+
 class BrowserTree extends Component {
     state = {
         status: STATUS_WAITING,
-        rootNode: null
+        rootNode: null,
+        selectedNodePath: null
     };
-    nodeCreator = new NodeCreator();
 
 
     async componentDidMount() {
         await this.updateContent();
+        this.setState({
+            selectedNodePath: this.props.selectedNodePath
+        });
     }
 
     async componentDidUpdate(prevProps) {
         if (this.props.path !== prevProps.path) {
             await this.updateContent()
         }
+        if (this.props.selectedNodePath !== prevProps.selectedNodePath) {
+            this.setState({
+                selectedNodePath: this.props.selectedNodePath
+            });
+        }
     }
 
     async updateContent() {
-        const { path, kacheryManager } = this.props;
-        this.setState({ status: STATUS_LOADING });
-        let rootNode = null;
-        if (path.endsWith('.json')) {
-            let A = await kacheryManager.loadObject(path, {});
-            if (!A) {
-                this.setState({
-                    status: STATUS_FAILED_TO_LOAD
-                });
-                return;
-            }
-            rootNode = this.nodeCreator.createObjectNode(A, '');
-        }
-        else {
-            let X = await kacheryManager.loadDirectory(path, {});
-            if (!X) {
-                this.setState({
-                    status: STATUS_FAILED_TO_LOAD
-                });
-                return;
-            }
-            rootNode = this.nodeCreator.createDirNode(X, '', path);
-        }
         this.setState({
-            status: STATUS_LOADED,
-            rootNode: rootNode
+            status: STATUS_LOADING
         });
-        this.handleNodeSelected(rootNode);
+        const { path, kacheryManager } = this.props;
+        await this.props.treeData.updateContent(path, kacheryManager);
+        this.setState({
+            status: this.props.treeData.status,
+            rootNode: this.props.treeData.rootNode
+        });
+        this.handleNodeSelected(this.props.treeData.rootNode);
     }
 
     handleNodeSelected = (node) => {
         this.setState({
-            selectedNode: node
+            selectedNodePath: node ? node.path : null
         });
         this.props.onItemSelected && this.props.onItemSelected({
             type: node.type,
@@ -225,11 +266,13 @@ class BrowserTree extends Component {
                         }
                     <Tree
                         rootNode={this.state.rootNode}
-                        selectedNode={this.state.selectedNode}
+                        selectedNodePath={this.state.selectedNodePath}
                         onNodeSelected={this.handleNodeSelected}
                     />
                     </React.Fragment>
                 );
+            default:
+                return <div>Unknown status: {status}</div>;
         }
     }
 }

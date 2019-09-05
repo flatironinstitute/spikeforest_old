@@ -64,7 +64,7 @@ sa.ComputeUnitsInfo.execute(
 import numpy as np
 
 for suf in ['old', 'new']:
-  print('----------------------------------------------------')
+  print('======================================================')
   print('RESULTS FOR {}'.format(suf))
   # Load and consolidate the outputs
   true_units_info = mt.loadObject(path='test_outputs/true_units_info.json')

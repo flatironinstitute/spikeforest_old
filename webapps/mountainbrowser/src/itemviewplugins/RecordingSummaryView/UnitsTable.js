@@ -16,7 +16,7 @@ function HeaderRow(props) {
 function UnitRow(props) {
     const { unitInfo } = props;
     return (
-        <TableRow hover selected={props.selected} onClick={props.onClick}>
+        <TableRow selected={props.selected} onClick={props.onClick}>
             {
                 props.columns.map((cc) => {
                     let val = unitInfo[cc.name];
@@ -55,6 +55,7 @@ export default class UnitsTable extends Component {
         }
     ]
     selectUnit = (unitInfo) => {
+        console.log('select unit', unitInfo);
         this.setState({
             selectedUnitId: unitInfo.unit_id
         });
@@ -75,7 +76,7 @@ export default class UnitsTable extends Component {
                             unitInfo={ui} key={ui.unit_id}
                             selected={ui.unit_id === this.state.selectedUnitId}
                         />
-                    ))};
+                    ))}
                 </TableBody>
             </Table>
         );

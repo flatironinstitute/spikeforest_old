@@ -13,15 +13,15 @@ export class DevTestView extends Component {
     }
 
     handleRunJob = async () => {
-        console.log('xxxxxxx', repeat_text);
+        console.info('xxxxxxx', repeat_text);
         let result = await window.executeJob(repeat_text, {textfile: 'sha1://7e4bee0355513c30b905507448cac1edd0357e5d/test1.txt', num_repeats: 6})
         if (result.retcode !== 0) {
             console.error('Error running job');
             return;
         }
-        console.log(result);
+        console.info(result);
         let txt0 = await this.props.kacheryManager.loadText(result.outputs['textfile_out']);
-        console.log(txt0);
+        console.info(txt0);
     }
 
     render() {

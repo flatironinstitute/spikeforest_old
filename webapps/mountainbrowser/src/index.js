@@ -4,10 +4,36 @@ import MainWindow from "./components/MainWindow";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'highlight.js/styles/railscasts.css';
+import { createMuiTheme } from "@material-ui/core";
+import { ThemeProvider } from "@material-ui/styles";
+import { MuiThemeProvider } from "@material-ui/core/styles";
+import { blue, green, red, yellow } from "@material-ui/core/colors";
+
+const theme = createMuiTheme({
+    overrides: {
+        MuiTableRow: {
+            root: {
+                '&:hover': {
+                    backgroundColor: '#CCCCCC'
+                },
+                '&$selected': {
+                    backgroundColor: '#AAAAAA',
+                    '&:hover': {
+                        backgroundColor: '#BBBBBB'
+                    }
+                }
+            }
+        }
+    }
+});
 
 const show_mtbrowser = async (path) => {
-    ReactDOM.render(
-        <MainWindow path={path}></MainWindow>,
+    ReactDOM.render((
+        <MuiThemeProvider theme={theme}>
+            <MainWindow path={path}>
+            </MainWindow>
+        </MuiThemeProvider>
+    ),
         document.getElementById("root")
     );
 };

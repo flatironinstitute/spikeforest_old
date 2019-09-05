@@ -1,106 +1,22 @@
 import React, { Component } from "react";
 import { ElectrodeGeometryView } from "../ElectrodeGeometryView/ElectrodeGeometryViewPlugin";
 import { Button } from "@material-ui/core";
-import ComputeRecordingInfoJob from "./ComputeRecordingInfo.json";
-import ComputeUnitsInfoJob from "./ComputeUnitsInfo.json";
 import UnitsTable from "./UnitsTable";
 import UnitDetailWidget from "./UnitDetailWidget";
+import AutocorrelogramsView from "../spikeforestanalysis/AutocorrelogramsView";
+import TimeseriesView from "../spikeforestanalysis/TimeseriesView";
+import ReactComponentPythonCompanion from "../ReactComponentPythonCompanion";
+import UnitsView from "./UnitsView";
+import ButtonOpen from "./ButtonOpen";
+import EventAmplitudesView from "./EventAmplitudesView";
 
-class ComputeWidget extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            status: 'pending',
-            error: null,
-            result: null,
-            output: null
-        };
-    }
-    componentDidUpdate(prevProps) {
-        if (prevProps.recordingPath !== this.props.recordingPath) {
-            this.setState({
-                status: 'pending'
-            });
-        }
-    }
-    compute = async () => {
-        this.setState({ status: 'running' });
-        let result_recording_info = await window.executeJob(
-            ComputeRecordingInfoJob,
-            { recording_dir: this.props.recordingPath },
-            { download_from: 'spikeforest.public' }
-        )
-        if (result_recording_info.retcode !== 0) {
-            let txt = await this.props.kacheryManager.loadText(result.console_out);
-            console.error(txt);
-            this.setState({ status: 'error', error: 'Error running job ComputeRecordingInfo.' });
-            return;
-        }
-
-        this.setState({ status: 'running' });
-        let result_units_info = await window.executeJob(
-            ComputeUnitsInfoJob,
-            { recording_dir: this.props.recordingPath, firings: this.props.recordingPath + '/firings_true.mda' },
-            { download_from: 'spikeforest.public' }
-        )
-        if (result_units_info.retcode !== 0) {
-            let txt = await this.props.kacheryManager.loadText(result.console_out);
-            console.error(txt);
-            this.setState({ status: 'error', error: 'Error running job ComputeUnitsInfo.' });
-            return;
-        }
-
-        let output = {
-            recording_info: await this.props.kacheryManager.loadObject(result_recording_info.outputs.json_out),
-            units_info: await this.props.kacheryManager.loadObject(result_units_info.outputs.json_out)
-        };
-        this.setState({
-            status: 'finished',
-            output: output
-        });
-        this.props.onFinished && this.props.onFinished(output);
-    }
-    render() {
-        const { status } = this.state;
-        if (status === 'pending') {
-            return (
-                <Button onClick={this.compute}>Compute summary info</Button>
-            )
-        }
-        else if (status === 'running') {
-            return (
-                <div>Running...</div>
-            );
-        }
-        else if (status === 'finished') {
-            return (
-                <div>
-                    <span>Computation finished.</span>
-                    {/* <span><pre>{JSON.stringify(this.state.output, null, 4)}</pre></span> */}
-                </div>
-            );
-        }
-        else if (status === 'error') {
-            return (
-                <div>Error: {this.state.error}</div>
-            );
-        }
-        else {
-            return (
-                <div>Unexpected status: {status}</div>
-            );
-        }
-    }
-}
-
-class RecordingSummaryView extends Component {
+export class RecordingSummaryView extends Component {
     constructor(props) {
         super(props);
         this.state = {
             locations: null,
             labels: null,
             params: null,
-            output: null,
             selectedUnitId: null
         };
     }
@@ -114,8 +30,7 @@ class RecordingSummaryView extends Component {
             this.setState({
                 locations: null,
                 labels: null,
-                params: null,
-                output: null
+                params: null
             })
             await this.update();
         }
@@ -152,50 +67,69 @@ class RecordingSummaryView extends Component {
     }
 
     render() {
-        const { output, locations } = this.state;
+        const { locations } = this.state;
         if (!locations) {
             return <div></div>;
         }
-        return <div>
-            <ComputeWidget
-                recordingPath={this.props.recordingPath}
-                kacheryManager={this.props.kacheryManager}
-                onFinished={(output) => this.setState({ output: output })}
-            />
-            <table className="table">
-                <tbody>
-                    <tr><td>Sampling freq (Hz)</td><td>{this.state.params ? this.state.params.samplerate : '...'}</td></tr>
-                    <tr><td>Num. channels</td><td>{this.state.locations ? this.state.locations.length : '...'}</td></tr>
-                    <tr><td>Duration (sec)</td><td>{output ? output.recording_info.duration_sec : '.'}</td></tr>
-                </tbody>
-            </table>
-            <ElectrodeGeometryView
-                path={this.props.geomPath}
-                kacheryManager={this.props.kacheryManager}
-            />
-            {
-                (output && output.units_info) ?
-                    (
-                        <div style={{ overflow: 'auto', height: 200 }}>
-                            <UnitsTable
-                                unitsInfo={output.units_info}
-                                onUnitSelected={this.handleUnitSelected}
-                            />
-                        </div>
-                    ) : <span></span>
-
-            }
-            {
-                this.state.selectedUnitId ? (
-                    <UnitDetailWidget
-                        recordingPath={this.props.recordingPath}
-                        firingsPath={this.props.recordingPath + '/firings.mda'}
+        return (
+            <div>
+                <table className="table">
+                    <tbody>
+                        <tr><td>Recording</td><td>{this.props.recordingPath}</td></tr>
+                        <tr><td>Sampling freq (Hz)</td><td>{this.state.params ? this.state.params.samplerate : '...'}</td></tr>
+                        <tr><td>Num. channels</td><td>{this.state.locations ? this.state.locations.length : '...'}</td></tr>
+                    </tbody>
+                </table>
+                <ButtonOpen label='Timeseries'>
+                    <TimeseriesView
                         kacheryManager={this.props.kacheryManager}
-                        unitId={this.state.selectedUnitId}
+                        recordingPath={this.props.recordingPath}
                     />
-                ) : (<span></span>)
-            }
-        </div>;
+                </ButtonOpen>
+                <ButtonOpen label='Electrode geometry'>
+                    <ElectrodeGeometryView
+                        path={this.props.geomPath}
+                        kacheryManager={this.props.kacheryManager}
+                    />
+                </ButtonOpen>
+                <ButtonOpen label='Units'>
+                    <UnitsView
+                        recordingPath={this.props.recordingPath}
+                        firingsPath={`${this.props.recordingPath}/firings_true.mda`}
+                        kacheryManager={this.props.kacheryManager}
+                        onUnitSelected={(unitInfo) => {this.setState({selectedUnitId: unitInfo.unit_id})}}
+                    />
+                </ButtonOpen>
+                <ButtonOpen label='Autocorrelograms'>
+                    <AutocorrelogramsView
+                        kacheryManager={this.props.kacheryManager}
+                        samplerate={(this.state.params || {}).samplerate}
+                        firingsPath={this.props.recordingPath + '/firings_true.mda'}
+                    />
+                </ButtonOpen>
+                <ButtonOpen label='Event amplitudes'>
+                    <EventAmplitudesView
+                        kacheryManager={this.props.kacheryManager}
+                        recordingPath={this.props.recordingPath}
+                        firingsPath={this.props.recordingPath + '/firings_true.mda'}
+                        unitIds={this.state.selectedUnitId ? [this.state.selectedUnitId] : []}
+                    />
+                </ButtonOpen>
+                {/* {
+                    this.state.selectedUnitId ? (
+                        <ButtonOpen label='Selected unit details'>
+                            <UnitDetailWidget
+                                recordingPath={this.props.recordingPath}
+                                firingsPath={this.props.recordingPath + '/firings.mda'}
+                                kacheryManager={this.props.kacheryManager}
+                                unitId={this.state.selectedUnitId}
+                            />
+                        </ButtonOpen>
+                    ) : (<span></span>)
+                } */}
+
+            </div>
+        )
     }
 }
 

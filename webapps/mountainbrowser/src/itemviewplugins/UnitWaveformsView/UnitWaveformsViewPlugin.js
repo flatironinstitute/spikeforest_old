@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import Plot from 'react-plotly.js';
 // import { UnitWaveformsWidget } from "@spikeforestwidgets-js";
 
-const MountainClient = require('@mountainclient-js').MountainClient;
-
 class UnitWaveformsWidget extends Component {
     constructor(props) {
         super(props);

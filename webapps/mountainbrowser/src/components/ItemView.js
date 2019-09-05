@@ -39,7 +39,7 @@ const TopTable = (props) => {
         table = <table className="table">
             <tbody>
                 <tr>
-                    <td>Path</td>
+                    <td>Item</td>
                     <td>{item.path}</td>
                 </tr>
             </tbody>
@@ -49,7 +49,7 @@ const TopTable = (props) => {
         table = <table className="table">
             <tbody>
                 <tr>
-                    <td>Path</td>
+                    <td>Item</td>
                     <td>{item.path}</td>
                 </tr>
             </tbody>
@@ -63,7 +63,7 @@ const TopTable = (props) => {
         table = <table className="table">
             <tbody>
                 <tr>
-                    <td>Path</td>
+                    <td>Item</td>
                     <td>{item.path}</td>
                 </tr>
                 <tr>
@@ -100,21 +100,33 @@ class ItemView extends Component {
     }
 
     updatePluginComponents() {
-        let { item, viewPlugins, kacheryManager } = this.props;
+        let { item, viewPlugins, kacheryManager, onOpenPath, onSelectItem } = this.props;
         if (!item) return;
         if (!viewPlugins) return;
         let components = [];
         if (viewPlugins) {
             for (let plugin of viewPlugins) {
+                let opts = {
+                    kacheryManager: kacheryManager,
+                    onOpenPath: onOpenPath,
+                    onSelectItem: onSelectItem
+                }
                 if (item.type === 'file') {
                     if (plugin.getViewComponentsForFile) {
-                        let components0 = plugin.getViewComponentsForFile(`sha1://${item.data.file.sha1}/${item.name}`, { size: item.data.file.size, kacheryManager });
+                        opts.size = item.data.file.size;
+                        let components0 = plugin.getViewComponentsForFile(`sha1://${item.data.file.sha1}/${item.name}`, opts);
                         components.push(...components0);
                     }
                 }
                 else if (item.type === 'dir') {
                     if (plugin.getViewComponentsForDir) {
-                        let components0 = plugin.getViewComponentsForDir(item.path, item.data.dir, {kacheryManager: kacheryManager });
+                        let components0 = plugin.getViewComponentsForDir(item.path, item.data.dir, opts);
+                        components.push(...components0);
+                    }
+                }
+                else if (item.type === 'object') {
+                    if (plugin.getViewComponentsForObject) {
+                        let components0 = plugin.getViewComponentsForObject(item.name, item.path, item.data.object, opts);
                         components.push(...components0);
                     }
                 }
