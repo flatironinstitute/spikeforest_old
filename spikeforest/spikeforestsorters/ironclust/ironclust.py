@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.5.5'
+    VERSION = '0.5.6'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -99,10 +99,13 @@ class IronClust(mlpr.Processor):
     fSave_spkwav = mlpr.BoolParameter(
         optional=True, default=True, description='Save spike clips (disable if automated merging is not used)')
 
+    fMemProfile = mlpr.BoolParameter(
+        optional=True, default=False, description='Run memory profiler')
+
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='11cda30a0b4471ef33b80ac2cb17e670398487f7')
+        return install_ironclust(commit='13cf02f9802af6db64fdaf54ac86a8f7ffee73f1')
 
     def run(self):
         import spikesorters as sorters
@@ -125,7 +128,7 @@ class IronClust(mlpr.Processor):
             recording=recording,
             output_folder=tmpdir,
             debug=True,
-            delete_output_folder=True
+            delete_output_folder = False # will be taken care by _keep_temp_files one step above
         )
 
         sorter.set_params(
@@ -153,11 +156,18 @@ class IronClust(mlpr.Processor):
             feature_type=self.feature_type,
             delta_cut=self.delta_cut,
             post_merge_mode=self.post_merge_mode,
-            sort_mode=self.sort_mode
+            sort_mode=self.sort_mode,
+            fSave_spkwav=self.fSave_spkwav
         )
 
         # TODO: get elapsed time from the return of this run
-        sorter.run()
+        if not self.fMemProfile:
+            sorter.run()
+        else:
+            from memory_profiler import memory_usage
+            mem = max(memory_usage(proc=sorter.run))
+            print("Maximum memory used: {0} MiB".format(str(mem)))
+       
 
         sorting = sorter.get_result()
 
