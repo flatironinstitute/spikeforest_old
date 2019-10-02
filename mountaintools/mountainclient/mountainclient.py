@@ -483,7 +483,7 @@ class MountainClient():
                           value=None),
             return
         # return self.saveText(text=simplejson.dumps(object, indent=indent, ignore_nan=True), key=key, collection=collection, subkey=subkey, basename=basename, dest_path=dest_path, upload_to=upload_to)
-        return self.saveText(text=json.dumps(object, indent=indent, ignore_nan=True), key=key, collection=collection, subkey=subkey, basename=basename, dest_path=dest_path, upload_to=upload_to)
+        return self.saveText(text=json.dumps(object, indent=indent), key=key, collection=collection, subkey=subkey, basename=basename, dest_path=dest_path, upload_to=upload_to)
 
     @mtlogging.log(name='MountainClient:realizeFile')
     def realizeFile(self, path: Optional[str]=None, *,
