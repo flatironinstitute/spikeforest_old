@@ -20,8 +20,9 @@ synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_sta
 
 
 def main():
-    print('test_irc_bionet_static1')
-    test_irc_bionet_static1()
+    mem_profile_test(IronClust, dict(fSave_spkwav=True), synth_magland_c8_recdir)
+    mem_profile_test(IronClust, dict(fSave_spkwav=False), synth_magland_c8_recdir)
+
 
 
 @pytest.mark.spikeforest
@@ -434,6 +435,20 @@ def test_ks2_kampff():
     sorter = KiloSort2
     params = dict()
     do_sorting_test(sorter, params, kampff1_recdir, assert_avg_accuracy=0.8)
+
+def mem_profile_test(sorting_processor, params, recording_dir, container='default', _keep_temp_files=True):
+    mt.configDownloadFrom('spikeforest.public')
+    params['fMemProfile'] = True
+    recdir = recording_dir
+    mt.createSnapshot(path=recdir, download_recursive=True)
+    sorting = sorting_processor.execute(
+        recording_dir=recdir,
+        firings_out={'ext': '.mda'},
+        **params,
+        _container=container,
+        _force_run=True,
+        _keep_temp_files=_keep_temp_files
+    )
 
 
 def do_sorting_test(sorting_processor, params, recording_dir, assert_avg_accuracy, container='default', _keep_temp_files=False):
