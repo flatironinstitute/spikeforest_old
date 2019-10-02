@@ -41,9 +41,9 @@ def main():
         'neuropixels': {
             'ncells': [20, 40, 60], 'tempgen': tempgen_neuropixels, 'drifting': False
         },
-        #'neuronexus_drift': {
-        #    'ncells': [10, 20, 40], 'tempgen': tempgen_neuronexus_drift, 'drifting': True
-        #}
+        'neuronexus_drift': {
+            'ncells': [10, 20, 40], 'tempgen': tempgen_neuronexus_drift, 'drifting': True
+        }
     }
 
     # optional: if drifting change drift velocity

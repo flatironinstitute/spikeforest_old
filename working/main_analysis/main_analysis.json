@@ -51,27 +51,22 @@
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
         "synth_mearec_neuronexus": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuronexus.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuronexus.json",
-            "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
-        },
-        "synth_mearec_tetrode": {
-            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_tetrode.json"],
-            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_tetrode.json",
-            "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
-        },
-        "SYNTH_MEAREC_NEURONEXUS_b": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_NEURONEXUS_b.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_NEURONEXUS_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
-        "SYNTH_MEAREC_NEUROPIXELS_b": {
+        "synth_mearec_neuropixels": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_NEUROPIXELS_b.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_NEUROPIXELS_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },
-        "SYNTH_MEAREC_TETRODE_b": {
+        "synth_mearec_tetrode": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_TETRODE_b.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_TETRODE_b.json",
+            "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
+        },
+        "synth_mearec_neuronexus_drift": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.SYNTH_MEAREC_NEURONEXUS_DRIFT_b.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.SYNTH_MEAREC_TETRODE_b.json",
             "sorter_keys": ["irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
         },

@@ -104,6 +104,8 @@ def createJobs(proc, argslist, verbose=None) -> List[MountainJob]:
                         path=fname0
                     )
                 else:
+                    if not fname0:
+                        inputs[name0] = None
                     if type(fname0) == str:
                         inputs[name0] = dict(
                             path=fname0
