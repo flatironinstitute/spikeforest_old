@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.5.8'
+    VERSION = '0.5.9'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -39,7 +39,7 @@ class IronClust(mlpr.Processor):
         description='Use -1 to include all channels in every neighborhood'
     )
     detect_threshold = mlpr.FloatParameter(
-        optional=True, default=4.5,
+        optional=True, default=4,
         description='detection threshold'
     )
     prm_template_name = mlpr.StringParameter(
@@ -55,7 +55,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.985,
+        optional=True, default=0.99,
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
@@ -71,7 +71,7 @@ class IronClust(mlpr.Processor):
     filter_detect_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, bandpass, wiener, fftdiff, ndiff}')
     common_ref_type = mlpr.StringParameter(
-        optional=True, default='none', description='{none, mean, median}')
+        optional=True, default='mean', description='{none, mean, median}')
     batch_sec_drift = mlpr.FloatParameter(
         optional=True, default=300, description='batch duration in seconds. clustering time duration')
     step_sec_drift = mlpr.FloatParameter(
@@ -102,7 +102,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='540647d03d735c7d6289545d271ba842182c871b')
+        return install_ironclust(commit='daf781c871f172748e1ec6de6b631b91f73ec17d')
 
     def run(self):
         import spikesorters as sorters
