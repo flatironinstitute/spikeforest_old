@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.5.6'
+    VERSION = '0.5.7'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -61,7 +61,7 @@ class IronClust(mlpr.Processor):
     pc_per_chan = mlpr.IntegerParameter(
         optional=True, default=2,
         description='Number of principal components per channel'
-    )
+    )  
 
     # added in version 0.2.4
     whiten = mlpr.BoolParameter(
@@ -97,15 +97,12 @@ class IronClust(mlpr.Processor):
     sort_mode = mlpr.IntegerParameter(
         optional=True, default=1, description='sort_mode')
     fSave_spkwav = mlpr.BoolParameter(
-        optional=True, default=True, description='Save spike clips (disable if automated merging is not used)')
-
-    fMemProfile = mlpr.BoolParameter(
-        optional=True, default=False, description='Run memory profiler')
+        optional=True, default=True, description='Save spike clips (disable if automated merging is not used)')    
 
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='13cf02f9802af6db64fdaf54ac86a8f7ffee73f1')
+        return install_ironclust(commit='8d8bfcb16e8b93260b575368225772f2c20ac80a')
 
     def run(self):
         import spikesorters as sorters
@@ -158,157 +155,12 @@ class IronClust(mlpr.Processor):
             post_merge_mode=self.post_merge_mode,
             sort_mode=self.sort_mode,
             fSave_spkwav=self.fSave_spkwav
-        )
-
-        # TODO: get elapsed time from the return of this run
-        if not self.fMemProfile:
-            sorter.run()
-        else:
-            from memory_profiler import memory_usage
-            mem = max(memory_usage(proc=sorter.run))
-            print("Maximum memory used: {0} MiB".format(str(mem)))
-       
-
+        )       
+        sorter.run()
         sorting = sorter.get_result()
 
         SFMdaSortingExtractor.write_sorting(
             sorting=sorting, save_path=self.firings_out)
-
-
-class IronClustOld(mlpr.Processor):
-    NAME = 'IronClust'
-    VERSION = '0.4.10'
-    ENVIRONMENT_VARIABLES = [
-        'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
-    ADDITIONAL_FILES = ['*.m']
-    CONTAINER = None
-
-    recording_dir = mlpr.Input('Directory of recording', directory=True)
-    firings_out = mlpr.Output('Output firings file')
-    channels = mlpr.IntegerListParameter(
-        optional=True, default=[],
-        description='List of channels to use.'
-    )
-    detect_sign = mlpr.IntegerParameter(
-        optional=True, default=-1,
-        description='Use -1, 0, or 1, depending on the sign of the spikes in the recording'
-    )
-    adjacency_radius = mlpr.FloatParameter(
-        optional=True, default=50,
-        description='Use -1 to include all channels in every neighborhood'
-    )
-    adjacency_radius_out = mlpr.FloatParameter(
-        optional=True, default=75,
-        description='Use -1 to include all channels in every neighborhood'
-    )
-    detect_threshold = mlpr.FloatParameter(
-        optional=True, default=4.5,
-        description='detection threshold'
-    )
-    prm_template_name = mlpr.StringParameter(
-        optional=True, default='',
-        description='.prm template file name'
-    )
-    freq_min = mlpr.FloatParameter(
-        optional=True, default=300,
-        description='Use 0 for no bandpass filtering'
-    )
-    freq_max = mlpr.FloatParameter(
-        optional=True, default=6000,
-        description='Use 0 for no bandpass filtering'
-    )
-    merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.985,
-        description='Threshold for automated merging'
-    )
-    pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=2,
-        description='Number of principal components per channel'
-    )
-
-    # added in version 0.2.4
-    whiten = mlpr.BoolParameter(
-        optional=True, default=False, description='Whether to do channel whitening as part of preprocessing')
-    filter_type = mlpr.StringParameter(
-        optional=True, default='bandpass', description='{none, bandpass, wiener, fftdiff, ndiff}')
-    filter_detect_type = mlpr.StringParameter(
-        optional=True, default='none', description='{none, bandpass, wiener, fftdiff, ndiff}')
-    common_ref_type = mlpr.StringParameter(
-        optional=True, default='none', description='{none, mean, median}')
-    batch_sec_drift = mlpr.FloatParameter(
-        optional=True, default=300, description='batch duration in seconds. clustering time duration')
-    step_sec_drift = mlpr.FloatParameter(
-        optional=True, default=20, description='compute anatomical similarity every n sec')
-    knn = mlpr.IntegerParameter(
-        optional=True, default=30, description='K nearest neighbors')
-    min_count = mlpr.IntegerParameter(
-        optional=True, default=30, description='Minimum cluster size')
-    fGpu = mlpr.BoolParameter(
-        optional=True, default=True, description='Use GPU if available')
-    fft_thresh = mlpr.FloatParameter(
-        optional=True, default=8, description='FFT-based noise peak threshold')
-    fft_thresh_low = mlpr.FloatParameter(
-        optional=True, default=4, description='FFT-based noise peak lower threshold (set to 0 to disable dual thresholding scheme)')
-    nSites_whiten = mlpr.IntegerParameter(
-        optional=True, default=32, description='Number of adjacent channels to whiten')        
-    feature_type = mlpr.StringParameter(
-        optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
-    delta_cut = mlpr.FloatParameter(
-        optional=True, default=1.1, description='Cluster detection threshold (delta-cutoff)')
-    post_merge_mode = mlpr.IntegerParameter(
-        optional=True, default=1, description='post_merge_mode')
-    sort_mode = mlpr.IntegerParameter(
-        optional=True, default=1, description='sort_mode')
-
-    @staticmethod
-    def install():
-        print('Auto-installing ironclust.')
-        return install_ironclust(commit='9e20de263a8a6ae8b6b572553d6608f1a7cd8235')
-
-    def run(self):
-        ironclust_path = os.environ.get('IRONCLUST_PATH_DEV', None)
-        if ironclust_path:
-            print('Using ironclust from IRONCLUST_PATH_DEV directory: {}'.format(ironclust_path))
-        else:
-            try:
-                ironclust_path = IronClust.install()
-            except:
-                traceback.print_exc()
-                raise Exception('Problem installing ironclust. You can set the IRONCLUST_PATH_DEV to force to use a particular path.')
-        print('Using ironclust from: {}'.format(ironclust_path))
-
-        code = ''.join(random.choice(string.ascii_uppercase)
-                       for x in range(10))
-        tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/ironclust-tmp-' + code
-
-        try:
-            recording = SFMdaRecordingExtractor(self.recording_dir)
-            params = read_dataset_params(self.recording_dir)
-            if len(self.channels) > 0:
-                recording = se.SubRecordingExtractor(
-                    parent_recording=recording, channel_ids=self.channels)
-            if not os.path.exists(tmpdir):
-                os.mkdir(tmpdir)
-
-            all_params = dict()
-            for param0 in self.PARAMETERS:
-                all_params[param0.name] = getattr(self, param0.name)
-            sorting = ironclust_helper(
-                recording=recording,
-                tmpdir=tmpdir,
-                ironclust_path=ironclust_path,
-                params=params,
-                **all_params)
-            SFMdaSortingExtractor.write_sorting(
-                sorting=sorting, save_path=self.firings_out)
-        except:
-            if os.path.exists(tmpdir):
-                if not getattr(self, '_keep_temp_files', False):
-                    shutil.rmtree(tmpdir)
-            raise
-        if not getattr(self, '_keep_temp_files', False):
-            pass
-            # shutil.rmtree(tmpdir)
 
 
 def ironclust_helper(

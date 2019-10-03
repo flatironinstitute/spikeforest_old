@@ -17,12 +17,24 @@ visapy30c_recdir = 'sha1dir://97253adc2581b1acbf9a9fffcbc00247d8088a1d.mea_c30.s
 # synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/recordings/bionet_static_rec1'
 # synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_A_4A'
 synth_bionet_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/bionet/bionet_static/static_8x_C_4B'
+hybrid_janelia_static1_recdir = '/mnt/home/jjun/ceph/groundtruth/hybrid_synth/static_siprobe/rec_64c_1200s_11'
 
 
 def main():
     mem_profile_test(IronClust, dict(fSave_spkwav=True), synth_magland_c8_recdir)
     mem_profile_test(IronClust, dict(fSave_spkwav=False), synth_magland_c8_recdir)
 
+
+
+@pytest.mark.spikeforest
+@pytest.mark.irc_hybrid_static
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_irc_hybrid_static():
+    sorter = IronClust
+    params = dict()
+    do_sorting_test(sorter, params, hybrid_janelia_static1_recdir,
+                    assert_avg_accuracy=0.5, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
@@ -150,6 +162,16 @@ def test_sc():
     )
 
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.4)
+
+
+@pytest.mark.spikeforest
+@pytest.mark.ks2_hybrid_static
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_ks2_hybrid_static():
+    sorter = KiloSort2
+    params = dict()
+    do_sorting_test(sorter, params, hybrid_janelia_static1_recdir, assert_avg_accuracy=0.8, _keep_temp_files=True)
 
 
 @pytest.mark.spikeforest
