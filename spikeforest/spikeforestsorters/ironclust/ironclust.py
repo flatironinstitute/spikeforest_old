@@ -102,7 +102,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='986345179b60d1ace7d35d8e9a7ed077911fd585')
+        return install_ironclust(commit='3b072b59a1ead1b7c4155bc4bc91d15a8f193750')
 
     def run(self):
         import spikesorters as sorters
