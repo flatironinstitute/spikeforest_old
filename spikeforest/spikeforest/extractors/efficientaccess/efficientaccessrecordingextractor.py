@@ -112,11 +112,15 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
         N = recording.get_num_frames()  # Number of timepoints
         num_segments = int(np.ceil(N / segment_size))
 
-        channel_locations = recording.get_channel_locations(channel_ids=channel_ids)
-        nd = len(channel_locations[0])
-        geom = np.zeros((M, nd))
-        for m in range(M):
-            geom[m, :] = channel_locations[m]
+        try:
+            channel_locations = recording.get_channel_locations(channel_ids=channel_ids)
+            nd = len(channel_locations[0])
+            geom = np.zeros((M, nd))
+            for m in range(M):
+                geom[m, :] = channel_locations[m]
+        except:
+            nd = 2
+            geom = np.zeros((M, nd))
 
         with h5py.File(self.hdf5_out, "w") as f:
             f.create_dataset('segment_size', data=[segment_size])
