@@ -286,12 +286,12 @@ def main():
             'synth_bionet',
             'synth_magland',
             'manual_franklab',
-            # 'synth_mearec_neuronexus',
-            # 'synth_mearec_tetrode',
-            'SYNTH_MEAREC_TETRODE_b',
-            'SYNTH_MEAREC_NEURONEXUS_b',
-            'SYNTH_MEAREC_NEUROPIXELS_b',
-            'synth_visapy',
+            'synth_mearec_neuronexus',
+            'synth_mearec_tetrode',
+            # 'SYNTH_MEAREC_TETRODE_b',
+            # 'SYNTH_MEAREC_NEURONEXUS_b',
+            # 'SYNTH_MEAREC_NEUROPIXELS_b',
+            # 'synth_visapy',
             'hybrid_janelia'
         ]
     print('Using output ids: ', output_ids)
