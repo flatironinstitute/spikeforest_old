@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.6.3'
+    VERSION = '0.6.4'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -96,13 +96,11 @@ class IronClust(mlpr.Processor):
         optional=True, default=1, description='post_merge_mode')
     sort_mode = mlpr.IntegerParameter(
         optional=True, default=1, description='sort_mode')
-    fSave_spkwav = mlpr.BoolParameter(
-        optional=True, default=True, description='Save spike clips (disable if automated merging is not used)')    
 
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='7aafd4d37935d8bf4232318949719c74881a31ee')
+        return install_ironclust(commit='63722b69b9cd42851e30731d69aba562f9faefc8')
 
     def run(self):
         import spikesorters as sorters
@@ -153,8 +151,7 @@ class IronClust(mlpr.Processor):
             feature_type=self.feature_type,
             delta_cut=self.delta_cut,
             post_merge_mode=self.post_merge_mode,
-            sort_mode=self.sort_mode,
-            fSave_spkwav=self.fSave_spkwav
+            sort_mode=self.sort_mode
         )       
         sorter.run()
         sorting = sorter.get_result()
