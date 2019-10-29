@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.6.6'
+    VERSION = '0.6.7'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -59,7 +59,7 @@ class IronClust(mlpr.Processor):
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=3,
+        optional=True, default=2,
         description='Number of principal components per channel'
     )  
 
