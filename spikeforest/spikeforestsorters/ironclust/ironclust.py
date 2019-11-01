@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.6.4'
+    VERSION = '0.6.9'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -59,7 +59,7 @@ class IronClust(mlpr.Processor):
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
-        optional=True, default=2,
+        optional=True, default=3,
         description='Number of principal components per channel'
     )  
 
@@ -100,7 +100,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='63722b69b9cd42851e30731d69aba562f9faefc8')
+        return install_ironclust(commit='5e883c141761354e0b587f85b4ef8c2bcc9173c4')
 
     def run(self):
         import spikesorters as sorters
