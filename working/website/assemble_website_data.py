@@ -291,7 +291,7 @@ def main():
             # 'SYNTH_MEAREC_TETRODE_b',
             # 'SYNTH_MEAREC_NEURONEXUS_b',
             # 'SYNTH_MEAREC_NEUROPIXELS_b',
-            # 'synth_visapy',
+            'synth_visapy',
             'hybrid_janelia'
         ]
     print('Using output ids: ', output_ids)
