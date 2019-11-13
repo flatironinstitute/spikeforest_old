@@ -1,0 +1,27 @@
+{
+  "name": "mountainclient",
+  "version": "0.1.0",
+  "description": "JavaScript client corresponding for accessing MountainTools system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flatironinstitute/mountaintools"
+  },
+  "keywords": [
+    "mountaintools",
+    "kachery"
+  ],
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/flatironinstitute/mountaintools/issues"
+  },
+  "homepage": "https://github.com/flatironinstitute/mountaintools#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "json-stable-stringify": "latest"
+  }
+}

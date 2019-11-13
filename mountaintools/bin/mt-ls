@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+import mtlogging
+from mountaintools import client as mt
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description = 'List the contents of a remote database directory')
+    parser.add_argument('path',help='Local or remote path (sha1dir://...)')
+    parser.add_argument('--download-from', required=False, default=None)
+
+    args = parser.parse_args()
+    path = args.path
+
+    if args.download_from:
+        mt.configDownloadFrom([args.download_from])
+
+    if mt.isFile(path):
+        path2 = path2 = mt.realizeFile(path=path)
+        if path2:
+            print(os.path.basename(path))
+            exit(0)
+        else:
+            print('Problem realizing file.', file=sys.stderr)
+            exit(-1)
+    else:
+        dd = mt.readDir(path, recursive=False, include_sha1=False)
+        if not dd:
+            print('Not found.', file=sys.stderr)
+            exit(-1)
+        dnames = sorted(dd['dirs'].keys())
+        for dname in dnames:
+            print(dname+'/')
+        fnames = sorted(dd['files'].keys())
+        for fname in fnames:
+            print(fname)
+        
+
+if __name__== "__main__":
+    main()

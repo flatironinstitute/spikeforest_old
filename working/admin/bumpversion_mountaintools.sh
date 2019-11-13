@@ -9,7 +9,7 @@ if output=$(git status --porcelain) && [ -z "$output" ]; then
   fi
   if [ "$2" == "go" ]; then
     bumpversion $1 --verbose
-    echo "Now you should push via 'git push && push --tags' and replace the explicit version in all the docs."
+    echo "Now you should push via 'git push && git push --tags' and replace the explicit version in all the docs."
   else
     bumpversion $1 --dry-run --verbose
     echo "That was a dry run. If it looks okay, then add the 'go' argument"

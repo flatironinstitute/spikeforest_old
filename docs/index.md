@@ -31,7 +31,7 @@ VSCode is a powerful yet lightweight IDE. It is written in typescript and suppor
 Here are some important points to understand about using SpikeForest via codepod:
 
 * The working directory (where you cloned SpikeForest) lives on the host machine but is also mounted in the container at `/home/project`. This means you can edit the sources files from either inside the codepod container (vscode) or outside the container, using your preferred editors on the host. Since the .git directory lives at the root of the project directory, you can also perform push/pull/commit operations either inside or outside the container and they will both take effect.
-* The `/tmp` directory is by default also shared between the container and the host. In particular, the kbucket cache files (in `/tmp/sha1-cache`) are shared between the two and therefore persist between codepod sessions. If you set the KBUCKET_CACHE_DIR environment variable to something outside the /tmp directory, `codepod_run.sh` will handle that nicely as well.
+* The `/tmp` directory is by default also shared between the container and the host. In particular, the kbucket cache files (in `/tmp/sha1-cache`) are shared between the two and therefore persist between codepod sessions. If you set the SHA1_CACHE_DIR environment variable to something outside the /tmp directory, `codepod_run.sh` will handle that nicely as well.
 * For convenience the `~/.gitconfig` (and other files with your user git preferences) will be mounted into the container as well. This enables git operations to work inside the container without needing to reconfigure every time you open a new codepod session. (See the `-g` option for `codepod`.)
 * The `/tmp/.X11-unix` file is mounted and the display is forwarded so that GUI windows opened in the container appear like native windows on your host system.
 * The user inside the codepod container matches the non-root user on the host. This is helpful because it is not always easy to accomplish using docker on Linux.
@@ -65,7 +65,7 @@ KBucket is a distributed content-addressable storage database that enables refer
 
 ## Hosting kbucket shares and hubs
 
-## KBUCKET_CACHE_DIR
+## SHA1_CACHE_DIR
 
 ## Mountainlab python processors (MLProcessors)
 

@@ -3,6 +3,7 @@ test_output
 cairio.env
 spikesprays
 run1.sh
+*.png
 
 website_data
 .vscode

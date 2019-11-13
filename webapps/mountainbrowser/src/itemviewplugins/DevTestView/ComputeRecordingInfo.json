@@ -1,0 +1,34 @@
+{
+    "processor_name": "ComputeRecordingInfo",
+    "processor_version": "0.1.1",
+    "processor_class_name": "ComputeRecordingInfo",
+    "processor_code": "sha1://132089d16a18b10fb67e9f2b9602259a9713fdb6/object.json",
+    "label": "ComputeRecordingInfo (version: 0.1.1)",
+    "inputs": {
+        "recording_dir": {
+            "directory": true,
+            "path": "<placeholder>"
+        }
+    },
+    "outputs": {
+        "json_out": {
+            "ext": ".json"
+        }
+    },
+    "parameters": {
+        "channels": []
+    },
+    "parameters_to_hash": {
+        "channels": []
+    },
+    "container": "sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg",
+    "compute_requirements": {},
+    "force_run": false,
+    "use_cache": true,
+    "skip_failing": false,
+    "skip_timed_out": false,
+    "keep_temp_files": false,
+    "environment_variables": [],
+    "additional_files_to_realize": [],
+    "timeout": null
+}

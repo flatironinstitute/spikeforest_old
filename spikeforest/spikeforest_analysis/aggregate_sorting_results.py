@@ -74,7 +74,8 @@ def aggregate_sorting_results(studies, recordings, sorting_results):
                                 num_false_negatives=[]
                             )
 
-                            ok = True
+                            ok: bool = True
+                            error: str = ''
                             for key0 in comparison.keys():
                                 unit = comparison[key0]
                                 # best_unit = unit['best_unit']

@@ -8,6 +8,7 @@ import random
 import time
 from .filelock import FileLock
 import mtlogging
+from typing import Optional, List, Any, Dict, Tuple, Union
 
 # TODO: implement cleanup() for Sha1Cache
 # removing .record.json and .hints.json files that are no longer relevant
@@ -18,13 +19,13 @@ class Sha1Cache():
         self._directory = None
         self._alternate_directories = None
 
-    def directory(self):
+    def directory(self) -> str:
         if self._directory:
             return self._directory
         else:
-            return os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache')
+            return os.getenv('SHA1_CACHE_DIR', os.getenv('KBUCKET_CACHE_DIR', '/tmp/sha1-cache'))
 
-    def alternateDirectories(self):
+    def alternateDirectories(self) -> List[str]:
         if self._alternate_directories:
             return self._alternate_directories
         else:
@@ -34,14 +35,14 @@ class Sha1Cache():
             else:
                 return []
 
-    def setDirectory(self, directory):
+    def setDirectory(self, directory: str) -> None:
         self._directory = directory
 
-    def setAlternateDirectories(self, directories):
+    def setAlternateDirectories(self, directories: List[str]) -> None:
         self._alternate_directories = directories
 
-    def findFile(self, sha1):
-        path, alternate_paths = self._get_path(
+    def findFile(self, sha1: str) -> Optional[str]:
+        path, alternate_paths = self._get_path_ext(
             sha1, create=False, return_alternates=True)
         # if file is available return it
         if os.path.exists(path):
@@ -79,7 +80,7 @@ class Sha1Cache():
                 _safe_remove_file(hints_fname)
         return None
 
-    def downloadFile(self, url, sha1, target_path=None, size=None, verbose=False, show_progress=False):
+    def downloadFile(self, url: str, sha1: str, target_path: Optional[str]=None, size: Optional[int]=None, verbose: bool=False, show_progress: bool=False) -> Optional[str]:
         alternate_target_path = False
         if target_path is None:
             target_path = self._get_path(sha1, create=True)
@@ -87,7 +88,7 @@ class Sha1Cache():
             alternate_target_path = True
 
         path_tmp = target_path + '.downloading.' + _random_string(6)
-        if (verbose) or (show_progress) or (size > 10000):
+        if (verbose) or (show_progress) or ((size is not None) and (size > 10000)):
             print(
                 'Downloading file --- ({}): {} -> {}'.format(_format_file_size(size), url, target_path))
 
@@ -95,7 +96,7 @@ class Sha1Cache():
         sha1b = steady_download_and_compute_sha1(url=url, target_path=path_tmp)
         elapsed = time.time() - timer
 
-        if (verbose) or (show_progress) or (size > 10000):
+        if (verbose) or (show_progress) or ((size is not None) and size > 10000):
             print('Downloaded file ({}) in {} sec.'.format(_format_file_size(size), elapsed))
 
         if not sha1b:
@@ -105,7 +106,7 @@ class Sha1Cache():
             if os.path.exists(path_tmp):
                 _safe_remove_file(path_tmp)
             raise Exception(
-                'sha1 of downloaded file does not match expected {} {}'.format(url, sha1))
+                'sha1 of downloaded file does not match expected {} {} <> {}'.format(url, sha1, sha1b))
         if alternate_target_path:
             if os.path.exists(target_path):
                 _safe_remove_file(target_path)
@@ -118,7 +119,7 @@ class Sha1Cache():
                 _safe_remove_file(path_tmp)
         return target_path
 
-    def moveFileToCache(self, path):
+    def moveFileToCache(self, path: str) -> str:
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
         if os.path.exists(path0):
@@ -132,7 +133,7 @@ class Sha1Cache():
         return path0
 
     @mtlogging.log()
-    def copyFileToCache(self, path):
+    def copyFileToCache(self, path: str) -> Tuple[str, str]:
         sha1 = self.computeFileSha1(path)
         path0 = self._get_path(sha1, create=True)
         if not os.path.exists(path0):
@@ -142,7 +143,7 @@ class Sha1Cache():
         return path0, sha1
 
     @mtlogging.log()
-    def computeFileSha1(self, path, _known_sha1=None):
+    def computeFileSha1(self, path: str, _known_sha1: str = None, _cache_only: bool = False) -> Optional[str]:
         path = os.path.abspath(path)
         basename = os.path.basename(path)
         if len(basename) == 40:
@@ -165,6 +166,8 @@ class Sha1Cache():
                             return obj['sha1']
 
         if _known_sha1 is None:
+            if _cache_only:
+                return None
             sha1 = _compute_file_sha1(path)
         else:
             sha1 = _known_sha1
@@ -196,14 +199,17 @@ class Sha1Cache():
         # todo: use hints for findFile
         return sha1
 
-    def reportFileSha1(self, path, sha1):
+    def reportFileSha1(self, path: str, sha1: str) -> None:
         self.computeFileSha1(path, _known_sha1=sha1)
 
-    def _get_path(self, sha1, *, create=True, directory=None, return_alternates=False):
-        if directory is None:
+    def _get_path(self, sha1: str, *, create: bool=True, directory: Optional[str]=None) -> str:
+        return str(self._get_path_ext(sha1, create=create, directory=directory, return_alternates=False))
+
+    def _get_path_ext(self, sha1: str, *, create: bool=True, directory: Optional[str]=None, return_alternates: bool=False) -> Union[str, Tuple[str, List[str]]]:
+        if not directory:
             directory = self.directory()
         path1 = os.path.join(sha1[0], sha1[1:3])
-        path0 = os.path.join(directory, path1)
+        path0 = os.path.join(str(directory), path1)
         if create:
             if not os.path.exists(path0):
                 try:
@@ -222,7 +228,7 @@ class Sha1Cache():
 
 
 @mtlogging.log()
-def _compute_file_sha1(path):
+def _compute_file_sha1(path: str) -> Optional[str]:
     if not os.path.exists(path):
         return None
     if (os.path.getsize(path) > 1024 * 1024 * 100):
@@ -237,7 +243,7 @@ def _compute_file_sha1(path):
     return sha.hexdigest()
 
 
-def _get_stat_object(fname):
+def _get_stat_object(fname: str) -> Optional[Dict]:
     try:
         stat0 = os.stat(fname)
         obj = dict(
@@ -252,18 +258,18 @@ def _get_stat_object(fname):
         return None
 
 
-def _stat_objects_match(aa, bb):
+def _stat_objects_match(aa: object, bb: object) -> bool:
     str1 = json.dumps(aa, sort_keys=True)
     str2 = json.dumps(bb, sort_keys=True)
     return (str1 == str2)
 
 
-def _compute_string_sha1(txt):
+def _compute_string_sha1(txt: str) -> str:
     hash_object = hashlib.sha1(txt.encode('utf-8'))
     return hash_object.hexdigest()
 
 
-def _safe_remove_file(fname):
+def _safe_remove_file(fname: str) -> None:
     try:
         os.remove(fname)
     except:
@@ -271,7 +277,7 @@ def _safe_remove_file(fname):
 
 
 @mtlogging.log()
-def _read_json_file(path, *, delete_on_error=False):
+def _read_json_file(path: str, *, delete_on_error: bool=False) -> Any:
     with FileLock(path + '.lock', exclusive=False):
         try:
             with open(path) as f:
@@ -289,21 +295,13 @@ def _read_json_file(path, *, delete_on_error=False):
             return None
 
 
-def _write_json_file(obj, path):
+def _write_json_file(obj: object, path: str) -> None:
     with FileLock(path + '.lock', exclusive=True):
         with open(path, 'w') as f:
-            return json.dump(obj, f)
+            json.dump(obj, f)
 
 
-def _safe_list_dir(path):
-    try:
-        ret = os.listdir(path)
-        return ret
-    except:
-        return []
-
-
-def _rename_or_copy(path1, path2):
+def _rename_or_copy(path1: str, path2: str) -> None:
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     try:
@@ -316,7 +314,7 @@ def _rename_or_copy(path1, path2):
 
 
 @mtlogging.log()
-def _rename_file(path1, path2, remove_if_exists):
+def _rename_file(path1: str, path2: str, remove_if_exists: bool) -> None:
     if os.path.abspath(path1) == os.path.abspath(path2):
         return
     if os.path.exists(path2):
@@ -343,7 +341,7 @@ def _rename_file(path1, path2, remove_if_exists):
 
 # thanks: https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
 
-def _format_file_size(size):
+def _format_file_size(size: Optional[int]) -> str:
     if not size:
         return 'Unknown'
     if size <= 1024:
@@ -351,14 +349,15 @@ def _format_file_size(size):
     return _sizeof_fmt(size)
 
 
-def _sizeof_fmt(num, suffix='B'):
+def _sizeof_fmt(num: int, suffix='B') -> str:
+    num_float = float(num)
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
+        if abs(num_float) < 1024.0:
+            return "%3.1f %s%s" % (num_float, unit, suffix)
+        num_float /= 1024.0
+    return "%.1f %s%s" % (num_float, 'Yi', suffix)
 
 
-def _random_string(num_chars):
+def _random_string(num_chars: int) -> str:
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     return ''.join(random.choice(chars) for _ in range(num_chars))

@@ -15,7 +15,7 @@ recording = SFMdaRecordingExtractor(dataset_directory=recdir, download=True)
 sorting_true = SFMdaSortingExtractor(firings_file=recdir + '/firings_true.mda')
 
 # import a spike sorter from the spikesorters module of spikeforest
-from spikesorters import MountainSort4
+from spikeforestsorters import MountainSort4
 import os
 import shutil
 

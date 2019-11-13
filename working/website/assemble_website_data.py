@@ -266,7 +266,12 @@ def main():
 
     args = parser.parse_args()
 
-    mt.configDownloadFrom(['spikeforest.kbucket'])
+    if args.upload_to:
+        upload_to = args.upload_to.split(',')
+    else:
+        upload_to = None
+
+    mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
 
     if args.output_ids is not None:
         output_ids = args.output_ids.split(',')
@@ -283,6 +288,9 @@ def main():
             'manual_franklab',
             'synth_mearec_neuronexus',
             'synth_mearec_tetrode',
+            # 'SYNTH_MEAREC_TETRODE_b',
+            # 'SYNTH_MEAREC_NEURONEXUS_b',
+            # 'SYNTH_MEAREC_NEUROPIXELS_b',
             'synth_visapy',
             'hybrid_janelia'
         ]
@@ -291,6 +299,14 @@ def main():
     sorters_to_include = set([
         'HerdingSpikes2',
         'IronClust',
+        'IronClust1',
+        'IronClust2',
+        'IronClust3',
+        'IronClust4',
+        'IronClust5',
+        'IronClust6',
+        'IronClust7',
+        'IronClust8',
         'JRClust',
         'KiloSort',
         'KiloSort2',
@@ -311,22 +327,25 @@ def main():
         print('Loading output object: {}'.format(output_id))
         output_path = ('key://pairio/spikeforest/spikeforest_analysis_results.{}.json').format(output_id)
         obj = mt.loadObject(path=output_path)
-        studies = studies + obj['studies']
-        print(obj.keys())
-        study_sets = study_sets + obj.get('study_sets', [])
-        recordings = recordings + obj['recordings']
-        sorting_results = sorting_results + obj['sorting_results']
+        if obj is not None:
+            studies = studies + obj['studies']
+            print(obj.keys())
+            study_sets = study_sets + obj.get('study_sets', [])
+            recordings = recordings + obj['recordings']
+            sorting_results = sorting_results + obj['sorting_results']
+        else:
+            raise Exception('Unable to load: {}'.format(output_path))
 
     # ALGORITHMS
     print('******************************** ASSEMBLING ALGORITHMS...')
     algorithms_by_processor_name = dict()
     Algorithms = []
-    basepath = '../../spikeforest/spikesorters/descriptions'
+    basepath = '../../spikeforest/spikeforestsorters/descriptions'
     repo_base_url = 'https://github.com/flatironinstitute/spikeforest/blob/master'
     for item in os.listdir(basepath):
         if item.endswith('.md'):
             alg = frontmatter.load(basepath + '/' + item).to_dict()
-            alg['markdown_link'] = repo_base_url + '/spikeforest/spikesorters/descriptions/' + item
+            alg['markdown_link'] = repo_base_url + '/spikeforest/spikeforestsorters/descriptions/' + item
             alg['markdown'] = alg['content']
             del alg['content']
             if 'processor_name' in alg:
@@ -483,7 +502,7 @@ def main():
         General=General
     )
     address = mt.saveObject(object=obj)
-    mt.createSnapshot(path=address, upload_to=args.upload_to, dest_path=args.dest_key_path)
+    mt.createSnapshot(path=address, upload_to=upload_to, dest_path=args.dest_key_path)
 
 
 def _assemble_study_analysis_result(*, study_name, study_set_name, recordings, sorting_results, sorter_names):

@@ -13,6 +13,7 @@ import argparse
 from copy import deepcopy
 import spikeforest_analysis as sa
 import numpy as np
+from typing import List, Optional
 
 
 @mtlogging.log(root=True)
@@ -27,13 +28,25 @@ def main():
     parser.add_argument('--use_slurm', help='Whether to use slurm.', action='store_true')
     parser.add_argument('--verbose', help='Provide some additional verbose output.', action='store_true')
     parser.add_argument('--test', help='Only run a few, and do not save output.', action='store_true')
+    parser.add_argument('--upload_to', help='Upload destination(s) separated by comma', default=None, required=False)
+    parser.add_argument('--download_from', help='Download destination(s) separated by comma', default=None, required=False)
 
     args = parser.parse_args()
-
     print(args)
 
-    mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
-    upload_to = 'spikeforest.kbucket'
+    upload_to: Optional[List[str]] = None
+    if args.upload_to:
+        upload_to = args.upload_to.split(',')
+
+    download_from: Optional[List[str]] = None
+    if args.download_from:
+        download_from = args.download_from.split(',')
+        
+    mt.configDownloadFrom(download_from)
+
+    # mt.configDownloadFrom(['spikeforest.kbucket', 'spikeforest.public'])
+    # upload_to = ['spikeforest.kbucket', 'spikeforest.public']
+    # download_from = ['spikeforest.kbucket', 'spikeforest.public']
 
     print('Loading analysis file...')
     analysis_obj = mt.loadObject(path=args.analysis_file)
@@ -47,13 +60,25 @@ def main():
     skip_failing = args.skip_failing
     skip_timed_out = args.skip_timed_out
 
-    use_slurm = True
+    use_slurm = args.use_slurm
 
     analysis_names = args.analyses.split(',')
 
     sorter_definitions = analysis_obj['sorters']
     analysis_definitions = analysis_obj['analyses']
-    
+
+    # Realize the containers for the sorters
+    for sorter in sorter_definitions.values():
+        sorter_name = sorter['name']
+        sorting_params = sorter['params']
+        processor_name = sorter['processor_name']
+        SORTER, CONTAINER = sa.find_sorter_processor_and_container(processor_name)
+        print('Checking container for SORTER: {}'.format(sorter_name))
+        if CONTAINER:
+            print('Realizing container for sorter: {}'.format(CONTAINER))
+            mt.realizeFile(path=CONTAINER)
+
+    # Loop through all the analyses
     for aname in analysis_names:
         if aname not in analysis_definitions:
             raise Exception('Analysis {} not found in analysis file'.format(aname))
@@ -89,7 +114,8 @@ def main():
             recordings = recordings[0:2]
             studies = studies[0:1]
             output_path = None
-        
+
+        # Set up slurm configuration
         slurm_working_dir = 'tmp_slurm_job_handler_' + _random_string(5)
         job_handler = mlpr.SlurmJobHandler(
             working_dir=slurm_working_dir
@@ -101,31 +127,36 @@ def main():
                 num_cores_per_job=2,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
+                max_simultaneous_batches=20,
                 additional_srun_opts=['-p ccm']
             )
             job_handler.addBatchType(
                 name='gpu',
                 num_workers_per_batch=4,
-                num_cores_per_job=4,
+                num_cores_per_job=2,
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
-                #additional_srun_opts=['-p gpu', '--gres=gpu:1', '--constraint=v100']
-                #additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1', '--constraint=v100']
-                additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
+                max_simultaneous_batches=20,
+                additional_srun_opts=['-p gpu', '--gres=gpu:v100-16gb:1']
+                # additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
             )
         else:
             job_handler.addBatchType(
                 name='cpu',
                 num_workers_per_batch=multiprocessing.cpu_count(),
                 num_cores_per_job=2,
+                max_simultaneous_batches=1,
                 use_slurm=False
             )
             job_handler.addBatchType(
                 name='gpu',
                 num_workers_per_batch=1,
                 num_cores_per_job=2,
+                max_simultaneous_batches=1,
                 use_slurm=False
             )
+
+        # Start the job queue
         with mlpr.JobQueue(job_handler=job_handler) as JQ:
             # Summarize the recordings
             mtlogging.sublog('summarize-recordings')
@@ -157,10 +188,11 @@ def main():
             ])
             for i, recording in enumerate(recordings):
                 recording['results'] = dict()
-                recording['results']['info'] = jobs_info[i].execute()
-                recording['results']['units_info'] = jobs_units_info[i].execute()
+                recording['results']['info'] = jobs_info[i].execute()  # sends the job to the queue
+                recording['results']['units_info'] = jobs_units_info[i].execute()  # sends the job to the queue
                 recording['results']['sorting'] = dict()
                 recording['results']['comparison'] = dict()
+                recording['results']['sorted_units_info'] = dict()
 
             # Sort the recordings
             mtlogging.sublog('summarize-recordings')
@@ -191,7 +223,7 @@ def main():
                     for recording in recordings
                 ])
                 for i, recording in enumerate(recordings):
-                    recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()
+                    recording['results']['sorting'][sorter_name] = sorting_jobs[i].execute()  # sends job to the queue
 
                 comparison_jobs = sa.GenSortingComparisonTable.createJobs([
                     dict(
@@ -207,9 +239,25 @@ def main():
                     )
                     for recording in recordings
                 ])
+                jobs_sorted_units_info = sa.ComputeUnitsInfo.createJobs([
+                    dict(
+                        recording_dir=recording['directory'],
+                        firings=recording['results']['sorting'][sorter_name].outputs['firings_out'],
+                        unit_ids=None,
+                        channel_ids=recording.get('channels', None),
+                        json_out={'ext': '.json', 'upload': True},
+                        _timeout=job_timeout,
+                        _container='default',
+                        _label='Compute sorted units info for recording: ' + recording.get('name', ''),
+                        _compute_requirements=dict(batch_type='cpu')
+                    )
+                    for recording in recordings
+                ])
                 for i, recording in enumerate(recordings):
-                    recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()
+                    recording['results']['comparison'][sorter_name] = comparison_jobs[i].execute()  # sends job to the queue
+                    recording['results']['sorted_units_info'][sorter_name] = jobs_sorted_units_info[i].execute()  # sends job to the queue
 
+            # wait for all jobs to complete
             JQ.wait()
 
             for recording in recordings:
@@ -219,6 +267,7 @@ def main():
                     true_units_info=recording['results']['units_info'].outputs['json_out']
                 )
                 if upload_to:
+                    # upload true units info into kachery
                     mt.createSnapshot(path=recording['summary']['true_units_info'], upload_to=upload_to)
 
             sorting_results = []
@@ -231,6 +280,7 @@ def main():
                 for recording in recordings:
                     sorting_result = recording['results']['sorting'][sorter_name]
                     comparison_result = recording['results']['comparison'][sorter_name]
+                    sorted_units_info = recording['results']['sorted_units_info'][sorter_name]
                     sr = dict(
                         recording=recording,
                         sorter=sorter,
@@ -242,6 +292,7 @@ def main():
                         container=CONTAINER,
                     )
                     if upload_to:
+                        # upload console output to kachery
                         mt.createSnapshot(path=sr['console_out'], upload_to=upload_to)
                     if sorting_result.retcode == 0:
                         sr['firings'] = sorting_result.outputs['firings_out']
@@ -249,12 +300,16 @@ def main():
                             json=comparison_result.outputs['json_out'],
                             html=comparison_result.outputs['html_out']
                         )
+                        sr['sorted_units_info'] = sorted_units_info.outputs['json_out']
                         if upload_to:
+                            # upload firings, comparison, and sorted units info to kachery
                             mt.createSnapshot(path=sr['firings'], upload_to=upload_to)
                             mt.createSnapshot(path=sr['comparison_with_truth']['json'], upload_to=upload_to)
+                            mt.createSnapshot(path=sr['sorted_units_info'], upload_to=upload_to)
                     else:
                         sr['firings'] = None
                         sr['comparison_with_truth'] = None
+                        sr['sorted_units_info'] = None
                     sorting_results.append(sr)
 
             for recording in recordings:

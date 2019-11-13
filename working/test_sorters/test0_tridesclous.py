@@ -1,4 +1,4 @@
-from spikesorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Klusta, Tridesclous
+from spikeforestsorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Klusta, Tridesclous
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import json
@@ -16,8 +16,8 @@ paired_mea64c_recdir = 'sha1dir://7f12606802ade3c7c71eb306490b7840eb8b1fb4.paire
 
 
 def main():
-    print('test_tridesclous_magland_c4')
-    test_tridesclous_magland_c4()
+    print('test_irc_magland_c8')
+    test_irc_neuropix32c()
 
 @pytest.mark.spikeforest
 @pytest.mark.ms4

@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+import mtlogging
+import shutil
+from mountaintools import client as mt
+
+
+# @mtlogging.log(root=True)
+def main():
+    parser = argparse.ArgumentParser(description='Find a local or remote file and print the location.')
+    parser.add_argument('path', help='Path of source file: sha1://, sha1dir://, or local path')
+    parser.add_argument('--verbose', action='store_true', help='Turn on verbose output')
+    parser.add_argument('--local-only', action='store_true', help='Only search for file remotely')
+    parser.add_argument('--remote-only', action='store_true', help='Only search for file remotely')
+    parser.add_argument('--download-from', required=False, default=None)
+
+    args = parser.parse_args()
+    path = args.path
+
+    if args.download_from:
+        mt.configDownloadFrom([args.download_from])
+
+    if args.verbose:
+        mt.configVerbose(True)
+
+    if mt.isFile(path):
+        path2 = mt.findFile(path=path, local_only=args.local_only, remote_only=args.remote_only)
+        if not path2:
+            return
+        print(path2)
+    else:
+        dd = mt.readDir(path=path, recursive=False, include_sha1=False, local_only=args.local_only, remote_only=args.remote_only)
+        if not dd:
+            return
+        print('[directory]')
+
+if __name__ == "__main__":
+    main()

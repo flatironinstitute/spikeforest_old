@@ -15,8 +15,8 @@ The first step is to install spikeforest and mountaintools. The easiest way is t
 the PyPI packages as follows.
 
 ```
-pip install --upgrade spikeforest==0.9.1
-pip install --upgrade mountaintools==0.5.1
+pip install --upgrade spikeforest==0.11.0
+pip install --upgrade mountaintools==0.7.1
 ```
 
 To use the containerized versions of the spike sorters (recommended), you should

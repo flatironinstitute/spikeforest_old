@@ -4,11 +4,11 @@ For testing purposes, we would like to make a subset of our recordings
 publicly available. Here we show the procedure for accomplishing this.
 
 The first step is to get a `sha1dir://` URI associated with the recording. This is done
-by taking a kb-snapshot using mountaintools. For example,
+by taking a mt-snapshot using mountaintools. For example,
 
 ```
 cd /path/to/synth_maglandc
-kb-snapshot datasets_noise10_K10_C4
+mt-snapshot datasets_noise10_K10_C4
 ```
 
 This will print something like `sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e`.
@@ -17,8 +17,8 @@ After configuring the appropriate upload kachery upload token, we can then make
 a single recording publicly available via:
 
 ```
-kb-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public
-kb-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikeforest.public
+mt-snapshot sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth --ur --dr --upload-to spikeforest.public
+mt-snapshot sha1://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e --upload-to spikeforest.public
 ```
 
 This will upload the contents of this recording directory to a kachery node that
@@ -30,7 +30,7 @@ automatically - @wysota)
 Now, anyone can download this dataset via
 
 ```
-kb-download sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth 001_synth --download-from spikeforest.public
+mt-download sha1dir://cdc2bd6b5a39223b53b8bd2fcbe8594fc780325e/001_synth 001_synth --download-from spikeforest.public
 ```
 
 If it is already cached on their machine it will not need to download (saving us

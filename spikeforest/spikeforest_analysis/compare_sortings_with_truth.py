@@ -1,104 +1,62 @@
 # from spikeforest import spikewidgets as sw
 import mlprocessors as mlpr
 import json
-from mountaintools import client as mt
-import numpy as np
-from copy import deepcopy
-import multiprocessing
-import mtlogging
 
 import spikeextractors as si
-from .sfmdaextractors import SFMdaRecordingExtractor, SFMdaSortingExtractor
+import spiketoolkit as st
+import pandas as pd
+from .sfmdaextractors import SFMdaSortingExtractor
 from .sortingcomparison import SortingComparison
 
 
-def _create_job_for_sorting_helper(kwargs):
-    return _create_job_for_sorting(**kwargs)
+# new method (in progress) that uses spiketoolkit
+class GenSortingComparisonTableNew(mlpr.Processor):
+    VERSION = '0.3.1'
+    firings = mlpr.Input('Firings file (sorting)')
+    firings_true = mlpr.Input('True firings file')
+    units_true = mlpr.IntegerListParameter('List of true units to consider')
+    json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
+    html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
+    # CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
+    # CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
 
+    def run(self):
+        print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))
+        sorting = SFMdaSortingExtractor(firings_file=self.firings)
+        sorting_true = SFMdaSortingExtractor(firings_file=self.firings_true)
+        if (self.units_true is not None) and (len(self.units_true) > 0):
+            sorting_true = si.SubSortingExtractor(parent_sorting=sorting_true, unit_ids=self.units_true)
 
-def _create_job_for_sorting(sorting, container):
-    if sorting['firings'] is None:
-        from mlprocessors import MountainJob
-        return MountainJob()
-    units_true = sorting.get('units_true', [])
-    firings = sorting['firings']
-    firings_true = sorting['firings_true']
-    units_true = units_true
-    job = GenSortingComparisonTable.createJob(
-        firings=firings,
-        firings_true=firings_true,
-        units_true=units_true,
-        json_out={'ext': '.json', 'upload': True},
-        html_out={'ext': '.html', 'upload': True},
-        _container=container
-    )
-    return job
-
-
-@mtlogging.log()
-def compare_sortings_with_truth(sortings, compute_resource, num_workers=None, label=None, upload_to=None):
-    print('')
-    print('>>>>>> {}'.format(label or 'compare sortings with truth'))
-    # container = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
-    container = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
-
-    sortings_out = deepcopy(sortings)
-    sortings_valid = [sorting for sorting in sortings_out if (sorting['firings'] is not None)]
-    jobs_gen_table = GenSortingComparisonTable.createJobs([
-        dict(
-            firings=sorting['firings'],
-            firings_true=sorting['firings_true'],
-            units_true=sorting.get('units_true', []),
-            json_out={'ext': '.json', 'upload': True},
-            html_out={'ext': '.html', 'upload': True},
-            _container=container
+        SC = st.comparison.compare_sorter_to_ground_truth(
+            gt_sorting=sorting_true,
+            tested_sorting=sorting,
+            delta_time=0.3,
+            min_accuracy=0,
+            compute_misclassification=False,
+            exhaustive_gt=False  # Fix this in future
         )
-        for sorting in sortings_valid
-    ])
+        df = pd.concat([SC.count, SC.get_performance()], axis=1).reset_index()
 
-    # jobs_gen_table=[]
-    # for sorting in sortings:
-    #     units_true=sorting.get('units_true',[])
-    #     firings=sorting['firings']
-    #     firings_true=sorting['firings_true']
-    #     units_true=units_true
-    #     job=GenSortingComparisonTable.createJob(
-    #         firings=firings,
-    #         firings_true=firings_true,
-    #         units_true=units_true,
-    #         json_out={'ext':'.json','upload':True},
-    #         html_out={'ext':'.html','upload':True},
-    #         _container=container
-    #     )
-    #     jobs_gen_table.append(job)
+        df = df.rename(columns=dict(
+            gt_unit_id='unit_id',
+            fp='num_false_positives',
+            fn='num_false_negatives',
+            tested_id='best_unit',
+            tp='num_matches'
+        ))
+        df['matched_unit'] = df['best_unit']
+        df['f_p'] = 1 - df['precision']
+        df['f_n'] = 1 - df['recall']
 
-    label = label or 'Compare sortings with truth'
-    mlpr.executeBatch(jobs=jobs_gen_table, label=label, num_workers=num_workers, compute_resource=compute_resource)
-
-    for sorting in sortings_out:
-        sorting['comparison_with_truth'] = None
-
-    for ii, sorting in enumerate(sortings_valid):
-        comparison_with_truth = dict()
-        res0 = jobs_gen_table[ii].result
-        if res0.retcode == 0:
-            comparison_with_truth['json'] = res0.outputs['json_out']
-            comparison_with_truth['html'] = res0.outputs['html_out']
-            sorting['comparison_with_truth'] = comparison_with_truth
-            if upload_to:
-                mt.createSnapshot(path=comparison_with_truth['json'], upload_to=upload_to)
-                mt.createSnapshot(path=comparison_with_truth['html'], upload_to=upload_to)
-        else:
-            print("WARNING: Problem generating sorting comparison table for sorting (retcode = {}).".format(res0.retcode))
-            print('===================== sorting')
-            print(sorting)
-            print('===================== res0.console_out')
-            print(res0.console_out)
-            raise Exception('Problem generating sorting comparison table for sorting.')
-
-    return sortings_out
+        # sw.SortingComparisonTable(comparison=SC).getDataframe()
+        json = df.transpose().to_dict()
+        html = df.to_html(index=False)
+        _write_json_file(json, self.json_out)
+        _write_json_file(html, self.html_out)
 
 
+# old method that uses spikeforest
 class GenSortingComparisonTable(mlpr.Processor):
     VERSION = '0.2.6'
     firings = mlpr.Input('Firings file (sorting)')
@@ -107,7 +65,8 @@ class GenSortingComparisonTable(mlpr.Processor):
     json_out = mlpr.Output('Table as .json file produced from pandas dataframe')
     html_out = mlpr.Output('Table as .html file produced from pandas dataframe')
     # CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
-    CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    # CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg'  # MAY26JJJ
+    CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
 
     def run(self):
         print('GenSortingComparisonTable: firings={}, firings_true={}, units_true={}'.format(self.firings, self.firings_true, self.units_true))

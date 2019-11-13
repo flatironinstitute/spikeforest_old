@@ -12,7 +12,7 @@ First clone this repo:
 git clone https://github.com/flatironinstitute/spikeforest
 ```
 
-Next, set the KBUCKET_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export KBUCKET_CACHE_DIR=/tmp/sha1-cache`
+Next, set the SHA1_CACHE_DIR environment variable. This is where the cached files from kbucket will go. For example, you could use `export SHA1_CACHE_DIR=/tmp/sha1-cache`
 
 Install codepod
 ```

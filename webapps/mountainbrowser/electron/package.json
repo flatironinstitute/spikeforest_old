@@ -1,0 +1,15 @@
+{
+  "name": "mountainbrowser-electron",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "electron src",
+    "dev": "electron http://localhost:5050"
+  },
+  "dependencies": {
+    "electron": "^5.0.7",
+    "electron-serve": "^0.3.0"
+  }
+}

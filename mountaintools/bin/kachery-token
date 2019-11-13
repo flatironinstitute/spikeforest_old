@@ -26,7 +26,10 @@ def ListCmd(args):
     else:
         entries = [ [ entry[0], entry[1], entry[2][0]+'***'+entry[2][-1] ] for entry in kt.entries() ]
 
-    print_columns(entries, '\t')
+    if entries:
+        print_columns(entries, '\t')
+    else:
+        print("[ No tokens registered ]")
     sys.exit(0)
 
 def AddCmd(args):
@@ -58,7 +61,7 @@ def main():
     parser_remove.add_argument('name')
     parser_remove.add_argument('type', choices=['download', 'upload'], nargs='?')
     
-    args = parser.parse_args()
+    args = parser.parse_args(['list'] if len(sys.argv) == 1 else None)
     command = args.command
 
     cmds = {

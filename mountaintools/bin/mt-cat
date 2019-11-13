@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+from mountaintools import client as mt
+
+# @mtlogging.log(root=True)
+def main():
+    """main routine
+    """
+
+    parser = argparse.ArgumentParser(
+        description='Write the contents of a local or remote file to stdout')
+    parser.add_argument('path', help='remote or local path of file')
+    parser.add_argument('--download-from', required=False, default=None)
+
+    args = parser.parse_args()
+
+    if args.download_from:
+        mt.configDownloadFrom([args.download_from])
+
+    path2 = mt.realizeFile(path=args.path)
+
+    if not path2:
+        print('Unable to realize file.', file=sys.stderr)
+        exit(-1)
+
+    with open(path2, 'rb') as f:
+        while True:
+            data = os.read(f.fileno(), 4096)
+            if len(data) == 0:
+                break
+            os.write(sys.stdout.fileno(), data)
+
+
+if __name__ == "__main__":
+    main()

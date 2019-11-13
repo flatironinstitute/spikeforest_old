@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import time
+from mountaintools import client as mt
+import mtlogging
+
+# @mtlogging.log(root=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Compute the hash of a local or remote file or directory and print the address representing a snapshot.')
+    parser.add_argument('path', help='Path to local file or directory')
+    parser.add_argument('dest_path', nargs='?', help='Optional destination key path', default=None)
+    parser.add_argument('--upload-to', '-u', help='Remote database to upload all files', required=False, default=None)
+    parser.add_argument('--download-recursive', '--dr', help='Download all remote files to the local SHA-1 cache.', action='store_true')
+    parser.add_argument('--upload-recursive', '--ur', help='Upload all files (recursively).', action='store_true')
+    parser.add_argument('--login', help='Whether to log in', required=False, action='store_true')
+
+    args = parser.parse_args()
+    path = args.path
+
+    if args.login:
+        mt.login(interactive=True)
+
+    address = mt.createSnapshot(path=path, upload_to=args.upload_to, download_recursive=args.download_recursive, upload_recursive=args.upload_recursive, dest_path=args.dest_path)
+    if not address:
+        print('Error creating snapshot.', file=sys.stderr)
+        exit(-1)
+
+    print(address)
+
+if __name__ == "__main__":
+    main()

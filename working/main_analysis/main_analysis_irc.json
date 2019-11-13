@@ -1,0 +1,79 @@
+{
+    "analyses":{
+        "hybrid_janelia": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.hybrid_janelia.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.hybrid_janelia_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "manual_franklab": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.manual_franklab_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "paired_boyden32c": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_boyden32c.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_boyden32c_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "paired_crcns": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_crcns.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_crcns_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "paired_kampff": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_kampff.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_kampff_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "paired_mea64c": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.paired_mea64c.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.paired_mea64c_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "synth_bionet": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_bionet.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_bionet_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "synth_magland": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_magland.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_magland_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "synth_mearec_neuronexus": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_neuronexus.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_neuronexus_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "synth_mearec_tetrode": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_mearec_tetrode.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_mearec_tetrode_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        },
+        "synth_visapy": {
+            "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_visapy.json"],
+            "output": "key://pairio/spikeforest/spikeforest_analysis_results.synth_visapy_irc.json",
+            "sorter_keys": ["irc-gpu","irc-cpu","ks2"]
+        }
+    },
+    "sorters":{
+        "irc-cpu": {
+            "name":"IronClust-cpu",
+            "processor_name":"IronClust",
+            "params": {"fGpu":false},
+            "gpu": false
+        },
+        "irc-gpu": {
+            "name":"IronClust-gpu",
+            "processor_name":"IronClust",
+            "params": {"fGpu":true},
+            "gpu": true
+        },                                                    
+        "ks2": {
+            "name": "KiloSort2",
+            "processor_name": "KiloSort2",
+            "params": {},
+            "gpu": true
+        }
+    }
+}

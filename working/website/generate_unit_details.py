@@ -17,6 +17,7 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 # _CONTAINER = 'sha1://5627c39b9bd729fc011cbfce6e8a7c37f8bcbc6b/spikeforest_basic.simg'
 # _CONTAINER = 'sha1://0944f052e22de0f186bb6c5cb2814a71f118f2d1/spikeforest_basic.simg' #MAY26JJJ
+# _CONTAINER = 'sha1://4904b8f914eb159618b6579fb9ba07b269bb2c61/06-26-2019/spikeforest_basic.simg'
 _CONTAINER = None
 
 
@@ -188,7 +189,7 @@ def main():
                     obj0 = spike_spray_job_objects[i]
                     if result.retcode != 0:
                         print('WARNING: Error creating spike sprays for job:')
-                        print(spike_spray_jobs[i])
+                        print(spike_spray_job_objects[i])
                         ok = False
                         break
                     ssobj = mt.loadObject(path=result.outputs['json_out'])

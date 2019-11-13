@@ -1,19 +1,22 @@
 import multiprocessing
+from multiprocessing.connection import Connection
 import time
 import signal
 import mlprocessors as mlpr
 from .jobhandler import JobHandler
 from .mountainjobresult import MountainJobResult
+from typing import List
+from .mountainjob import MountainJob
 
 
 class ParallelJobHandler(JobHandler):
-    def __init__(self, num_workers):
+    def __init__(self, num_workers: int):
         super().__init__()
         self._num_workers = num_workers
-        self._processes = []
+        self._processes: List[dict] = []
         self._halted = False
 
-    def executeJob(self, job):
+    def executeJob(self, job: MountainJob) -> MountainJobResult:
         pipe_to_parent, pipe_to_child = multiprocessing.Pipe()
         process = multiprocessing.Process(target=_run_job, args=(pipe_to_parent, job))
         self._processes.append(dict(
@@ -22,8 +25,9 @@ class ParallelJobHandler(JobHandler):
             pipe_to_child=pipe_to_child,
             pjh_status='pending'
         ))
+        return job.result
 
-    def iterate(self):
+    def iterate(self) -> None:
         if self._halted:
             return
 
@@ -48,7 +52,7 @@ class ParallelJobHandler(JobHandler):
                     p['process'].start()
                     num_running = num_running + 1
     
-    def isFinished(self):
+    def isFinished(self) -> bool:
         if self._halted:
             return True
         for p in self._processes:
@@ -56,19 +60,19 @@ class ParallelJobHandler(JobHandler):
                 return False
         return True
 
-    def halt(self):
+    def halt(self) -> None:
         for p in self._processes:
             if p['pjh_status'] == 'running':
                 # TODO: i don't think this will actually terminate the child processes
                 p['process'].terminate()
         self._halted = True
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
 
 
-def _run_job(pipe_to_parent, job):
-    result0 = job._execute()
+def _run_job(pipe_to_parent: Connection, job: MountainJob) -> None:
+    result0 = job._execute(print_console_out=False)
     pipe_to_parent.send(result0.getObject())
     # wait for message to return
     while True:

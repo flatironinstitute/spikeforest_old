@@ -2,15 +2,15 @@
 
 import mlprocessors as mlpr
 import spikeextractors as se
-import h5py
 import numpy as np
 import spikeextractors as se
 from mountaintools import client as mt
 import mtlogging
-
+import h5py
 
 class EfficientAccessRecordingExtractor(se.RecordingExtractor):
     def __init__(self, *, path=None, recording=None, _dest_path=None):
+        #import h5py
         se.RecordingExtractor.__init__(self)
         if path is not None:
             if recording is not None:
@@ -18,18 +18,15 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
             self._path = path
         elif recording is not None:
             if not hasattr(recording, 'hash'):
-                try:
-                    if not hasattr(recording, 'hash'):
-                        print('''
-                        Warning: Recording does not have the hash attribute.
-                        Using sampling method to compute a hash.''')
-                        setattr(recording, 'hash', _hash(recording))
-                except:
-                    raise Exception('Recording class does not support the sampling hash.')
-            path0 = CreateEfficientAccessRecordingFile.execute(
+                print('''
+                Warning: Recording does not have the hash attribute.
+                Using sampling method to compute a hash.''')
+                setattr(recording, 'hash', _samplehash(recording))
+            result = CreateEfficientAccessRecordingFile.execute(
                 recording=recording,
                 hdf5_out=dict(ext='.hdf5', dest_path=_dest_path)
-            ).outputs['hdf5_out']
+            )
+            path0 = result.outputs['hdf5_out']
             self._path = mt.realizeFile(path=path0)
         else:
             raise Exception('Missing argument: path or recording')
@@ -64,6 +61,7 @@ class EfficientAccessRecordingExtractor(se.RecordingExtractor):
 
     @mtlogging.log(name='EfficientAccessRecordingExtractor:get_traces')
     def get_traces(self, channel_ids=None, start_frame=None, end_frame=None):
+        import h5py
         if start_frame is None:
             start_frame = 0
         if end_frame is None:
@@ -105,6 +103,7 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
     hdf5_out = mlpr.Output()
 
     def run(self):
+        import h5py
         recording = self.recording
         segment_size = self.segment_size
         channel_ids = recording.get_channel_ids()
@@ -113,11 +112,15 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
         N = recording.get_num_frames()  # Number of timepoints
         num_segments = int(np.ceil(N / segment_size))
 
-        channel_locations = recording.get_channel_locations(channel_ids=channel_ids)
-        nd = len(channel_locations[0])
-        geom = np.zeros((M, nd))
-        for m in range(M):
-            geom[m, :] = channel_locations[m]
+        try:
+            channel_locations = recording.get_channel_locations(channel_ids=channel_ids)
+            nd = len(channel_locations[0])
+            geom = np.zeros((M, nd))
+            for m in range(M):
+                geom[m, :] = channel_locations[m]
+        except:
+            nd = 2
+            geom = np.zeros((M, nd))
 
         with h5py.File(self.hdf5_out, "w") as f:
             f.create_dataset('segment_size', data=[segment_size])
@@ -148,22 +151,22 @@ class CreateEfficientAccessRecordingFile(mlpr.Processor):
                     f.create_dataset('part-{}-{}'.format(ch, j), data=segment[ii, :].ravel())
 
 
-def _hash(self):
+def _samplehash(recording):
     from mountaintools import client as mt
     obj = {
-        'channels': tuple(self.get_channel_ids()),
-        'frames': self.get_num_frames(),
-        'data': samplehash(self)
+        'channels': tuple(recording.get_channel_ids()),
+        'frames': recording.get_num_frames(),
+        'data': _samplehash_helper(recording)
     }
     return mt.sha1OfObject(obj)
 
 
-def samplehash(self):
+def _samplehash_helper(recording):
     rng = np.random.RandomState(37)
-    n_samples = min(self.get_num_frames() // 1000, 100)
-    inds = rng.randint(low=0, high=self.get_num_frames(), size=n_samples)
+    n_samples = min(recording.get_num_frames() // 1000, 100)
+    inds = rng.randint(low=0, high=recording.get_num_frames(), size=n_samples)
     h = 0
     for i in inds:
-        t = self.get_traces(start_frame=i, end_frame=i + 100)
+        t = recording.get_traces(start_frame=i, end_frame=i + 100)
         h = hash((hash(bytes(t)), hash(h)))
     return h

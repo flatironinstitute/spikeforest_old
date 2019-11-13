@@ -3,12 +3,12 @@
         "test": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.synth_visapy.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.test.json",
-            "sorter_keys": ["ms4", "sc"]
+            "sorter_keys": ["ms4", "irc"]
         },
         "hybrid_janelia": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.hybrid_janelia.json"],
             "output": "key://pairio/spikeforest/spikeforest_analysis_results.hybrid_janelia.json",
-            "sorter_keys": ["hs2", "irc", "jrc", "ks", "ks2", "klusta", "ms4", "sc", "tdc"]
+            "sorter_keys": ["hs2", "irc", "jrc", "ks", "ks2", "ms4", "sc", "tdc"]
         },
         "manual_franklab": {
             "recordings": ["key://pairio/spikeforest/spikeforest_recording_group.manual_franklab.json"],

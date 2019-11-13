@@ -6,19 +6,20 @@ from .mountainjob import MountainJob
 import json
 import inspect
 import multiprocessing
+from typing import Optional, List
 
 local_client = MountainClient()
 
 
 @mtlogging.log()
-def createJobs(proc, argslist, verbose=None):
+def createJobs(proc, argslist, verbose=None) -> List[MountainJob]:
     if verbose is None:
         verbose = True
     # Get the code for the processor
     try:
         processor_source_fname = os.path.abspath(inspect.getsourcefile(proc))
     except:
-        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a compute resource or in a container.'.format(proc.NAME))
+        print('Warning: Unable to get source file for processor {}. You will not be able to run this on a cluster or in a container.'.format(proc.NAME))
         processor_source_fname = None
     if processor_source_fname is not None:
         processor_source_dirname = os.path.dirname(processor_source_fname)
@@ -103,6 +104,8 @@ def createJobs(proc, argslist, verbose=None):
                         path=fname0
                     )
                 else:
+                    if not fname0:
+                        inputs[name0] = None
                     if type(fname0) == str:
                         inputs[name0] = dict(
                             path=fname0
@@ -243,6 +246,8 @@ def createJobs(proc, argslist, verbose=None):
     all_local_dir_inputs = []
     all_kbucket_file_inputs = []
     all_sha1_file_inputs = []
+    all_placeholder_inputs = []
+    all_placeholder_dir_inputs = []
     all_local_file_inputs = []
     for job_object in job_objects:
         for input_name, input0 in job_object['inputs'].items():
@@ -252,6 +257,8 @@ def createJobs(proc, argslist, verbose=None):
                     if input0.get('directory', False):
                         if path0.startswith('kbucket://') or path0.startswith('sha1dir://'):
                             all_kbucket_dir_inputs.append(input0)
+                        elif path0 == '<placeholder>':
+                            all_placeholder_dir_inputs.append(input0)
                         else:
                             all_local_dir_inputs.append(input0)
                     else:
@@ -259,6 +266,8 @@ def createJobs(proc, argslist, verbose=None):
                             all_kbucket_file_inputs.append(input0)
                         elif path0.startswith('sha1://'):
                             all_sha1_file_inputs.append(input0)
+                        elif path0 == '<placeholder>':
+                            all_placeholder_inputs.append(input0)
                         else:
                             all_local_file_inputs.append(input0)
             elif type(input0) == list:
@@ -334,18 +343,18 @@ def createJobs(proc, argslist, verbose=None):
 @mtlogging.log()
 def createJob(
     proc,
-    _container=None,
-    _use_cache=True,
-    _skip_failing=None,
-    _skip_timed_out=None,
-    _force_run=None,
-    _keep_temp_files=None,
-    _label=None,
-    _timeout=None,
-    _additional_files_to_realize=None,
-    _verbose=None,
+    _container: Optional[str]=None,
+    _use_cache: bool=True,
+    _skip_failing: Optional[bool]=None,
+    _skip_timed_out: Optional[bool]=None,
+    _force_run: Optional[bool]=None,
+    _keep_temp_files: Optional[bool]=None,
+    _label: Optional[str]=None,
+    _timeout: Optional[float]=None,
+    _additional_files_to_realize: Optional[List[str]]=None,
+    _verbose: Optional[bool]=None,
     **kwargs
-):
+) -> MountainJob:
     args = dict(
         _container=_container,
         _use_cache=_use_cache,
