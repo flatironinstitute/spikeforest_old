@@ -173,6 +173,14 @@ def test_ks2_hybrid_static():
     params = dict()
     do_sorting_test(sorter, params, hybrid_janelia_static1_recdir, assert_avg_accuracy=0.8, _keep_temp_files=True)
 
+@pytest.mark.spikeforest
+@pytest.mark.ks_hybrid_static
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_ks_hybrid_static():
+    sorter = KiloSort
+    params = dict()
+    do_sorting_test(sorter, params, hybrid_janelia_static1_recdir, assert_avg_accuracy=0.8, _keep_temp_files=True)
 
 @pytest.mark.spikeforest
 @pytest.mark.ks2_magland_c4
