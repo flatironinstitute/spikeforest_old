@@ -15,7 +15,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.7.1'
+    VERSION = '0.7.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -51,7 +51,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     freq_max = mlpr.FloatParameter(
-        optional=True, default=6000,
+        optional=True, default=8000,
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
