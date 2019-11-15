@@ -137,7 +137,7 @@ def main():
                 time_limit_per_batch=job_timeout * 3,
                 use_slurm=True,
                 max_simultaneous_batches=20,
-                additional_srun_opts=['-p gpu', '--gres=gpu:v100-16gb:1']
+                additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
                 # additional_srun_opts=['-p gpu', '--gres=gpu:v100-32gb:1']
             )
         else:
