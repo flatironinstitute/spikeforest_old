@@ -8,12 +8,12 @@ RUN ln -s python3 /usr/bin/python
 RUN ln -s pip3 /usr/bin/pip
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 
-RUN echo "22 July 2019"
+RUN echo "13 November 2019"
 
 #########################################
 ### Spyking Circus
-RUN apt-get update && apt-get install -y libopenmpi-dev
-RUN pip install spyking-circus==0.8.3
+RUN apt-get update && apt-get install -y libmpich-dev mpich
+RUN pip install spyking-circus==0.8.6
 RUN pip install pyqt5
 RUN apt-get update && apt-get install -y libglib2.0-0
 RUN apt-get update && apt-get install -y libgl1-mesa-glx
