@@ -19,7 +19,7 @@ import spikeextractors as se
 
 class YASS(mlpr.Processor):
     NAME = 'YASS'
-    VERSION = '0.1.1'
+    VERSION = '0.1.2'
     # used by container to pass the env variables
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
@@ -151,8 +151,7 @@ def yass_helper(
     # retcode = run_command_and_print_output(cmd_merge)
     # if retcode != 0:
     #    raise Exception('yass merging returned a non-zero exit code')
-    processing_time = time.time() - t_start_proc
-    print('Elapsed time: ', processing_time)
+    print('#SF-SORTER-RUNTIME#{:.3f}#'.format(time.time() - t_start_proc))
     sorting = yassSortingExtractor(join_abspath_(output_folder, 'tmp'))
 
     return sorting, yaml_file

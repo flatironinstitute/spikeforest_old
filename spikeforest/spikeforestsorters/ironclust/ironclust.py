@@ -3,6 +3,7 @@ import os
 import random
 import string
 import shutil
+import time
 from spikeforest import mdaio
 import spikeextractors as se
 from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
@@ -15,7 +16,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.7.5'
+    VERSION = '0.7.6'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -103,6 +104,7 @@ class IronClust(mlpr.Processor):
         return install_ironclust(commit='9f8e6513c9ba45f99b492c0b4c5c29d8117dbddf')
 
     def run(self):
+        timer = time.time()
         import spikesorters as sorters
         print('IronClust......')
 
@@ -152,8 +154,9 @@ class IronClust(mlpr.Processor):
             delta_cut=self.delta_cut,
             post_merge_mode=self.post_merge_mode,
             sort_mode=self.sort_mode
-        )       
-        sorter.run()
+        )     
+        timer = sorter.run()
+        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
         sorting = sorter.get_result()
 
         SFMdaSortingExtractor.write_sorting(

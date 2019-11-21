@@ -97,6 +97,16 @@ def test_ms4_neurocube1c():
 
 
 @pytest.mark.spikeforest
+@pytest.mark.irc_neurocube1c
+@pytest.mark.test_all
+@pytest.mark.exclude
+def test_irc_neurocube1c():
+    sorter = IronClust
+    params = dict()
+    do_sorting_test(sorter, params, neurocube1c_recdir, assert_avg_accuracy=0.1, _keep_temp_files=True)
+
+
+@pytest.mark.spikeforest
 @pytest.mark.ms4
 @pytest.mark.test_all
 @pytest.mark.exclude

@@ -32,7 +32,7 @@ class Waveclus(mlpr.Processor):
     """
 
     NAME = 'waveclus'
-    VERSION = '0.0.3'
+    VERSION = '0.0.4'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -67,13 +67,13 @@ class Waveclus(mlpr.Processor):
                 sorting=sorting, save_path=self.firings_out)
         except:
             if os.path.exists(tmpdir):
-                if not getattr(self, '_keep_temp_files', False):
+                if not getattr(self, '_keep_temp_files', False):                    
                     print('erased temp file 1')
                     shutil.rmtree(tmpdir)
             raise
         if not getattr(self, '_keep_temp_files', False):
-            print('erased temp file 2')
-            shutil.rmtree(tmpdir)
+           print('erased temp file 2')
+           shutil.rmtree(tmpdir)
 
 
 def waveclus_helper(
@@ -97,8 +97,6 @@ def waveclus_helper(
             traceback.print_exc()
             raise Exception('Problem installing waveclus. You can set the WAVECLUS_PATH_DEV to force to use a particular path.')
     print('Using waveclus from: {}'.format(waveclus_path))
-
-    # source_dir = os.path.dirname(os.path.realpath(__file__))
 
     dataset_dir = os.path.join(tmpdir, 'waveclus_dataset')
     # Generate three files in the dataset directory: raw.mda, geom.csv, params.json
@@ -142,9 +140,11 @@ def waveclus_helper(
     '''.format(tmpdir=tmpdir)
     shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_waveclus.sh', keep_temp_files=True)
     shell_cmd.write(tmpdir + '/run_waveclus.sh')
+    time_ = time.time()
     shell_cmd.start()
 
-    retcode = shell_cmd.wait()
+    retcode = shell_cmd.wait()    
+    print('#SF-SORTER-RUNTIME#{:.3f}#'.format(time_ - time.time()))
 
     if retcode != 0:
         raise Exception('waveclus returned a non-zero exit code')

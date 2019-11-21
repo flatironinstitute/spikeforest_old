@@ -23,7 +23,7 @@ class Tridesclous(mlpr.Processor):
     """
 
     NAME = 'Tridesclous'
-    VERSION = '0.2.5'  # wrapper VERSION
+    VERSION = '0.2.6'  # wrapper VERSION
     ADDITIONAL_FILES: List[str] = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
@@ -63,7 +63,8 @@ class Tridesclous(mlpr.Processor):
             )
             setattr(st_sorter, 'debug', True)
             st_sorter
-            st_sorter.run()
+            timer = st_sorter.run()
+            print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
             sorting = st_sorter.get_result()
 
             SFMdaSortingExtractor.write_sorting(

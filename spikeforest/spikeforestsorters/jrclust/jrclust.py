@@ -34,7 +34,7 @@ class JRClust(mlpr.Processor):
     """
 
     NAME = 'JRClust'
-    VERSION = '0.1.1'
+    VERSION = '0.1.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -90,6 +90,7 @@ class JRClust(mlpr.Processor):
             all_params = dict()
             for param0 in self.PARAMETERS:
                 all_params[param0.name] = getattr(self, param0.name)
+            
             sorting = jrclust_helper(
                 recording=recording,
                 tmpdir=tmpdir,
@@ -180,9 +181,11 @@ def jrclust_helper(
     '''.format(tmpdir=tmpdir)
     shell_cmd = mlpr.ShellScript(shell_cmd, script_path=tmpdir + '/run_jrclust.sh', keep_temp_files=True)
     shell_cmd.write(tmpdir + '/run_jrclust.sh')
+    time_ = time.time()
     shell_cmd.start()
 
     retcode = shell_cmd.wait()
+    print('#SF-SORTER-RUNTIME#{:.3f}#'.format(time_ - time.time()))
 
     if retcode != 0:
         raise Exception('jrclust returned a non-zero exit code')

@@ -7,7 +7,7 @@ from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
 
 class SpykingCircus(mlpr.Processor):
     NAME = 'SpykingCircus'
-    VERSION = '0.3.3'
+    VERSION = '0.3.4'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     ADDITIONAL_FILES = ['*.params']
@@ -65,8 +65,8 @@ class SpykingCircus(mlpr.Processor):
             clustering_max_elts=self.clustering_max_elts,
         )
 
-        # TODO: get elapsed time from the return of this run
-        sorter.run()
+        timer = sorter.run()
+        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
 
         sorting = sorter.get_result()
 

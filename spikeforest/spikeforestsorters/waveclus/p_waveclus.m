@@ -37,9 +37,9 @@ else
     vcFile_spikes = strrep(pol_fname, '.txt', '_spikes.mat');
 end
 
-
+% currently supporting single channel only
 Do_clustering(vcFile_spikes);
-[vcDir_, vcFile_, vcExt_] = fileparts(vcFile_mat);
+[vcDir_, vcFile_, vcExt_] = fileparts(vcFile_mat{1});
 vcFile_cluster = fullfile(vcDir_, ['times_', vcFile_, vcExt_]);
 
 % parse output and save

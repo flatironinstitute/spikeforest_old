@@ -10,7 +10,7 @@ import random
 
 class MountainSort4(mlpr.Processor):
     NAME = 'MountainSort4'
-    VERSION = '4.3.1'
+    VERSION = '4.3.2'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
     # CONTAINER = 'sha1://e06fee7f72f6b66d80d899ebc08e7c39e5a2458e/2019-05-06/mountainsort4.simg'
@@ -74,8 +74,8 @@ class MountainSort4(mlpr.Processor):
             freq_max=self.freq_max
         )
 
-        # TODO: get elapsed time from the return of this run
-        sorter.run()
+        timer = sorter.run()
+        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
 
         sorting = sorter.get_result()
 

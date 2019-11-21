@@ -28,7 +28,7 @@ class KiloSort2(mlpr.Processor):
     """
 
     NAME = 'KiloSort2'
-    VERSION = '0.4.2'  # wrapper VERSION
+    VERSION = '0.4.3'  # wrapper VERSION
     CONTAINER: Union[str, None] = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -91,8 +91,8 @@ class KiloSort2(mlpr.Processor):
             nPCs=self.pc_per_chan
         )
 
-        # TODO: get elapsed time from the return of this run
-        sorter.run()
+        timer = sorter.run()
+        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
 
         sorting = sorter.get_result()
 

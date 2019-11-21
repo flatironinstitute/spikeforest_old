@@ -26,7 +26,7 @@ class KiloSort(mlpr.Processor):
     """
 
     NAME = 'KiloSort'
-    VERSION = '0.3.3'  # wrapper VERSION
+    VERSION = '0.3.4'  # wrapper VERSION
     CONTAINER: Union[str, None] = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -81,8 +81,8 @@ class KiloSort(mlpr.Processor):
             electrode_dimensions=None
         )
 
-        # TODO: get elapsed time from the return of this run
-        sorter.run()
+        timer = sorter.run()
+        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
 
         sorting = sorter.get_result()
 
