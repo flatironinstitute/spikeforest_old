@@ -5,41 +5,24 @@ function p_waveclus(vcDir_temp, vcFile_raw, vcFile_mda, sRateHz)
 % vcFile_raw: input raw .mda file (raw.mda)
 % vcFile_mda: output .mda file (firings.mda)
 
-all_data = double(readmda(vcFile_raw));
+% convert input to matlab format. flip polarity for positive detection
+vcFile_mat = fullfile(vcDir_temp, 'raw.mat');
+data = double(readmda(vcFile_raw) * -1);
 sr = sRateHz;
+try
+    save(vcFile_mat, 'data', 'sr', '-v7.3', '-nocompression'); %faster    
+catch
+    save(vcFile_mat, 'data', 'sr');
+end
+
+% Run waveclus batch mode. supply parameter file (set sampling rate)
 S_par = set_parameters_spf();
 S_par.sr = sRateHz;
-
-[nChans, ~] = size(all_data);
 cd(vcDir_temp);
-
-for nch = 1: nChans
-    vcFile_mat{nch} = fullfile(vcDir_temp, ['raw' int2str(nch) '.mat']);
-    data = all_data(nch,:);
-    try
-        save(vcFile_mat{nch}, 'data', 'sr', '-v7.3', '-nocompression'); %faster    
-    catch
-        save(vcFile_mat{nch}, 'data', 'sr');
-    end    
-end
-if nChans==1
-    % Run waveclus batch mode. supply parameter file (set sampling rate)
-    Get_spikes(vcFile_mat{1}, 'par', S_par);
-    vcFile_spikes = strrep(vcFile_mat{1}, '.mat', '_spikes.mat');
-else
-    % Run waveclus batch mode. supply parameter file (set sampling rate)
-	elec_group = 1; %for now only one group supported
-    pol_fname = ['polytrode' num2str(elec_group) '.txt'];
-    pol_file = fopen(pol_fname,'w');
-    cellfun(@(x) fprintf(pol_file ,'%s\n',x),vcFile_mat);
-    fclose(pol_file);
-    Get_spikes_pol(elec_group, 'par', S_par);
-    vcFile_spikes = strrep(pol_fname, '.txt', '_spikes.mat');
-end
-
-% currently supporting single channel only
+Get_spikes(vcFile_mat, 'par', S_par);
+vcFile_spikes = strrep(vcFile_mat, '.mat', '_spikes.mat');
 Do_clustering(vcFile_spikes);
-[vcDir_, vcFile_, vcExt_] = fileparts(vcFile_mat{1});
+[vcDir_, vcFile_, vcExt_] = fileparts(vcFile_mat);
 vcFile_cluster = fullfile(vcDir_, ['times_', vcFile_, vcExt_]);
 
 % parse output and save

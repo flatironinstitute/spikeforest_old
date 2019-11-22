@@ -23,12 +23,12 @@ from .install_kilosort2 import install_kilosort2
 class KiloSort2(mlpr.Processor):
     """
     [Prerequisite]
-    1. MATLAB (Tested on R2018b)
-    2. CUDA Toolkit v9.1
+    1. MATLAB (Tested on R2019a)
+    2. CUDA Toolkit v10.0
     """
 
     NAME = 'KiloSort2'
-    VERSION = '0.4.3'  # wrapper VERSION
+    VERSION = '0.4.4'  # wrapper VERSION
     CONTAINER: Union[str, None] = None
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
@@ -53,8 +53,8 @@ class KiloSort2(mlpr.Processor):
     def install():
         print('Auto-installing kilosort2.')
         return install_kilosort2(
-            repo='https://github.com/alexmorley/Kilosort2',
-            commit='43cbbfff89b9c88cdeb147ffd4ac35bfde9c7956'
+            repo='https://github.com/MouseLand/Kilosort2',
+            commit='5629125f072795b082245f4265b567d3540cbc2b'
         )
 
     def run(self):

@@ -42,10 +42,15 @@ def install_kilosort2(repo, commit):
     if retcode != 0:
         raise Exception('Install script returned a non-zero exit code/')
 
+    # make sure module unload gcc/7.4.0
     compile_gpu = mlpr.ShellScript(script="""
     function compile_gpu
 
     try
+        [~,path_nvcc_] = system('which nvcc');
+        path_nvcc_ = strrep(path_nvcc_, 'nvcc', '');
+        disp(['path_nvcc_: ', path_nvcc_]);
+        setenv('MW_NVCC_PATH', path_nvcc_);
         run('mexGPUall.m');
     catch
         disp('Problem running mexGPUall.');
