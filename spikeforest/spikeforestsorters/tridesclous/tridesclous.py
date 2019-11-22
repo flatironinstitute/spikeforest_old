@@ -41,7 +41,8 @@ class Tridesclous(mlpr.Processor):
         print('Running Tridesclous...')
         from spikeforest import SFMdaRecordingExtractor, SFMdaSortingExtractor
         # from spikeforest_common import autoScaleRecordingToNoiseLevel
-        import spiketoolkit as st
+        # import spiketoolkit as st
+        import spikesorters
 
         code = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
         tmpdir = os.environ.get('TEMPDIR', '/tmp') + '/tdc-tmp-' + code
@@ -58,7 +59,7 @@ class Tridesclous(mlpr.Processor):
 
             print('Running TridesclousSorter...')
             os.environ['HS2_PROBE_PATH'] = tmpdir
-            st_sorter = st.sorters.TridesclousSorter(
+            st_sorter = spikesorters.TridesclousSorter(
                 recording=recording,
                 output_folder=tmpdir + '/tdc_sorting_output'
             )
