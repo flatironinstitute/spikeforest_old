@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t magland/spikodrome-ironclust .
+docker build -t magland/sf-ironclust .

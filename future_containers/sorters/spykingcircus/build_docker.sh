@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t magland/spikodrome-spykingcircus .
+docker build -t magland/sf-spykingcircus .

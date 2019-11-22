@@ -9,5 +9,5 @@ docker run -it \
     -v ~/.kachery:/tmp/.kachery \
     -v $SHA1_CACHE_DIR:/tmp/sha1-cache \
     -v $OUTPUT_DIR:/output \
-    magland/spikodrome-mountainsort4 \
+    magland/sf-mountainsort4 \
     sha1dir://3ea5c9bd992de2d27402b2e83259c679d76e9319.synth_mearec_tetrode/datasets_noise10_K10_C4/001_synth

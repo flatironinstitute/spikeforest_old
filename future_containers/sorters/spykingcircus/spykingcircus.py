@@ -8,7 +8,7 @@ import kachery as ka
 import spiketoolkit as st
 import spikesorters as ss
 import spikeextractors as se
-from spikodrome_utils import AutoRecordingExtractor
+from spikeforest_container_utils import AutoRecordingExtractor
 
 def main():
     parser = argparse.ArgumentParser(description='Run spike sorting using SpyKING CIRCUS.')

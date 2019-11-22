@@ -8,7 +8,7 @@ import kachery as ka
 import spiketoolkit as st
 import spikesorters as ss
 import spikeextractors as se
-from spikodrome_utils import AutoRecordingExtractor
+from spikeforest_container_utils import AutoRecordingExtractor
 from shellscript import ShellScript
 from ironclust_sorter import IronClustSorter
 

@@ -1,6 +1,4 @@
-FROM ubuntu:18.04
-
-RUN echo "17 June 2019"
+FROM nvidia/cuda:10.1-base-ubuntu18.04
 
 #########################################
 ### Python, etc                                                                                                                
@@ -17,17 +15,20 @@ RUN pip install Cython
 RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl PyQt5 pyqtgraph==0.10 quantities neo numba hdbscan
 RUN pip install tridesclous==1.3.0
 
-## OpenCL with POCL
-# WRANING : need POCL 1.4 but not available on ubuntu 18.04
-# tridesclous will be slow because without opencl
-# RUN apt-get update && apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl-opencl-icd
-# RUN pip install pyopencl
-
-
 ### spikeinterface
 RUN pip install --upgrade https://github.com/SpikeInterface/spikeextractors/archive/master.zip
 RUN pip install --upgrade https://github.com/SpikeInterface/spiketoolkit/archive/master.zip
 RUN pip install --upgrade https://github.com/SpikeInterface/spikesorters/archive/master.zip
 
-### Other dependencies
-RUN pip install requests h5py
+## OpenCL with POCL
+# WRANING : need POCL 1.4 but not available on ubuntu 18.04
+# tridesclous will be slow because without opencl
+# RUN apt-get update && apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1 pocl-opencl-icd
+RUN apt-get update && apt-get install -y opencl-headers ocl-icd-opencl-dev libclc-dev ocl-icd-libopencl1
+RUN apt-get update && apt-get install -y clinfo
+# RUN apt-get install -y software-properties-common && add-apt-repository ppa:graphics-drivers/ppa
+# RUN apt-get update && apt-get install -y nvidia-graphics-drivers-430
+# RUN pip install pyopencl
+
+# ### Other dependencies
+# RUN pip install requests h5py

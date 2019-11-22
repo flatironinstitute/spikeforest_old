@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t magland/spikodrome-mountainsort4 .
+docker build -t magland/sf-mountainsort4 .

@@ -74,10 +74,10 @@ RUN pip install spikeextractors==0.7.0 spiketoolkit==0.5.0 spikesorters==0.2.1
 RUN pip install kachery==0.4.2
 
 #########################################
-### Install spikodrome_utils from github
-RUN mkdir -p /src && git clone https://github.com/spikodrome/spikodrome_utils /src/spikodrome_utils \
-    && cd /src/spikodrome_utils \
-    && git checkout 3c1aec30494f2b4a96939a99270436562c02c494 \
+### Install spikeforest_container_utils from github
+RUN mkdir -p /src && git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest \
+    && cd /src/spikeforest/future_containers/spikeforest_container_utils \
+    && git checkout xxxxxxxxxxxxxxxxxxxxxxxxx \
     && pip install -e .
 RUN pip install h5py
 

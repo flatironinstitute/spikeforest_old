@@ -24,9 +24,9 @@ RUN pip install ml_ms4alg==0.3.2
 RUN pip install kachery==0.4.2
 
 #########################################
-### Install spikodrome_utils from github
-RUN mkdir -p /src && git clone https://github.com/spikodrome/spikodrome_utils /src/spikodrome_utils \
-    && cd /src/spikodrome_utils \
+### Install spikeforest_container_utils from github
+RUN mkdir -p /src && git clone https://github.com/spikodrome/spikeforest_container_utils /src/spikeforest_container_utils \
+    && cd /src/spikeforest_container_utils \
     && git checkout 3c1aec30494f2b4a96939a99270436562c02c494 \
     && pip install -e .
 
