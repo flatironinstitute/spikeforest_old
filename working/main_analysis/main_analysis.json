@@ -134,7 +134,7 @@
             "name": "Tridesclous",
             "processor_name": "Tridesclous",
             "params": {},
-            "gpu": false
+            "gpu": true
         },
         "waveclus": {
             "name": "Waveclus",
