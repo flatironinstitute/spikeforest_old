@@ -23,14 +23,15 @@ class Tridesclous(mlpr.Processor):
     """
 
     NAME = 'Tridesclous'
-    VERSION = '0.2.6'  # wrapper VERSION
+    VERSION = '0.2.7'  # wrapper VERSION
     ADDITIONAL_FILES: List[str] = []
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     # CONTAINER = 'sha1://9fb4a9350492ee84c8ea5d8692434ecba3cf33da/2019-05-13/tridesclous.simg'
     # CONTAINER = 'sha1://17171f85d4b35238e517ad974e2426c5990ae17a/2019-06-14/tridesclous.simg'
     # CONTAINER = 'sha1://9d13a5fb53c65b3627753e35f3af43aeeaaa14ce/2019-06-17/tridesclous.simg'
-    CONTAINER = 'sha1://bfa657d577af721954beb55ede0f0fccf9ae18bd/2019-06-18/tridesclous.simg'
+    # CONTAINER = 'sha1://bfa657d577af721954beb55ede0f0fccf9ae18bd/2019-06-18/tridesclous.simg'
+    CONTAINER = 'sha1://99673b55a1dda69ff59bb58f2a8409ccf8aa2391/2019-11-22/tridesclous.simg'
     LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)

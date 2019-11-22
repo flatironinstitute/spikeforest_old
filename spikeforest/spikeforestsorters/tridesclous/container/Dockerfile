@@ -13,6 +13,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk
 #########################################
 ### Tridesclous
 RUN apt-get update && apt-get install -y libgl1-mesa-glx
+RUN pip install Cython
 RUN pip install scipy numpy pandas scikit-learn matplotlib seaborn tqdm openpyxl PyQt5 pyqtgraph==0.10 quantities neo numba hdbscan
 RUN pip install tridesclous==1.3.0
 
