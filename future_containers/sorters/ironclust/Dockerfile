@@ -1,48 +1,12 @@
-FROM ubuntu:18.04
+FROM nvidia/cuda:10.1-base-ubuntu18.04
 
 RUN apt-get update && apt-get install -y unzip
 RUN apt-get install -y libxt-dev
 RUN apt-get install -y curl 
 
-RUN mkdir /working
-RUN curl http://ssd.mathworks.com/supportfiles/downloads/R2019b/Release/1/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2019b_Update_1_glnxa64.zip > /working/MATLAB_Runtime_R2019b_Update_1_glnxa64.zip
-
-WORKDIR /working
-RUN unzip MATLAB_Runtime_R2019b_Update_1_glnxa64.zip
-RUN ./install -mode silent -agreeToLicense yes
-
-# Important not to set the LD_LIBRARY_PATH for Matlab until later, because it conflicts with curl!
-##################################################################################################################
-RUN apt-get update && apt-get install -y --no-install-recommends gnupg2 curl ca-certificates && \
-    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
-    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
-    echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
-    apt-get purge --autoremove -y curl && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV CUDA_VERSION 10.0.130
-
-ENV CUDA_PKG_VERSION 10-0=$CUDA_VERSION-1
-
-# For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        cuda-cudart-$CUDA_PKG_VERSION \
-        cuda-compat-10-0 && \
-    ln -s cuda-10.0 /usr/local/cuda && \
-    rm -rf /var/lib/apt/lists/*
-
-# Required for nvidia-docker v1
-RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
-    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
-
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-
-# nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
-ENV NVIDIA_REQUIRE_CUDA "cuda>=10.0 brand=tesla,driver>=384,driver<385 brand=tesla,driver>=410,driver<411"
-##################################################################################################################
+RUN mkdir /install_matlab \
+    && curl http://ssd.mathworks.com/supportfiles/downloads/R2019b/Release/1/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2019b_Update_1_glnxa64.zip > /install_matlab/MATLAB_Runtime_R2019b_Update_1_glnxa64.zip \
+    && cd /install_matlab && unzip MATLAB_Runtime_R2019b_Update_1_glnxa64.zip && ./install -mode silent -agreeToLicense yes && cd / && rm -rf /install_matlab
 
 # See comment above
 ENV LD_LIBRARY_PATH /usr/local/MATLAB/MATLAB_Runtime/v97/runtime/glnxa64:/usr/local/MATLAB/MATLAB_Runtime/v97/bin/glnxa64:/usr/local/MATLAB/MATLAB_Runtime/v97/sys/os/glnxa64:/usr/local/MATLAB/MATLAB_Runtime/v97/extern/bin/glnxa64
@@ -76,8 +40,9 @@ RUN pip install kachery==0.4.2
 #########################################
 ### Install spikeforest_container_utils from github
 RUN mkdir -p /src && git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest \
-    && cd /src/spikeforest/future_containers/spikeforest_container_utils \
-    && git checkout xxxxxxxxxxxxxxxxxxxxxxxxx \
+    && cd /src/spikeforest \
+    && git checkout d9d5d82dd031fa9e3546ad090ed9ec0e811ddf95 \
+    && cd future_containers/spikeforest_container_utils \
     && pip install -e .
 RUN pip install h5py
 
