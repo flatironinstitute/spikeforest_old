@@ -27,6 +27,9 @@ class JRClust(mlpr.Processor):
     1. Run `git clone https://github.com/JaneliaSciComp/JRCLUST`
     2. Activate conda environment for SpikeForest
     3. Create `JRCLUST_PATH` and `MDAIO_PATH`
+    4. Flatiron execution: `module load matlab/R2019a cuda/10.0.130_410.48`
+    DO NOT LOAD `module load gcc`. 
+    DO NOT USE `matlab/R2018b` (it will crash while creating a parpool).
 
     See: James Jun, et al. Real-time spike sorting platform for
     high-density extracellular probes with ground-truth validation and drift correction
@@ -34,7 +37,7 @@ class JRClust(mlpr.Processor):
     """
 
     NAME = 'JRClust'
-    VERSION = '0.1.2'
+    VERSION = '0.1.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
@@ -68,10 +71,10 @@ class JRClust(mlpr.Processor):
         optional=True, default='none', description='{none, mean, median}')
     min_count = mlpr.IntegerParameter(
         optional=True, default=30, description='Minimum cluster size')
-    fGpu = mlpr.BoolParameter(
-        optional=True, default=False, description='Use GPU if available')
-    fParfor = mlpr.BoolParameter(
-        optional=True, default=True, description='Use parfor if available')
+    fGpu = mlpr.IntegerParameter(
+        optional=True, default=1, description='Use GPU if available')
+    fParfor = mlpr.IntegerParameter(
+        optional=True, default=0, description='Use parfor if available')
     feature_type = mlpr.StringParameter(
         optional=True, default='gpca', description='{gpca, pca, vpp, vmin, vminmax, cov, energy, xcov}')
 
@@ -123,7 +126,7 @@ def jrclust_helper(
             print('Auto-installing jrclust.')
             jrclust_path = install_jrclust(
                 repo='https://github.com/JaneliaSciComp/JRCLUST.git',
-                commit='68ffb3ef064f97aca7043b7faac49c34a58997d9'
+                commit='3d2e75c0041dca2a9f273598750c6a14dbc4c1b8'
             )
         except:
             traceback.print_exc()

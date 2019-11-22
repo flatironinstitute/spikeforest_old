@@ -47,6 +47,10 @@ def install_kilosort(repo, commit):
     function compile_gpu
 
     try
+        [~,path_nvcc_] = system('which nvcc');
+        path_nvcc_ = strrep(path_nvcc_, 'nvcc', '');
+        disp(['path_nvcc_: ', path_nvcc_]);
+        setenv('MW_NVCC_PATH', path_nvcc_);    
         run('mexGPUall.m');
     catch
         disp('Problem running mexGPUall.');

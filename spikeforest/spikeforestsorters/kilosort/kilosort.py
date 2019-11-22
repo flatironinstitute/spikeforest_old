@@ -97,9 +97,8 @@ class KiloSortOld(mlpr.Processor):
       written by J. James Jun, May 21, 2019
 
     [Prerequisite]
-    1. MATLAB (Tested on R2018b)
-    2. CUDA Toolkit v9.1 (module load cuda/9.1.85)
-    3. GCC 6.4.0 (module load gcc/6.4.0)
+    1. MATLAB (Tested on R2019a)
+    2. CUDA Toolkit v10.0 
 
     [Optional: Installation instruction in SpikeForest environment]
     1. Run `git clone https://github.com/cortex-lab/KiloSort.git`
@@ -108,7 +107,7 @@ class KiloSortOld(mlpr.Processor):
     """
 
     NAME = 'KiloSort'
-    VERSION = '0.2.3'  # wrapper VERSION
+    VERSION = '0.2.4'  # wrapper VERSION
     ADDITIONAL_FILES = ['*.m']
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS']
