@@ -25,9 +25,9 @@ RUN pip install tridesclous==1.3.0
 
 
 ### spikeinterface
-RUN pip install https://github.com/SpikeInterface/spikeextractors/archive/master.zip
-RUN pip install https://github.com/SpikeInterface/spiketoolkit/archive/master.zip
-RUN pip install https://github.com/SpikeInterface/spikesorters/archive/master.zip
+RUN pip install --upgrade https://github.com/SpikeInterface/spikeextractors/archive/master.zip
+RUN pip install --upgrade https://github.com/SpikeInterface/spiketoolkit/archive/master.zip
+RUN pip install --upgrade https://github.com/SpikeInterface/spikesorters/archive/master.zip
 
 ### Other dependencies
 RUN pip install requests h5py
