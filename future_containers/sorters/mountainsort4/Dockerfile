@@ -25,9 +25,10 @@ RUN pip install kachery==0.4.2
 
 #########################################
 ### Install spikeforest_container_utils from github
-RUN mkdir -p /src && git clone https://github.com/spikodrome/spikeforest_container_utils /src/spikeforest_container_utils \
-    && cd /src/spikeforest_container_utils \
-    && git checkout 3c1aec30494f2b4a96939a99270436562c02c494 \
+RUN mkdir -p /src && git clone https://github.com/flatironinstitute/spikeforest /src/spikeforest \
+    && cd /src/spikeforest \
+    && git checkout d9d5d82dd031fa9e3546ad090ed9ec0e811ddf95 \
+    && cd future_containers/spikeforest_container_utils \
     && pip install -e .
 
 COPY mountainsort4.py /src/mountainsort4.py
