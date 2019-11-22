@@ -31,7 +31,7 @@ class Tridesclous(mlpr.Processor):
     # CONTAINER = 'sha1://17171f85d4b35238e517ad974e2426c5990ae17a/2019-06-14/tridesclous.simg'
     # CONTAINER = 'sha1://9d13a5fb53c65b3627753e35f3af43aeeaaa14ce/2019-06-17/tridesclous.simg'
     # CONTAINER = 'sha1://bfa657d577af721954beb55ede0f0fccf9ae18bd/2019-06-18/tridesclous.simg'
-    CONTAINER = 'sha1://99673b55a1dda69ff59bb58f2a8409ccf8aa2391/2019-11-22/tridesclous.simg'
+    CONTAINER = 'sha1://e41f7528e7cca06c7a9ae4bf793eb08922cf5e9f/2019-11-22/tridesclous.simg'
     LOCAL_MODULES = ['../../spikeforest']
 
     recording_dir = mlpr.Input('Directory of recording', directory=True)
