@@ -32,7 +32,7 @@ class Waveclus(mlpr.Processor):
     """
 
     NAME = 'waveclus'
-    VERSION = '0.0.4'
+    VERSION = '0.0.5'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     ADDITIONAL_FILES = ['*.m', '*.prm']
