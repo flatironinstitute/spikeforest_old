@@ -16,7 +16,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.7.8'
+    VERSION = '0.7.9'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -56,7 +56,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.99,
+        optional=True, default=0.98,
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
@@ -74,7 +74,7 @@ class IronClust(mlpr.Processor):
     common_ref_type = mlpr.StringParameter(
         optional=True, default='mean', description='{none, mean, median}')
     batch_sec_drift = mlpr.FloatParameter(
-        optional=True, default=600, description='batch duration in seconds. clustering time duration')
+        optional=True, default=300, description='batch duration in seconds. clustering time duration')
     step_sec_drift = mlpr.FloatParameter(
         optional=True, default=20, description='compute anatomical similarity every n sec')
     knn = mlpr.IntegerParameter(
@@ -101,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='7b101dbf873c7de680df0a4d02e9c2b652537fb8')
+        return install_ironclust(commit='72bb6d097e0875d6cfe52bddf5f782e667e1b042')
 
     def run(self):
         timer = time.time()
