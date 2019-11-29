@@ -61,9 +61,10 @@ class Tridesclous(mlpr.Processor):
             os.environ['HS2_PROBE_PATH'] = tmpdir
             st_sorter = spikesorters.TridesclousSorter(
                 recording=recording,
-                output_folder=tmpdir + '/tdc_sorting_output'
+                output_folder=tmpdir + '/tdc_sorting_output',
+                verbose=True
             )
-            setattr(st_sorter, 'debug', True)
+            # setattr(st_sorter, 'debug', True)
             st_sorter
             timer = st_sorter.run()
             print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
