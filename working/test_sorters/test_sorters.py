@@ -1,4 +1,4 @@
-from spikeforestsorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, TridesclousOld, Klusta, Waveclus, YASS, YASS1
+from spikeforestsorters import MountainSort4, SpykingCircus, KiloSort, KiloSort2, IronClust, HerdingSpikes2, JRClust, Tridesclous, Klusta, Waveclus, YASS, YASS1
 from mountaintools import client as mt
 import spikeforest_analysis as sa
 import numpy as np
@@ -274,26 +274,6 @@ def test_tridesclous_magland_c4():
 @pytest.mark.exclude
 def test_tridesclous_magland_c8():
     sorter = Tridesclous
-    params = dict()
-    do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container='default')
-
-
-@pytest.mark.spikeforest
-@pytest.mark.tridesclous_old_magland_c4
-@pytest.mark.test_all
-@pytest.mark.exclude
-def test_tridesclous_old_magland_c4():
-    sorter = TridesclousOld
-    params = dict()
-    do_sorting_test(sorter, params, synth_magland_c4_recdir, assert_avg_accuracy=0.5, container='default')
-
-
-@pytest.mark.spikeforest
-@pytest.mark.tridesclous_old_magland_c8
-@pytest.mark.test_all
-@pytest.mark.exclude
-def test_tridesclous_old_magland_c8():
-    sorter = TridesclousOld
     params = dict()
     do_sorting_test(sorter, params, synth_magland_c8_recdir, assert_avg_accuracy=0.1, container='default')
 
