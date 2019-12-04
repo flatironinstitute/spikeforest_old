@@ -56,7 +56,7 @@ class IronClust(mlpr.Processor):
         description='Use 0 for no bandpass filtering'
     )
     merge_thresh = mlpr.FloatParameter(
-        optional=True, default=0.98,
+        optional=True, default=0.99,
         description='Threshold for automated merging'
     )
     pc_per_chan = mlpr.IntegerParameter(
