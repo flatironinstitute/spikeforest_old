@@ -101,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='1840606cd27126009fa6c1fa33bd0c4131faea0e')
+        return install_ironclust(commit='69b4c9f68f645570708e7dcef29b027f2da0aa48')
 
     def run(self):
         timer = time.time()
