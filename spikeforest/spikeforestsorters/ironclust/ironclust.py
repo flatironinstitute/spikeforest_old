@@ -16,7 +16,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.8.2'
+    VERSION = '0.8.3'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -36,7 +36,7 @@ class IronClust(mlpr.Processor):
         description='Use -1 to include all channels in every neighborhood'
     )
     adjacency_radius_out = mlpr.FloatParameter(
-        optional=True, default=100,
+        optional=True, default=75,
         description='Use -1 to include all channels in every neighborhood'
     )
     detect_threshold = mlpr.FloatParameter(
@@ -101,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='1bdcbeec0d4ac0fb5749a8ac74a0ce879db341af')
+        return install_ironclust(commit='d01e60080ca4cd1e1326fafa52616e8f7dabc627')
 
     def run(self):
         timer = time.time()
