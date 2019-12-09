@@ -16,7 +16,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.8.5'
+    VERSION = '0.8.8'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -101,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='c21cf1bb00f940a325aeeaf0241e709356f895b6')
+        return install_ironclust(commit='c5130d5fe6d54ee4744e63172c81538c981d1b98')
 
     def run(self):
         timer = time.time()
@@ -156,7 +156,7 @@ class IronClust(mlpr.Processor):
             sort_mode=self.sort_mode
         )     
         timer = sorter.run()
-        print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
+        #print('#SF-SORTER-RUNTIME#{:.3f}#'.format(timer))
         sorting = sorter.get_result()
 
         SFMdaSortingExtractor.write_sorting(
