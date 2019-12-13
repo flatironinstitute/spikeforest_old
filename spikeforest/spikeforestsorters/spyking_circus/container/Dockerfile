@@ -13,7 +13,7 @@ RUN echo "13 November 2019"
 #########################################
 ### Spyking Circus
 RUN apt-get update && apt-get install -y libmpich-dev mpich
-RUN pip install spyking-circus==0.8.7
+RUN pip install spyking-circus==0.8.8
 RUN pip install pyqt5
 RUN apt-get update && apt-get install -y libglib2.0-0
 RUN apt-get update && apt-get install -y libgl1-mesa-glx
