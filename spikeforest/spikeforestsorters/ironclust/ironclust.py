@@ -16,7 +16,7 @@ from .install_ironclust import install_ironclust
 
 class IronClust(mlpr.Processor):
     NAME = 'IronClust'
-    VERSION = '0.9.3'
+    VERSION = '0.9.4'
     ENVIRONMENT_VARIABLES = [
         'NUM_WORKERS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS', 'TEMPDIR']
     CONTAINER: Union[str, None] = None
@@ -72,7 +72,7 @@ class IronClust(mlpr.Processor):
     filter_detect_type = mlpr.StringParameter(
         optional=True, default='none', description='{none, bandpass, wiener, fftdiff, ndiff}')
     common_ref_type = mlpr.StringParameter(
-        optional=True, default='mean', description='{none, mean, median}')
+        optional=True, default='none', description='{none, mean, median}')
     batch_sec_drift = mlpr.FloatParameter(
         optional=True, default=300, description='batch duration in seconds. clustering time duration')
     step_sec_drift = mlpr.FloatParameter(
@@ -101,7 +101,7 @@ class IronClust(mlpr.Processor):
     @staticmethod
     def install():
         print('Auto-installing ironclust.')
-        return install_ironclust(commit='839399d0e0f0d05e2dd121bb11cd41a209a4184c')
+        return install_ironclust(commit='e6edc56497315f13a31e568c249cb4f33e7d8154')
 
     def run(self):
         timer = time.time()
